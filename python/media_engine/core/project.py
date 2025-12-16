@@ -112,6 +112,13 @@ class Project:
 
         return project
 
+    # === Convenience Properties ===
+
+    @property
+    def name(self) -> str:
+        """Project name."""
+        return self.config.name
+
     # === Path Properties ===
 
     @property
