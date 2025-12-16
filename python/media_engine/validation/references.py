@@ -214,8 +214,8 @@ def collect_references(project: "Project") -> Set[str]:
                 # Also check frontmatter
                 try:
                     doc = Document.load(path)
-                    if 'reference_id' in doc.frontmatter:
-                        references.add(doc.frontmatter['reference_id'])
+                    if 'reference_id' in doc.metadata:
+                        references.add(doc.metadata['reference_id'])
                 except Exception:
                     pass
 

@@ -123,7 +123,7 @@ def validate_project(
 
                 # Schema validation
                 schema_errors = validate_frontmatter(
-                    doc.frontmatter,
+                    doc.metadata,
                     schema,
                     chapter_path,
                 )

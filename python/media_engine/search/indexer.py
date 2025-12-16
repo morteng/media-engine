@@ -230,7 +230,7 @@ def index_document(
         excerpt = extract_excerpt(doc.content)
 
         # Extract tags from frontmatter
-        tags = doc.frontmatter.get('tags', [])
+        tags = doc.metadata.get('tags', [])
         if isinstance(tags, str):
             tags = [t.strip() for t in tags.split(',')]
 
@@ -244,8 +244,8 @@ def index_document(
             excerpt=excerpt,
             headings=headings,
             tags=tags,
-            last_modified=doc.frontmatter.get('last_modified'),
-            version=doc.frontmatter.get('version'),
+            last_modified=doc.metadata.get('last_modified'),
+            version=doc.metadata.get('version'),
             word_count=len(content.split()),
         )
     except Exception as e:

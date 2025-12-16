@@ -147,8 +147,12 @@ def check_encoding(
     lines = content.split('\n')
 
     for line_num, line in enumerate(lines, 1):
+        # Skip lines that are documentation examples (patterns inside backticks)
+        # Remove inline code before checking
+        line_without_code = re.sub(r'`[^`]+`', '', line)
+
         for pattern, replacement, message in NORWEGIAN_ISSUES:
-            if re.search(pattern, line):
+            if re.search(pattern, line_without_code):
                 issues.append(QualityIssue(
                     type="encoding",
                     severity="error" if "Encoding" in message else "warning",
