@@ -27,6 +27,8 @@ try:
 except ImportError:
     HAS_FASTAPI = False
     FastAPI = None
+    WebSocket = None
+    WebSocketDisconnect = None
 
 from ..core.project import Project, find_project
 
@@ -254,14 +256,14 @@ def create_app(project_path: Optional[Path] = None) -> "FastAPI":
         report = run_quality_checks(project, console_output=False)
 
         return {
-            "total": report.total_count,
+            "total": len(report.issues),
             "errors": report.error_count,
             "warnings": report.warning_count,
-            "info": report.info_count,
+            "info": len(report.issues) - report.error_count - report.warning_count,
             "issues": [
                 {
                     "severity": i.severity,
-                    "category": i.category,
+                    "category": i.type,
                     "message": i.message,
                     "file": str(i.file_path) if i.file_path else None,
                     "line": i.line,
@@ -322,17 +324,142 @@ def create_app(project_path: Optional[Path] = None) -> "FastAPI":
     async def get_document(path: str):
         """Get a document's content and metadata."""
         from ..cms.document import Document
+        import markdown
 
         doc_path = Path(path)
         if not doc_path.exists():
             raise HTTPException(404, f"Document not found: {path}")
 
         doc = Document.load(doc_path)
+
+        # Render markdown to HTML
+        md = markdown.Markdown(extensions=[
+            'tables',
+            'fenced_code',
+            'toc',
+            'meta',
+            'codehilite',
+        ])
+        html_content = md.convert(doc.content)
+
         return {
             "path": str(doc_path),
             "title": doc.title,
             "content": doc.content,
+            "html": html_content,
             "metadata": doc.metadata,
+        }
+
+    @app.get("/api/documents/{language}")
+    async def list_documents(language: str):
+        """List all documents for a language with metadata."""
+        from ..cms.document import Document
+        project = get_project()
+
+        if language not in project.languages:
+            raise HTTPException(404, f"Language '{language}' not found")
+
+        documents = []
+
+        # Chapters
+        for chapter in project.list_chapters(language):
+            doc = Document.load(chapter)
+            documents.append({
+                "path": str(chapter),
+                "filename": chapter.name,
+                "title": doc.title,
+                "type": "chapter",
+                "metadata": doc.metadata,
+            })
+
+        # Scripts
+        for script in project.list_scripts(language):
+            documents.append({
+                "path": str(script),
+                "filename": script.name,
+                "title": script.stem.replace("_", " ").title(),
+                "type": "script",
+                "metadata": {},
+            })
+
+        # Diagrams
+        diagrams_dir = project.content_dir / language / "diagrams"
+        if diagrams_dir.exists():
+            for diagram in diagrams_dir.glob("*.yaml"):
+                documents.append({
+                    "path": str(diagram),
+                    "filename": diagram.name,
+                    "title": diagram.stem.replace("_", " ").title(),
+                    "type": "diagram",
+                    "metadata": {},
+                })
+
+        # Slides
+        slides_dir = project.content_dir / language / "slides"
+        if slides_dir.exists():
+            for slide in slides_dir.glob("*.yaml"):
+                documents.append({
+                    "path": str(slide),
+                    "filename": slide.name,
+                    "title": slide.stem.replace("_", " ").title(),
+                    "type": "slides",
+                    "metadata": {},
+                })
+
+        # Data
+        data_dir = project.content_dir / language / "data"
+        if data_dir.exists():
+            for data_file in data_dir.glob("*.yaml"):
+                documents.append({
+                    "path": str(data_file),
+                    "filename": data_file.name,
+                    "title": data_file.stem.replace("_", " ").title(),
+                    "type": "data",
+                    "metadata": {},
+                })
+
+        # Demos
+        demos_dir = project.content_dir / language / "demos"
+        if demos_dir.exists():
+            for demo in demos_dir.glob("*.yaml"):
+                documents.append({
+                    "path": str(demo),
+                    "filename": demo.name,
+                    "title": demo.stem.replace("_", " ").title(),
+                    "type": "demo",
+                    "metadata": {},
+                })
+
+        return {
+            "language": language,
+            "documents": documents,
+        }
+
+    @app.get("/api/file")
+    async def get_file(path: str):
+        """Get raw file content (for YAML files etc)."""
+        import yaml
+
+        file_path = Path(path)
+        if not file_path.exists():
+            raise HTTPException(404, f"File not found: {path}")
+
+        content = file_path.read_text()
+
+        # Parse YAML if applicable
+        parsed = None
+        if file_path.suffix in ('.yaml', '.yml'):
+            try:
+                parsed = yaml.safe_load(content)
+            except:
+                pass
+
+        return {
+            "path": str(file_path),
+            "filename": file_path.name,
+            "content": content,
+            "parsed": parsed,
+            "type": file_path.suffix.lstrip('.'),
         }
 
     @app.post("/api/document")
@@ -536,6 +663,49 @@ def generate_dashboard_html() -> str:
             cursor: pointer;
         }
         .refresh-btn:hover { opacity: 0.9; }
+        /* Document browser styles */
+        .doc-browser { display: grid; grid-template-columns: 300px 1fr; gap: 1.5rem; height: calc(100vh - 200px); }
+        .doc-sidebar { background: var(--bg-card); border: 1px solid var(--border); border-radius: 0.5rem; overflow: hidden; display: flex; flex-direction: column; }
+        .doc-sidebar-header { padding: 1rem; border-bottom: 1px solid var(--border); }
+        .doc-list { flex: 1; overflow-y: auto; }
+        .doc-item { padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid var(--border); transition: background 0.2s; }
+        .doc-item:hover { background: rgba(59, 130, 246, 0.1); }
+        .doc-item.active { background: rgba(59, 130, 246, 0.2); border-left: 3px solid var(--primary); }
+        .doc-item-title { font-weight: 500; margin-bottom: 0.25rem; }
+        .doc-item-meta { font-size: 0.75rem; color: var(--text-muted); }
+        .doc-type-badge { font-size: 0.65rem; padding: 0.15rem 0.4rem; border-radius: 3px; background: var(--border); margin-left: 0.5rem; }
+        .doc-preview { background: var(--bg-card); border: 1px solid var(--border); border-radius: 0.5rem; overflow: hidden; display: flex; flex-direction: column; }
+        .doc-preview-header { padding: 1rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .doc-preview-tabs { display: flex; gap: 0.5rem; }
+        .preview-tab { padding: 0.25rem 0.75rem; background: transparent; border: 1px solid var(--border); border-radius: 0.25rem; color: var(--text-muted); cursor: pointer; font-size: 0.8rem; }
+        .preview-tab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .doc-preview-content { flex: 1; overflow-y: auto; padding: 1.5rem; }
+        .doc-preview-content.preview-mode { background: #fff; color: #1a1a1a; }
+        .doc-preview-content.preview-mode h1, .doc-preview-content.preview-mode h2, .doc-preview-content.preview-mode h3 { color: #1a1a1a; margin-top: 1.5em; margin-bottom: 0.5em; }
+        .doc-preview-content.preview-mode h1 { font-size: 2rem; border-bottom: 1px solid #e5e5e5; padding-bottom: 0.3em; }
+        .doc-preview-content.preview-mode h2 { font-size: 1.5rem; }
+        .doc-preview-content.preview-mode h3 { font-size: 1.25rem; }
+        .doc-preview-content.preview-mode p { margin: 1em 0; line-height: 1.7; }
+        .doc-preview-content.preview-mode code { background: #f5f5f5; padding: 0.2em 0.4em; border-radius: 3px; font-size: 0.9em; }
+        .doc-preview-content.preview-mode pre { background: #f5f5f5; padding: 1em; border-radius: 5px; overflow-x: auto; }
+        .doc-preview-content.preview-mode pre code { background: none; padding: 0; }
+        .doc-preview-content.preview-mode blockquote { border-left: 4px solid var(--primary); margin: 1em 0; padding-left: 1em; color: #666; }
+        .doc-preview-content.preview-mode table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+        .doc-preview-content.preview-mode th, .doc-preview-content.preview-mode td { border: 1px solid #ddd; padding: 0.5em; text-align: left; }
+        .doc-preview-content.preview-mode th { background: #f5f5f5; }
+        .doc-preview-content.preview-mode ul, .doc-preview-content.preview-mode ol { margin: 1em 0; padding-left: 2em; }
+        .doc-preview-content.preview-mode li { margin: 0.5em 0; }
+        .doc-preview-content.preview-mode a { color: var(--primary); }
+        .doc-preview-content.source-mode { font-family: 'Monaco', 'Menlo', monospace; font-size: 0.85rem; white-space: pre-wrap; }
+        .doc-metadata { background: var(--bg); padding: 1rem; border-radius: 0.25rem; margin-bottom: 1rem; font-size: 0.85rem; }
+        .doc-metadata dt { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; margin-top: 0.5rem; }
+        .doc-metadata dd { margin: 0; margin-bottom: 0.5rem; }
+        .lang-select { padding: 0.5rem; background: var(--bg); border: 1px solid var(--border); border-radius: 0.25rem; color: var(--text); width: 100%; }
+        .yaml-viewer { background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.85rem; white-space: pre-wrap; overflow-x: auto; }
+        .yaml-key { color: #9cdcfe; }
+        .yaml-string { color: #ce9178; }
+        .yaml-number { color: #b5cea8; }
+        .empty-state { text-align: center; padding: 3rem; color: var(--text-muted); }
     </style>
 </head>
 <body>
@@ -553,6 +723,7 @@ def generate_dashboard_html() -> str:
 
         <div class="tabs">
             <button class="tab active" onclick="showTab('overview')">Overview</button>
+            <button class="tab" onclick="showTab('documents')">Documents</button>
             <button class="tab" onclick="showTab('translations')">Translations</button>
             <button class="tab" onclick="showTab('quality')">Quality</button>
             <button class="tab" onclick="showTab('activity')">Activity</button>
@@ -594,6 +765,36 @@ def generate_dashboard_html() -> str:
                         <div class="card-title">Recent Issues</div>
                     </div>
                     <div id="issues-container"><div class="loading">Loading...</div></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-documents" style="display: none;">
+            <div class="doc-browser">
+                <div class="doc-sidebar">
+                    <div class="doc-sidebar-header">
+                        <select id="lang-select" class="lang-select" onchange="loadDocuments()">
+                        </select>
+                    </div>
+                    <div class="doc-list" id="doc-list">
+                        <div class="loading">Loading...</div>
+                    </div>
+                </div>
+                <div class="doc-preview">
+                    <div class="doc-preview-header">
+                        <div>
+                            <strong id="preview-title">Select a document</strong>
+                            <span id="preview-path" class="stat-label"></span>
+                        </div>
+                        <div class="doc-preview-tabs">
+                            <button class="preview-tab active" onclick="setPreviewMode('preview')">Preview</button>
+                            <button class="preview-tab" onclick="setPreviewMode('source')">Source</button>
+                            <button class="preview-tab" onclick="setPreviewMode('metadata')">Metadata</button>
+                        </div>
+                    </div>
+                    <div class="doc-preview-content preview-mode" id="preview-content">
+                        <div class="empty-state">Select a document from the list to preview</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -755,6 +956,146 @@ def generate_dashboard_html() -> str:
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-' + name).style.display = 'block';
             event.target.classList.add('active');
+            if (name === 'documents' && !documentsLoaded) {
+                initDocumentBrowser();
+            }
+        }
+
+        // Document browser state
+        let documentsLoaded = false;
+        let currentDoc = null;
+        let currentDocData = null;
+        let previewMode = 'preview';
+        let projectLanguages = [];
+
+        async function initDocumentBrowser() {
+            const data = await fetchAPI('/api/project');
+            projectLanguages = Object.keys(data.languages);
+
+            const select = document.getElementById('lang-select');
+            select.innerHTML = projectLanguages.map(lang =>
+                '<option value="' + lang + '">' + lang.toUpperCase() + ' - ' + data.languages[lang].name + '</option>'
+            ).join('');
+
+            documentsLoaded = true;
+            loadDocuments();
+        }
+
+        async function loadDocuments() {
+            const lang = document.getElementById('lang-select').value;
+            if (!lang) return;
+
+            const docList = document.getElementById('doc-list');
+            docList.innerHTML = '<div class="loading">Loading...</div>';
+
+            try {
+                const data = await fetchAPI('/api/documents/' + lang);
+
+                // Group by type
+                const grouped = {};
+                for (const doc of data.documents) {
+                    if (!grouped[doc.type]) grouped[doc.type] = [];
+                    grouped[doc.type].push(doc);
+                }
+
+                let html = '';
+                const typeLabels = {
+                    chapter: 'Chapters',
+                    script: 'Video Scripts',
+                    diagram: 'Diagrams',
+                    slides: 'Slides',
+                    data: 'Data Files',
+                    demo: 'Interactive Demos'
+                };
+
+                for (const [type, docs] of Object.entries(grouped)) {
+                    html += '<div style="padding: 0.5rem 1rem; background: var(--bg); font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">' + (typeLabels[type] || type) + '</div>';
+                    for (const doc of docs) {
+                        const isActive = currentDoc === doc.path ? 'active' : '';
+                        html += '<div class="doc-item ' + isActive + '" onclick="loadDocument(\\'' + doc.path.replace(/'/g, "\\\\'") + '\\', \\'' + doc.type + '\\')">';
+                        html += '<div class="doc-item-title">' + doc.title + '</div>';
+                        html += '<div class="doc-item-meta">' + doc.filename + '</div>';
+                        html += '</div>';
+                    }
+                }
+
+                docList.innerHTML = html || '<div class="empty-state">No documents found</div>';
+            } catch (e) {
+                docList.innerHTML = '<div class="empty-state">Error loading documents</div>';
+            }
+        }
+
+        async function loadDocument(path, type) {
+            currentDoc = path;
+
+            // Update active state in list
+            document.querySelectorAll('.doc-item').forEach(el => el.classList.remove('active'));
+            event.target.closest('.doc-item').classList.add('active');
+
+            const previewContent = document.getElementById('preview-content');
+            previewContent.innerHTML = '<div class="loading">Loading...</div>';
+
+            try {
+                if (type === 'chapter') {
+                    const data = await fetchAPI('/api/document?path=' + encodeURIComponent(path));
+                    currentDocData = data;
+                    document.getElementById('preview-title').textContent = data.title;
+                    document.getElementById('preview-path').textContent = data.path;
+                    renderDocPreview();
+                } else {
+                    const data = await fetchAPI('/api/file?path=' + encodeURIComponent(path));
+                    currentDocData = {
+                        title: data.filename,
+                        content: data.content,
+                        html: '<pre class="yaml-viewer">' + escapeHtml(data.content) + '</pre>',
+                        metadata: data.parsed || {},
+                        isYaml: true
+                    };
+                    document.getElementById('preview-title').textContent = data.filename;
+                    document.getElementById('preview-path').textContent = data.path;
+                    renderDocPreview();
+                }
+            } catch (e) {
+                previewContent.innerHTML = '<div class="empty-state">Error loading document</div>';
+            }
+        }
+
+        function renderDocPreview() {
+            const previewContent = document.getElementById('preview-content');
+            if (!currentDocData) return;
+
+            if (previewMode === 'preview') {
+                previewContent.className = 'doc-preview-content preview-mode';
+                previewContent.innerHTML = currentDocData.html;
+            } else if (previewMode === 'source') {
+                previewContent.className = 'doc-preview-content source-mode';
+                previewContent.textContent = currentDocData.content;
+            } else if (previewMode === 'metadata') {
+                previewContent.className = 'doc-preview-content';
+                let html = '<div class="doc-metadata"><dl>';
+                for (const [key, value] of Object.entries(currentDocData.metadata || {})) {
+                    html += '<dt>' + escapeHtml(key) + '</dt>';
+                    html += '<dd>' + escapeHtml(typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)) + '</dd>';
+                }
+                html += '</dl></div>';
+                if (Object.keys(currentDocData.metadata || {}).length === 0) {
+                    html = '<div class="empty-state">No metadata available</div>';
+                }
+                previewContent.innerHTML = html;
+            }
+        }
+
+        function setPreviewMode(mode) {
+            previewMode = mode;
+            document.querySelectorAll('.preview-tab').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+            renderDocPreview();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         function connectWebSocket() {
