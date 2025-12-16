@@ -654,15 +654,6 @@ def generate_dashboard_html() -> str:
         }
         .tab:hover { border-color: var(--primary); color: var(--text); }
         .tab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
-        .refresh-btn {
-            padding: 0.5rem 1rem;
-            background: var(--primary);
-            border: none;
-            border-radius: 0.25rem;
-            color: #fff;
-            cursor: pointer;
-        }
-        .refresh-btn:hover { opacity: 0.9; }
         /* Document browser styles */
         .doc-browser { display: grid; grid-template-columns: 300px 1fr; gap: 1.5rem; height: calc(100vh - 200px); }
         .doc-sidebar { background: var(--bg-card); border: 1px solid var(--border); border-radius: 0.5rem; overflow: hidden; display: flex; flex-direction: column; }
@@ -739,7 +730,6 @@ def generate_dashboard_html() -> str:
             <div style="display: flex; align-items: center; gap: 0.75rem;">
                 <div class="users-online" id="users-online"></div>
                 <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle theme">☀️</button>
-                <button class="refresh-btn" onclick="loadAll()">Refresh</button>
             </div>
         </header>
 
