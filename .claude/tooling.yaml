@@ -1,0 +1,161 @@
+# =============================================================================
+# Media Engine Project Tooling Configuration
+# =============================================================================
+# Single source of truth for tooling choices.
+# Agents and documentation should reference this file rather than hardcoding.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Code Quality Tools
+# -----------------------------------------------------------------------------
+code_quality:
+  linter:
+    tool: ruff
+    command: "uv run ruff check python/"
+    fix_command: "uv run ruff check --fix python/"
+    config_file: pyproject.toml
+    docs: "https://docs.astral.sh/ruff/"
+
+  formatter:
+    tool: ruff
+    command: "uv run ruff format python/"
+    check_command: "uv run ruff format --check python/"
+    config_file: pyproject.toml
+    docs: "https://docs.astral.sh/ruff/"
+
+# -----------------------------------------------------------------------------
+# Testing Tools
+# -----------------------------------------------------------------------------
+testing:
+  test_runner:
+    tool: pytest
+    command: "uv run pytest"
+    verbose_command: "uv run pytest -v"
+    coverage_command: "uv run pytest --cov=media_engine --cov-report=term-missing"
+    config_file: pyproject.toml
+    docs: "https://docs.pytest.org/"
+
+  coverage:
+    tool: pytest-cov
+    target: ">80%"
+    fail_under_command: "uv run pytest --cov=media_engine --cov-fail-under=80"
+    report_command: "uv run pytest --cov=media_engine --cov-report=html"
+
+# -----------------------------------------------------------------------------
+# Package Management
+# -----------------------------------------------------------------------------
+package_management:
+  manager:
+    tool: uv
+    install_command: "uv sync"
+    add_command: "uv add"
+    lock_file: uv.lock
+    docs: "https://docs.astral.sh/uv/"
+
+# -----------------------------------------------------------------------------
+# Content Quality Tools (Built-in)
+# -----------------------------------------------------------------------------
+content_quality:
+  quality_check:
+    tool: media-engine
+    command: "media-engine quality"
+    json_command: "media-engine quality --json"
+    docs: "Built-in CLI"
+
+  readability:
+    tool: media-engine
+    command: "media-engine readability"
+    docs: "Built-in CLI"
+
+  gap_analysis:
+    tool: media-engine
+    command: "media-engine gaps"
+    docs: "Built-in CLI"
+
+  translation_status:
+    tool: media-engine
+    command: "media-engine translation status"
+    outdated_command: "media-engine translation outdated"
+    docs: "Built-in CLI"
+
+  link_validation:
+    tool: media-engine
+    command: "media-engine links"
+    internal_only: "media-engine links --internal-only"
+    docs: "Built-in CLI"
+
+  security_scan:
+    tool: media-engine
+    command: "media-engine security"
+    with_assets: "media-engine security --include-assets"
+    docs: "Built-in CLI"
+
+# -----------------------------------------------------------------------------
+# Build Tools (Built-in)
+# -----------------------------------------------------------------------------
+build:
+  html:
+    tool: media-engine
+    command: "media-engine build --only html"
+    docs: "Built-in CLI"
+
+  pptx:
+    tool: media-engine
+    command: "media-engine build --only pptx"
+    docs: "Built-in CLI"
+
+  search_index:
+    tool: media-engine
+    command: "media-engine index"
+    docs: "Built-in CLI"
+
+# -----------------------------------------------------------------------------
+# Infrastructure Tools
+# -----------------------------------------------------------------------------
+infrastructure:
+  ci_cd:
+    tool: github-actions
+    config_path: ".github/workflows/"
+    docs: "https://docs.github.com/en/actions"
+
+# -----------------------------------------------------------------------------
+# Pre-commit Checks (in order)
+# -----------------------------------------------------------------------------
+pre_commit_checks:
+  - name: "Ruff linting"
+    command: "uv run ruff check python/"
+    auto_fix: "uv run ruff check --fix python/"
+
+  - name: "Ruff formatting"
+    command: "uv run ruff format --check python/"
+    auto_fix: "uv run ruff format python/"
+
+  - name: "Pytest (quick)"
+    command: "uv run pytest -x -q"
+
+# -----------------------------------------------------------------------------
+# Pre-Release Checks (in order)
+# -----------------------------------------------------------------------------
+pre_release_checks:
+  - name: "Content quality"
+    command: "media-engine quality"
+
+  - name: "Translation status"
+    command: "media-engine translation outdated"
+
+  - name: "Security scan"
+    command: "media-engine security"
+
+  - name: "Full test suite"
+    command: "uv run pytest --cov=media_engine --cov-fail-under=80"
+
+  - name: "Linting"
+    command: "uv run ruff check python/"
+
+# -----------------------------------------------------------------------------
+# Metadata
+# -----------------------------------------------------------------------------
+metadata:
+  version: "1.0.0"
+  last_updated: "2025-12-16"
+  maintainer: "media-engine team"
