@@ -213,3 +213,160 @@ class TestTransitionType:
         assert TransitionType.FADE_IN.value == "fade_in"
         assert TransitionType.CROSSFADE.value == "crossfade"
         assert TransitionType.COPPER_SWEEP.value == "copper_sweep"
+
+
+# Video Builder Tests
+from media_engine.video.builder import (
+    VideoBuilder,
+    VideoConfig,
+    VideoScript,
+    VideoScene,
+    VideoBuildResult,
+)
+
+
+class TestVideoConfig:
+    """Tests for VideoConfig dataclass."""
+
+    def test_default_values(self):
+        """Test default configuration values."""
+        config = VideoConfig()
+        assert config.width == 1920
+        assert config.height == 1080
+        assert config.fps == 30
+        assert config.format == "mp4"
+        assert config.codec == "h264"
+        assert config.crf == 23
+
+    def test_custom_values(self):
+        """Test custom configuration values."""
+        config = VideoConfig(
+            width=1280,
+            height=720,
+            fps=60,
+            format="webm",
+            codec="vp9",
+            crf=18,
+        )
+        assert config.width == 1280
+        assert config.height == 720
+        assert config.fps == 60
+        assert config.format == "webm"
+
+
+class TestVideoScene:
+    """Tests for VideoScene dataclass."""
+
+    def test_scene_creation(self):
+        """Test creating a scene."""
+        scene = VideoScene(
+            id="intro",
+            type="intro",
+            title="Introduction",
+            text="Welcome to the demo.",
+        )
+        assert scene.id == "intro"
+        assert scene.type == "intro"
+        assert scene.title == "Introduction"
+        assert scene.text == "Welcome to the demo."
+
+    def test_scene_defaults(self):
+        """Test scene default values."""
+        scene = VideoScene(id="test", type="content")
+        assert scene.title is None
+        assert scene.text is None
+        assert scene.duration is None
+        assert scene.visual == {}
+        assert scene.audio_start is None
+
+
+class TestVideoScript:
+    """Tests for VideoScript class."""
+
+    def test_from_yaml(self, temp_dir):
+        """Test loading script from YAML."""
+        yaml_content = """
+metadata:
+  title: "Test Video"
+  language: "en"
+
+scenes:
+  - id: intro
+    type: intro
+    title: "Intro"
+    content:
+      text: "Welcome to the test."
+  - id: main
+    type: content
+    content: "Main content here."
+"""
+        yaml_path = temp_dir / "script.yaml"
+        yaml_path.write_text(yaml_content)
+
+        script = VideoScript.from_yaml(yaml_path)
+
+        assert script.title == "Test Video"
+        assert script.language == "en"
+        assert len(script.scenes) == 2
+        assert script.scenes[0].id == "intro"
+        assert script.scenes[0].text == "Welcome to the test."
+        assert script.scenes[1].text == "Main content here."
+
+    def test_script_defaults(self, temp_dir):
+        """Test script with minimal YAML."""
+        yaml_content = """
+scenes:
+  - id: scene1
+    type: content
+"""
+        yaml_path = temp_dir / "minimal.yaml"
+        yaml_path.write_text(yaml_content)
+
+        script = VideoScript.from_yaml(yaml_path)
+
+        assert script.name == "minimal"
+        assert script.language == "en"
+        assert len(script.scenes) == 1
+
+
+class TestVideoBuilder:
+    """Tests for VideoBuilder class."""
+
+    def test_create_builder(self):
+        """Test creating a builder."""
+        builder = VideoBuilder()
+        assert builder.config.width == 1920
+        assert builder.config.fps == 30
+
+    def test_create_with_config(self):
+        """Test creating builder with custom config."""
+        config = VideoConfig(width=1280, height=720, fps=60)
+        builder = VideoBuilder(config=config)
+        assert builder.config.width == 1280
+        assert builder.config.fps == 60
+
+
+class TestVideoBuildResult:
+    """Tests for VideoBuildResult dataclass."""
+
+    def test_default_values(self):
+        """Test default result values."""
+        result = VideoBuildResult()
+        assert result.video_path is None
+        assert result.audio_path is None
+        assert result.captions_path is None
+        assert result.duration == 0.0
+        assert result.success is False
+        assert result.error is None
+
+    def test_successful_result(self, temp_dir):
+        """Test successful result values."""
+        result = VideoBuildResult(
+            video_path=temp_dir / "video.mp4",
+            audio_path=temp_dir / "audio.mp3",
+            captions_path=temp_dir / "captions.vtt",
+            duration=120.5,
+            success=True,
+        )
+        assert result.success is True
+        assert result.duration == 120.5

@@ -1,0 +1,40 @@
+---
+title: "Introduction to Media Engine"
+version: "1.0.0"
+status: "final"
+last_modified: "2025-12-16"
+freshness_days: 60
+tags:
+  - introduction
+  - overview
+---
+
+# Introduction to Media Engine
+
+Media Engine is an agent-operated media production framework. It helps AI assistants like Claude Code generate documents, presentations, videos, and other media assets from structured content.
+
+## Key Features
+
+- **Content Management**: Markdown documents with YAML frontmatter for metadata tracking
+- **Multi-format Output**: Generate HTML, PDF, PPTX, XLSX, and video from the same source
+- **Smart Caching**: Only rebuild what's changed
+- **Multi-language Support**: Content in multiple languages with translation tracking
+- **Agent-Friendly**: CLI designed for AI assistants to operate
+
+## How It Works
+
+```
+Content (Markdown) → Media Engine → Outputs (PDF, Video, etc.)
+                          ↑
+                    project.yaml
+                    (configuration)
+```
+
+The media engine reads your content, applies your theme, and generates outputs. It tracks what's been built and only regenerates when source content changes.
+
+## Getting Started
+
+1. Create a project with `media-engine init`
+2. Add content to `content/{language}/chapters/`
+3. Build with `media-engine build`
+4. Publish to Desktop with `media-engine publish`

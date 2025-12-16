@@ -15,6 +15,7 @@ dependencies = [
     "python-frontmatter>=1.0.0",
     "pyyaml>=6.0",
     "jsonschema>=4.0",
+    "markdown>=3.5",
 
     # Video production
     "elevenlabs>=1.0",
@@ -33,6 +34,9 @@ dependencies = [
     "python-dotenv>=1.0",
     "rich>=13.0",
 ]
+
+[project.scripts]
+media-engine = "media_engine.cli:main"
 
 [project.optional-dependencies]
 capture = [

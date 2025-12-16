@@ -1,0 +1,30 @@
+# Demo Theme - Midnight Blue
+#
+# A professional dark theme for demonstrations.
+
+name: "Midnight Blue"
+
+colors:
+  # Light mode
+  primary: "#1a365d"       # Deep navy
+  secondary: "#2c5282"     # Medium blue
+  accent: "#3182ce"        # Bright blue
+  background: "#f7fafc"    # Light gray
+  text: "#1a365d"          # Navy text
+  muted: "#718096"         # Gray
+  border: "#e2e8f0"        # Light border
+
+  # Dark mode overrides
+  dark:
+    background: "#0d1b2a"  # Very dark blue
+    text: "#e2e8f0"        # Light text
+    accent: "#63b3ed"      # Lighter blue
+    muted: "#a0aec0"       # Lighter gray
+    border: "#2d3748"      # Dark border
+
+typography:
+  heading: "Inter"
+  body: "Inter"
+  code: "JetBrains Mono"
+  base_size: 16
+  scale: 1.25

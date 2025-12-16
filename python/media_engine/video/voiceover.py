@@ -1,143 +1,78 @@
-#!/usr/bin/env python3
 """
-ROP Voiceover Generation
+Voiceover Generation Module
 
-Generates voiceover audio from video scripts using Eleven Labs TTS.
+Generates voiceover audio using ElevenLabs TTS with smart caching.
+Integrates with Project for caching and configuration.
 
 Features:
-- Scene-by-scene audio generation with pacing
-- Caching to avoid regeneration
-- Concatenation into single audio file
-- Support for multiple voices and languages
-
-Requirements:
-    pip install elevenlabs pydub
-
-Environment:
-    ELEVEN_LABS_API_KEY - Your Eleven Labs API key
-
-Usage:
-    from voiceover import generate_voiceover
-    audio_path = await generate_voiceover(script)
+- Script-hash based caching (don't regenerate unchanged text)
+- Multiple voice support
+- Multi-language support
+- Pause calculation based on punctuation
+- Segment concatenation
 """
 
 import asyncio
 import hashlib
 import os
 import re
-from pathlib import Path
-from typing import Optional, List
+import shutil
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Optional, List, TYPE_CHECKING
 
-# Paths
-SCRIPT_DIR = Path(__file__).parent
-PROJECT_ROOT = SCRIPT_DIR.parent.parent.parent
-VIDEO_DIR = PROJECT_ROOT / "docs" / "deliverables" / "video"
-AUDIO_DIR = VIDEO_DIR / "audio"
-CACHE_DIR = AUDIO_DIR / ".cache"
-
-# Configure pydub to find ffprobe
-FFPROBE_PATH = Path.home() / "bin" / "ffprobe"
-if FFPROBE_PATH.exists():
-    import pydub.utils
-    pydub.utils.get_prober_name = lambda: str(FFPROBE_PATH)
-
-# Default voice IDs for Eleven Labs
-VOICE_IDS = {
-    "adam": "pNInz6obpgDQGcFmaJgB",  # Adam - deep, professional
-    "rachel": "21m00Tcm4TlvDq8ikWAM",  # Rachel - warm, friendly
-    "domi": "AZnzlk1XvdvUeBnXmlld",  # Domi - young, energetic
-    "bella": "EXAVITQu4vr4xnSDxMaL",  # Bella - soft, warm
-    "antoni": "ErXwobaYiN019PkySvjV",  # Antoni - crisp, clear
-    "elli": "MF3mGyEYCl7XYWbV9V6O",  # Elli - young female
-    "josh": "TxGEqnHWrfWFTfGW9XjX",  # Josh - young male
-    "arnold": "VR6AewLTigWG4xSOukaG",  # Arnold - deep, authoritative
-    "sam": "yoZ06aMxZJJ28mfd3POQ",  # Sam - young, natural
-}
-
-# Norwegian voices (if available on your account)
-NORWEGIAN_VOICE_IDS = {
-    "nora": None,  # Will need to be set up in Eleven Labs
-}
+if TYPE_CHECKING:
+    from ..core.project import Project
 
 
 @dataclass
 class AudioSegment:
-    """Represents a single audio segment."""
-    scene_id: str
+    """Represents a generated audio segment."""
+    id: str
     text: str
     duration: float
     audio_path: Optional[Path] = None
+    pause_after: float = 0.0
+
+
+@dataclass
+class VoiceoverResult:
+    """Result of voiceover generation."""
+    audio_path: Path
+    total_duration: float
+    segments: List[AudioSegment]
+    cached: bool = False
 
 
 def get_api_key() -> str:
-    """Get Eleven Labs API key from environment or .env file."""
-    # Try loading from .env file first
-    try:
-        from dotenv import load_dotenv
-        env_path = PROJECT_ROOT / ".env"
-        if env_path.exists():
-            load_dotenv(env_path)
-    except ImportError:
-        pass  # dotenv not installed, rely on environment
+    """Get ElevenLabs API key from environment."""
+    from dotenv import load_dotenv
+    load_dotenv()
 
-    key = os.environ.get("ELEVEN_LABS_API_KEY")
+    key = os.environ.get("ELEVEN_LABS_API_KEY") or os.environ.get("ELEVENLABS_API_KEY")
     if not key:
         raise ValueError(
             "ELEVEN_LABS_API_KEY not set. "
-            "Add it to .env file or export as environment variable. "
-            "Get your key from: https://elevenlabs.io/api"
+            "Add it to .env file or export as environment variable."
         )
     return key
 
 
-def extract_voice_id(voice_spec: str) -> str:
+def clean_text(text: str) -> str:
     """
-    Extract voice ID from voice specification.
+    Clean text for TTS processing.
 
-    Supports formats:
-    - "eleven_labs/adam" -> looks up adam in VOICE_IDS
-    - "pNInz6obpgDQGcFmaJgB" -> uses directly
-    - "adam" -> looks up in VOICE_IDS
-    """
-    # Strip prefix
-    if "/" in voice_spec:
-        voice_spec = voice_spec.split("/")[-1]
-
-    # Check if it's already a voice ID (long alphanumeric string)
-    if len(voice_spec) > 15 and voice_spec.isalnum():
-        return voice_spec
-
-    # Look up in voice IDs
-    voice_id = VOICE_IDS.get(voice_spec.lower())
-    if voice_id:
-        return voice_id
-
-    # Try Norwegian voices
-    voice_id = NORWEGIAN_VOICE_IDS.get(voice_spec.lower())
-    if voice_id:
-        return voice_id
-
-    # Default to Adam
-    print(f"  Warning: Unknown voice '{voice_spec}', using 'adam'")
-    return VOICE_IDS["adam"]
-
-
-def clean_voiceover_text(text: str) -> str:
-    """
-    Clean voiceover text for TTS.
-
-    Handles:
-    - [pause:0.5] markers -> converted to SSML or removed
-    - [emphasis] markers -> removed (TTS handles naturally)
+    Removes:
+    - [pause:X] markers
+    - [emphasis] markers
     - Excess whitespace
     """
     if not text:
         return ""
 
-    # Remove pacing markers (Eleven Labs handles timing naturally)
+    # Remove markers
     text = re.sub(r'\[pause:[0-9.]+\]', ' ', text)
-    text = re.sub(r'\[(emphasis|slower|faster)\]', '', text)
+    text = re.sub(r'\[(emphasis|slower|faster|break)\]', '', text)
 
     # Clean whitespace
     text = re.sub(r'\s+', ' ', text).strip()
@@ -145,471 +80,382 @@ def clean_voiceover_text(text: str) -> str:
     return text
 
 
-def measure_audio_duration(audio_path: Path) -> float:
+def calculate_hash(text: str, voice_id: str, language: str = "en") -> str:
+    """Calculate cache hash for text + voice + language."""
+    content = f"{voice_id}:{language}:{text}"
+    return hashlib.sha256(content.encode()).hexdigest()[:16]
+
+
+def calculate_pause(text: str, is_last: bool = False) -> float:
     """
-    Measure duration of an audio file using pydub.
+    Calculate natural pause duration based on punctuation.
 
     Args:
-        audio_path: Path to MP3/audio file
-
-    Returns:
-        Duration in seconds (float)
-    """
-    try:
-        from pydub import AudioSegment
-    except ImportError:
-        raise ImportError(
-            "pydub package not installed. Run: pip install pydub"
-        )
-
-    audio = AudioSegment.from_mp3(str(audio_path))
-    return len(audio) / 1000.0  # Convert ms to seconds
-
-
-def calculate_pause_after(text: str, is_last_scene: bool = False) -> float:
-    """
-    Calculate appropriate pause duration based on text content.
-
-    Analyzes punctuation and sentence structure to determine
-    natural pause length.
-
-    Args:
-        text: Voiceover text to analyze
-        is_last_scene: True if this is the final scene (no pause)
+        text: The text that was spoken
+        is_last: Whether this is the last segment (no pause after)
 
     Returns:
         Pause duration in seconds
-
-    Rules:
-    - Last scene: 0.0s (no pause after)
-    - Ends with "?": 0.9s (question - longer pause for comprehension)
-    - Ends with "!": 0.6s (exclamation - medium-long pause)
-    - Ends with ".": 0.4-0.5s (statement - shorter for brief, longer for longer)
-    - Ends with ",", ";", ":": 0.25s (continuing thought - short pause)
-    - Default: 0.4s
     """
-    if is_last_scene:
+    if is_last:
         return 0.0
 
     if not text or not text.strip():
-        return 0.3  # Default for empty scenes
-
-    clean_text = clean_voiceover_text(text)
-    if not clean_text:
         return 0.3
 
-    last_char = clean_text.rstrip()[-1] if clean_text.rstrip() else '.'
+    clean = clean_text(text)
+    if not clean:
+        return 0.3
+
+    last_char = clean.rstrip()[-1] if clean.rstrip() else '.'
 
     # Pause based on punctuation
     if last_char == '?':
-        return 0.9  # Question - longer pause for comprehension
+        return 0.9  # Questions need comprehension time
     elif last_char == '!':
-        return 0.6  # Exclamation - medium-long pause
+        return 0.6  # Exclamations
     elif last_char == '.':
-        word_count = len(clean_text.split())
-        return 0.5 if word_count < 5 else 0.4  # Shorter statement = longer pause
+        word_count = len(clean.split())
+        return 0.5 if word_count < 5 else 0.4
     elif last_char in [',', ';', ':']:
-        return 0.25  # Continuing thought - short pause
+        return 0.25  # Continuing thought
     else:
-        return 0.4  # Default
+        return 0.4
 
 
-def calculate_text_hash(text: str, voice_id: str, language: str = None) -> str:
-    """Calculate hash for caching."""
-    content = f"{voice_id}:{language or 'auto'}:{text}"
-    return hashlib.sha256(content.encode()).hexdigest()[:12]
-
-
-async def generate_segment_audio(
-    text: str,
-    voice_id: str,
-    output_path: Path,
-    stability: float = 0.5,
-    similarity_boost: float = 0.75,
-    language: str = None
-) -> Path:
-    """
-    Generate audio for a single segment using Eleven Labs.
-
-    Returns path to generated audio file.
-    """
+def measure_duration(audio_path: Path) -> float:
+    """Measure duration of an audio file in seconds."""
     try:
-        from elevenlabs.client import ElevenLabs
-    except ImportError:
-        raise ImportError(
-            "elevenlabs package not installed. Run: pip install elevenlabs"
-        )
-
-    # Create client with API key
-    client = ElevenLabs(api_key=get_api_key())
-
-    # Clean text
-    clean_text = clean_voiceover_text(text)
-    if not clean_text:
-        # Return silence for empty text
-        return await generate_silence(output_path, 0.5)
-
-    # Check cache (include language in hash)
-    text_hash = calculate_text_hash(clean_text, voice_id, language)
-    cache_path = CACHE_DIR / f"{text_hash}.mp3"
-
-    if cache_path.exists():
-        # Copy from cache
-        import shutil
-        shutil.copy(cache_path, output_path)
-        return output_path
-
-    # Generate audio
-    print(f"    Generating: {clean_text[:50]}...")
-
-    # Build API call parameters
-    api_params = {
-        "text": clean_text,
-        "voice_id": voice_id,
-        "model_id": "eleven_turbo_v2_5",  # Multilingual model
-    }
-
-    # Add language code to enforce pronunciation (ISO 639-1)
-    # Turbo v2.5 supports language enforcement for all 32 languages
-    if language:
-        api_params["language_code"] = language
-
-    audio = client.text_to_speech.convert(**api_params)
-
-    # Save to output path
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, "wb") as f:
-        for chunk in audio:
-            f.write(chunk)
-
-    # Cache for future use
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    import shutil
-    shutil.copy(output_path, cache_path)
-
-    return output_path
+        from pydub import AudioSegment
+        audio = AudioSegment.from_mp3(str(audio_path))
+        return len(audio) / 1000.0
+    except Exception:
+        return 0.0
 
 
 async def generate_silence(output_path: Path, duration: float) -> Path:
     """Generate silent audio of specified duration."""
-    try:
-        from pydub import AudioSegment
-        from pydub.generators import Sine
-    except ImportError:
-        raise ImportError(
-            "pydub package not installed. Run: pip install pydub"
-        )
+    from pydub import AudioSegment as PyAudio
 
-    # Generate silence
-    silence = AudioSegment.silent(duration=int(duration * 1000))
+    silence = PyAudio.silent(duration=int(duration * 1000))
     output_path.parent.mkdir(parents=True, exist_ok=True)
     silence.export(str(output_path), format="mp3")
 
     return output_path
 
 
-async def concatenate_audio(
-    segments: List[Path],
+async def generate_segment(
+    text: str,
+    voice_id: str,
     output_path: Path,
-    pause_between: float = 0.3
-) -> Path:
+    cache_dir: Optional[Path] = None,
+    language: str = "en",
+    stability: float = 0.5,
+    similarity_boost: float = 0.75,
+) -> tuple[Path, bool]:
     """
-    Concatenate audio segments with pauses between.
-
-    Returns path to concatenated audio file.
-    """
-    try:
-        from pydub import AudioSegment
-    except ImportError:
-        raise ImportError(
-            "pydub package not installed. Run: pip install pydub"
-        )
-
-    # Create pause segment
-    pause = AudioSegment.silent(duration=int(pause_between * 1000))
-
-    # Concatenate
-    combined = AudioSegment.empty()
-    for i, segment_path in enumerate(segments):
-        segment = AudioSegment.from_mp3(str(segment_path))
-        combined += segment
-
-        # Add pause between segments (not after last)
-        if i < len(segments) - 1:
-            combined += pause
-
-    # Export
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    combined.export(str(output_path), format="mp3")
-
-    return output_path
-
-
-async def generate_voiceover(script) -> Path:
-    """
-    Generate complete voiceover audio for a video script.
+    Generate audio for a single text segment.
 
     Args:
-        script: VideoScript object with scenes and narrator config
+        text: Text to synthesize
+        voice_id: ElevenLabs voice ID
+        output_path: Where to save the audio
+        cache_dir: Optional cache directory
+        language: Language code (e.g., "en", "no")
+        stability: Voice stability (0-1)
+        similarity_boost: Voice similarity boost (0-1)
 
     Returns:
-        Path to generated audio file
+        Tuple of (audio_path, was_cached)
     """
-    from video_orchestrator import VideoScript
+    from elevenlabs.client import ElevenLabs
 
-    if not isinstance(script, VideoScript):
-        raise TypeError("Expected VideoScript object")
+    clean = clean_text(text)
+    if not clean:
+        await generate_silence(output_path, 0.5)
+        return output_path, False
 
-    print(f"  Generating voiceover for: {script.id}")
+    # Check cache
+    text_hash = calculate_hash(clean, voice_id, language)
+    if cache_dir:
+        cache_path = cache_dir / f"{text_hash}.mp3"
+        if cache_path.exists():
+            shutil.copy(cache_path, output_path)
+            return output_path, True
 
-    # Extract voice ID and language
-    voice_id = script.narrator.voice_id or extract_voice_id(script.narrator.voice)
-    language = getattr(script.narrator, 'language', None) or script.language
+    # Generate with ElevenLabs
+    client = ElevenLabs(api_key=get_api_key())
 
-    # Create temp directory for segments
-    temp_dir = AUDIO_DIR / ".temp" / script.id
-    temp_dir.mkdir(parents=True, exist_ok=True)
-
-    # Generate audio for each scene
-    segment_paths = []
-    for i, scene in enumerate(script.scenes):
-        if not scene.voiceover:
-            # Generate silence for scenes without voiceover
-            segment_path = temp_dir / f"{i:03d}_{scene.id}_silence.mp3"
-            await generate_silence(segment_path, scene.duration * 0.3)  # Short silence
-        else:
-            segment_path = temp_dir / f"{i:03d}_{scene.id}.mp3"
-            await generate_segment_audio(
-                scene.voiceover,
-                voice_id,
-                segment_path,
-                stability=script.narrator.stability,
-                similarity_boost=script.narrator.similarity_boost,
-                language=language
-            )
-
-        segment_paths.append(segment_path)
-
-    # Concatenate all segments
-    output_path = script.get_audio_path()
-    await concatenate_audio(
-        segment_paths,
-        output_path,
-        pause_between=script.narrator.pause_between_scenes
+    audio = client.text_to_speech.convert(
+        text=clean,
+        voice_id=voice_id,
+        model_id="eleven_turbo_v2_5",
+        language_code=language if language != "en" else None,
     )
 
-    # Clean up temp files
-    import shutil
-    shutil.rmtree(temp_dir, ignore_errors=True)
+    # Save audio
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "wb") as f:
+        for chunk in audio:
+            f.write(chunk)
 
-    print(f"  Audio saved: {output_path}")
-    return output_path
+    # Cache for future use
+    if cache_dir:
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy(output_path, cache_path)
+
+    return output_path, False
 
 
-async def generate_voiceover_with_timing(script) -> tuple:
+async def concatenate_segments(
+    segments: List[AudioSegment],
+    output_path: Path,
+) -> float:
     """
-    Generate voiceover with measured timing information.
-
-    Enhanced version that measures actual audio durations and
-    calculates intelligent pauses based on content.
+    Concatenate audio segments with calculated pauses.
 
     Args:
-        script: VideoScript object with scenes and narrator config
+        segments: List of AudioSegment with paths and pause_after values
+        output_path: Output file path
 
     Returns:
-        Tuple of (audio_path, list of AudioSegment with measured durations)
+        Total duration in seconds
     """
-    from video_orchestrator import VideoScript
+    from pydub import AudioSegment as PyAudio
 
-    if not isinstance(script, VideoScript):
-        raise TypeError("Expected VideoScript object")
+    combined = PyAudio.empty()
 
-    print(f"  Generating voiceover with timing for: {script.id}")
+    for i, segment in enumerate(segments):
+        if segment.audio_path and segment.audio_path.exists():
+            audio = PyAudio.from_mp3(str(segment.audio_path))
+            combined += audio
 
-    # Extract voice ID and language
-    voice_id = script.narrator.voice_id or extract_voice_id(script.narrator.voice)
-    language = getattr(script.narrator, 'language', None) or script.language
-
-    # Create temp directory for segments
-    temp_dir = AUDIO_DIR / ".temp" / script.id
-    temp_dir.mkdir(parents=True, exist_ok=True)
-
-    # Generate and measure each segment
-    measured_segments = []
-    segment_paths = []
-
-    for i, scene in enumerate(script.scenes):
-        segment_path = temp_dir / f"{i:03d}_{scene.id}.mp3"
-
-        if not scene.voiceover:
-            # Silent scene - generate minimal silence
-            duration = 0.5  # Default silence duration
-            await generate_silence(segment_path, duration)
-        else:
-            await generate_segment_audio(
-                scene.voiceover,
-                voice_id,
-                segment_path,
-                stability=script.narrator.stability,
-                similarity_boost=script.narrator.similarity_boost,
-                language=language
-            )
-
-        # ⭐ MEASURE DURATION
-        measured_duration = measure_audio_duration(segment_path)
-
-        measured_segments.append(AudioSegment(
-            scene_id=scene.id,
-            text=scene.voiceover or "",
-            duration=measured_duration,
-            audio_path=segment_path
-        ))
-
-        segment_paths.append(segment_path)
-        print(f"    Scene '{scene.id}': {measured_duration:.1f}s")
-
-    # Concatenate with intelligent pauses
-    output_path = script.get_audio_path()
-
-    # Build combined audio with calculated pauses
-    try:
-        from pydub import AudioSegment as PyAudioSegment
-    except ImportError:
-        raise ImportError(
-            "pydub package not installed. Run: pip install pydub"
-        )
-
-    combined = PyAudioSegment.empty()
-
-    for i, segment_path in enumerate(segment_paths):
-        segment_audio = PyAudioSegment.from_mp3(str(segment_path))
-        combined += segment_audio
-
-        # Add calculated pause (not after last scene)
-        if i < len(segment_paths) - 1:
-            is_last = False
-            pause_duration = calculate_pause_after(
-                measured_segments[i].text,
-                is_last
-            )
-            pause = PyAudioSegment.silent(duration=int(pause_duration * 1000))
-            combined += pause
-            print(f"    Pause after '{measured_segments[i].scene_id}': {pause_duration:.2f}s")
+            # Add pause (not after last segment)
+            if segment.pause_after > 0:
+                pause = PyAudio.silent(duration=int(segment.pause_after * 1000))
+                combined += pause
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     combined.export(str(output_path), format="mp3")
 
-    # Clean up temp files
-    import shutil
-    shutil.rmtree(temp_dir, ignore_errors=True)
-
-    print(f"  Audio saved: {output_path}")
-    return output_path, measured_segments
+    return len(combined) / 1000.0
 
 
-# Fallback for systems without Eleven Labs
-async def generate_voiceover_macos(script) -> Path:
+async def generate_voiceover(
+    texts: List[tuple[str, str]],  # List of (id, text)
+    output_path: Path,
+    voice_id: str,
+    cache_dir: Optional[Path] = None,
+    language: str = "en",
+    stability: float = 0.5,
+    similarity_boost: float = 0.75,
+    progress_callback=None,
+) -> VoiceoverResult:
     """
-    Generate voiceover using macOS say command (fallback).
+    Generate complete voiceover from list of text segments.
+
+    Args:
+        texts: List of (segment_id, text) tuples
+        output_path: Where to save final audio
+        voice_id: ElevenLabs voice ID
+        cache_dir: Optional cache directory for segments
+        language: Language code
+        stability: Voice stability
+        similarity_boost: Voice similarity
+        progress_callback: Optional callback(segment_id, status)
+
+    Returns:
+        VoiceoverResult with path, duration, and segment info
+    """
+    if not texts:
+        raise ValueError("No text segments provided")
+
+    # Create temp directory for segments
+    temp_dir = output_path.parent / ".temp" / output_path.stem
+    temp_dir.mkdir(parents=True, exist_ok=True)
+
+    segments = []
+    total_cached = 0
+
+    try:
+        for i, (seg_id, text) in enumerate(texts):
+            is_last = (i == len(texts) - 1)
+            segment_path = temp_dir / f"{i:03d}_{seg_id}.mp3"
+
+            if progress_callback:
+                progress_callback(seg_id, "generating")
+
+            # Generate audio
+            path, was_cached = await generate_segment(
+                text=text,
+                voice_id=voice_id,
+                output_path=segment_path,
+                cache_dir=cache_dir,
+                language=language,
+                stability=stability,
+                similarity_boost=similarity_boost,
+            )
+
+            if was_cached:
+                total_cached += 1
+
+            # Measure duration
+            duration = measure_duration(path)
+
+            # Calculate pause
+            pause = calculate_pause(text, is_last)
+
+            segments.append(AudioSegment(
+                id=seg_id,
+                text=text,
+                duration=duration,
+                audio_path=path,
+                pause_after=pause,
+            ))
+
+            if progress_callback:
+                progress_callback(seg_id, "done")
+
+        # Concatenate all segments
+        total_duration = await concatenate_segments(segments, output_path)
+
+        return VoiceoverResult(
+            audio_path=output_path,
+            total_duration=total_duration,
+            segments=segments,
+            cached=(total_cached == len(texts)),
+        )
+
+    finally:
+        # Clean up temp files
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+async def generate_voiceover_for_script(
+    script_path: Path,
+    output_path: Path,
+    project: "Project",
+    language: str = None,
+) -> VoiceoverResult:
+    """
+    Generate voiceover from a video script YAML file.
+
+    Args:
+        script_path: Path to video script YAML
+        output_path: Where to save audio
+        project: Project for configuration and caching
+        language: Override language (default: from script or project)
+
+    Returns:
+        VoiceoverResult
+    """
+    import yaml
+
+    with open(script_path, "r") as f:
+        script = yaml.safe_load(f)
+
+    # Get language
+    lang = language or script.get("metadata", {}).get("language") or project.source_language
+
+    # Get voice ID
+    lang_config = project.languages.get(lang)
+    voice_id = lang_config.voice_id if lang_config else project.config.voiceover.voice_id
+
+    if not voice_id:
+        raise ValueError(f"No voice_id configured for language '{lang}'")
+
+    # Extract text segments from scenes
+    texts = []
+    for scene in script.get("scenes", []):
+        scene_id = scene.get("id", f"scene_{len(texts)}")
+
+        # Get narration/voiceover text
+        text = None
+        if "content" in scene:
+            content = scene["content"]
+            if isinstance(content, dict):
+                text = content.get("text") or content.get("narration")
+            elif isinstance(content, str):
+                text = content
+
+        if text:
+            texts.append((scene_id, text))
+
+    if not texts:
+        raise ValueError(f"No voiceover text found in script: {script_path}")
+
+    # Generate voiceover
+    return await generate_voiceover(
+        texts=texts,
+        output_path=output_path,
+        voice_id=voice_id,
+        cache_dir=project.cache_dir / "voiceover",
+        language=lang,
+        stability=project.config.voiceover.stability,
+        similarity_boost=project.config.voiceover.similarity_boost,
+    )
+
+
+# macOS fallback for offline/free generation
+async def generate_voiceover_macos(
+    texts: List[tuple[str, str]],
+    output_path: Path,
+    voice: str = "Samantha",
+) -> VoiceoverResult:
+    """
+    Generate voiceover using macOS 'say' command (fallback).
 
     Lower quality but free and works offline.
     """
     import subprocess
     import tempfile
 
-    from video_orchestrator import VideoScript
-
-    if not isinstance(script, VideoScript):
-        raise TypeError("Expected VideoScript object")
-
-    print(f"  Generating voiceover (macOS) for: {script.id}")
-
-    # Determine voice based on language
-    voice = "Samantha" if script.language == "en" else "Nora"
-
     temp_dir = Path(tempfile.mkdtemp())
-    segment_paths = []
-
-    for i, scene in enumerate(script.scenes):
-        if not scene.voiceover:
-            continue
-
-        clean_text = clean_voiceover_text(scene.voiceover)
-        if not clean_text:
-            continue
-
-        segment_path = temp_dir / f"{i:03d}.aiff"
-
-        # Use macOS say command
-        subprocess.run([
-            'say',
-            '-v', voice,
-            '-o', str(segment_path),
-            clean_text
-        ], check=True)
-
-        segment_paths.append(segment_path)
-
-    # Convert and concatenate using ffmpeg
-    output_path = script.get_audio_path()
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
-    if segment_paths:
-        # Create file list for ffmpeg
-        list_file = temp_dir / "files.txt"
-        with open(list_file, 'w') as f:
-            for path in segment_paths:
-                f.write(f"file '{path}'\n")
-
-        # Concatenate with ffmpeg
-        subprocess.run([
-            'ffmpeg', '-y',
-            '-f', 'concat',
-            '-safe', '0',
-            '-i', str(list_file),
-            '-c:a', 'libmp3lame',
-            '-b:a', '192k',
-            str(output_path)
-        ], check=True, capture_output=True)
-
-    # Clean up
-    import shutil
-    shutil.rmtree(temp_dir, ignore_errors=True)
-
-    print(f"  Audio saved: {output_path}")
-    return output_path
-
-
-def main():
-    """Test voiceover generation."""
-    import sys
-    sys.path.insert(0, str(SCRIPT_DIR))
-
-    from video_orchestrator import ScriptLoader
-
-    loader = ScriptLoader()
-    scripts = loader.load_all()
-
-    if not scripts:
-        print("No scripts found")
-        return
-
-    # Generate voiceover for first script
-    script = scripts[0]
-    print(f"Testing voiceover for: {script.id}")
+    segments = []
 
     try:
-        path = asyncio.run(generate_voiceover(script))
-        print(f"Generated: {path}")
-    except Exception as e:
-        print(f"Eleven Labs failed: {e}")
-        print("Trying macOS fallback...")
-        try:
-            path = asyncio.run(generate_voiceover_macos(script))
-            print(f"Generated (macOS): {path}")
-        except Exception as e2:
-            print(f"macOS fallback also failed: {e2}")
+        for i, (seg_id, text) in enumerate(texts):
+            is_last = (i == len(texts) - 1)
+            clean = clean_text(text)
 
+            if not clean:
+                continue
 
-if __name__ == "__main__":
-    main()
+            segment_path = temp_dir / f"{i:03d}.aiff"
+
+            # Use macOS say command
+            subprocess.run([
+                'say', '-v', voice, '-o', str(segment_path), clean
+            ], check=True, capture_output=True)
+
+            # Convert to mp3
+            mp3_path = temp_dir / f"{i:03d}.mp3"
+            subprocess.run([
+                'ffmpeg', '-y', '-i', str(segment_path),
+                '-c:a', 'libmp3lame', '-b:a', '192k',
+                str(mp3_path)
+            ], check=True, capture_output=True)
+
+            duration = measure_duration(mp3_path)
+            pause = calculate_pause(text, is_last)
+
+            segments.append(AudioSegment(
+                id=seg_id,
+                text=text,
+                duration=duration,
+                audio_path=mp3_path,
+                pause_after=pause,
+            ))
+
+        # Concatenate
+        total_duration = await concatenate_segments(segments, output_path)
+
+        return VoiceoverResult(
+            audio_path=output_path,
+            total_duration=total_duration,
+            segments=segments,
+            cached=False,
+        )
+
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)

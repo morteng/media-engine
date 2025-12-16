@@ -1,0 +1,79 @@
+# Demo Calculator Spreadsheet
+# Demonstrates XLSX builder capabilities
+
+sheets:
+  - name: "ROI Calculator"
+    title: "Content Production ROI Calculator"
+    columns:
+      - name: "Metric"
+        width: 30
+      - name: "Manual Process"
+        width: 18
+        format: currency
+      - name: "With Media Engine"
+        width: 18
+        format: currency
+      - name: "Savings"
+        width: 15
+        format: percent
+    rows:
+      - ["Hours per document", 4, 0.5, 0.875]
+      - ["Cost per document (at $50/hr)", 200, 25, 0.875]
+      - ["Documents per month", 20, 20, 0]
+      - ["Monthly document cost", 4000, 500, 0.875]
+      - ["Hours per video", 8, 1, 0.875]
+      - ["Cost per video", 400, 50, 0.875]
+      - ["Videos per month", 4, 4, 0]
+      - ["Monthly video cost", 1600, 200, 0.875]
+      - ["Total monthly cost", 5600, 700, 0.875]
+      - ["Annual savings", 0, 58800, 0]
+
+  - name: "Content Inventory"
+    title: "Content Status Tracker"
+    columns:
+      - name: "Document"
+        width: 25
+      - name: "Type"
+        width: 15
+      - name: "Status"
+        width: 12
+      - name: "Last Updated"
+        width: 15
+      - name: "Word Count"
+        width: 12
+        format: number
+    rows:
+      - ["Executive Summary", "Chapter", "Final", "2025-01-15", 1200]
+      - ["Product Vision", "Chapter", "Draft", "2025-01-10", 2500]
+      - ["Technical Architecture", "Chapter", "Review", "2025-01-12", 3200]
+      - ["Business Model", "Chapter", "Draft", "2025-01-08", 1800]
+      - ["Market Analysis", "Research", "Final", "2025-01-05", 4500]
+      - ["Competitor Review", "Research", "Draft", "2025-01-14", 2100]
+
+  - name: "Project Timeline"
+    title: "Development Timeline"
+    columns:
+      - name: "Phase"
+        width: 20
+      - name: "Task"
+        width: 35
+      - name: "Status"
+        width: 12
+      - name: "Progress"
+        width: 12
+        format: percent
+    rows:
+      - ["Phase 1", "Core CMS module", "Complete", 1.0]
+      - ["Phase 1", "Theme system", "Complete", 1.0]
+      - ["Phase 1", "CLI interface", "Complete", 1.0]
+      - ["Phase 2", "HTML builder", "Complete", 1.0]
+      - ["Phase 2", "PPTX builder", "Complete", 1.0]
+      - ["Phase 2", "XLSX builder", "Complete", 1.0]
+      - ["Phase 3", "Video builder", "In Progress", 0.5]
+      - ["Phase 3", "Voiceover caching", "Complete", 1.0]
+      - ["Phase 4", "Diagram generation", "Planned", 0.0]
+      - ["Phase 4", "Translation sync", "Planned", 0.0]
+    chart:
+      type: bar
+      title: "Task Progress"
+      position: "F2"

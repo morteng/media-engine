@@ -1,0 +1,70 @@
+# Demo Video Script
+# This script defines a short overview video for Media Engine
+
+metadata:
+  title: "Media Engine Overview"
+  description: "A quick introduction to Media Engine capabilities"
+  duration: 45  # seconds
+  language: "en"
+
+scenes:
+  - id: "intro"
+    type: "title"
+    content:
+      headline: "Media Engine"
+      subheadline: "Agent-Operated Media Production"
+    duration: 5
+    transition: "fade_in"
+
+  - id: "problem"
+    type: "narration"
+    content:
+      text: "Creating documents, presentations, and videos manually takes time. What if an AI could do it for you?"
+    duration: 8
+    voiceover: true
+
+  - id: "solution"
+    type: "feature"
+    content:
+      title: "Automated Media Production"
+      points:
+        - "Write content once in Markdown"
+        - "Generate multiple formats automatically"
+        - "Smart caching avoids redundant work"
+    duration: 12
+    voiceover: true
+
+  - id: "demo"
+    type: "screen_recording"
+    content:
+      description: "Show terminal running media-engine build"
+      command: "media-engine build"
+    duration: 10
+
+  - id: "outputs"
+    type: "showcase"
+    content:
+      title: "What You Get"
+      items:
+        - name: "HTML Documents"
+          icon: "document"
+        - name: "PDF Reports"
+          icon: "pdf"
+        - name: "PowerPoint Decks"
+          icon: "presentation"
+        - name: "Videos with Voiceover"
+          icon: "video"
+    duration: 8
+
+  - id: "outro"
+    type: "title"
+    content:
+      headline: "Get Started"
+      subheadline: "media-engine init"
+    duration: 5
+    transition: "fade_out"
+
+voiceover:
+  voice_id: ""  # Uses project default
+  style: "professional"
+  pace: "medium"

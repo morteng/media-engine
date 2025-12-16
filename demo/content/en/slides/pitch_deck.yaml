@@ -1,0 +1,81 @@
+# Demo Pitch Deck
+# Demonstrates PPTX builder capabilities
+
+title: "Media Engine"
+subtitle: "Agent-Operated Media Production"
+
+slides:
+  - type: title
+    title: "Media Engine"
+    subtitle: "Agent-Operated Media Production"
+    notes: "Opening slide - introduce the concept"
+
+  - type: section
+    title: "The Problem"
+    subtitle: "Why manual media production doesn't scale"
+
+  - type: content
+    title: "Content Creation is Time-Consuming"
+    bullets:
+      - "Documents require formatting and styling"
+      - "Videos need scripts, voiceovers, and editing"
+      - "Presentations must be consistent with branding"
+      - "Spreadsheets need formulas and formatting"
+      - "Multi-language content multiplies the work"
+    notes: "Emphasize the manual effort involved"
+
+  - type: section
+    title: "The Solution"
+    subtitle: "Automated media generation"
+
+  - type: content
+    title: "Media Engine Automates Production"
+    bullets:
+      - "Write content once in Markdown"
+      - "Define data in YAML"
+      - "Let AI handle formatting and production"
+      - "Smart caching avoids redundant work"
+      - "Multi-language support built-in"
+
+  - type: two_column
+    title: "Before vs After"
+    left_title: "Before"
+    left_bullets:
+      - "Manual document formatting"
+      - "Record voiceovers yourself"
+      - "Create slides one by one"
+      - "Translate manually"
+    right_title: "After"
+    right_bullets:
+      - "Auto-styled HTML/PDF"
+      - "AI-generated voiceovers"
+      - "Slides from YAML"
+      - "Machine translation"
+
+  - type: content
+    title: "Output Formats"
+    bullets:
+      - "HTML - Responsive web documents"
+      - "PDF - Print-ready documents"
+      - "PPTX - PowerPoint presentations"
+      - "XLSX - Excel spreadsheets"
+      - "MP4 - Videos with voiceover"
+      - "VTT - Captions and subtitles"
+
+  - type: quote
+    quote: "AI handles the busywork. You make the calls."
+    author: "Media Engine Philosophy"
+
+  - type: section
+    title: "Get Started"
+    subtitle: "media-engine init"
+
+  - type: content
+    title: "Next Steps"
+    bullets:
+      - "Install: pip install media-engine"
+      - "Initialize: media-engine init"
+      - "Add content to content/ directory"
+      - "Build: media-engine build"
+      - "Publish: media-engine publish"
+    notes: "Call to action"

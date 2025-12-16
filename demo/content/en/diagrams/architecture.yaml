@@ -1,0 +1,133 @@
+# Demo Architecture Diagram
+# Demonstrates diagram generator capabilities
+
+title: "Media Engine Architecture"
+description: "High-level system architecture"
+
+config:
+  width: 14
+  height: 10
+  dpi: 150
+  format: png
+  font_scale: 1.0
+
+boxes:
+  # Top layer - Content Sources
+  - id: markdown
+    label: "Markdown\nContent"
+    x: 0
+    y: 4
+    width: 1.8
+    height: 0.9
+
+  - id: yaml
+    label: "YAML\nData"
+    x: 2.5
+    y: 4
+    width: 1.8
+    height: 0.9
+
+  - id: scripts
+    label: "Video\nScripts"
+    x: 5
+    y: 4
+    width: 1.8
+    height: 0.9
+
+  # Middle layer - Processing
+  - id: cms
+    label: "CMS Module"
+    x: 1.25
+    y: 2
+    width: 2.2
+    height: 1.0
+    color: "#e8f4f8"
+
+  - id: builders
+    label: "Builders"
+    x: 4
+    y: 2
+    width: 2.2
+    height: 1.0
+    color: "#e8f4f8"
+
+  - id: video
+    label: "Video Pipeline"
+    x: 6.75
+    y: 2
+    width: 2.2
+    height: 1.0
+    color: "#e8f4f8"
+
+  # Bottom layer - Outputs
+  - id: html
+    label: "HTML"
+    x: 0
+    y: 0
+    width: 1.4
+    height: 0.7
+
+  - id: pdf
+    label: "PDF"
+    x: 1.8
+    y: 0
+    width: 1.4
+    height: 0.7
+
+  - id: pptx
+    label: "PPTX"
+    x: 3.6
+    y: 0
+    width: 1.4
+    height: 0.7
+
+  - id: xlsx
+    label: "XLSX"
+    x: 5.4
+    y: 0
+    width: 1.4
+    height: 0.7
+
+  - id: mp4
+    label: "MP4"
+    x: 7.2
+    y: 0
+    width: 1.4
+    height: 0.7
+
+arrows:
+  # Content to processors
+  - from: markdown
+    to: cms
+    label: ""
+
+  - from: yaml
+    to: builders
+    label: ""
+
+  - from: scripts
+    to: video
+    label: ""
+
+  # CMS to outputs
+  - from: cms
+    to: html
+    label: ""
+
+  - from: cms
+    to: pdf
+    label: ""
+
+  # Builders to outputs
+  - from: builders
+    to: pptx
+    label: ""
+
+  - from: builders
+    to: xlsx
+    label: ""
+
+  # Video to output
+  - from: video
+    to: mp4
+    label: ""
