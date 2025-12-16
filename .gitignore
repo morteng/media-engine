@@ -65,3 +65,6 @@ remotion/out/
 
 # Cache
 .cache/
+
+# Playwright MCP screenshots
+.playwright-mcp/
