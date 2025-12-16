@@ -535,6 +535,182 @@ def cmd_cache(args):
         console.print(f"[green]Cleared {count} cached items[/green]")
 
 
+def cmd_search(args):
+    """Search project documents."""
+    project = find_project()
+    if not project:
+        console.print("[red]No project.yaml found[/red]")
+        sys.exit(1)
+
+    from .search import build_search_index, search_documents, SearchIndex
+
+    query = args.query
+
+    # Build or load index
+    index_path = project.cache_dir / "search_index.json"
+
+    if args.rebuild or not index_path.exists():
+        console.print("[bold]Building search index...[/bold]")
+        index = build_search_index(project, console_output=not args.json)
+        index_path.parent.mkdir(parents=True, exist_ok=True)
+        index.save(index_path)
+    else:
+        index = SearchIndex.load(index_path)
+
+    # Search
+    results = index.search(query, limit=args.limit)
+
+    if args.json:
+        output = {
+            "query": query,
+            "results": [
+                {
+                    "id": r.entry.id,
+                    "title": r.entry.title,
+                    "path": r.entry.path,
+                    "score": r.score,
+                    "excerpt": r.entry.excerpt,
+                }
+                for r in results
+            ],
+        }
+        print(json.dumps(output, indent=2))
+        return
+
+    if not results:
+        console.print(f"[dim]No results for: {query}[/dim]")
+        return
+
+    console.print(f"\n[bold]Search results for: {query}[/bold]\n")
+
+    table = Table(box=box.SIMPLE, show_header=True)
+    table.add_column("Score", justify="right", width=6)
+    table.add_column("Title", style="cyan", width=35)
+    table.add_column("Type", width=12)
+    table.add_column("Excerpt", width=50)
+
+    for result in results:
+        excerpt = result.entry.excerpt[:47] + "..." if len(result.entry.excerpt) > 50 else result.entry.excerpt
+        table.add_row(
+            f"{result.score:.0f}",
+            result.entry.title,
+            result.entry.type,
+            excerpt,
+        )
+
+    console.print(table)
+    console.print(f"\n[dim]Found {len(results)} results[/dim]")
+
+
+def cmd_validate(args):
+    """Run validation checks on project."""
+    project = find_project()
+    if not project:
+        console.print("[red]No project.yaml found[/red]")
+        sys.exit(1)
+
+    from .validation import validate_project, validate_references
+
+    # Determine schema path
+    schema_path = None
+    if args.schema:
+        schema_path = Path(args.schema)
+        if not schema_path.exists():
+            console.print(f"[red]Schema file not found: {schema_path}[/red]")
+            sys.exit(1)
+
+    if args.refs_only:
+        # Only check references
+        errors = validate_references(project, console_output=True)
+        if errors and not args.json:
+            sys.exit(1)
+        return
+
+    # Full validation
+    report = validate_project(project, schema_path, console_output=not args.json)
+
+    if args.json:
+        output = {
+            "passed": report.passed,
+            "files_checked": report.files_checked,
+            "error_count": report.error_count,
+            "warning_count": report.warning_count,
+            "issues": [
+                {
+                    "type": i.type,
+                    "severity": i.severity,
+                    "file": str(i.file_path),
+                    "line": i.line,
+                    "message": i.message,
+                    "field": i.field,
+                }
+                for i in report.issues
+            ],
+        }
+        print(json.dumps(output, indent=2))
+
+    if not report.passed:
+        sys.exit(1)
+
+
+def cmd_pack(args):
+    """Generate curated packs for specific audiences."""
+    project = find_project()
+    if not project:
+        console.print("[red]No project.yaml found[/red]")
+        sys.exit(1)
+
+    from .packs import generate_investor_pack, generate_pilot_pack
+
+    pack_type = args.type
+    output_dir = Path(args.output) if args.output else project.output_dir
+
+    if pack_type == "investor":
+        result = generate_investor_pack(
+            project,
+            output_dir,
+            create_zip=not args.no_zip,
+            console_output=True,
+        )
+    elif pack_type == "pilot":
+        result = generate_pilot_pack(
+            project,
+            output_dir,
+            create_zip=not args.no_zip,
+            console_output=True,
+        )
+    else:
+        console.print(f"[red]Unknown pack type: {pack_type}[/red]")
+        console.print("[dim]Available: investor, pilot[/dim]")
+        sys.exit(1)
+
+    if not result.success:
+        console.print(f"[yellow]Pack generated with missing items[/yellow]")
+        for item in result.items_missing:
+            console.print(f"  [red]Missing: {item}[/red]")
+        sys.exit(1)
+
+
+def cmd_index(args):
+    """Build or update search index."""
+    project = find_project()
+    if not project:
+        console.print("[red]No project.yaml found[/red]")
+        sys.exit(1)
+
+    from .search import build_search_index
+
+    index = build_search_index(project, console_output=True)
+
+    # Save index
+    output_path = Path(args.output) if args.output else project.cache_dir / "search_index.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    index.save(output_path)
+
+    console.print(f"\n[green]✓ Index saved to {output_path}[/green]")
+    console.print(f"  Entries: {len(index.entries)}")
+
+
 def cmd_init(args):
     """Initialize a new project."""
     project_dir = Path(args.directory or ".").resolve()
@@ -695,6 +871,29 @@ def main():
     init_parser.add_argument("directory", nargs="?", help="Project directory")
     init_parser.add_argument("--name", help="Project name")
 
+    # search
+    search_parser = subparsers.add_parser("search", help="Search project documents")
+    search_parser.add_argument("query", help="Search query")
+    search_parser.add_argument("--limit", type=int, default=20, help="Max results")
+    search_parser.add_argument("--rebuild", action="store_true", help="Rebuild index")
+    search_parser.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # validate
+    validate_parser = subparsers.add_parser("validate", help="Validate project content")
+    validate_parser.add_argument("--schema", help="Path to custom schema file")
+    validate_parser.add_argument("--refs-only", action="store_true", help="Only check references")
+    validate_parser.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # pack
+    pack_parser = subparsers.add_parser("pack", help="Generate curated packs")
+    pack_parser.add_argument("type", choices=["investor", "pilot"], help="Pack type")
+    pack_parser.add_argument("--output", "-o", help="Output directory")
+    pack_parser.add_argument("--no-zip", action="store_true", help="Don't create ZIP archive")
+
+    # index
+    index_parser = subparsers.add_parser("index", help="Build search index")
+    index_parser.add_argument("--output", "-o", help="Output path for index file")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -709,6 +908,10 @@ def main():
         "stale": cmd_stale,
         "cache": cmd_cache,
         "init": cmd_init,
+        "search": cmd_search,
+        "validate": cmd_validate,
+        "pack": cmd_pack,
+        "index": cmd_index,
     }
 
     if args.command in commands:

@@ -11,6 +11,9 @@ Modules:
     quality: Content quality checks (placeholders, terminology, encoding)
     publish: Complete deliverable packaging with navigation
     status: Comprehensive project status dashboards and views
+    search: Full-text search index generation
+    validation: Schema and reference validation
+    packs: Curated deliverable packages (investor, pilot)
     core: Configuration and theming utilities
 """
 
@@ -25,6 +28,9 @@ from .assets import download_google_fonts, bundle_project_assets
 from .quality import run_quality_checks, QualityReport
 from .publish import publish_project, PublishConfig
 from .status import get_project_dashboard, print_dashboard
+from .search import SearchIndex, build_search_index
+from .validation import validate_project, ValidationReport
+from .packs import generate_investor_pack, generate_pilot_pack, PackResult
 
 __all__ = [
     "__version__",
@@ -53,4 +59,14 @@ __all__ = [
     # Status
     "get_project_dashboard",
     "print_dashboard",
+    # Search
+    "SearchIndex",
+    "build_search_index",
+    # Validation
+    "validate_project",
+    "ValidationReport",
+    # Packs
+    "generate_investor_pack",
+    "generate_pilot_pack",
+    "PackResult",
 ]

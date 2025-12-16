@@ -11,6 +11,9 @@ Agent-based media production framework for automated content generation.
 - **Templates** - Professional HTML templates with sidebar, theme toggle, progress bar
 - **Assets** - Google Fonts downloading, asset bundling for offline use
 - **Quality** - Placeholder detection, terminology consistency, encoding validation
+- **Search** - Full-text search index with relevance scoring
+- **Validation** - Schema validation for frontmatter, reference and link checking
+- **Packs** - Curated ZIP bundles for specific audiences (investor, pilot)
 - **Publish** - Self-contained deliverable packages with navigation indexes
 - **Remotion** - React-based motion graphics components
 
@@ -48,6 +51,21 @@ media-engine build --force       # Force rebuild
 # Quality checks
 media-engine quality             # Run quality checks
 media-engine quality --json      # JSON output
+
+# Search documents
+media-engine search "query"      # Search project content
+media-engine search "api" --limit 10  # Limit results
+media-engine index               # Build/update search index
+
+# Validate content
+media-engine validate            # Full schema + reference validation
+media-engine validate --refs-only  # Only check references
+media-engine validate --schema custom.yaml  # Custom schema
+
+# Generate audience packs
+media-engine pack investor       # Investor materials ZIP
+media-engine pack pilot          # Pilot customer materials ZIP
+media-engine pack investor -o ./dist  # Custom output
 
 # Publish deliverables
 media-engine publish             # Full self-contained package
@@ -116,6 +134,53 @@ result = publish_project(project, config)
 print(f"Published {result.documents_copied} documents")
 ```
 
+### Search Index
+
+```python
+from media_engine import build_search_index, find_project
+
+project = find_project()
+index = build_search_index(project)
+
+# Search with relevance scoring
+results = index.search("authentication", limit=10)
+for result in results:
+    print(f"{result.score:.0f} - {result.entry.title}")
+
+# Save/load index
+index.save("search_index.json")
+```
+
+### Validation
+
+```python
+from media_engine import validate_project, find_project
+
+project = find_project()
+report = validate_project(project, schema_path=Path("schema.yaml"))
+
+print(f"Files: {report.files_checked}")
+print(f"Errors: {report.error_count}, Warnings: {report.warning_count}")
+
+for issue in report.issues:
+    print(f"  {issue.severity}: {issue.file_path.name} - {issue.message}")
+```
+
+### Audience Packs
+
+```python
+from media_engine import generate_investor_pack, generate_pilot_pack, find_project
+
+project = find_project()
+
+# Generate investor materials ZIP
+result = generate_investor_pack(project, output_dir=Path("./dist"))
+print(f"Created {result.output_path} ({result.items_included} items)")
+
+# Generate pilot customer pack
+result = generate_pilot_pack(project, create_zip=True)
+```
+
 ### Remotion Components
 
 ```tsx
@@ -143,6 +208,9 @@ media-engine/
 │   │   ├── templates/    # Professional HTML templates
 │   │   ├── assets/       # Font downloading, bundling
 │   │   ├── quality/      # Quality checks
+│   │   ├── search/       # Full-text search indexing
+│   │   ├── validation/   # Schema and reference validation
+│   │   ├── packs/        # Audience pack generators
 │   │   ├── publish/      # Deliverable packaging
 │   │   ├── status/       # Project dashboards
 │   │   ├── core/         # Config, theme, project
