@@ -75,7 +75,7 @@ Skanneren gjenkjenner vanlige hemmelighetsmønstre.
 | Mønster | Eksempel | Alvorlighet |
 |---------|----------|-------------|
 | E-postadresse | `bruker@example.com` | Høy |
-| Telefonnummer | `+47 123 45 678` | Høy |
+| Telefonnummer | `+47 XXX XX XXX` | Høy |
 
 ## Alvorlighetsnivåer
 

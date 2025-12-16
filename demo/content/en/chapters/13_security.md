@@ -81,16 +81,16 @@ The scanner recognizes common secret patterns.
 | Pattern | Example | Severity |
 |---------|---------|----------|
 | Email Address | `user@example.com` | High |
-| Phone Number | `+1-555-123-4567` | High |
-| SSN | `123-45-6789` | Critical |
+| Phone Number | `+1-555-XXX-XXXX` | High |
+| SSN | `XXX-XX-XXXX` | Critical |
 
 ### Internal References
 
 | Pattern | Example | Severity |
 |---------|---------|----------|
-| Private IP | `192.168.1.1` | Medium |
-| Localhost | `http://localhost:3000` | Low |
-| Internal URL | `http://internal.corp/` | Medium |
+| Private IP | `10.x.x.x` | Medium |
+| Localhost | `localhost:PORT` | Low |
+| Internal URL | `internal.example/` | Medium |
 
 ## Sensitivity Levels
 
