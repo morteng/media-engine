@@ -38,6 +38,9 @@ paths:
   content: "content"
   assets: "assets"
   output: "output"
+  # publish: "dist"  # Where final deliverables go (default: dist/{project-name})
+  # Can also be absolute: /path/to/deliverables
+  # Or set via environment: MEDIA_ENGINE_PUBLISH_DIR
 
 # Design system (loads from theme.yaml)
 design:

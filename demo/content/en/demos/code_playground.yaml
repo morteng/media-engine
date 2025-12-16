@@ -1,0 +1,51 @@
+# Interactive Code Playground Demo
+# Allows users to experiment with HTML/CSS/JS live
+
+id: code-playground
+type: code_playground
+title: Try It Yourself
+description: Edit the code below and see the results instantly.
+
+data:
+  html: |
+    <div class="card">
+      <h2>Welcome!</h2>
+      <p>This is an interactive demo.</p>
+      <button onclick="greet()">Click me</button>
+      <p id="output"></p>
+    </div>
+
+  css: |
+    .card {
+      padding: 20px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-family: sans-serif;
+    }
+    button {
+      background: white;
+      color: #667eea;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+
+  js: |
+    let count = 0;
+    function greet() {
+      count++;
+      document.getElementById('output').textContent =
+        'Button clicked ' + count + ' time(s)!';
+    }
+
+# Settings
+width: "100%"
+height: "450px"
+editable: true
+autorun: true

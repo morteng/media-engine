@@ -35,6 +35,7 @@ class PathsConfig:
     output: Path = field(default_factory=lambda: Path("output"))
     assets: Path = field(default_factory=lambda: Path("assets"))
     content: Path = field(default_factory=lambda: Path("content"))
+    publish: Optional[Path] = None  # None means use default: {project}/dist
 
 
 @dataclass
@@ -75,6 +76,7 @@ class Config:
                 output=Path(paths.get("output", "output")),
                 assets=Path(paths.get("assets", "assets")),
                 content=Path(paths.get("content", "content")),
+                publish=Path(paths["publish"]) if paths.get("publish") else None,
             ),
             extra={k: v for k, v in data.items()
                    if k not in ("project", "voiceover", "video", "paths")},

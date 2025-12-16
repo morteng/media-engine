@@ -711,6 +711,162 @@ def cmd_index(args):
     console.print(f"  Entries: {len(index.entries)}")
 
 
+def cmd_translation(args):
+    """Translation tracking commands."""
+    project = find_project()
+    if not project:
+        console.print("[red]No project.yaml found[/red]")
+        sys.exit(1)
+
+    from .cms.translation import TranslationTracker
+
+    tracker = TranslationTracker(project)
+
+    if args.translation_command == "status":
+        _translation_status(tracker, args)
+    elif args.translation_command == "outdated":
+        _translation_outdated(tracker, args)
+    elif args.translation_command == "missing":
+        _translation_missing(tracker, project, args)
+    else:
+        console.print("[red]Unknown translation command[/red]")
+        sys.exit(1)
+
+
+def _translation_status(tracker, args):
+    """Show translation status."""
+    statuses = tracker.get_all_statuses()
+
+    if args.json:
+        output = [
+            {
+                "source": str(s.source_path),
+                "translation": str(s.translation_path),
+                "source_version": s.source_version,
+                "translated_version": s.translated_version,
+                "is_outdated": s.is_outdated,
+                "source_language": s.source_language,
+                "target_language": s.target_language,
+            }
+            for s in statuses
+        ]
+        print(json.dumps(output, indent=2))
+        return
+
+    if not statuses:
+        console.print("[dim]No translations found[/dim]")
+        return
+
+    console.print(f"\n[bold]Translation Status[/bold]")
+
+    table = Table(box=box.ROUNDED)
+    table.add_column("Source", style="cyan")
+    table.add_column("Translation", style="cyan")
+    table.add_column("Lang", justify="center")
+    table.add_column("Source Ver", justify="center")
+    table.add_column("Trans Ver", justify="center")
+    table.add_column("Status", justify="center")
+
+    for status in statuses:
+        status_color = "red" if status.is_outdated else "green"
+        status_text = "outdated" if status.is_outdated else "current"
+
+        table.add_row(
+            status.source_title[:30],
+            status.translation_title[:30],
+            status.target_language,
+            status.source_version,
+            status.translated_version,
+            f"[{status_color}]{status_text}[/{status_color}]",
+        )
+
+    console.print(table)
+
+    outdated_count = sum(1 for s in statuses if s.is_outdated)
+    if outdated_count > 0:
+        console.print(f"\n[yellow]⚠ {outdated_count} translation(s) need updating[/yellow]")
+    else:
+        console.print(f"\n[green]✓ All translations are current[/green]")
+
+
+def _translation_outdated(tracker, args):
+    """Show only outdated translations."""
+    outdated = tracker.get_outdated_translations()
+
+    if args.json:
+        output = [
+            {
+                "source": str(s.source_path),
+                "translation": str(s.translation_path),
+                "source_version": s.source_version,
+                "translated_version": s.translated_version,
+                "target_language": s.target_language,
+            }
+            for s in outdated
+        ]
+        print(json.dumps(output, indent=2))
+        return
+
+    if not outdated:
+        console.print("[green]✓ No outdated translations[/green]")
+        return
+
+    console.print(f"\n[bold]Outdated Translations[/bold]")
+
+    table = Table(box=box.ROUNDED)
+    table.add_column("Translation", style="cyan")
+    table.add_column("Lang")
+    table.add_column("Source Ver", justify="center")
+    table.add_column("Trans Ver", justify="center")
+    table.add_column("Behind", justify="center")
+
+    for status in outdated:
+        table.add_row(
+            status.translation_title[:40],
+            status.target_language,
+            status.source_version,
+            status.translated_version,
+            f"[red]{status.source_version}[/red]",
+        )
+
+    console.print(table)
+    console.print(f"\n[yellow]⚠ {len(outdated)} translation(s) need updating[/yellow]")
+
+
+def _translation_missing(tracker, project, args):
+    """Show missing translations."""
+    target_lang = args.lang or "no"  # Default to Norwegian
+
+    missing = tracker.get_missing_translations(target_lang)
+
+    if args.json:
+        output = [
+            {
+                "title": doc.title,
+                "path": str(doc.path),
+            }
+            for doc in missing
+        ]
+        print(json.dumps(output, indent=2))
+        return
+
+    if not missing:
+        console.print(f"[green]✓ All source documents have {target_lang} translations[/green]")
+        return
+
+    console.print(f"\n[bold]Missing Translations ({target_lang})[/bold]")
+
+    table = Table(box=box.ROUNDED)
+    table.add_column("Source Document", style="cyan")
+    table.add_column("Version")
+
+    for doc in missing:
+        table.add_row(doc.title, doc.version)
+
+    console.print(table)
+    console.print(f"\n[yellow]⚠ {len(missing)} document(s) need translation to {target_lang}[/yellow]")
+
+
 def cmd_init(args):
     """Initialize a new project."""
     project_dir = Path(args.directory or ".").resolve()
@@ -817,6 +973,331 @@ This is your first chapter. Edit this file to add your content.
     console.print(f"  Run [cyan]media-engine build[/cyan] to build outputs")
 
 
+def cmd_dashboard(args):
+    """Launch web dashboard."""
+    project = find_project()
+    if not project:
+        console.print("[red]No project.yaml found[/red]")
+        sys.exit(1)
+
+    try:
+        from .web import run_dashboard
+    except ImportError:
+        console.print("[red]Web dependencies not installed.[/red]")
+        console.print("Install with: [cyan]pip install media-engine[web][/cyan]")
+        sys.exit(1)
+
+    console.print(f"[bold]Launching dashboard for {project.config.name}[/bold]")
+    console.print(f"  URL: [cyan]http://{args.host}:{args.port}[/cyan]")
+
+    run_dashboard(
+        project_path=project.root,
+        host=args.host,
+        port=args.port,
+        open_browser=not args.no_browser,
+    )
+
+
+def cmd_provenance(args):
+    """Provenance and approval tracking."""
+    project = find_project()
+    if not project:
+        console.print("[red]No project.yaml found[/red]")
+        sys.exit(1)
+
+    from .provenance import ProvenanceTracker
+
+    tracker = ProvenanceTracker(project)
+
+    if args.provenance_command == "report":
+        report = tracker.generate_report()
+        if args.json:
+            print(json.dumps(report, indent=2))
+        else:
+            console.print("[bold]Provenance Report[/bold]")
+            console.print(f"  Documents tracked: {report['summary']['total_documents']}")
+            console.print(f"  Total claims: {report['summary']['total_claims']}")
+            console.print(f"  Verified: {report['summary']['verified_claims']}")
+            console.print(f"  Unverified: {report['summary']['unverified_claims']}")
+            console.print(f"  Expired: {report['summary']['expired_claims']}")
+            console.print(f"  Expiring soon: {report['summary']['expiring_soon']}")
+            console.print("\n[bold]By Status:[/bold]")
+            for status, count in report['by_status'].items():
+                console.print(f"  {status}: {count}")
+
+    elif args.provenance_command == "claims":
+        unverified = tracker.get_all_unverified()
+        expired = tracker.get_all_expired()
+        expiring = tracker.get_expiring_soon()
+
+        if args.json:
+            print(json.dumps({
+                "unverified": [(str(p), c.to_dict()) for p, c in unverified],
+                "expired": [(str(p), c.to_dict()) for p, c in expired],
+                "expiring_soon": [(str(p), c.to_dict()) for p, c in expiring],
+            }, indent=2))
+        else:
+            if unverified:
+                console.print(f"[bold yellow]Unverified Claims ({len(unverified)}):[/bold yellow]")
+                for path, claim in unverified[:10]:
+                    console.print(f"  {path.name}: {claim.text[:50]}...")
+            if expired:
+                console.print(f"[bold red]Expired Claims ({len(expired)}):[/bold red]")
+                for path, claim in expired[:10]:
+                    console.print(f"  {path.name}: {claim.text[:50]}...")
+            if expiring:
+                console.print(f"[bold yellow]Expiring Soon ({len(expiring)}):[/bold yellow]")
+                for path, claim in expiring[:10]:
+                    days = claim.days_until_expiry()
+                    console.print(f"  {path.name}: {claim.text[:50]}... ({days}d)")
+
+    elif args.provenance_command == "queue":
+        queue = tracker.get_review_queue()
+        if args.json:
+            print(json.dumps([str(p) for p in queue], indent=2))
+        else:
+            console.print(f"[bold]Review Queue ({len(queue)} documents):[/bold]")
+            for doc_path in queue:
+                console.print(f"  {doc_path.name}")
+
+    else:
+        console.print("[yellow]Usage: media-engine provenance <report|claims|queue>[/yellow]")
+
+
+def cmd_integrity(args):
+    """Asset and terminology integrity."""
+    project = find_project()
+    if not project:
+        console.print("[red]No project.yaml found[/red]")
+        sys.exit(1)
+
+    from .integrity import AssetIntegrityChecker, TerminologyChecker
+
+    if args.integrity_command == "verify":
+        checker = AssetIntegrityChecker(project)
+        results = checker.verify_all()
+
+        if args.json:
+            print(json.dumps(results, indent=2))
+        else:
+            console.print("[bold]Asset Integrity Check[/bold]")
+            console.print(f"  Valid: {len(results['valid'])}")
+            console.print(f"  Modified: {len(results['modified'])}")
+            console.print(f"  Missing: {len(results['missing'])}")
+            console.print(f"  Untracked: {len(results['untracked'])}")
+
+            if results['modified']:
+                console.print("\n[bold red]Modified assets:[/bold red]")
+                for item in results['modified']:
+                    console.print(f"  {item['path']}")
+
+    elif args.integrity_command == "record":
+        checker = AssetIntegrityChecker(project)
+        count = checker.record_all()
+        console.print(f"[green]Recorded checksums for {count} assets[/green]")
+
+    elif args.integrity_command == "terms":
+        checker = TerminologyChecker(project)
+        issues = checker.check_all_documents()
+
+        if args.json:
+            print(json.dumps(issues, indent=2))
+        else:
+            total = sum(len(i) for i in issues.values())
+            console.print(f"[bold]Terminology Check ({total} issues):[/bold]")
+            for doc_path, doc_issues in issues.items():
+                console.print(f"\n  {Path(doc_path).name}:")
+                for issue in doc_issues[:3]:
+                    console.print(f"    Avoid '{issue['found']}', prefer '{issue['preferred']}'")
+
+    else:
+        console.print("[yellow]Usage: media-engine integrity <verify|record|terms>[/yellow]")
+
+
+def cmd_readability(args):
+    """Readability analysis."""
+    project = find_project()
+    if not project:
+        console.print("[red]No project.yaml found[/red]")
+        sys.exit(1)
+
+    from .readability import check_readability, ReadabilityLevel
+
+    target = ReadabilityLevel(args.target) if args.target else ReadabilityLevel.HIGH_SCHOOL
+    report = check_readability(project, target_level=target)
+
+    if args.json:
+        print(json.dumps(report, indent=2))
+    else:
+        s = report["summary"]
+        console.print("[bold]Readability Analysis[/bold]")
+        console.print(f"  Target level: {report['target_level']}")
+        console.print(f"  Documents: {s['total_documents']}")
+        console.print(f"  Passing: {s['passing']} ({s['pass_rate']}%)")
+        console.print(f"  Average grade level: {s['average_grade_level']}")
+        console.print(f"  Total reading time: {s['total_reading_time_minutes']:.1f} min")
+
+        if s['failing'] > 0:
+            console.print(f"\n[yellow]Documents above target level:[/yellow]")
+            for doc in report['documents']:
+                if not doc['passes_target']:
+                    console.print(f"  {doc['file']}: grade {doc['grade_level']}")
+
+
+def cmd_gaps(args):
+    """Content gap analysis."""
+    project = find_project()
+    if not project:
+        console.print("[red]No project.yaml found[/red]")
+        sys.exit(1)
+
+    from .gaps import analyze_gaps
+
+    topics = args.topics.split(",") if args.topics else []
+    report = analyze_gaps(project, expected_topics=topics)
+
+    if args.json:
+        print(json.dumps(report, indent=2))
+    else:
+        s = report["summary"]
+        console.print("[bold]Content Gap Analysis[/bold]")
+        console.print(f"  Total gaps found: {s['total_gaps']}")
+        console.print(f"  Critical: {s['critical']}")
+        console.print(f"  High: {s['high']}")
+        console.print(f"  Medium: {s['medium']}")
+        console.print(f"  Low: {s['low']}")
+
+        if s['total_gaps'] > 0:
+            console.print("\n[bold]By Type:[/bold]")
+            for gap_type, gaps in report['by_type'].items():
+                console.print(f"  {gap_type}: {len(gaps)}")
+
+
+def cmd_links(args):
+    """Link validation."""
+    project = find_project()
+    if not project:
+        console.print("[red]No project.yaml found[/red]")
+        sys.exit(1)
+
+    from .links import check_links
+
+    console.print("[bold]Checking links...[/bold]")
+    report = check_links(project, include_external=not args.internal_only)
+
+    if args.json:
+        print(json.dumps(report, indent=2))
+    else:
+        s = report["summary"]
+        console.print(f"  Total links: {s['total']}")
+        console.print(f"  Valid: {s['valid']}")
+        console.print(f"  [red]Broken: {s['broken']}[/red]")
+        console.print(f"  [yellow]Timeout: {s['timeout']}[/yellow]")
+
+        if report['broken_links']:
+            console.print("\n[bold red]Broken Links:[/bold red]")
+            for link in report['broken_links'][:10]:
+                console.print(f"  {link['url']}")
+                if link['file']:
+                    console.print(f"    in {link['file']}:{link['line']}")
+
+
+def cmd_security(args):
+    """Security scan for sensitive content."""
+    project = find_project()
+    if not project:
+        console.print("[red]No project.yaml found[/red]")
+        sys.exit(1)
+
+    from .security import SensitiveContentScanner
+
+    scanner = SensitiveContentScanner()
+    report = scanner.scan_project(project, include_assets=args.include_assets)
+
+    if args.json:
+        print(json.dumps(report, indent=2))
+    else:
+        s = report["summary"]
+        console.print("[bold]Security Scan[/bold]")
+        console.print(f"  Total findings: {s['total']}")
+        console.print(f"  [red]Critical: {s['critical']}[/red]")
+        console.print(f"  [yellow]High: {s['high']}[/yellow]")
+        console.print(f"  Medium: {s['medium']}")
+        console.print(f"  Low: {s['low']}")
+
+        if s['blocks_publish']:
+            console.print("\n[bold red]⚠ CRITICAL ISSUES FOUND - Publishing blocked[/bold red]")
+
+        if report['matches']:
+            console.print("\n[bold]Findings:[/bold]")
+            for match in report['matches'][:10]:
+                level_color = {"critical": "red", "high": "yellow"}.get(match['level'], "white")
+                console.print(f"  [{level_color}]{match['pattern']}[/{level_color}]: {match['redacted']}")
+                if match['file']:
+                    console.print(f"    in {match['file']}:{match['line']}")
+
+
+def cmd_changelog(args):
+    """Generate changelog."""
+    project = find_project()
+    if not project:
+        console.print("[red]No project.yaml found[/red]")
+        sys.exit(1)
+
+    from .changelog import generate_changelog
+    from datetime import datetime, timedelta
+
+    since = None
+    if args.since:
+        since = datetime.fromisoformat(args.since)
+    elif args.days:
+        since = datetime.now() - timedelta(days=args.days)
+
+    fmt = "json" if args.json else "markdown"
+    changelog = generate_changelog(project, since=since, format=fmt)
+
+    if args.output:
+        Path(args.output).write_text(changelog)
+        console.print(f"[green]Changelog written to {args.output}[/green]")
+    else:
+        print(changelog)
+
+
+def cmd_demos(args):
+    """Build interactive demos."""
+    project = find_project()
+    if not project:
+        console.print("[red]No project.yaml found[/red]")
+        sys.exit(1)
+
+    from .demos import DemoBuilder, DemoLoader
+
+    builder = DemoBuilder(project)
+    loader = DemoLoader(project)
+
+    if args.demos_command == "list":
+        demos = loader.list_demos()
+        if args.json:
+            print(json.dumps([str(d) for d in demos], indent=2))
+        else:
+            console.print(f"[bold]Interactive Demos ({len(demos)}):[/bold]")
+            for demo in demos:
+                console.print(f"  {demo.relative_to(project.content_dir)}")
+
+    elif args.demos_command == "build":
+        output_dir = Path(args.output) if args.output else None
+        generated = builder.build_all_demos(output_dir)
+        if args.json:
+            print(json.dumps([str(g) for g in generated], indent=2))
+        else:
+            console.print(f"[green]Built {len(generated)} demos[/green]")
+            for g in generated:
+                console.print(f"  {g}")
+
+    else:
+        console.print("[yellow]Usage: media-engine demos <list|build>[/yellow]")
+
+
 def main():
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -894,6 +1375,90 @@ def main():
     index_parser = subparsers.add_parser("index", help="Build search index")
     index_parser.add_argument("--output", "-o", help="Output path for index file")
 
+    # translation
+    trans_parser = subparsers.add_parser("translation", help="Translation tracking")
+    trans_subparsers = trans_parser.add_subparsers(dest="translation_command")
+
+    trans_status = trans_subparsers.add_parser("status", help="Show translation status")
+    trans_status.add_argument("--json", action="store_true", help="Output as JSON")
+
+    trans_outdated = trans_subparsers.add_parser("outdated", help="Show outdated translations")
+    trans_outdated.add_argument("--json", action="store_true", help="Output as JSON")
+
+    trans_missing = trans_subparsers.add_parser("missing", help="Show missing translations")
+    trans_missing.add_argument("--lang", help="Target language (default: no)")
+    trans_missing.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # dashboard
+    dash_parser = subparsers.add_parser("dashboard", help="Launch web dashboard")
+    dash_parser.add_argument("--host", default="127.0.0.1", help="Host to bind to")
+    dash_parser.add_argument("--port", "-p", type=int, default=8080, help="Port to bind to")
+    dash_parser.add_argument("--no-browser", action="store_true", help="Don't open browser")
+
+    # provenance
+    prov_parser = subparsers.add_parser("provenance", help="Provenance and approval tracking")
+    prov_subparsers = prov_parser.add_subparsers(dest="provenance_command")
+
+    prov_report = prov_subparsers.add_parser("report", help="Generate provenance report")
+    prov_report.add_argument("--json", action="store_true", help="Output as JSON")
+
+    prov_claims = prov_subparsers.add_parser("claims", help="List claims needing verification")
+    prov_claims.add_argument("--json", action="store_true", help="Output as JSON")
+
+    prov_queue = prov_subparsers.add_parser("queue", help="Show review queue")
+    prov_queue.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # integrity
+    integ_parser = subparsers.add_parser("integrity", help="Asset and terminology integrity")
+    integ_subparsers = integ_parser.add_subparsers(dest="integrity_command")
+
+    integ_verify = integ_subparsers.add_parser("verify", help="Verify asset checksums")
+    integ_verify.add_argument("--json", action="store_true", help="Output as JSON")
+
+    integ_record = integ_subparsers.add_parser("record", help="Record asset checksums")
+
+    integ_terms = integ_subparsers.add_parser("terms", help="Check terminology consistency")
+    integ_terms.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # readability
+    read_parser = subparsers.add_parser("readability", help="Readability analysis")
+    read_parser.add_argument("--target", choices=["elementary", "middle_school", "high_school", "college", "graduate", "technical"],
+                             help="Target reading level")
+    read_parser.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # gaps
+    gaps_parser = subparsers.add_parser("gaps", help="Content gap analysis")
+    gaps_parser.add_argument("--topics", help="Expected topics (comma-separated)")
+    gaps_parser.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # links
+    links_parser = subparsers.add_parser("links", help="Link validation")
+    links_parser.add_argument("--internal-only", action="store_true", help="Only check internal links")
+    links_parser.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # security
+    sec_parser = subparsers.add_parser("security", help="Security scan for sensitive content")
+    sec_parser.add_argument("--include-assets", action="store_true", help="Also scan YAML/JSON assets")
+    sec_parser.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # changelog
+    change_parser = subparsers.add_parser("changelog", help="Generate changelog")
+    change_parser.add_argument("--since", help="Start date (ISO format)")
+    change_parser.add_argument("--days", type=int, help="Include last N days")
+    change_parser.add_argument("--output", "-o", help="Output file")
+    change_parser.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # demos
+    demos_parser = subparsers.add_parser("demos", help="Interactive HTML demos")
+    demos_subparsers = demos_parser.add_subparsers(dest="demos_command")
+
+    demos_list = demos_subparsers.add_parser("list", help="List available demos")
+    demos_list.add_argument("--json", action="store_true", help="Output as JSON")
+
+    demos_build = demos_subparsers.add_parser("build", help="Build demos to HTML")
+    demos_build.add_argument("--output", "-o", help="Output directory")
+    demos_build.add_argument("--json", action="store_true", help="Output as JSON")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -912,6 +1477,16 @@ def main():
         "validate": cmd_validate,
         "pack": cmd_pack,
         "index": cmd_index,
+        "translation": cmd_translation,
+        "dashboard": cmd_dashboard,
+        "provenance": cmd_provenance,
+        "integrity": cmd_integrity,
+        "readability": cmd_readability,
+        "gaps": cmd_gaps,
+        "links": cmd_links,
+        "security": cmd_security,
+        "changelog": cmd_changelog,
+        "demos": cmd_demos,
     }
 
     if args.command in commands:

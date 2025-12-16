@@ -37,8 +37,22 @@ dependencies = [
 
 [project.scripts]
 media-engine = "media_engine.cli:main"
+media-engine-mcp = "media_engine.mcp.server:main"
+media-engine-dashboard = "media_engine.web:run_dashboard"
+media-engine-gui = "media_engine.gui:main"
 
 [project.optional-dependencies]
+mcp = [
+    "mcp>=1.0",
+]
+web = [
+    "fastapi>=0.109",
+    "uvicorn>=0.27",
+    "websockets>=12.0",
+]
+pdf = [
+    "weasyprint>=60.0",
+]
 capture = [
     "playwright>=1.40",
 ]
@@ -47,6 +61,9 @@ dev = [
     "pytest-cov>=4.0",
     "pytest-asyncio>=0.23",
     "ruff>=0.1",
+]
+all = [
+    "media-engine[mcp,web,pdf,capture]",
 ]
 
 [build-system]

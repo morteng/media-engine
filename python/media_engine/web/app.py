@@ -1,0 +1,828 @@
+"""
+FastAPI Application for Media Engine Dashboard
+
+Provides REST API and WebSocket endpoints for:
+- Project status and configuration
+- Translation tracking and management
+- Quality checks and validation
+- Real-time collaboration
+- Build operations
+"""
+
+import asyncio
+import json
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Optional
+import webbrowser
+
+# FastAPI imports - graceful fallback
+try:
+    from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+    from fastapi.staticfiles import StaticFiles
+    from fastapi.responses import HTMLResponse, FileResponse
+    from fastapi.middleware.cors import CORSMiddleware
+    import uvicorn
+    HAS_FASTAPI = True
+except ImportError:
+    HAS_FASTAPI = False
+    FastAPI = None
+
+from ..core.project import Project, find_project
+
+
+class ConnectionManager:
+    """Manages WebSocket connections for real-time collaboration."""
+
+    def __init__(self):
+        self.active_connections: list[WebSocket] = []
+        self.user_cursors: dict[str, dict] = {}  # user_id -> {file, line, col}
+
+    async def connect(self, websocket: WebSocket, user_id: str):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+        # Notify others of new user
+        await self.broadcast({
+            "type": "user_joined",
+            "user_id": user_id,
+            "timestamp": datetime.now().isoformat(),
+        }, exclude=websocket)
+
+    def disconnect(self, websocket: WebSocket, user_id: str):
+        self.active_connections.remove(websocket)
+        if user_id in self.user_cursors:
+            del self.user_cursors[user_id]
+
+    async def broadcast(self, message: dict, exclude: WebSocket = None):
+        for connection in self.active_connections:
+            if connection != exclude:
+                try:
+                    await connection.send_json(message)
+                except Exception:
+                    pass
+
+    async def update_cursor(self, user_id: str, file: str, line: int, col: int):
+        self.user_cursors[user_id] = {"file": file, "line": line, "col": col}
+        await self.broadcast({
+            "type": "cursor_update",
+            "user_id": user_id,
+            "file": file,
+            "line": line,
+            "col": col,
+        })
+
+
+def create_app(project_path: Optional[Path] = None) -> "FastAPI":
+    """
+    Create FastAPI application for the dashboard.
+
+    Args:
+        project_path: Path to project root. If None, searches from cwd.
+
+    Returns:
+        FastAPI application instance
+    """
+    if not HAS_FASTAPI:
+        raise RuntimeError(
+            "FastAPI not installed. Install with: pip install media-engine[web]"
+        )
+
+    app = FastAPI(
+        title="Media Engine Dashboard",
+        description="Web interface for media-engine project management",
+        version="1.0.0",
+    )
+
+    # CORS for development
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # State
+    manager = ConnectionManager()
+    _project: Optional[Project] = None
+
+    def get_project() -> Project:
+        nonlocal _project
+        if _project is None:
+            if project_path:
+                _project = Project.load(project_path)
+            else:
+                _project = find_project()
+            if _project is None:
+                raise HTTPException(404, "No project found")
+        return _project
+
+    # === Static Files ===
+    static_dir = Path(__file__).parent / "static"
+    if static_dir.exists():
+        app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+    # === API Routes ===
+
+    @app.get("/", response_class=HTMLResponse)
+    async def dashboard():
+        """Serve the main dashboard page."""
+        index_path = static_dir / "index.html"
+        if index_path.exists():
+            return FileResponse(index_path)
+        return HTMLResponse(generate_dashboard_html())
+
+    @app.get("/api/project")
+    async def get_project_info():
+        """Get project configuration and status."""
+        project = get_project()
+        return {
+            "name": project.config.name,
+            "description": project.config.description,
+            "root": str(project.root),
+            "languages": {
+                code: {"name": lang.name, "locale": lang.locale}
+                for code, lang in project.languages.items()
+            },
+            "source_language": project.source_language,
+            "paths": {
+                "content": str(project.content_dir),
+                "assets": str(project.assets_dir),
+                "output": str(project.output_dir),
+                "publish": str(project.publish_dir),
+            },
+        }
+
+    @app.get("/api/status")
+    async def get_status():
+        """Get comprehensive project status."""
+        project = get_project()
+        return project.get_status()
+
+    @app.get("/api/translations")
+    async def get_translations():
+        """Get all translation statuses."""
+        from ..cms.translation import TranslationTracker
+        project = get_project()
+        tracker = TranslationTracker(project)
+        statuses = tracker.get_all_statuses()
+
+        return {
+            "total": len(statuses),
+            "current": sum(1 for s in statuses if not s.is_outdated),
+            "outdated": sum(1 for s in statuses if s.is_outdated),
+            "translations": [
+                {
+                    "source_path": str(s.source_path),
+                    "translation_path": str(s.translation_path),
+                    "source_title": s.source_title,
+                    "translation_title": s.translation_title,
+                    "source_language": s.source_language,
+                    "target_language": s.target_language,
+                    "source_version": s.source_version,
+                    "translated_version": s.translated_version,
+                    "is_outdated": s.is_outdated,
+                    "status": s.status_label,
+                }
+                for s in statuses
+            ],
+        }
+
+    @app.get("/api/translations/matrix")
+    async def get_translation_matrix():
+        """Get translation matrix (documents x languages)."""
+        from ..cms.document import Document
+        from ..cms.translation import TranslationTracker
+
+        project = get_project()
+        tracker = TranslationTracker(project)
+
+        # Build matrix: rows are source docs, columns are languages
+        source_docs = project.list_chapters(project.source_language)
+        languages = list(project.languages.keys())
+
+        matrix = []
+        for source_path in source_docs:
+            source_doc = Document.load(source_path)
+            row = {
+                "source_path": str(source_path),
+                "title": source_doc.title,
+                "version": source_doc.metadata.get("version", ""),
+                "translations": {},
+            }
+
+            for lang in languages:
+                if lang == project.source_language:
+                    row["translations"][lang] = {
+                        "status": "source",
+                        "path": str(source_path),
+                    }
+                else:
+                    # Find translation
+                    status = None
+                    for s in tracker.get_all_statuses():
+                        if (str(s.source_path) == str(source_path) and
+                            s.target_language == lang):
+                            status = s
+                            break
+
+                    if status:
+                        row["translations"][lang] = {
+                            "status": "outdated" if status.is_outdated else "current",
+                            "path": str(status.translation_path),
+                            "translated_version": status.translated_version,
+                        }
+                    else:
+                        row["translations"][lang] = {
+                            "status": "missing",
+                            "path": None,
+                        }
+
+            matrix.append(row)
+
+        return {
+            "languages": languages,
+            "source_language": project.source_language,
+            "documents": matrix,
+        }
+
+    @app.get("/api/quality")
+    async def get_quality():
+        """Run quality checks and return report."""
+        from ..quality import run_quality_checks
+        project = get_project()
+        report = run_quality_checks(project, console_output=False)
+
+        return {
+            "total": report.total_count,
+            "errors": report.error_count,
+            "warnings": report.warning_count,
+            "info": report.info_count,
+            "issues": [
+                {
+                    "severity": i.severity,
+                    "category": i.category,
+                    "message": i.message,
+                    "file": str(i.file_path) if i.file_path else None,
+                    "line": i.line,
+                }
+                for i in report.issues
+            ],
+        }
+
+    @app.get("/api/validation")
+    async def get_validation():
+        """Validate project and return report."""
+        from ..validation import validate_project
+        project = get_project()
+        schema_path = project.root / "schema.yaml"
+
+        report = validate_project(
+            project,
+            schema_path if schema_path.exists() else None,
+            console_output=False,
+        )
+
+        return {
+            "valid": report.error_count == 0,
+            "total": report.total_count,
+            "errors": report.error_count,
+            "warnings": report.warning_count,
+            "issues": [
+                {
+                    "severity": i.severity,
+                    "message": i.message,
+                    "file": str(i.file_path) if i.file_path else None,
+                }
+                for i in report.issues
+            ],
+        }
+
+    @app.get("/api/chapters/{language}")
+    async def get_chapters(language: str):
+        """Get chapters for a language."""
+        from ..cms.document import Document
+        project = get_project()
+
+        if language not in project.languages:
+            raise HTTPException(404, f"Language '{language}' not found")
+
+        chapters = project.list_chapters(language)
+        return [
+            {
+                "path": str(c),
+                "filename": c.name,
+                "title": Document.load(c).title,
+                "metadata": Document.load(c).metadata,
+            }
+            for c in chapters
+        ]
+
+    @app.get("/api/document")
+    async def get_document(path: str):
+        """Get a document's content and metadata."""
+        from ..cms.document import Document
+
+        doc_path = Path(path)
+        if not doc_path.exists():
+            raise HTTPException(404, f"Document not found: {path}")
+
+        doc = Document.load(doc_path)
+        return {
+            "path": str(doc_path),
+            "title": doc.title,
+            "content": doc.content,
+            "metadata": doc.metadata,
+        }
+
+    @app.post("/api/document")
+    async def save_document(path: str, content: str, metadata: dict = None):
+        """Save a document (for collaborative editing)."""
+        from ..cms.document import Document
+
+        doc_path = Path(path)
+        if not doc_path.exists():
+            raise HTTPException(404, f"Document not found: {path}")
+
+        doc = Document.load(doc_path)
+        doc.content = content
+        if metadata:
+            doc.metadata.update(metadata)
+        doc.save()
+
+        # Broadcast change to collaborators
+        await manager.broadcast({
+            "type": "document_saved",
+            "path": path,
+            "timestamp": datetime.now().isoformat(),
+        })
+
+        return {"status": "saved", "path": path}
+
+    @app.get("/api/audit-log")
+    async def get_audit_log(limit: int = 100):
+        """Get recent audit log entries."""
+        project = get_project()
+        log_path = project.root / ".media-engine" / "audit.log"
+
+        if not log_path.exists():
+            return {"entries": []}
+
+        entries = []
+        with open(log_path) as f:
+            for line in f:
+                try:
+                    entries.append(json.loads(line))
+                except json.JSONDecodeError:
+                    pass
+
+        return {"entries": entries[-limit:]}
+
+    # === WebSocket for Real-time Collaboration ===
+
+    @app.websocket("/ws/{user_id}")
+    async def websocket_endpoint(websocket: WebSocket, user_id: str):
+        """WebSocket for real-time collaboration."""
+        await manager.connect(websocket, user_id)
+        try:
+            while True:
+                data = await websocket.receive_json()
+
+                if data.get("type") == "cursor":
+                    await manager.update_cursor(
+                        user_id,
+                        data.get("file", ""),
+                        data.get("line", 0),
+                        data.get("col", 0),
+                    )
+                elif data.get("type") == "edit":
+                    # Broadcast edit to other users
+                    await manager.broadcast({
+                        "type": "edit",
+                        "user_id": user_id,
+                        "file": data.get("file"),
+                        "changes": data.get("changes"),
+                        "timestamp": datetime.now().isoformat(),
+                    }, exclude=websocket)
+
+        except WebSocketDisconnect:
+            manager.disconnect(websocket, user_id)
+            await manager.broadcast({
+                "type": "user_left",
+                "user_id": user_id,
+                "timestamp": datetime.now().isoformat(),
+            })
+
+    return app
+
+
+def generate_dashboard_html() -> str:
+    """Generate embedded dashboard HTML."""
+    return """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Engine Dashboard</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --bg-card: #1e293b;
+            --border: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        h1 { font-size: 1.5rem; font-weight: 600; }
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .status-ok { background: var(--success); color: #000; }
+        .status-warn { background: var(--warning); color: #000; }
+        .status-error { background: var(--error); color: #fff; }
+        .grid { display: grid; gap: 1.5rem; }
+        .grid-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-4 { grid-template-columns: repeat(4, 1fr); }
+        @media (max-width: 1024px) { .grid-3, .grid-4 { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 640px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .card-title { font-size: 0.875rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        .stat { font-size: 2.5rem; font-weight: 700; }
+        .stat-label { font-size: 0.875rem; color: var(--text-muted); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+        th { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
+        .matrix-cell {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 0.25rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+        }
+        .cell-source { background: var(--primary); }
+        .cell-current { background: var(--success); }
+        .cell-outdated { background: var(--warning); }
+        .cell-missing { background: var(--border); }
+        .issue { padding: 0.5rem; border-radius: 0.25rem; margin-bottom: 0.5rem; font-size: 0.875rem; }
+        .issue-error { background: rgba(239, 68, 68, 0.2); border-left: 3px solid var(--error); }
+        .issue-warning { background: rgba(245, 158, 11, 0.2); border-left: 3px solid var(--warning); }
+        .users-online { display: flex; gap: 0.5rem; }
+        .user-avatar {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .loading { text-align: center; padding: 2rem; color: var(--text-muted); }
+        .tabs { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+        .tab {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 0.25rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tab:hover { border-color: var(--primary); color: var(--text); }
+        .tab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .refresh-btn {
+            padding: 0.5rem 1rem;
+            background: var(--primary);
+            border: none;
+            border-radius: 0.25rem;
+            color: #fff;
+            cursor: pointer;
+        }
+        .refresh-btn:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1 id="project-name">Media Engine Dashboard</h1>
+                <span class="stat-label" id="project-path"></span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div class="users-online" id="users-online"></div>
+                <button class="refresh-btn" onclick="loadAll()">Refresh</button>
+            </div>
+        </header>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('overview')">Overview</button>
+            <button class="tab" onclick="showTab('translations')">Translations</button>
+            <button class="tab" onclick="showTab('quality')">Quality</button>
+            <button class="tab" onclick="showTab('activity')">Activity</button>
+        </div>
+
+        <div id="tab-overview">
+            <div class="grid grid-4" style="margin-bottom: 1.5rem;">
+                <div class="card">
+                    <div class="card-title">Documents</div>
+                    <div class="stat" id="stat-docs">-</div>
+                    <div class="stat-label">total chapters</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Languages</div>
+                    <div class="stat" id="stat-langs">-</div>
+                    <div class="stat-label">configured</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Translations</div>
+                    <div class="stat" id="stat-trans">-</div>
+                    <div class="stat-label" id="stat-trans-detail">synced</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Quality</div>
+                    <div class="stat" id="stat-quality">-</div>
+                    <div class="stat-label" id="stat-quality-detail">issues</div>
+                </div>
+            </div>
+
+            <div class="grid grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Translation Matrix</div>
+                    </div>
+                    <div id="matrix-container"><div class="loading">Loading...</div></div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Recent Issues</div>
+                    </div>
+                    <div id="issues-container"><div class="loading">Loading...</div></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-translations" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">All Translations</div>
+                </div>
+                <div id="translations-table"><div class="loading">Loading...</div></div>
+            </div>
+        </div>
+
+        <div id="tab-quality" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Quality Report</div>
+                </div>
+                <div id="quality-report"><div class="loading">Loading...</div></div>
+            </div>
+        </div>
+
+        <div id="tab-activity" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Audit Log</div>
+                </div>
+                <div id="audit-log"><div class="loading">Loading...</div></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '';
+        let ws = null;
+        const userId = 'user-' + Math.random().toString(36).substr(2, 9);
+
+        async function fetchAPI(endpoint) {
+            const res = await fetch(API_BASE + endpoint);
+            return res.json();
+        }
+
+        async function loadProject() {
+            const data = await fetchAPI('/api/project');
+            document.getElementById('project-name').textContent = data.name;
+            document.getElementById('project-path').textContent = data.root;
+            document.getElementById('stat-langs').textContent = Object.keys(data.languages).length;
+        }
+
+        async function loadStatus() {
+            const data = await fetchAPI('/api/status');
+            let totalDocs = 0;
+            for (const lang in data.content) {
+                totalDocs += data.content[lang].chapters || 0;
+            }
+            document.getElementById('stat-docs').textContent = totalDocs;
+        }
+
+        async function loadTranslations() {
+            const data = await fetchAPI('/api/translations');
+            document.getElementById('stat-trans').textContent = data.current + '/' + data.total;
+            document.getElementById('stat-trans-detail').textContent =
+                data.outdated > 0 ? data.outdated + ' outdated' : 'all synced';
+
+            // Full table
+            let html = '<table><thead><tr><th>Source</th><th>Translation</th><th>Status</th><th>Version</th></tr></thead><tbody>';
+            for (const t of data.translations) {
+                const statusClass = t.is_outdated ? 'status-warn' : 'status-ok';
+                html += '<tr>';
+                html += '<td>' + t.source_title + '</td>';
+                html += '<td>' + t.translation_title + ' (' + t.target_language + ')</td>';
+                html += '<td><span class="status-badge ' + statusClass + '">' + t.status + '</span></td>';
+                html += '<td>' + t.translated_version + ' / ' + t.source_version + '</td>';
+                html += '</tr>';
+            }
+            html += '</tbody></table>';
+            document.getElementById('translations-table').innerHTML = html;
+        }
+
+        async function loadMatrix() {
+            const data = await fetchAPI('/api/translations/matrix');
+            let html = '<table><thead><tr><th>Document</th>';
+            for (const lang of data.languages) {
+                html += '<th style="text-align:center">' + lang.toUpperCase() + '</th>';
+            }
+            html += '</tr></thead><tbody>';
+
+            for (const doc of data.documents) {
+                html += '<tr><td title="' + doc.source_path + '">' + doc.title + '</td>';
+                for (const lang of data.languages) {
+                    const t = doc.translations[lang];
+                    const cellClass = 'cell-' + t.status;
+                    const icon = t.status === 'source' ? 'S' :
+                                 t.status === 'current' ? '✓' :
+                                 t.status === 'outdated' ? '!' : '?';
+                    html += '<td style="text-align:center"><span class="matrix-cell ' + cellClass + '">' + icon + '</span></td>';
+                }
+                html += '</tr>';
+            }
+            html += '</tbody></table>';
+            document.getElementById('matrix-container').innerHTML = html;
+        }
+
+        async function loadQuality() {
+            const data = await fetchAPI('/api/quality');
+            document.getElementById('stat-quality').textContent = data.total;
+            document.getElementById('stat-quality-detail').textContent =
+                data.errors > 0 ? data.errors + ' errors' :
+                data.warnings > 0 ? data.warnings + ' warnings' : 'all good';
+
+            // Issues list
+            let html = '';
+            const recentIssues = data.issues.slice(0, 5);
+            if (recentIssues.length === 0) {
+                html = '<div style="color: var(--success);">No issues found</div>';
+            }
+            for (const issue of recentIssues) {
+                const issueClass = issue.severity === 'error' ? 'issue-error' : 'issue-warning';
+                html += '<div class="issue ' + issueClass + '">';
+                html += '<strong>' + issue.category + '</strong>: ' + issue.message;
+                if (issue.file) html += '<br><small>' + issue.file + '</small>';
+                html += '</div>';
+            }
+            document.getElementById('issues-container').innerHTML = html;
+
+            // Full report
+            let reportHtml = '<div style="margin-bottom: 1rem;">Errors: ' + data.errors + ' | Warnings: ' + data.warnings + '</div>';
+            for (const issue of data.issues) {
+                const issueClass = issue.severity === 'error' ? 'issue-error' : 'issue-warning';
+                reportHtml += '<div class="issue ' + issueClass + '">';
+                reportHtml += '<strong>' + issue.category + '</strong>: ' + issue.message;
+                if (issue.file) reportHtml += '<br><small>' + issue.file + (issue.line ? ':' + issue.line : '') + '</small>';
+                reportHtml += '</div>';
+            }
+            document.getElementById('quality-report').innerHTML = reportHtml || 'No issues';
+        }
+
+        async function loadAuditLog() {
+            try {
+                const data = await fetchAPI('/api/audit-log');
+                let html = '<table><thead><tr><th>Time</th><th>Action</th><th>User</th><th>Details</th></tr></thead><tbody>';
+                for (const entry of data.entries.reverse().slice(0, 50)) {
+                    html += '<tr>';
+                    html += '<td>' + new Date(entry.timestamp).toLocaleString() + '</td>';
+                    html += '<td>' + entry.action + '</td>';
+                    html += '<td>' + (entry.user || '-') + '</td>';
+                    html += '<td>' + (entry.details || '-') + '</td>';
+                    html += '</tr>';
+                }
+                html += '</tbody></table>';
+                document.getElementById('audit-log').innerHTML = html || '<div>No audit entries</div>';
+            } catch (e) {
+                document.getElementById('audit-log').innerHTML = '<div>Audit log not available</div>';
+            }
+        }
+
+        function showTab(name) {
+            document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + name).style.display = 'block';
+            event.target.classList.add('active');
+        }
+
+        function connectWebSocket() {
+            ws = new WebSocket('ws://' + window.location.host + '/ws/' + userId);
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                if (data.type === 'user_joined' || data.type === 'user_left') {
+                    updateOnlineUsers();
+                } else if (data.type === 'document_saved') {
+                    loadAll();
+                }
+            };
+            ws.onclose = function() {
+                setTimeout(connectWebSocket, 3000);
+            };
+        }
+
+        function updateOnlineUsers() {
+            // Placeholder - would show connected users
+        }
+
+        async function loadAll() {
+            await Promise.all([
+                loadProject(),
+                loadStatus(),
+                loadTranslations(),
+                loadMatrix(),
+                loadQuality(),
+                loadAuditLog(),
+            ]);
+        }
+
+        loadAll();
+        connectWebSocket();
+        setInterval(loadAll, 30000);
+    </script>
+</body>
+</html>"""
+
+
+def run_dashboard(
+    project_path: Optional[Path] = None,
+    host: str = "127.0.0.1",
+    port: int = 8080,
+    open_browser: bool = True,
+):
+    """
+    Run the dashboard server.
+
+    Args:
+        project_path: Path to project root
+        host: Host to bind to
+        port: Port to bind to
+        open_browser: Whether to open browser automatically
+    """
+    if not HAS_FASTAPI:
+        raise RuntimeError(
+            "FastAPI not installed. Install with: pip install media-engine[web]"
+        )
+
+    app = create_app(project_path)
+
+    if open_browser:
+        import threading
+        def open_browser_delayed():
+            import time
+            time.sleep(1)
+            webbrowser.open(f"http://{host}:{port}")
+        threading.Thread(target=open_browser_delayed, daemon=True).start()
+
+    uvicorn.run(app, host=host, port=port)

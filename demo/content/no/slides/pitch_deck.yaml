@@ -1,0 +1,83 @@
+# Demo Pitch Deck (Norsk)
+# Demonstrerer PPTX-byggerens funksjoner
+
+title: "Media Engine"
+subtitle: "Agent-operert medieproduksjon"
+language: "no"
+source_document: "en/slides/pitch_deck.yaml"
+
+slides:
+  - type: title
+    title: "Media Engine"
+    subtitle: "Agent-operert medieproduksjon"
+    notes: "Åpningsslide - introduser konseptet"
+
+  - type: section
+    title: "Problemet"
+    subtitle: "Hvorfor manuell medieproduksjon ikke skalerer"
+
+  - type: content
+    title: "Innholdsproduksjon er tidkrevende"
+    bullets:
+      - "Dokumenter krever formatering og stilisering"
+      - "Videoer trenger manus, voiceover og redigering"
+      - "Presentasjoner må være konsistente med merkevaren"
+      - "Regneark trenger formler og formatering"
+      - "Flerspråklig innhold multipliserer arbeidet"
+    notes: "Understrek den manuelle innsatsen som kreves"
+
+  - type: section
+    title: "Løsningen"
+    subtitle: "Automatisert mediagenerering"
+
+  - type: content
+    title: "Media Engine automatiserer produksjon"
+    bullets:
+      - "Skriv innhold én gang i Markdown"
+      - "Definer data i YAML"
+      - "La AI håndtere formatering og produksjon"
+      - "Smart caching unngår overflødig arbeid"
+      - "Flerspråklig støtte innebygd"
+
+  - type: two_column
+    title: "Før vs. Etter"
+    left_title: "Før"
+    left_bullets:
+      - "Manuell dokumentformatering"
+      - "Ta opp voiceovers selv"
+      - "Lag slides én for én"
+      - "Oversett manuelt"
+    right_title: "Etter"
+    right_bullets:
+      - "Autostilisert HTML/PDF"
+      - "AI-genererte voiceovers"
+      - "Slides fra YAML"
+      - "Maskinoversettelse"
+
+  - type: content
+    title: "Outputformater"
+    bullets:
+      - "HTML - Responsive webdokumenter"
+      - "PDF - Utskriftsklare dokumenter"
+      - "PPTX - PowerPoint-presentasjoner"
+      - "XLSX - Excel-regneark"
+      - "MP4 - Videoer med voiceover"
+      - "VTT - Undertekster"
+
+  - type: quote
+    quote: "AI håndterer rutinearbeidet. Du tar beslutningene."
+    author: "Media Engine-filosofien"
+
+  - type: section
+    title: "Kom i gang"
+    subtitle: "media-engine init"
+
+  - type: content
+    title: "Neste steg"
+    bullets:
+      - "Installer: pip install media-engine"
+      - "Initialiser: media-engine init"
+      - "Legg til innhold i content/-mappen"
+      - "Bygg: media-engine build"
+      - "Publiser: media-engine publish"
+    notes: "Oppfordring til handling"

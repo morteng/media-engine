@@ -143,8 +143,31 @@ class Project:
 
     @property
     def publish_dir(self) -> Path:
-        """Desktop deliverables directory."""
-        return Path.home() / "Desktop" / "deliverables" / self.config.name.lower().replace(" ", "-")
+        """
+        Directory for final published deliverables.
+
+        Priority:
+        1. Environment variable MEDIA_ENGINE_PUBLISH_DIR
+        2. Configured paths.publish in project.yaml
+        3. Default: {project_root}/dist/{project-name}
+        """
+        import os
+
+        # Check environment variable first
+        env_publish = os.environ.get("MEDIA_ENGINE_PUBLISH_DIR")
+        if env_publish:
+            return Path(env_publish) / self.config.name.lower().replace(" ", "-")
+
+        # Check project config
+        if self.config.paths.publish:
+            publish_path = self.config.paths.publish
+            # Support both absolute and relative paths
+            if publish_path.is_absolute():
+                return publish_path
+            return self.root / publish_path
+
+        # Default to project/dist/project-name
+        return self.root / "dist" / self.config.name.lower().replace(" ", "-")
 
     # === Content Access ===
 

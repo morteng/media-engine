@@ -1,0 +1,128 @@
+# Media Engine Documentation Schema
+# Defines validation rules for frontmatter fields
+# Uses JSON Schema format
+
+type: object
+required:
+  - title
+  - version
+  - status
+  - last_modified
+
+properties:
+  # Required fields
+  title:
+    type: string
+    description: Document title
+    minLength: 1
+
+  version:
+    type: string
+    description: Semantic version (major.minor.patch)
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+
+  status:
+    type: string
+    description: Document status
+    enum:
+      - draft
+      - review
+      - final
+      - archived
+
+  last_modified:
+    type: string
+    description: Date of last modification (YYYY-MM-DD)
+    pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+
+  # Optional fields
+  freshness_days:
+    type: integer
+    description: Days before content is considered stale
+    minimum: 1
+    default: 60
+
+  depends_on:
+    type: array
+    description: List of documents this depends on
+    items:
+      type: string
+
+  tags:
+    type: array
+    description: Tags for categorization
+    items:
+      type: string
+
+  references:
+    type: array
+    description: External references
+    items:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+        title:
+          type: string
+
+  # Translation fields
+  language:
+    type: string
+    description: Language code for this document
+    pattern: "^[a-z]{2}(-[A-Z]{2})?$"
+
+  source_document:
+    type: string
+    description: Path to source document (for translations)
+
+  source_version:
+    type: string
+    description: Version of source when translation was made
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+
+  # Review tracking
+  last_reviewed:
+    type: string
+    description: Date of last review (YYYY-MM-DD)
+    pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+
+  reviewers:
+    type: array
+    description: List of reviewers
+    items:
+      type: string
+
+  # Content metadata
+  accuracy:
+    type: string
+    description: Accuracy level of content
+    enum:
+      - draft
+      - estimated
+      - verified
+      - audited
+
+  audience:
+    type: string
+    description: Target audience
+    enum:
+      - technical
+      - business
+      - investor
+      - general
+
+  # Document classification
+  category:
+    type: string
+    description: Document category
+
+  reference_id:
+    type: string
+    description: Unique reference identifier
+
+  # Change tracking
+  changes:
+    type: string
+    description: Summary of recent changes

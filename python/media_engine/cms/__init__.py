@@ -19,6 +19,7 @@ from .references import ReferenceManager
 from .index import SearchIndex
 from .provenance import ProvenanceTracker
 from .graph import DocumentGraph, DocumentGraphBuilder, GraphNode, GraphEdge
+from .translation import TranslationTracker, TranslationStatus
 
 __all__ = [
     "Document",
@@ -33,4 +34,6 @@ __all__ = [
     "DocumentGraphBuilder",
     "GraphNode",
     "GraphEdge",
+    "TranslationTracker",
+    "TranslationStatus",
 ]

@@ -1,0 +1,38 @@
+# Interactive Pricing Calculator Demo
+# This demo shows how to create interactive calculators in documentation
+
+id: pricing-calculator
+type: calculator
+title: Project Pricing Calculator
+description: Calculate estimated project costs based on content volume and features.
+
+# Calculator configuration
+data:
+  formula: "(chapters * 500) + (videos * 2000) + (languages * chapters * 200)"
+
+  variables:
+    - name: chapters
+      label: Number of Chapters
+      default: 10
+      min: 1
+      max: 50
+      step: 1
+
+    - name: videos
+      label: Video Scripts
+      default: 3
+      min: 0
+      max: 20
+      step: 1
+
+    - name: languages
+      label: Languages
+      default: 2
+      min: 1
+      max: 10
+      step: 1
+
+# Display settings
+width: "100%"
+height: "200px"
+theme: light
