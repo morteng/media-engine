@@ -17,8 +17,8 @@ export { StatCounter, StatGrid } from './components/StatCounter';
 export { FeatureCard, FeatureList } from './components/FeatureCard';
 export { TextReveal, HighlightText, Typewriter } from './components/TextReveal';
 export { Transition, Scene } from './components/Transition';
-export { Overlay, DemoOverlay, StatOverlay, CalloutOverlay, LowerThirdOverlay } from './components/Overlay';
+export { Overlay } from './components/Overlay';
 
 // Theme and utilities
 export { colors, typography, motion, gradients, videoConfig, icons } from './lib/theme';
-export { fadeIn, slideIn, scaleIn, springConfig, useAnimatedValue } from './lib/animations';
+export { ease, presets, animateCount, getStaggerDelay, revealText, revealWords } from './lib/animations';
