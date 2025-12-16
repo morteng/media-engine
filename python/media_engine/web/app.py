@@ -706,6 +706,27 @@ def generate_dashboard_html() -> str:
         .yaml-string { color: #ce9178; }
         .yaml-number { color: #b5cea8; }
         .empty-state { text-align: center; padding: 3rem; color: var(--text-muted); }
+        .issue-clickable { cursor: pointer; transition: transform 0.1s, box-shadow 0.1s; }
+        .issue-clickable:hover { transform: translateX(4px); box-shadow: -4px 0 0 var(--primary); }
+        .issue-file { opacity: 0.8; }
+        .issue-file:hover { text-decoration: underline; }
+        .highlight-line { background: rgba(255, 235, 59, 0.3); animation: highlight-fade 2s ease-out; }
+        @keyframes highlight-fade { from { background: rgba(255, 235, 59, 0.5); } to { background: transparent; } }
+        .source-lines { font-family: 'Monaco', 'Menlo', 'Consolas', monospace; font-size: 0.85rem; }
+        .source-line { display: flex; line-height: 1.5; padding: 0 0.5rem; }
+        .source-line:hover { background: rgba(59, 130, 246, 0.1); }
+        .line-number { color: var(--text-muted); min-width: 3rem; text-align: right; padding-right: 1rem; user-select: none; }
+        .line-content { white-space: pre-wrap; word-break: break-all; flex: 1; }
+        .theme-toggle { background: transparent; border: 1px solid var(--border); padding: 0.5rem; border-radius: 0.25rem; cursor: pointer; font-size: 1rem; }
+        .theme-toggle:hover { background: var(--border); }
+
+        /* Light mode styles */
+        body.light-mode { --bg: #f8fafc; --bg-card: #ffffff; --border: #e2e8f0; --text: #1e293b; --text-muted: #64748b; }
+        body.light-mode .doc-preview-content.source-mode { background: #f8f8f8; color: #333; }
+        body.light-mode .yaml-viewer { background: #f5f5f5; color: #333; }
+        body.light-mode .issue-warning { background: #fef3c7; border-left-color: #f59e0b; }
+        body.light-mode .issue-error { background: #fee2e2; border-left-color: #ef4444; }
+        body.light-mode .matrix-cell { color: #fff; }
     </style>
 </head>
 <body>
@@ -715,8 +736,9 @@ def generate_dashboard_html() -> str:
                 <h1 id="project-name">Media Engine Dashboard</h1>
                 <span class="stat-label" id="project-path"></span>
             </div>
-            <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
                 <div class="users-online" id="users-online"></div>
+                <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle theme">☀️</button>
                 <button class="refresh-btn" onclick="loadAll()">Refresh</button>
             </div>
         </header>
@@ -913,9 +935,11 @@ def generate_dashboard_html() -> str:
             }
             for (const issue of recentIssues) {
                 const issueClass = issue.severity === 'error' ? 'issue-error' : 'issue-warning';
-                html += '<div class="issue ' + issueClass + '">';
+                const clickable = issue.file ? ' issue-clickable' : '';
+                const onclick = issue.file ? ' onclick="openIssueFile(\\'' + issue.file.replace(/'/g, "\\\\'") + '\\', ' + (issue.line || 0) + ')"' : '';
+                html += '<div class="issue ' + issueClass + clickable + '"' + onclick + '>';
                 html += '<strong>' + issue.category + '</strong>: ' + issue.message;
-                if (issue.file) html += '<br><small>' + issue.file + '</small>';
+                if (issue.file) html += '<br><small class="issue-file">' + issue.file + '</small>';
                 html += '</div>';
             }
             document.getElementById('issues-container').innerHTML = html;
@@ -924,9 +948,11 @@ def generate_dashboard_html() -> str:
             let reportHtml = '<div style="margin-bottom: 1rem;">Errors: ' + data.errors + ' | Warnings: ' + data.warnings + '</div>';
             for (const issue of data.issues) {
                 const issueClass = issue.severity === 'error' ? 'issue-error' : 'issue-warning';
-                reportHtml += '<div class="issue ' + issueClass + '">';
+                const clickable = issue.file ? ' issue-clickable' : '';
+                const onclick = issue.file ? ' onclick="openIssueFile(\\'' + issue.file.replace(/'/g, "\\\\'") + '\\', ' + (issue.line || 0) + ')"' : '';
+                reportHtml += '<div class="issue ' + issueClass + clickable + '"' + onclick + '>';
                 reportHtml += '<strong>' + issue.category + '</strong>: ' + issue.message;
-                if (issue.file) reportHtml += '<br><small>' + issue.file + (issue.line ? ':' + issue.line : '') + '</small>';
+                if (issue.file) reportHtml += '<br><small class="issue-file">' + issue.file + (issue.line ? ':' + issue.line : '') + '</small>';
                 reportHtml += '</div>';
             }
             document.getElementById('quality-report').innerHTML = reportHtml || 'No issues';
@@ -1097,6 +1123,135 @@ def generate_dashboard_html() -> str:
             div.textContent = text;
             return div.innerHTML;
         }
+
+        // Open file from issue click
+        let pendingLine = 0;
+        async function openIssueFile(filePath, line) {
+            pendingLine = line;
+
+            // Detect language from path (e.g., /content/en/... or /content/no/...)
+            const langMatch = filePath.match(/\\/content\\/([a-z]{2})\\//);
+            const lang = langMatch ? langMatch[1] : projectLanguages[0];
+
+            // Determine file type from path
+            let fileType = 'chapter';
+            if (filePath.includes('/scripts/')) fileType = 'script';
+            else if (filePath.includes('/diagrams/')) fileType = 'diagram';
+            else if (filePath.includes('/slides/')) fileType = 'slides';
+            else if (filePath.includes('/data/')) fileType = 'data';
+            else if (filePath.includes('/demos/')) fileType = 'demo';
+
+            // Switch to documents tab
+            document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-documents').style.display = 'block';
+            document.querySelectorAll('.tab')[1].classList.add('active');
+
+            // Init documents if needed
+            if (!documentsLoaded) {
+                await initDocumentBrowser();
+            }
+
+            // Select language
+            const select = document.getElementById('lang-select');
+            if (select.value !== lang) {
+                select.value = lang;
+                await loadDocuments();
+            }
+
+            // Load the document in source mode to show line
+            previewMode = 'source';
+            document.querySelectorAll('.preview-tab').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.preview-tab')[1].classList.add('active');
+
+            await loadDocumentDirect(filePath, fileType);
+        }
+
+        async function loadDocumentDirect(path, type) {
+            currentDoc = path;
+
+            const previewContent = document.getElementById('preview-content');
+            previewContent.innerHTML = '<div class="loading">Loading...</div>';
+
+            try {
+                if (type === 'chapter') {
+                    const data = await fetchAPI('/api/document?path=' + encodeURIComponent(path));
+                    currentDocData = data;
+                    document.getElementById('preview-title').textContent = data.title;
+                    document.getElementById('preview-path').textContent = data.path;
+                } else {
+                    const data = await fetchAPI('/api/file?path=' + encodeURIComponent(path));
+                    currentDocData = {
+                        title: data.filename,
+                        content: data.content,
+                        html: '<pre class="yaml-viewer">' + escapeHtml(data.content) + '</pre>',
+                        metadata: data.parsed || {},
+                        isYaml: true
+                    };
+                    document.getElementById('preview-title').textContent = data.filename;
+                    document.getElementById('preview-path').textContent = data.path;
+                }
+
+                renderDocPreviewWithHighlight(pendingLine);
+                pendingLine = 0;
+
+                // Update doc list selection
+                document.querySelectorAll('.doc-item').forEach(el => el.classList.remove('active'));
+            } catch (e) {
+                previewContent.innerHTML = '<div class="empty-state">Error loading document</div>';
+            }
+        }
+
+        function renderDocPreviewWithHighlight(line) {
+            const previewContent = document.getElementById('preview-content');
+            if (!currentDocData) return;
+
+            previewContent.className = 'doc-preview-content source-mode';
+            const lines = currentDocData.content.split('\\n');
+            let html = '<div class="source-lines">';
+            for (let i = 0; i < lines.length; i++) {
+                const lineNum = i + 1;
+                const highlight = lineNum === line ? ' highlight-line' : '';
+                const lineId = lineNum === line ? ' id="target-line"' : '';
+                html += '<div class="source-line' + highlight + '"' + lineId + '>';
+                html += '<span class="line-number">' + lineNum + '</span>';
+                html += '<span class="line-content">' + escapeHtml(lines[i]) + '</span>';
+                html += '</div>';
+            }
+            html += '</div>';
+            previewContent.innerHTML = html;
+
+            // Scroll to target line
+            if (line > 0) {
+                setTimeout(() => {
+                    const targetLine = document.getElementById('target-line');
+                    if (targetLine) {
+                        targetLine.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
+            }
+        }
+
+        // Dark/Light mode toggle
+        let darkMode = true;
+        function toggleTheme() {
+            darkMode = !darkMode;
+            document.body.classList.toggle('light-mode', !darkMode);
+            localStorage.setItem('theme', darkMode ? 'dark' : 'light');
+            document.getElementById('theme-toggle').textContent = darkMode ? '☀️' : '🌙';
+        }
+
+        // Load saved theme
+        (function() {
+            if (localStorage.getItem('theme') === 'light') {
+                darkMode = false;
+                document.body.classList.add('light-mode');
+            }
+            // Set initial icon after DOM ready
+            document.addEventListener('DOMContentLoaded', function() {
+                document.getElementById('theme-toggle').textContent = darkMode ? '☀️' : '🌙';
+            });
+        })();
 
         function connectWebSocket() {
             ws = new WebSocket('ws://' + window.location.host + '/ws/' + userId);
