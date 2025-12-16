@@ -10,8 +10,8 @@ Complete deliverable packaging:
 from .packager import (
     PublishConfig,
     PublishResult,
-    publish_project,
     generate_navigation_indexes,
+    publish_project,
 )
 
 __all__ = [

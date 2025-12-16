@@ -7,12 +7,14 @@ Validates YAML frontmatter against JSON schemas.
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Dict, Optional, Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import yaml
 
 try:
-    from jsonschema import validate, ValidationError as JsonSchemaError, Draft7Validator
+    from jsonschema import Draft7Validator, validate
+    from jsonschema import ValidationError as JsonSchemaError
+
     HAS_JSONSCHEMA = True
 except ImportError:
     HAS_JSONSCHEMA = False
@@ -20,7 +22,7 @@ except ImportError:
 from rich.console import Console
 
 if TYPE_CHECKING:
-    from ..core.project import Project
+    pass
 
 console = Console()
 
@@ -28,6 +30,7 @@ console = Console()
 @dataclass
 class SchemaError:
     """A schema validation error."""
+
     file_path: Path
     field: str
     message: str
@@ -38,6 +41,7 @@ class SchemaError:
 @dataclass
 class SchemaValidator:
     """Validates frontmatter against schemas."""
+
     schemas: Dict[str, dict] = field(default_factory=dict)
 
     def load_schema(self, name: str, schema: dict):
@@ -77,11 +81,13 @@ class SchemaValidator:
         file_path = file_path or Path("unknown")
 
         if schema_name not in self.schemas:
-            errors.append(SchemaError(
-                file_path=file_path,
-                field="",
-                message=f"Schema '{schema_name}' not found",
-            ))
+            errors.append(
+                SchemaError(
+                    file_path=file_path,
+                    field="",
+                    message=f"Schema '{schema_name}' not found",
+                )
+            )
             return errors
 
         schema = self.schemas[schema_name]
@@ -91,13 +97,15 @@ class SchemaValidator:
             try:
                 validate(instance=frontmatter, schema=schema)
             except JsonSchemaError as e:
-                errors.append(SchemaError(
-                    file_path=file_path,
-                    field=".".join(str(p) for p in e.absolute_path),
-                    message=e.message,
-                    value=e.instance,
-                    schema_path=".".join(str(p) for p in e.schema_path),
-                ))
+                errors.append(
+                    SchemaError(
+                        file_path=file_path,
+                        field=".".join(str(p) for p in e.absolute_path),
+                        message=e.message,
+                        value=e.instance,
+                        schema_path=".".join(str(p) for p in e.schema_path),
+                    )
+                )
         else:
             # Basic validation without jsonschema
             errors.extend(self._basic_validate(frontmatter, schema, file_path))
@@ -118,11 +126,13 @@ class SchemaValidator:
         required = schema.get("required", [])
         for field_name in required:
             if field_name not in data:
-                errors.append(SchemaError(
-                    file_path=file_path,
-                    field=f"{path}.{field_name}" if path else field_name,
-                    message=f"Required field '{field_name}' is missing",
-                ))
+                errors.append(
+                    SchemaError(
+                        file_path=file_path,
+                        field=f"{path}.{field_name}" if path else field_name,
+                        message=f"Required field '{field_name}' is missing",
+                    )
+                )
 
         # Check field types
         properties = schema.get("properties", {})
@@ -135,22 +145,26 @@ class SchemaValidator:
 
             if expected_type:
                 if not self._check_type(value, expected_type):
-                    errors.append(SchemaError(
-                        file_path=file_path,
-                        field=f"{path}.{field_name}" if path else field_name,
-                        message=f"Expected type '{expected_type}', got '{type(value).__name__}'",
-                        value=value,
-                    ))
+                    errors.append(
+                        SchemaError(
+                            file_path=file_path,
+                            field=f"{path}.{field_name}" if path else field_name,
+                            message=f"Expected type '{expected_type}', got '{type(value).__name__}'",
+                            value=value,
+                        )
+                    )
 
             # Check enum values
             if "enum" in field_schema:
                 if value not in field_schema["enum"]:
-                    errors.append(SchemaError(
-                        file_path=file_path,
-                        field=f"{path}.{field_name}" if path else field_name,
-                        message=f"Value '{value}' not in allowed values: {field_schema['enum']}",
-                        value=value,
-                    ))
+                    errors.append(
+                        SchemaError(
+                            file_path=file_path,
+                            field=f"{path}.{field_name}" if path else field_name,
+                            message=f"Value '{value}' not in allowed values: {field_schema['enum']}",
+                            value=value,
+                        )
+                    )
 
         return errors
 

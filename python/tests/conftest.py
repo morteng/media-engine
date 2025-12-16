@@ -2,10 +2,11 @@
 Shared test fixtures for Media Engine tests.
 """
 
-import pytest
-from pathlib import Path
-import tempfile
 import shutil
+import tempfile
+from pathlib import Path
+
+import pytest
 
 
 @pytest.fixture
@@ -19,7 +20,7 @@ def temp_dir():
 @pytest.fixture
 def sample_markdown(temp_dir):
     """Create a sample markdown file with frontmatter."""
-    content = '''---
+    content = """---
 title: Test Document
 version: 1.0.0
 status: draft
@@ -37,7 +38,7 @@ Some content here.
 ## Section Two
 
 More content here.
-'''
+"""
     path = temp_dir / "test_doc.md"
     path.write_text(content)
     return path
@@ -46,7 +47,7 @@ More content here.
 @pytest.fixture
 def sample_config(temp_dir):
     """Create a sample config.yaml file."""
-    content = '''
+    content = """
 project:
   name: "Test Project"
   description: "A test project"
@@ -64,7 +65,7 @@ video:
 paths:
   output: "./output"
   assets: "./assets"
-'''
+"""
     path = temp_dir / "config.yaml"
     path.write_text(content)
     return path
@@ -73,7 +74,7 @@ paths:
 @pytest.fixture
 def sample_theme(temp_dir):
     """Create a sample theme.yaml file."""
-    content = '''
+    content = """
 name: "Test Theme"
 
 colors:
@@ -88,7 +89,7 @@ colors:
 typography:
   heading: "Arial"
   body: "Helvetica"
-'''
+"""
     path = temp_dir / "theme.yaml"
     path.write_text(content)
     return path

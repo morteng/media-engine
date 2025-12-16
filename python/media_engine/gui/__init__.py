@@ -46,9 +46,7 @@ def browse_for_directory() -> Optional[Path]:
         root = tk.Tk()
         root.withdraw()  # Hide main window
 
-        directory = filedialog.askdirectory(
-            title="Select Media Engine Project Directory"
-        )
+        directory = filedialog.askdirectory(title="Select Media Engine Project Directory")
 
         root.destroy()
 
@@ -174,7 +172,8 @@ def main():
         help="Host to bind to (default: 127.0.0.1)",
     )
     parser.add_argument(
-        "--port", "-p",
+        "--port",
+        "-p",
         type=int,
         default=8080,
         help="Port to bind to (default: 8080)",
@@ -239,7 +238,7 @@ def main():
         if sub_projects:
             print(f"Found {len(sub_projects)} project(s):")
             for i, p in enumerate(sub_projects[:5]):
-                print(f"  {i+1}. {p.parent}")
+                print(f"  {i + 1}. {p.parent}")
             print("\nSpecify the exact project directory.")
             sys.exit(1)
         else:

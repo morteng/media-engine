@@ -7,12 +7,14 @@ Load and validate project configuration from YAML files.
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Optional
+
 import yaml
 
 
 @dataclass
 class VoiceoverConfig:
     """Voiceover generation settings."""
+
     provider: str = "elevenlabs"
     voice_id: str = ""
     stability: float = 0.5
@@ -23,6 +25,7 @@ class VoiceoverConfig:
 @dataclass
 class VideoConfig:
     """Video output settings."""
+
     width: int = 1920
     height: int = 1080
     fps: int = 30
@@ -32,6 +35,7 @@ class VideoConfig:
 @dataclass
 class PathsConfig:
     """Project paths."""
+
     output: Path = field(default_factory=lambda: Path("output"))
     assets: Path = field(default_factory=lambda: Path("assets"))
     content: Path = field(default_factory=lambda: Path("content"))
@@ -41,6 +45,7 @@ class PathsConfig:
 @dataclass
 class Config:
     """Project configuration."""
+
     name: str = "Untitled Project"
     description: str = ""
     voiceover: VoiceoverConfig = field(default_factory=VoiceoverConfig)
@@ -78,8 +83,9 @@ class Config:
                 content=Path(paths.get("content", "content")),
                 publish=Path(paths["publish"]) if paths.get("publish") else None,
             ),
-            extra={k: v for k, v in data.items()
-                   if k not in ("project", "voiceover", "video", "paths")},
+            extra={
+                k: v for k, v in data.items() if k not in ("project", "voiceover", "video", "paths")
+            },
         )
 
 

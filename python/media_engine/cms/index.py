@@ -4,10 +4,10 @@ Search index generation for documents.
 
 import json
 import re
+from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional, Any
-from collections import defaultdict
+from typing import Any, Optional
 
 from .document import Document, DocumentCollection
 
@@ -15,6 +15,7 @@ from .document import Document, DocumentCollection
 @dataclass
 class SearchResult:
     """A search result."""
+
     doc_path: str
     title: str
     score: float
@@ -28,6 +29,7 @@ class SearchResult:
 @dataclass
 class IndexEntry:
     """An entry in the search index."""
+
     doc_path: str
     title: str
     content_text: str  # Plain text content (no markdown)
@@ -43,16 +45,88 @@ class SearchIndex:
 
     # Common stop words to exclude from indexing
     STOP_WORDS = {
-        'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from',
-        'has', 'he', 'in', 'is', 'it', 'its', 'of', 'on', 'that', 'the',
-        'to', 'was', 'were', 'will', 'with', 'the', 'this', 'but', 'they',
-        'have', 'had', 'what', 'when', 'where', 'who', 'which', 'why', 'how',
-        'all', 'each', 'every', 'both', 'few', 'more', 'most', 'other',
-        'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so',
-        'than', 'too', 'very', 'can', 'just', 'should', 'now',
+        "a",
+        "an",
+        "and",
+        "are",
+        "as",
+        "at",
+        "be",
+        "by",
+        "for",
+        "from",
+        "has",
+        "he",
+        "in",
+        "is",
+        "it",
+        "its",
+        "of",
+        "on",
+        "that",
+        "the",
+        "to",
+        "was",
+        "were",
+        "will",
+        "with",
+        "the",
+        "this",
+        "but",
+        "they",
+        "have",
+        "had",
+        "what",
+        "when",
+        "where",
+        "who",
+        "which",
+        "why",
+        "how",
+        "all",
+        "each",
+        "every",
+        "both",
+        "few",
+        "more",
+        "most",
+        "other",
+        "some",
+        "such",
+        "no",
+        "nor",
+        "not",
+        "only",
+        "own",
+        "same",
+        "so",
+        "than",
+        "too",
+        "very",
+        "can",
+        "just",
+        "should",
+        "now",
         # Norwegian common words
-        'og', 'i', 'er', 'det', 'en', 'et', 'til', 'på', 'som', 'med',
-        'for', 'av', 'har', 'de', 'ikke', 'om', 'vi', 'kan', 'den',
+        "og",
+        "i",
+        "er",
+        "det",
+        "en",
+        "et",
+        "til",
+        "på",
+        "som",
+        "med",
+        "for",
+        "av",
+        "har",
+        "de",
+        "ikke",
+        "om",
+        "vi",
+        "kan",
+        "den",
     }
 
     def __init__(self, docs_dir: Path, index_dir: Path = None):
@@ -135,28 +209,28 @@ class SearchIndex:
         text = content
 
         # Remove code blocks
-        text = re.sub(r'```[\s\S]*?```', ' ', text)
-        text = re.sub(r'`[^`]+`', ' ', text)
+        text = re.sub(r"```[\s\S]*?```", " ", text)
+        text = re.sub(r"`[^`]+`", " ", text)
 
         # Remove images
-        text = re.sub(r'!\[[^\]]*\]\([^)]+\)', ' ', text)
+        text = re.sub(r"!\[[^\]]*\]\([^)]+\)", " ", text)
 
         # Remove links but keep text
-        text = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', text)
+        text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
 
         # Remove markdown syntax
-        text = re.sub(r'^#+\s+', '', text, flags=re.MULTILINE)  # Headers
-        text = re.sub(r'\*\*([^*]+)\*\*', r'\1', text)  # Bold
-        text = re.sub(r'\*([^*]+)\*', r'\1', text)  # Italic
-        text = re.sub(r'^[-*+]\s+', '', text, flags=re.MULTILINE)  # Lists
-        text = re.sub(r'^\d+\.\s+', '', text, flags=re.MULTILINE)  # Numbered lists
-        text = re.sub(r'^>\s+', '', text, flags=re.MULTILINE)  # Blockquotes
+        text = re.sub(r"^#+\s+", "", text, flags=re.MULTILINE)  # Headers
+        text = re.sub(r"\*\*([^*]+)\*\*", r"\1", text)  # Bold
+        text = re.sub(r"\*([^*]+)\*", r"\1", text)  # Italic
+        text = re.sub(r"^[-*+]\s+", "", text, flags=re.MULTILINE)  # Lists
+        text = re.sub(r"^\d+\.\s+", "", text, flags=re.MULTILINE)  # Numbered lists
+        text = re.sub(r"^>\s+", "", text, flags=re.MULTILINE)  # Blockquotes
 
         # Remove HTML tags
-        text = re.sub(r'<[^>]+>', ' ', text)
+        text = re.sub(r"<[^>]+>", " ", text)
 
         # Remove extra whitespace
-        text = re.sub(r'\s+', ' ', text)
+        text = re.sub(r"\s+", " ", text)
 
         return text.strip()
 
@@ -164,13 +238,10 @@ class SearchIndex:
         """Tokenize text into searchable terms."""
         # Lowercase and extract words
         text = text.lower()
-        words = re.findall(r'\b[a-zA-ZæøåÆØÅ][a-zA-ZæøåÆØÅ0-9]*\b', text)
+        words = re.findall(r"\b[a-zA-ZæøåÆØÅ][a-zA-ZæøåÆØÅ0-9]*\b", text)
 
         # Filter stop words and short words
-        terms = [
-            w for w in words
-            if w not in self.STOP_WORDS and len(w) > 2
-        ]
+        terms = [w for w in words if w not in self.STOP_WORDS and len(w) > 2]
 
         return terms
 
@@ -209,13 +280,15 @@ class SearchIndex:
             if doc_path in self.entries:
                 entry = self.entries[doc_path]
                 context = self._get_context(entry.content_text, query_terms)
-                results.append(SearchResult(
-                    doc_path=doc_path,
-                    title=entry.title,
-                    score=score,
-                    matches=matches[doc_path],
-                    context=context,
-                ))
+                results.append(
+                    SearchResult(
+                        doc_path=doc_path,
+                        title=entry.title,
+                        score=score,
+                        matches=matches[doc_path],
+                        context=context,
+                    )
+                )
 
         return results[:limit]
 
@@ -286,7 +359,7 @@ class SearchIndex:
         import yaml
 
         with open(glossary_path) as f:
-            if glossary_path.suffix in ('.yaml', '.yml'):
+            if glossary_path.suffix in (".yaml", ".yml"):
                 data = yaml.safe_load(f)
             else:
                 data = json.load(f)
@@ -346,10 +419,9 @@ class SearchIndex:
                     word_count=entry_data.get("word_count", 0),
                 )
 
-            self.term_index = defaultdict(list, {
-                k: [tuple(x) for x in v]
-                for k, v in data.get("term_index", {}).items()
-            })
+            self.term_index = defaultdict(
+                list, {k: [tuple(x) for x in v] for k, v in data.get("term_index", {}).items()}
+            )
             self.tag_index = defaultdict(list, data.get("tag_index", {}))
             self.glossary = data.get("glossary", {})
 
@@ -389,10 +461,7 @@ class SearchIndex:
             "total_words": sum(e.word_count for e in self.entries.values()),
             "by_status": self._count_by_field("status"),
             "by_type": self._count_by_field("doc_type"),
-            "top_tags": sorted(
-                self.get_all_tags().items(),
-                key=lambda x: -x[1]
-            )[:10],
+            "top_tags": sorted(self.get_all_tags().items(), key=lambda x: -x[1])[:10],
         }
 
     def _count_by_field(self, field: str) -> dict[str, int]:

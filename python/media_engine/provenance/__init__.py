@@ -14,15 +14,16 @@ Features:
 
 import json
 import re
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, date
-from pathlib import Path
-from typing import Optional, Any
+from dataclasses import asdict, dataclass, field
+from datetime import date, datetime
 from enum import Enum
+from pathlib import Path
+from typing import Any, Optional
 
 
 class ApprovalStatus(str, Enum):
     """Document approval workflow states."""
+
     DRAFT = "draft"
     IN_REVIEW = "in_review"
     CHANGES_REQUESTED = "changes_requested"
@@ -33,6 +34,7 @@ class ApprovalStatus(str, Enum):
 
 class ClaimStatus(str, Enum):
     """Claim verification status."""
+
     UNVERIFIED = "unverified"
     VERIFIED = "verified"
     EXPIRED = "expired"
@@ -47,6 +49,7 @@ class Claim:
     Claims are statements that require source attribution
     and periodic verification.
     """
+
     claim_id: str
     text: str
     source: str
@@ -95,6 +98,7 @@ class Claim:
 @dataclass
 class Approval:
     """An approval record for a document."""
+
     approver: str
     status: ApprovalStatus
     timestamp: str
@@ -125,6 +129,7 @@ class DocumentProvenance:
     - Dependencies on other documents
     - External references
     """
+
     document_path: Path
     claims: list[Claim] = field(default_factory=list)
     approvals: list[Approval] = field(default_factory=list)
@@ -173,6 +178,7 @@ class DocumentProvenance:
                 claim.verified_date = datetime.now().isoformat()
                 exp = date.today()
                 from datetime import timedelta
+
                 exp = exp + timedelta(days=expiry_days)
                 claim.expires = exp.isoformat()
                 return True
@@ -180,40 +186,48 @@ class DocumentProvenance:
 
     def request_approval(self, requester: str, comments: str = None):
         """Request approval for the document."""
-        self.approvals.append(Approval(
-            approver=requester,
-            status=ApprovalStatus.IN_REVIEW,
-            timestamp=datetime.now().isoformat(),
-            comments=comments,
-        ))
+        self.approvals.append(
+            Approval(
+                approver=requester,
+                status=ApprovalStatus.IN_REVIEW,
+                timestamp=datetime.now().isoformat(),
+                comments=comments,
+            )
+        )
 
     def approve(self, approver: str, comments: str = None, version: str = None):
         """Approve the document."""
-        self.approvals.append(Approval(
-            approver=approver,
-            status=ApprovalStatus.APPROVED,
-            timestamp=datetime.now().isoformat(),
-            comments=comments,
-            version=version,
-        ))
+        self.approvals.append(
+            Approval(
+                approver=approver,
+                status=ApprovalStatus.APPROVED,
+                timestamp=datetime.now().isoformat(),
+                comments=comments,
+                version=version,
+            )
+        )
 
     def reject(self, reviewer: str, comments: str):
         """Request changes to the document."""
-        self.approvals.append(Approval(
-            approver=reviewer,
-            status=ApprovalStatus.CHANGES_REQUESTED,
-            timestamp=datetime.now().isoformat(),
-            comments=comments,
-        ))
+        self.approvals.append(
+            Approval(
+                approver=reviewer,
+                status=ApprovalStatus.CHANGES_REQUESTED,
+                timestamp=datetime.now().isoformat(),
+                comments=comments,
+            )
+        )
 
     def publish(self, publisher: str, version: str):
         """Mark document as published."""
-        self.approvals.append(Approval(
-            approver=publisher,
-            status=ApprovalStatus.PUBLISHED,
-            timestamp=datetime.now().isoformat(),
-            version=version,
-        ))
+        self.approvals.append(
+            Approval(
+                approver=publisher,
+                status=ApprovalStatus.PUBLISHED,
+                timestamp=datetime.now().isoformat(),
+                version=version,
+            )
+        )
 
     def to_dict(self) -> dict:
         return {
@@ -292,6 +306,7 @@ class ProvenanceTracker:
 
         # Generate claim ID
         import hashlib
+
         claim_id = hashlib.sha256(claim_text.encode()).hexdigest()[:8]
 
         claim = Claim(
@@ -443,6 +458,7 @@ class ProvenanceTracker:
 
 # === Reference Extraction ===
 
+
 def extract_claims_from_content(content: str) -> list[dict]:
     """
     Extract potential claims from markdown content.
@@ -453,11 +469,11 @@ def extract_claims_from_content(content: str) -> list[dict]:
     - Absolute statements: "always", "never", "all"
     """
     patterns = [
-        (r'\d+%\s+\w+', 'statistic'),
-        (r'\d+x\s+\w+', 'multiplier'),
-        (r'better than|worse than|faster than|slower than', 'comparison'),
-        (r'always|never|every|all\s+\w+', 'absolute'),
-        (r'according to|research shows|studies show', 'citation'),
+        (r"\d+%\s+\w+", "statistic"),
+        (r"\d+x\s+\w+", "multiplier"),
+        (r"better than|worse than|faster than|slower than", "comparison"),
+        (r"always|never|every|all\s+\w+", "absolute"),
+        (r"according to|research shows|studies show", "citation"),
     ]
 
     claims = []
@@ -468,12 +484,14 @@ def extract_claims_from_content(content: str) -> list[dict]:
             end = min(len(content), match.end() + 50)
             context = content[start:end].strip()
 
-            claims.append({
-                "match": match.group(),
-                "type": claim_type,
-                "context": context,
-                "position": match.start(),
-            })
+            claims.append(
+                {
+                    "match": match.group(),
+                    "type": claim_type,
+                    "context": context,
+                    "position": match.start(),
+                }
+            )
 
     return claims
 
@@ -484,32 +502,38 @@ def validate_external_urls(urls: list[str]) -> list[dict]:
 
     Returns list of validation results.
     """
-    import urllib.request
     import urllib.error
+    import urllib.request
 
     results = []
     for url in urls:
         try:
-            req = urllib.request.Request(url, method='HEAD')
-            req.add_header('User-Agent', 'MediaEngine/1.0')
+            req = urllib.request.Request(url, method="HEAD")
+            req.add_header("User-Agent", "MediaEngine/1.0")
             with urllib.request.urlopen(req, timeout=10) as response:
-                results.append({
-                    "url": url,
-                    "valid": True,
-                    "status": response.status,
-                })
+                results.append(
+                    {
+                        "url": url,
+                        "valid": True,
+                        "status": response.status,
+                    }
+                )
         except urllib.error.URLError as e:
-            results.append({
-                "url": url,
-                "valid": False,
-                "error": str(e),
-            })
+            results.append(
+                {
+                    "url": url,
+                    "valid": False,
+                    "error": str(e),
+                }
+            )
         except Exception as e:
-            results.append({
-                "url": url,
-                "valid": False,
-                "error": str(e),
-            })
+            results.append(
+                {
+                    "url": url,
+                    "valid": False,
+                    "error": str(e),
+                }
+            )
 
     return results
 

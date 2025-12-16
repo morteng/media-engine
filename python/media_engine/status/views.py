@@ -4,19 +4,16 @@ Specialized Status Views
 Individual view functions for specific status domains.
 """
 
-from datetime import datetime
-from pathlib import Path
-from typing import List, Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List, Optional
 
-from rich.console import Console
-from rich.table import Table
-from rich.panel import Panel
-from rich.tree import Tree
 from rich import box
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from rich.tree import Tree
 
 if TYPE_CHECKING:
     from ..core.project import Project
-    from .dashboard import ProjectDashboard
 
 console = Console()
 
@@ -27,7 +24,6 @@ def print_document_status(project: "Project", language: Optional[str] = None):
 
     Shows all chapters with version, status, word count, and freshness.
     """
-    from ..cms import Document
     from .dashboard import get_content_status
 
     languages = [language] if language else list(project.languages.keys())
@@ -38,7 +34,9 @@ def print_document_status(project: "Project", language: Optional[str] = None):
     for lang in languages:
         content = get_content_status(project, lang)
 
-        console.print(f"\n[bold cyan]{lang.upper()}[/bold cyan] - {len(content.chapters)} chapters, {content.total_words:,} words")
+        console.print(
+            f"\n[bold cyan]{lang.upper()}[/bold cyan] - {len(content.chapters)} chapters, {content.total_words:,} words"
+        )
 
         if not content.chapters:
             console.print("  [dim]No chapters found[/dim]")
@@ -84,7 +82,9 @@ def print_document_status(project: "Project", language: Optional[str] = None):
         # Summary
         final_count = sum(1 for c in content.chapters if c.status == "final")
         stale_count = sum(1 for c in content.chapters if c.freshness_status in ("stale", "expired"))
-        console.print(f"  [dim]Final: {final_count}/{len(content.chapters)} | Stale: {stale_count}[/dim]")
+        console.print(
+            f"  [dim]Final: {final_count}/{len(content.chapters)} | Stale: {stale_count}[/dim]"
+        )
 
 
 def print_video_status(project: "Project", language: Optional[str] = None):
@@ -138,7 +138,9 @@ def print_video_status(project: "Project", language: Optional[str] = None):
         # Summary
         complete = sum(1 for v in videos if v.status == "complete")
         in_progress = sum(1 for v in videos if v.status == "in_progress")
-        console.print(f"  [dim]Complete: {complete} | In Progress: {in_progress} | Not Started: {len(videos) - complete - in_progress}[/dim]")
+        console.print(
+            f"  [dim]Complete: {complete} | In Progress: {in_progress} | Not Started: {len(videos) - complete - in_progress}[/dim]"
+        )
 
 
 def print_quality_status(project: "Project", language: Optional[str] = None):
@@ -168,7 +170,9 @@ def print_quality_status(project: "Project", language: Optional[str] = None):
         by_type[issue.type] = by_type.get(issue.type, 0) + 1
         by_severity[issue.severity] = by_severity.get(issue.severity, 0) + 1
 
-    console.print(f"\n[yellow]Found {len(report.issues)} issues in {report.files_checked} files[/yellow]\n")
+    console.print(
+        f"\n[yellow]Found {len(report.issues)} issues in {report.files_checked} files[/yellow]\n"
+    )
 
     # Summary by type
     type_table = Table(title="Issues by Type", box=box.SIMPLE, show_header=True)
@@ -195,8 +199,12 @@ def print_quality_status(project: "Project", language: Optional[str] = None):
     # Show first few issues as examples
     console.print("\n[bold]Sample Issues:[/bold]")
     for issue in report.issues[:5]:
-        severity_color = {"error": "red", "warning": "yellow", "info": "blue"}.get(issue.severity, "white")
-        console.print(f"  [{severity_color}]{issue.type}[/{severity_color}] {issue.file_path.name}:{issue.line} - {issue.message}")
+        severity_color = {"error": "red", "warning": "yellow", "info": "blue"}.get(
+            issue.severity, "white"
+        )
+        console.print(
+            f"  [{severity_color}]{issue.type}[/{severity_color}] {issue.file_path.name}:{issue.line} - {issue.message}"
+        )
 
     if len(report.issues) > 5:
         console.print(f"  [dim]... and {len(report.issues) - 5} more[/dim]")
@@ -329,5 +337,9 @@ def print_cache_status(project: "Project"):
     console.print()
     console.print(table)
 
-    total_str = f"{total_size / 1024 / 1024:.1f} MB" if total_size > 1024 * 1024 else f"{total_size / 1024:.1f} KB"
+    total_str = (
+        f"{total_size / 1024 / 1024:.1f} MB"
+        if total_size > 1024 * 1024
+        else f"{total_size / 1024:.1f} KB"
+    )
     console.print(f"\n[dim]Total: {total_files} files, {total_str}[/dim]")

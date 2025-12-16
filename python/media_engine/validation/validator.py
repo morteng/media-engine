@@ -6,14 +6,14 @@ Runs all validation checks and produces a unified report.
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
 
+from rich import box
 from rich.console import Console
 from rich.table import Table
-from rich import box
 
-from .schema import SchemaValidator, SchemaError, validate_frontmatter
-from .references import ReferenceValidator, ReferenceError, validate_references
+from .references import ReferenceError, validate_references
+from .schema import SchemaError, validate_frontmatter
 
 if TYPE_CHECKING:
     from ..core.project import Project
@@ -24,6 +24,7 @@ console = Console()
 @dataclass
 class ValidationIssue:
     """A unified validation issue."""
+
     type: str  # schema, reference, link, citation
     severity: str  # error, warning
     file_path: Path
@@ -36,6 +37,7 @@ class ValidationIssue:
 @dataclass
 class ValidationReport:
     """Complete validation report."""
+
     issues: List[ValidationIssue] = field(default_factory=list)
     files_checked: int = 0
     passed: bool = True
@@ -58,27 +60,31 @@ class ValidationReport:
 
     def add_schema_error(self, error: SchemaError, severity: str = "error"):
         """Add a schema validation error."""
-        self.issues.append(ValidationIssue(
-            type="schema",
-            severity=severity,
-            file_path=error.file_path,
-            line=None,
-            message=error.message,
-            field=error.field,
-        ))
+        self.issues.append(
+            ValidationIssue(
+                type="schema",
+                severity=severity,
+                file_path=error.file_path,
+                line=None,
+                message=error.message,
+                field=error.field,
+            )
+        )
         if severity == "error":
             self.passed = False
 
     def add_reference_error(self, error: ReferenceError, severity: str = "warning"):
         """Add a reference validation error."""
-        self.issues.append(ValidationIssue(
-            type=error.error_type,
-            severity=severity,
-            file_path=error.file_path,
-            line=error.line,
-            message=error.message,
-            context=error.context,
-        ))
+        self.issues.append(
+            ValidationIssue(
+                type=error.error_type,
+                severity=severity,
+                file_path=error.file_path,
+                line=error.line,
+                message=error.message,
+                context=error.context,
+            )
+        )
         if severity == "error":
             self.passed = False
 
@@ -110,6 +116,7 @@ def validate_project(
     schema = None
     if schema_path and schema_path.exists():
         import yaml
+
         with open(schema_path) as f:
             schema = yaml.safe_load(f)
 
@@ -131,13 +138,15 @@ def validate_project(
                     report.add_schema_error(error)
 
             except Exception as e:
-                report.issues.append(ValidationIssue(
-                    type="parse",
-                    severity="error",
-                    file_path=chapter_path,
-                    line=None,
-                    message=f"Failed to parse document: {e}",
-                ))
+                report.issues.append(
+                    ValidationIssue(
+                        type="parse",
+                        severity="error",
+                        file_path=chapter_path,
+                        line=None,
+                        message=f"Failed to parse document: {e}",
+                    )
+                )
                 report.passed = False
 
     # Reference validation
@@ -155,9 +164,11 @@ def validate_project(
 
 def print_validation_report(report: ValidationReport):
     """Print validation report to console."""
-    console.print(f"[bold]Validation Report[/bold]")
+    console.print("[bold]Validation Report[/bold]")
     console.print(f"Files checked: {report.files_checked}")
-    console.print(f"Issues found: {len(report.issues)} ({report.error_count} errors, {report.warning_count} warnings)")
+    console.print(
+        f"Issues found: {len(report.issues)} ({report.error_count} errors, {report.warning_count} warnings)"
+    )
     console.print()
 
     if not report.issues:

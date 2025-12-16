@@ -8,7 +8,7 @@ import shutil
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
 
 from rich.console import Console
 
@@ -21,6 +21,7 @@ console = Console()
 @dataclass
 class PackItem:
     """An item to include in a pack."""
+
     source: str  # Source path pattern or literal path
     destination: str  # Destination path in the pack
     required: bool = True  # Whether item must exist
@@ -30,6 +31,7 @@ class PackItem:
 @dataclass
 class PackConfig:
     """Configuration for a pack."""
+
     name: str
     description: str = ""
     items: List[PackItem] = field(default_factory=list)
@@ -42,6 +44,7 @@ class PackConfig:
 @dataclass
 class PackResult:
     """Result of pack generation."""
+
     name: str
     output_path: Path
     items_included: int = 0
@@ -228,12 +231,14 @@ def generate_readme(
     for item_path in sorted(items_included):
         lines.append(f"- {item_path}")
 
-    lines.extend([
-        "",
-        "---",
-        "",
-        "For questions, contact the project team.",
-    ])
+    lines.extend(
+        [
+            "",
+            "---",
+            "",
+            "For questions, contact the project team.",
+        ]
+    )
 
     return "\n".join(lines)
 
@@ -323,21 +328,21 @@ def generate_pack(
             fonts_dest = pack_dir / "shared" / "fonts"
             shutil.copytree(fonts_src, fonts_dest, dirs_exist_ok=True)
             if console_output:
-                console.print(f"  [dim]Included fonts[/dim]")
+                console.print("  [dim]Included fonts[/dim]")
 
     # Generate README
     if config.include_readme:
         readme_content = generate_readme(config, items_included, project.name)
         (pack_dir / "README.md").write_text(readme_content)
         if console_output:
-            console.print(f"  [dim]Generated README.md[/dim]")
+            console.print("  [dim]Generated README.md[/dim]")
 
     # Create ZIP archive
     if create_zip:
         zip_name = f"{config.name}-{timestamp}"
         zip_path = shutil.make_archive(
             str(output_dir / zip_name),
-            'zip',
+            "zip",
             pack_dir,
         )
         result.output_path = Path(zip_path)
@@ -348,7 +353,9 @@ def generate_pack(
     if result.items_missing:
         result.success = False
         if console_output:
-            console.print(f"\n[yellow]Warning: {len(result.items_missing)} required items missing[/yellow]")
+            console.print(
+                f"\n[yellow]Warning: {len(result.items_missing)} required items missing[/yellow]"
+            )
     else:
         result.success = True
 

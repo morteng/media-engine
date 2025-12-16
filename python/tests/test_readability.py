@@ -2,15 +2,15 @@
 Tests for the readability module - content readability analysis.
 """
 
-import pytest
 from pathlib import Path
 
+import pytest
 from media_engine.readability import (
+    ReadabilityChecker,
+    ReadabilityIssue,
     ReadabilityLevel,
     ReadabilityMetrics,
-    ReadabilityIssue,
     ReadabilityReport,
-    ReadabilityChecker,
     SyllableCounter,
     TextAnalyzer,
     check_readability,
@@ -295,12 +295,15 @@ class TestReadabilityChecker:
     def test_flesch_score_warning(self, checker):
         """Test that very low Flesch scores are flagged."""
         # Very difficult text
-        text = """
+        text = (
+            """
         Notwithstanding aforementioned epistemological considerations,
         the phenomenological hermeneutical methodology necessitates
         comprehensive systematization of ontological presuppositions
         intrinsic to methodological paradigms.
-        """ * 5  # Repeat to get more data
+        """
+            * 5
+        )  # Repeat to get more data
         report = checker.check_text(text)
 
         flesch_issues = [i for i in report.issues if i.issue_type == "flesch_score"]
@@ -387,6 +390,7 @@ class TestReadabilityCheckerProject:
         if not demo_path.exists():
             pytest.skip("Demo project not found")
         from media_engine.core.project import Project
+
         return Project.load(demo_path)
 
     def test_check_project(self, demo_project):
@@ -437,6 +441,7 @@ class TestCheckReadabilityFunction:
         if not demo_path.exists():
             pytest.skip("Demo project not found")
         from media_engine.core.project import Project
+
         return Project.load(demo_path)
 
     def test_check_readability_function(self, demo_project):

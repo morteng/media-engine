@@ -11,10 +11,8 @@ Full-featured HTML document with:
 - Self-contained fonts option
 """
 
-from dataclasses import dataclass, field
-from pathlib import Path
-from typing import List, Optional, TYPE_CHECKING
-from datetime import datetime
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, List, Optional
 
 from jinja2 import Template
 
@@ -25,6 +23,7 @@ if TYPE_CHECKING:
 @dataclass
 class CoverConfig:
     """Cover page configuration."""
+
     title: str = ""
     subtitle: str = ""
     version: str = ""
@@ -36,6 +35,7 @@ class CoverConfig:
 @dataclass
 class ChapterConfig:
     """Chapter metadata."""
+
     id: str
     title: str
     number: int = 0
@@ -47,6 +47,7 @@ class ChapterConfig:
 @dataclass
 class DocumentConfig:
     """Document generation configuration."""
+
     include_toc: bool = True
     include_cover: bool = True
     include_progress: bool = True
@@ -58,7 +59,7 @@ class DocumentConfig:
 
 
 # The professional HTML template
-DOCUMENT_TEMPLATE = '''<!DOCTYPE html>
+DOCUMENT_TEMPLATE = """<!DOCTYPE html>
 <html lang="{{ lang }}" data-theme="{{ default_theme }}">
 <head>
     <meta charset="UTF-8">
@@ -763,7 +764,7 @@ DOCUMENT_TEMPLATE = '''<!DOCTYPE html>
         });
     </script>
 </body>
-</html>'''
+</html>"""
 
 
 class DocumentTemplate:
@@ -771,6 +772,7 @@ class DocumentTemplate:
 
     def __init__(self, theme: "Theme" = None):
         from ..core.theme import COPPER_AND_CREAM
+
         self.theme = theme or COPPER_AND_CREAM
         self.template = Template(DOCUMENT_TEMPLATE)
 

@@ -12,19 +12,18 @@ import shutil
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 from rich.console import Console
 
 from ..assets.bundler import bundle_project_assets, create_shared_css
 from ..assets.fonts import generate_font_faces
 from ..templates.html_index import (
-    IndexTemplate,
-    DeliverableItem,
     DeliverableCategory,
+    DeliverableItem,
     LanguageInfo,
-    render_project_index,
     render_language_index,
+    render_project_index,
 )
 
 if TYPE_CHECKING:
@@ -36,6 +35,7 @@ console = Console()
 @dataclass
 class PublishConfig:
     """Configuration for publishing deliverables."""
+
     output_dir: Path
     include_fonts: bool = True
     include_diagrams: bool = True
@@ -49,6 +49,7 @@ class PublishConfig:
 @dataclass
 class PublishResult:
     """Result of publishing operation."""
+
     output_dir: Path
     root_index: Optional[Path] = None
     language_indexes: Dict[str, Path] = field(default_factory=dict)
@@ -79,107 +80,131 @@ def collect_deliverables(
     proposal_items = []
     proposal_path = lang_output / "proposal.html"
     if proposal_path.exists():
-        proposal_items.append(DeliverableItem(
-            title="Full Proposal",
-            path="proposal.html",
-            description="Complete proposal document",
-            type="html",
-        ))
+        proposal_items.append(
+            DeliverableItem(
+                title="Full Proposal",
+                path="proposal.html",
+                description="Complete proposal document",
+                type="html",
+            )
+        )
 
     # Check for PDF version
     pdf_path = lang_output / "proposal.pdf"
     if pdf_path.exists():
-        proposal_items.append(DeliverableItem(
-            title="Full Proposal (PDF)",
-            path="proposal.pdf",
-            description="Printable PDF version",
-            type="pdf",
-        ))
+        proposal_items.append(
+            DeliverableItem(
+                title="Full Proposal (PDF)",
+                path="proposal.pdf",
+                description="Printable PDF version",
+                type="pdf",
+            )
+        )
 
     if proposal_items:
-        categories.append(DeliverableCategory(
-            name="Documentation",
-            icon="document",
-            items=proposal_items,
-        ))
+        categories.append(
+            DeliverableCategory(
+                name="Documentation",
+                icon="document",
+                items=proposal_items,
+            )
+        )
 
     # Presentations
     presentation_items = []
     presentations_dir = lang_output / "presentations"
     if presentations_dir.exists():
         for pres in presentations_dir.glob("*.html"):
-            presentation_items.append(DeliverableItem(
-                title=pres.stem.replace("_", " ").title(),
-                path=f"presentations/{pres.name}",
-                type="html",
-            ))
+            presentation_items.append(
+                DeliverableItem(
+                    title=pres.stem.replace("_", " ").title(),
+                    path=f"presentations/{pres.name}",
+                    type="html",
+                )
+            )
         for pres in presentations_dir.glob("*.pptx"):
-            presentation_items.append(DeliverableItem(
-                title=f"{pres.stem.replace('_', ' ').title()} (PowerPoint)",
-                path=f"presentations/{pres.name}",
-                type="pptx",
-            ))
+            presentation_items.append(
+                DeliverableItem(
+                    title=f"{pres.stem.replace('_', ' ').title()} (PowerPoint)",
+                    path=f"presentations/{pres.name}",
+                    type="pptx",
+                )
+            )
 
     if presentation_items:
-        categories.append(DeliverableCategory(
-            name="Presentations",
-            icon="presentation",
-            items=presentation_items,
-        ))
+        categories.append(
+            DeliverableCategory(
+                name="Presentations",
+                icon="presentation",
+                items=presentation_items,
+            )
+        )
 
     # Videos
     video_items = []
     videos_dir = lang_output / "videos"
     if videos_dir.exists():
         for video in videos_dir.glob("*.mp4"):
-            video_items.append(DeliverableItem(
-                title=video.stem.replace("-", " ").replace("_", " ").title(),
-                path=f"videos/{video.name}",
-                type="video",
-            ))
+            video_items.append(
+                DeliverableItem(
+                    title=video.stem.replace("-", " ").replace("_", " ").title(),
+                    path=f"videos/{video.name}",
+                    type="video",
+                )
+            )
 
     if video_items:
-        categories.append(DeliverableCategory(
-            name="Videos",
-            icon="video",
-            items=video_items,
-        ))
+        categories.append(
+            DeliverableCategory(
+                name="Videos",
+                icon="video",
+                items=video_items,
+            )
+        )
 
     # Spreadsheets
     spreadsheet_items = []
     spreadsheets_dir = lang_output / "spreadsheets"
     if spreadsheets_dir.exists():
         for ss in spreadsheets_dir.glob("*.xlsx"):
-            spreadsheet_items.append(DeliverableItem(
-                title=ss.stem.replace("_", " ").title(),
-                path=f"spreadsheets/{ss.name}",
-                type="xlsx",
-            ))
+            spreadsheet_items.append(
+                DeliverableItem(
+                    title=ss.stem.replace("_", " ").title(),
+                    path=f"spreadsheets/{ss.name}",
+                    type="xlsx",
+                )
+            )
 
     if spreadsheet_items:
-        categories.append(DeliverableCategory(
-            name="Spreadsheets",
-            icon="spreadsheet",
-            items=spreadsheet_items,
-        ))
+        categories.append(
+            DeliverableCategory(
+                name="Spreadsheets",
+                icon="spreadsheet",
+                items=spreadsheet_items,
+            )
+        )
 
     # Diagrams
     diagram_items = []
     diagrams_dir = lang_output / "diagrams"
     if diagrams_dir.exists():
         for diagram in diagrams_dir.glob("*.png"):
-            diagram_items.append(DeliverableItem(
-                title=diagram.stem.replace("_", " ").title(),
-                path=f"diagrams/{diagram.name}",
-                type="image",
-            ))
+            diagram_items.append(
+                DeliverableItem(
+                    title=diagram.stem.replace("_", " ").title(),
+                    path=f"diagrams/{diagram.name}",
+                    type="image",
+                )
+            )
 
     if diagram_items:
-        categories.append(DeliverableCategory(
-            name="Diagrams",
-            icon="diagram",
-            items=diagram_items,
-        ))
+        categories.append(
+            DeliverableCategory(
+                name="Diagrams",
+                icon="diagram",
+                items=diagram_items,
+            )
+        )
 
     return categories
 
@@ -206,12 +231,14 @@ def generate_navigation_indexes(
     languages = []
     for lang in project.languages:
         lang_config = project.languages.get(lang, {})
-        languages.append(LanguageInfo(
-            code=lang,
-            name=lang_config.get("name", lang.upper()),
-            flag=lang_config.get("flag", ""),
-            native_name=lang_config.get("native_name", ""),
-        ))
+        languages.append(
+            LanguageInfo(
+                code=lang,
+                name=lang_config.get("name", lang.upper()),
+                flag=lang_config.get("flag", ""),
+                native_name=lang_config.get("native_name", ""),
+            )
+        )
 
     # Generate per-language indexes
     for lang_info in languages:
@@ -222,21 +249,23 @@ def generate_navigation_indexes(
 
         # Get theme colors for CSS
         theme_colors = {}
-        if hasattr(project, 'theme'):
+        if hasattr(project, "theme"):
             theme_colors = {
-                'primary': project.theme.colors.text,
-                'secondary': project.theme.colors.secondary,
-                'accent': project.theme.colors.accent,
-                'background': project.theme.colors.background,
+                "primary": project.theme.colors.text,
+                "secondary": project.theme.colors.secondary,
+                "accent": project.theme.colors.accent,
+                "background": project.theme.colors.background,
             }
 
         index_html = render_language_index(
             language=lang_info,
             categories=categories,
             project_name=project.name,
-            project_tagline=getattr(project, 'tagline', ''),
+            project_tagline=getattr(project, "tagline", ""),
             theme_colors=theme_colors,
-            logo_path="../shared/logo.svg" if (output_dir / "shared" / "logo.svg").exists() else None,
+            logo_path="../shared/logo.svg"
+            if (output_dir / "shared" / "logo.svg").exists()
+            else None,
         )
 
         index_path = lang_dir / "index.html"
@@ -248,17 +277,17 @@ def generate_navigation_indexes(
 
     # Generate root index
     theme_colors = {}
-    if hasattr(project, 'theme'):
+    if hasattr(project, "theme"):
         theme_colors = {
-            'primary': project.theme.colors.text,
-            'secondary': project.theme.colors.secondary,
-            'accent': project.theme.colors.accent,
-            'background': project.theme.colors.background,
+            "primary": project.theme.colors.text,
+            "secondary": project.theme.colors.secondary,
+            "accent": project.theme.colors.accent,
+            "background": project.theme.colors.background,
         }
 
     root_html = render_project_index(
         project_name=project.name,
-        project_tagline=getattr(project, 'tagline', ''),
+        project_tagline=getattr(project, "tagline", ""),
         languages=languages,
         theme_colors=theme_colors,
         logo_path="shared/logo.svg" if (output_dir / "shared" / "logo.svg").exists() else None,
@@ -269,7 +298,7 @@ def generate_navigation_indexes(
     indexes["root"] = root_index
 
     if console_output:
-        console.print(f"  [green]✓[/green] Generated root index.html")
+        console.print("  [green]✓[/green] Generated root index.html")
 
     return indexes
 
@@ -346,7 +375,7 @@ def create_zip_archive(
     """
     zip_path = shutil.make_archive(
         str(output_path),
-        'zip',
+        "zip",
         source_dir,
     )
 
@@ -432,9 +461,7 @@ def publish_project(
                 config.console_output,
             )
             result.root_index = indexes.get("root")
-            result.language_indexes = {
-                k: v for k, v in indexes.items() if k != "root"
-            }
+            result.language_indexes = {k: v for k, v in indexes.items() if k != "root"}
 
         # Create ZIP if requested
         if config.zip_output:
@@ -452,7 +479,7 @@ def publish_project(
         result.success = True
 
         if config.console_output:
-            console.print(f"\n[green]✓ Published successfully![/green]")
+            console.print("\n[green]✓ Published successfully![/green]")
             console.print(f"  Documents: {result.documents_copied}")
             console.print(f"  Assets: {result.assets_bundled}")
             if result.root_index:

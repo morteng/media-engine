@@ -2,24 +2,22 @@
 Tests for the gaps module - content gap analysis.
 """
 
-import pytest
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
+import pytest
 from media_engine.gaps import (
-    GapType,
-    GapSeverity,
     ContentGap,
     ContentGapAnalyzer,
-    analyze_gaps,
-)
-from media_engine.gaps import (
-    TopicCoverage,
-    TopicAnalyzer,
-    ReferenceAnalyzer,
-    TranslationGapAnalyzer,
-    SchemaGapAnalyzer,
+    GapSeverity,
+    GapType,
     OrphanAnalyzer,
+    ReferenceAnalyzer,
+    SchemaGapAnalyzer,
+    TopicAnalyzer,
+    TopicCoverage,
+    TranslationGapAnalyzer,
+    analyze_gaps,
 )
 
 
@@ -657,6 +655,7 @@ class TestContentGapAnalyzerProject:
         if not demo_path.exists():
             pytest.skip("Demo project not found")
         from media_engine.core.project import Project
+
         return Project.load(demo_path)
 
     def test_analyze_demo_project(self, demo_project):
@@ -687,6 +686,7 @@ class TestAnalyzeGapsFunction:
         if not demo_path.exists():
             pytest.skip("Demo project not found")
         from media_engine.core.project import Project
+
         return Project.load(demo_path)
 
     def test_analyze_gaps_function(self, demo_project):
@@ -756,12 +756,14 @@ title: Test
         )
 
         # Should count severities correctly
-        total = sum([
-            report["summary"]["critical"],
-            report["summary"]["high"],
-            report["summary"]["medium"],
-            report["summary"]["low"],
-        ])
+        total = sum(
+            [
+                report["summary"]["critical"],
+                report["summary"]["high"],
+                report["summary"]["medium"],
+                report["summary"]["low"],
+            ]
+        )
         assert total == report["summary"]["total_gaps"]
 
     def test_blocks_publish_flag(self, mock_project):

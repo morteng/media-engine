@@ -17,21 +17,24 @@ Compatible with Claude Code, Claude Desktop, Cursor, VS Code, and any MCP client
 
 import asyncio
 import json
-import hashlib
-import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
-from functools import lru_cache
+from typing import Optional
 
 # MCP SDK import - graceful fallback
 try:
     from mcp.server import Server
-    from mcp.types import (
-        Tool, TextContent, Resource, Prompt, PromptMessage,
-        GetPromptResult, CallToolResult
-    )
     from mcp.server.stdio import stdio_server
+    from mcp.types import (
+        CallToolResult,
+        GetPromptResult,
+        Prompt,
+        PromptMessage,
+        Resource,
+        TextContent,
+        Tool,
+    )
+
     HAS_MCP = True
 except ImportError:
     HAS_MCP = False
@@ -78,6 +81,7 @@ class MediaEngineMCPServer:
                 return cached
 
         from ..core.project import Project, find_project
+
         if self.project_path:
             self._project = Project.load(self.project_path)
         else:
@@ -110,8 +114,12 @@ class MediaEngineMCPServer:
                 return resolved
 
             # Also allow content_dir, assets_dir, output_dir
-            for allowed in [self.project.content_dir, self.project.assets_dir,
-                           self.project.output_dir, self.project.publish_dir]:
+            for allowed in [
+                self.project.content_dir,
+                self.project.assets_dir,
+                self.project.output_dir,
+                self.project.publish_dir,
+            ]:
                 allowed_resolved = allowed.resolve()
                 if allowed_resolved in resolved.parents or resolved == allowed_resolved:
                     return resolved
@@ -161,32 +169,35 @@ class MediaEngineMCPServer:
             if not self.project:
                 return json.dumps({"error": "No project found"}, indent=2)
 
-            return json.dumps({
-                "name": self.project.config.name,
-                "description": self.project.config.description,
-                "languages": {
-                    code: {"name": lang.name, "locale": lang.locale, "voice_id": lang.voice_id}
-                    for code, lang in self.project.languages.items()
+            return json.dumps(
+                {
+                    "name": self.project.config.name,
+                    "description": self.project.config.description,
+                    "languages": {
+                        code: {"name": lang.name, "locale": lang.locale, "voice_id": lang.voice_id}
+                        for code, lang in self.project.languages.items()
+                    },
+                    "source_language": self.project.source_language,
+                    "paths": {
+                        "root": str(self.project.root),
+                        "content": str(self.project.content_dir),
+                        "assets": str(self.project.assets_dir),
+                        "output": str(self.project.output_dir),
+                        "publish": str(self.project.publish_dir),
+                        "cache": str(self.project.cache_dir),
+                    },
+                    "voiceover": {
+                        "provider": self.project.config.voiceover.provider,
+                        "model": getattr(self.project.config.voiceover, "model", None),
+                    },
+                    "video": {
+                        "width": self.project.config.video.width,
+                        "height": self.project.config.video.height,
+                        "fps": self.project.config.video.fps,
+                    },
                 },
-                "source_language": self.project.source_language,
-                "paths": {
-                    "root": str(self.project.root),
-                    "content": str(self.project.content_dir),
-                    "assets": str(self.project.assets_dir),
-                    "output": str(self.project.output_dir),
-                    "publish": str(self.project.publish_dir),
-                    "cache": str(self.project.cache_dir),
-                },
-                "voiceover": {
-                    "provider": self.project.config.voiceover.provider,
-                    "model": getattr(self.project.config.voiceover, 'model', None),
-                },
-                "video": {
-                    "width": self.project.config.video.width,
-                    "height": self.project.config.video.height,
-                    "fps": self.project.config.video.fps,
-                },
-            }, indent=2)
+                indent=2,
+            )
 
         @self.server.tool()
         async def refresh_project() -> str:
@@ -197,7 +208,12 @@ class MediaEngineMCPServer:
             subsequent queries return fresh data.
             """
             self._invalidate_cache()
-            return json.dumps({"status": "cache_cleared", "message": "Project data will be refreshed on next query"})
+            return json.dumps(
+                {
+                    "status": "cache_cleared",
+                    "message": "Project data will be refreshed on next query",
+                }
+            )
 
         # === Content Tools ===
 
@@ -215,22 +231,26 @@ class MediaEngineMCPServer:
                 return json.dumps({"error": "No project found"}, indent=2)
 
             from ..cms.document import Document
+
             lang = language or self.project.source_language
 
             if lang not in self.project.languages:
                 return json.dumps({"error": f"Language '{lang}' not configured"}, indent=2)
 
             chapters = self.project.list_chapters(lang)
-            return json.dumps([
-                {
-                    "path": str(c),
-                    "filename": c.name,
-                    "title": Document.load(c).title,
-                    "version": Document.load(c).metadata.get("version", ""),
-                    "status": Document.load(c).metadata.get("status", ""),
-                }
-                for c in chapters
-            ], indent=2)
+            return json.dumps(
+                [
+                    {
+                        "path": str(c),
+                        "filename": c.name,
+                        "title": Document.load(c).title,
+                        "version": Document.load(c).metadata.get("version", ""),
+                        "status": Document.load(c).metadata.get("status", ""),
+                    }
+                    for c in chapters
+                ],
+                indent=2,
+            )
 
         @self.server.tool()
         async def read_document(path: str) -> str:
@@ -253,13 +273,16 @@ class MediaEngineMCPServer:
                 return json.dumps({"error": f"Document not found: {path}"}, indent=2)
 
             doc = Document.load(validated_path)
-            return json.dumps({
-                "path": str(validated_path),
-                "title": doc.title,
-                "content": doc.content,
-                "metadata": doc.metadata,
-                "word_count": len(doc.content.split()),
-            }, indent=2)
+            return json.dumps(
+                {
+                    "path": str(validated_path),
+                    "title": doc.title,
+                    "content": doc.content,
+                    "metadata": doc.metadata,
+                    "word_count": len(doc.content.split()),
+                },
+                indent=2,
+            )
 
         @self.server.tool()
         async def update_document_metadata(path: str, updates: str) -> str:
@@ -288,11 +311,14 @@ class MediaEngineMCPServer:
             doc.save()
 
             self._invalidate_cache()
-            return json.dumps({
-                "status": "updated",
-                "path": str(validated_path),
-                "updated_fields": list(updates_dict.keys()),
-            }, indent=2)
+            return json.dumps(
+                {
+                    "status": "updated",
+                    "path": str(validated_path),
+                    "updated_fields": list(updates_dict.keys()),
+                },
+                indent=2,
+            )
 
         @self.server.tool()
         async def increment_document_version(path: str, bump: str = "patch") -> str:
@@ -319,12 +345,15 @@ class MediaEngineMCPServer:
             doc.save()
 
             self._invalidate_cache()
-            return json.dumps({
-                "status": "version_incremented",
-                "path": str(validated_path),
-                "old_version": old_version,
-                "new_version": doc.metadata.get("version"),
-            }, indent=2)
+            return json.dumps(
+                {
+                    "status": "version_incremented",
+                    "path": str(validated_path),
+                    "old_version": old_version,
+                    "new_version": doc.metadata.get("version"),
+                },
+                indent=2,
+            )
 
         # === Translation Tools ===
 
@@ -349,26 +378,29 @@ class MediaEngineMCPServer:
             if language:
                 statuses = [s for s in statuses if s.target_language == language]
 
-            return json.dumps({
-                "total": len(statuses),
-                "current": sum(1 for s in statuses if not s.is_outdated),
-                "outdated": sum(1 for s in statuses if s.is_outdated),
-                "translations": [
-                    {
-                        "source": str(s.source_path),
-                        "translation": str(s.translation_path),
-                        "source_title": s.source_title,
-                        "translation_title": s.translation_title,
-                        "source_language": s.source_language,
-                        "target_language": s.target_language,
-                        "source_version": s.source_version,
-                        "translated_version": s.translated_version,
-                        "is_outdated": s.is_outdated,
-                        "status": s.status_label,
-                    }
-                    for s in statuses
-                ],
-            }, indent=2)
+            return json.dumps(
+                {
+                    "total": len(statuses),
+                    "current": sum(1 for s in statuses if not s.is_outdated),
+                    "outdated": sum(1 for s in statuses if s.is_outdated),
+                    "translations": [
+                        {
+                            "source": str(s.source_path),
+                            "translation": str(s.translation_path),
+                            "source_title": s.source_title,
+                            "translation_title": s.translation_title,
+                            "source_language": s.source_language,
+                            "target_language": s.target_language,
+                            "source_version": s.source_version,
+                            "translated_version": s.translated_version,
+                            "is_outdated": s.is_outdated,
+                            "status": s.status_label,
+                        }
+                        for s in statuses
+                    ],
+                },
+                indent=2,
+            )
 
         @self.server.tool()
         async def outdated_translations() -> str:
@@ -386,19 +418,24 @@ class MediaEngineMCPServer:
             tracker = TranslationTracker(self.project)
             outdated = tracker.get_outdated_translations()
 
-            return json.dumps({
-                "count": len(outdated),
-                "outdated": [
-                    {
-                        "translation": str(s.translation_path),
-                        "source": str(s.source_path),
-                        "source_version": s.source_version,
-                        "translated_from_version": s.translated_version,
-                        "versions_behind": self._version_diff(s.translated_version, s.source_version),
-                    }
-                    for s in outdated
-                ],
-            }, indent=2)
+            return json.dumps(
+                {
+                    "count": len(outdated),
+                    "outdated": [
+                        {
+                            "translation": str(s.translation_path),
+                            "source": str(s.source_path),
+                            "source_version": s.source_version,
+                            "translated_from_version": s.translated_version,
+                            "versions_behind": self._version_diff(
+                                s.translated_version, s.source_version
+                            ),
+                        }
+                        for s in outdated
+                    ],
+                },
+                indent=2,
+            )
 
         @self.server.tool()
         async def missing_translations(language: str) -> str:
@@ -409,7 +446,6 @@ class MediaEngineMCPServer:
                 language: Target language code
             """
             from ..cms.translation import TranslationTracker
-            from ..cms.document import Document
 
             if not self.project:
                 return json.dumps({"error": "No project found"}, indent=2)
@@ -420,18 +456,21 @@ class MediaEngineMCPServer:
             tracker = TranslationTracker(self.project)
             missing = tracker.get_missing_translations(language)
 
-            return json.dumps({
-                "target_language": language,
-                "count": len(missing),
-                "missing": [
-                    {
-                        "source_path": str(doc.path),
-                        "title": doc.title,
-                        "version": doc.metadata.get("version", ""),
-                    }
-                    for doc in missing
-                ],
-            }, indent=2)
+            return json.dumps(
+                {
+                    "target_language": language,
+                    "count": len(missing),
+                    "missing": [
+                        {
+                            "source_path": str(doc.path),
+                            "title": doc.title,
+                            "version": doc.metadata.get("version", ""),
+                        }
+                        for doc in missing
+                    ],
+                },
+                indent=2,
+            )
 
         @self.server.tool()
         async def mark_translation_synced(translation_path: str) -> str:
@@ -444,8 +483,8 @@ class MediaEngineMCPServer:
             Args:
                 translation_path: Path to translation document
             """
-            from ..cms.translation import TranslationTracker
             from ..cms.document import Document
+            from ..cms.translation import TranslationTracker
 
             if not self.project:
                 return json.dumps({"error": "No project found"}, indent=2)
@@ -462,12 +501,15 @@ class MediaEngineMCPServer:
             tracker.mark_synced(trans_doc)
 
             self._invalidate_cache()
-            return json.dumps({
-                "status": "synced",
-                "translation": str(validated_path),
-                "old_source_version": old_version,
-                "new_source_version": trans_doc.metadata.get("source_version"),
-            }, indent=2)
+            return json.dumps(
+                {
+                    "status": "synced",
+                    "translation": str(validated_path),
+                    "old_source_version": old_version,
+                    "new_source_version": trans_doc.metadata.get("source_version"),
+                },
+                indent=2,
+            )
 
         # === Quality & Validation Tools ===
 
@@ -486,25 +528,28 @@ class MediaEngineMCPServer:
 
             report = run_quality_checks(self.project, console_output=False)
 
-            return json.dumps({
-                "summary": {
-                    "total": report.total_count,
-                    "errors": report.error_count,
-                    "warnings": report.warning_count,
-                    "info": report.info_count,
-                    "passed": report.error_count == 0,
+            return json.dumps(
+                {
+                    "summary": {
+                        "total": report.total_count,
+                        "errors": report.error_count,
+                        "warnings": report.warning_count,
+                        "info": report.info_count,
+                        "passed": report.error_count == 0,
+                    },
+                    "issues": [
+                        {
+                            "severity": i.severity,
+                            "category": i.category,
+                            "message": i.message,
+                            "file": str(i.file_path) if i.file_path else None,
+                            "line": i.line,
+                        }
+                        for i in report.issues
+                    ],
                 },
-                "issues": [
-                    {
-                        "severity": i.severity,
-                        "category": i.category,
-                        "message": i.message,
-                        "file": str(i.file_path) if i.file_path else None,
-                        "line": i.line,
-                    }
-                    for i in report.issues
-                ],
-            }, indent=2)
+                indent=2,
+            )
 
         @self.server.tool()
         async def validate_project() -> str:
@@ -526,23 +571,26 @@ class MediaEngineMCPServer:
                 console_output=False,
             )
 
-            return json.dumps({
-                "valid": report.error_count == 0,
-                "schema_used": str(schema_path) if schema_path.exists() else None,
-                "summary": {
-                    "total": report.total_count,
-                    "errors": report.error_count,
-                    "warnings": report.warning_count,
+            return json.dumps(
+                {
+                    "valid": report.error_count == 0,
+                    "schema_used": str(schema_path) if schema_path.exists() else None,
+                    "summary": {
+                        "total": report.total_count,
+                        "errors": report.error_count,
+                        "warnings": report.warning_count,
+                    },
+                    "issues": [
+                        {
+                            "severity": i.severity,
+                            "message": i.message,
+                            "file": str(i.file_path) if i.file_path else None,
+                        }
+                        for i in report.issues
+                    ],
                 },
-                "issues": [
-                    {
-                        "severity": i.severity,
-                        "message": i.message,
-                        "file": str(i.file_path) if i.file_path else None,
-                    }
-                    for i in report.issues
-                ],
-            }, indent=2)
+                indent=2,
+            )
 
         # === Search Tools ===
 
@@ -581,28 +629,31 @@ class MediaEngineMCPServer:
             if language:
                 results = [r for r in results if r.entry.language == language]
 
-            return json.dumps({
-                "query": query,
-                "count": len(results),
-                "results": [
-                    {
-                        "title": r.entry.title,
-                        "path": str(r.entry.path),
-                        "language": r.entry.language,
-                        "score": round(r.score, 3),
-                        "snippet": r.snippet[:200] + "..." if len(r.snippet) > 200 else r.snippet,
-                    }
-                    for r in results[:limit]
-                ],
-            }, indent=2)
+            return json.dumps(
+                {
+                    "query": query,
+                    "count": len(results),
+                    "results": [
+                        {
+                            "title": r.entry.title,
+                            "path": str(r.entry.path),
+                            "language": r.entry.language,
+                            "score": round(r.score, 3),
+                            "snippet": r.snippet[:200] + "..."
+                            if len(r.snippet) > 200
+                            else r.snippet,
+                        }
+                        for r in results[:limit]
+                    ],
+                },
+                indent=2,
+            )
 
         # === Build Tools ===
 
         @self.server.tool()
         async def build_html(
-            language: str = None,
-            chapter: str = None,
-            output_dir: str = None
+            language: str = None, chapter: str = None, output_dir: str = None
         ) -> str:
             """
             Build HTML output from markdown chapters.
@@ -646,12 +697,15 @@ class MediaEngineMCPServer:
                 built.append(str(out_file))
 
             self._invalidate_cache()
-            return json.dumps({
-                "status": "built",
-                "language": lang,
-                "files_built": len(built),
-                "output_files": built,
-            }, indent=2)
+            return json.dumps(
+                {
+                    "status": "built",
+                    "language": lang,
+                    "files_built": len(built),
+                    "output_files": built,
+                },
+                indent=2,
+            )
 
         @self.server.tool()
         async def build_pptx(slides_path: str, output_path: str = None) -> str:
@@ -689,12 +743,15 @@ class MediaEngineMCPServer:
             out.parent.mkdir(parents=True, exist_ok=True)
             saved = builder.save(out)
 
-            return json.dumps({
-                "status": "built",
-                "input": str(validated_path),
-                "output": str(saved),
-                "size_bytes": saved.stat().st_size,
-            }, indent=2)
+            return json.dumps(
+                {
+                    "status": "built",
+                    "input": str(validated_path),
+                    "output": str(saved),
+                    "size_bytes": saved.stat().st_size,
+                },
+                indent=2,
+            )
 
         @self.server.tool()
         async def build_xlsx(data_path: str, output_path: str = None) -> str:
@@ -732,12 +789,15 @@ class MediaEngineMCPServer:
             out.parent.mkdir(parents=True, exist_ok=True)
             saved = builder.save(out)
 
-            return json.dumps({
-                "status": "built",
-                "input": str(validated_path),
-                "output": str(saved),
-                "size_bytes": saved.stat().st_size,
-            }, indent=2)
+            return json.dumps(
+                {
+                    "status": "built",
+                    "input": str(validated_path),
+                    "output": str(saved),
+                    "size_bytes": saved.stat().st_size,
+                },
+                indent=2,
+            )
 
         # === Cache Tools ===
 
@@ -748,12 +808,15 @@ class MediaEngineMCPServer:
                 return json.dumps({"error": "No project found"}, indent=2)
 
             manifest = self.project._cache_manifest
-            return json.dumps({
-                "cache_dir": str(self.project.cache_dir),
-                "voiceover_cached": len(manifest.get("voiceover", {})),
-                "builds_tracked": len(manifest.get("builds", {})),
-                "content_hashes": len(manifest.get("content_hashes", {})),
-            }, indent=2)
+            return json.dumps(
+                {
+                    "cache_dir": str(self.project.cache_dir),
+                    "voiceover_cached": len(manifest.get("voiceover", {})),
+                    "builds_tracked": len(manifest.get("builds", {})),
+                    "content_hashes": len(manifest.get("content_hashes", {})),
+                },
+                indent=2,
+            )
 
         @self.server.tool()
         async def clear_cache(cache_type: str = "all") -> str:
@@ -767,16 +830,21 @@ class MediaEngineMCPServer:
                 return json.dumps({"error": "No project found"}, indent=2)
 
             if cache_type not in ("all", "voiceover", "builds"):
-                return json.dumps({"error": "cache_type must be 'all', 'voiceover', or 'builds'"}, indent=2)
+                return json.dumps(
+                    {"error": "cache_type must be 'all', 'voiceover', or 'builds'"}, indent=2
+                )
 
             count = self.project.clear_cache(cache_type)
             self._invalidate_cache()
 
-            return json.dumps({
-                "status": "cleared",
-                "type": cache_type,
-                "items_cleared": count,
-            }, indent=2)
+            return json.dumps(
+                {
+                    "status": "cleared",
+                    "type": cache_type,
+                    "items_cleared": count,
+                },
+                indent=2,
+            )
 
         # === Audit Tools ===
 
@@ -794,13 +862,17 @@ class MediaEngineMCPServer:
                 return json.dumps({"error": "No project found"}, indent=2)
 
             from ..audit import log_action as do_log
+
             do_log(self.project, action, details, user)
 
-            return json.dumps({
-                "status": "logged",
-                "action": action,
-                "timestamp": datetime.now().isoformat(),
-            }, indent=2)
+            return json.dumps(
+                {
+                    "status": "logged",
+                    "action": action,
+                    "timestamp": datetime.now().isoformat(),
+                },
+                indent=2,
+            )
 
         @self.server.tool()
         async def get_audit_log(limit: int = 50) -> str:
@@ -814,12 +886,16 @@ class MediaEngineMCPServer:
                 return json.dumps({"error": "No project found"}, indent=2)
 
             from ..audit import get_recent_entries
+
             entries = get_recent_entries(self.project, limit)
 
-            return json.dumps({
-                "count": len(entries),
-                "entries": entries,
-            }, indent=2)
+            return json.dumps(
+                {
+                    "count": len(entries),
+                    "entries": entries,
+                },
+                indent=2,
+            )
 
     def _register_resources(self):
         """Register MCP resources for context."""
@@ -841,14 +917,14 @@ class MediaEngineMCPServer:
 
 ## Languages
 - Source: {self.project.source_language}
-- Configured: {', '.join(self.project.languages.keys())}
+- Configured: {", ".join(self.project.languages.keys())}
 
 ## Content
-{json.dumps(status['content'], indent=2)}
+{json.dumps(status["content"], indent=2)}
 
 ## Health
-- Translation sync: {health['translation_status']}
-- Quality: {health['quality_status']}
+- Translation sync: {health["translation_status"]}
+- Quality: {health["quality_status"]}
 """
 
         @self.server.resource("project://languages")
@@ -857,10 +933,13 @@ class MediaEngineMCPServer:
             if not self.project:
                 return "No project loaded"
 
-            return json.dumps({
-                code: {"name": lang.name, "locale": lang.locale}
-                for code, lang in self.project.languages.items()
-            }, indent=2)
+            return json.dumps(
+                {
+                    code: {"name": lang.name, "locale": lang.locale}
+                    for code, lang in self.project.languages.items()
+                },
+                indent=2,
+            )
 
     def _register_prompts(self):
         """Register prompts for common workflows."""
@@ -883,8 +962,8 @@ class MediaEngineMCPServer:
 3. Summarize what changes are needed
 4. Suggest whether minor updates or full re-translation is needed
 
-Use the translation_status and read_document tools."""
-                        )
+Use the translation_status and read_document tools.""",
+                        ),
                     )
                 ]
             )
@@ -906,8 +985,8 @@ Use the translation_status and read_document tools."""
 4. Summarize findings by severity
 5. Recommend priority fixes
 
-Start with quality_check."""
-                        )
+Start with quality_check.""",
+                        ),
                     )
                 ]
             )
@@ -922,6 +1001,7 @@ Start with quality_check."""
         # Check translations
         try:
             from ..cms.translation import TranslationTracker
+
             tracker = TranslationTracker(self.project)
             outdated = tracker.get_outdated_translations()
             trans_status = "all_synced" if not outdated else f"{len(outdated)}_outdated"
@@ -931,6 +1011,7 @@ Start with quality_check."""
         # Check quality
         try:
             from ..quality import run_quality_checks
+
             report = run_quality_checks(self.project, console_output=False)
             if report.error_count > 0:
                 quality_status = f"{report.error_count}_errors"
@@ -971,9 +1052,7 @@ Start with quality_check."""
     async def run(self):
         """Run the MCP server."""
         if not HAS_MCP:
-            raise RuntimeError(
-                "MCP SDK not installed. Install with: pip install media-engine[mcp]"
-            )
+            raise RuntimeError("MCP SDK not installed. Install with: pip install media-engine[mcp]")
 
         async with stdio_server() as (read, write):
             await self.server.run(read, write)
@@ -981,7 +1060,6 @@ Start with quality_check."""
 
 def main():
     """CLI entry point for MCP server."""
-    import asyncio
     import argparse
 
     parser = argparse.ArgumentParser(
@@ -1001,15 +1079,17 @@ Claude Desktop config (~/.claude/claude_desktop_config.json):
       }
     }
   }
-"""
+""",
     )
     parser.add_argument(
-        "--project", "-p",
+        "--project",
+        "-p",
         type=Path,
         help="Path to project root (auto-detects if not specified)",
     )
     parser.add_argument(
-        "--version", "-v",
+        "--version",
+        "-v",
         action="version",
         version="media-engine-mcp 1.0.0",
     )

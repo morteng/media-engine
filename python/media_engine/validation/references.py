@@ -7,7 +7,7 @@ Validates citations, cross-references, and links in documents.
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Dict, Set, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional, Set
 
 from rich.console import Console
 
@@ -20,6 +20,7 @@ console = Console()
 @dataclass
 class ReferenceError:
     """A reference validation error."""
+
     file_path: Path
     line: int
     reference: str
@@ -31,6 +32,7 @@ class ReferenceError:
 @dataclass
 class ReferenceValidator:
     """Validates references and links in documents."""
+
     known_references: Set[str] = field(default_factory=set)
     known_files: Set[Path] = field(default_factory=set)
 
@@ -81,10 +83,10 @@ class ReferenceValidator:
     ) -> List[ReferenceError]:
         """Validate markdown links."""
         errors = []
-        lines = content.split('\n')
+        lines = content.split("\n")
 
         # Match [text](url) links
-        link_pattern = re.compile(r'\[([^\]]+)\]\(([^)]+)\)')
+        link_pattern = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 
         for line_num, line in enumerate(lines, 1):
             for match in link_pattern.finditer(line):
@@ -92,29 +94,31 @@ class ReferenceValidator:
                 link_url = match.group(2)
 
                 # Skip external URLs
-                if link_url.startswith(('http://', 'https://', 'mailto:')):
+                if link_url.startswith(("http://", "https://", "mailto:")):
                     continue
 
                 # Skip anchors
-                if link_url.startswith('#'):
+                if link_url.startswith("#"):
                     continue
 
                 # Check relative file links
                 target_path = (base_dir / link_url).resolve()
 
                 # Remove anchor from path if present
-                if '#' in str(target_path):
-                    target_path = Path(str(target_path).split('#')[0])
+                if "#" in str(target_path):
+                    target_path = Path(str(target_path).split("#")[0])
 
                 if not target_path.exists() and target_path not in self.known_files:
-                    errors.append(ReferenceError(
-                        file_path=file_path,
-                        line=line_num,
-                        reference=link_url,
-                        error_type="broken_link",
-                        message=f"Link target not found: {link_url}",
-                        context=line.strip()[:80],
-                    ))
+                    errors.append(
+                        ReferenceError(
+                            file_path=file_path,
+                            line=line_num,
+                            reference=link_url,
+                            error_type="broken_link",
+                            message=f"Link target not found: {link_url}",
+                            context=line.strip()[:80],
+                        )
+                    )
 
         return errors
 
@@ -125,14 +129,14 @@ class ReferenceValidator:
     ) -> List[ReferenceError]:
         """Validate footnote-style citations."""
         errors = []
-        lines = content.split('\n')
+        lines = content.split("\n")
 
         # Find all citation references [^id]
         cite_refs = set()
         cite_defs = set()
 
-        cite_ref_pattern = re.compile(r'\[\^([^\]]+)\](?!\:)')
-        cite_def_pattern = re.compile(r'^\[\^([^\]]+)\]\:')
+        cite_ref_pattern = re.compile(r"\[\^([^\]]+)\](?!\:)")
+        cite_def_pattern = re.compile(r"^\[\^([^\]]+)\]\:")
 
         for line_num, line in enumerate(lines, 1):
             # Find references
@@ -146,14 +150,16 @@ class ReferenceValidator:
         # Check for undefined citations
         for cite_id, line_num, context in cite_refs:
             if cite_id not in cite_defs:
-                errors.append(ReferenceError(
-                    file_path=file_path,
-                    line=line_num,
-                    reference=f"[^{cite_id}]",
-                    error_type="missing_citation",
-                    message=f"Citation [^{cite_id}] is referenced but not defined",
-                    context=context,
-                ))
+                errors.append(
+                    ReferenceError(
+                        file_path=file_path,
+                        line=line_num,
+                        reference=f"[^{cite_id}]",
+                        error_type="missing_citation",
+                        message=f"Citation [^{cite_id}] is referenced but not defined",
+                        context=context,
+                    )
+                )
 
         return errors
 
@@ -164,24 +170,26 @@ class ReferenceValidator:
     ) -> List[ReferenceError]:
         """Validate document reference IDs (TR001, MR002, etc.)."""
         errors = []
-        lines = content.split('\n')
+        lines = content.split("\n")
 
         # Pattern for reference IDs
-        ref_pattern = re.compile(r'\b(TR|MR|CA|REG|UR|ADR)\d{3}\b')
+        ref_pattern = re.compile(r"\b(TR|MR|CA|REG|UR|ADR)\d{3}\b")
 
         for line_num, line in enumerate(lines, 1):
             for match in ref_pattern.finditer(line):
                 ref_id = match.group(0)
 
                 if ref_id not in self.known_references:
-                    errors.append(ReferenceError(
-                        file_path=file_path,
-                        line=line_num,
-                        reference=ref_id,
-                        error_type="undefined_reference",
-                        message=f"Reference {ref_id} is not defined in any document",
-                        context=line.strip()[:80],
-                    ))
+                    errors.append(
+                        ReferenceError(
+                            file_path=file_path,
+                            line=line_num,
+                            reference=ref_id,
+                            error_type="undefined_reference",
+                            message=f"Reference {ref_id} is not defined in any document",
+                            context=line.strip()[:80],
+                        )
+                    )
 
         return errors
 
@@ -199,7 +207,7 @@ def collect_references(project: "Project") -> Set[str]:
     from ..cms import Document
 
     references = set()
-    ref_pattern = re.compile(r'^(TR|MR|CA|REG|UR|ADR)\d{3}')
+    ref_pattern = re.compile(r"^(TR|MR|CA|REG|UR|ADR)\d{3}")
 
     for language in project.languages:
         # Check research documents
@@ -209,13 +217,13 @@ def collect_references(project: "Project") -> Set[str]:
                 # Extract ref ID from filename
                 match = ref_pattern.match(path.stem)
                 if match:
-                    references.add(path.stem.split('_')[0])
+                    references.add(path.stem.split("_")[0])
 
                 # Also check frontmatter
                 try:
                     doc = Document.load(path)
-                    if 'reference_id' in doc.metadata:
-                        references.add(doc.metadata['reference_id'])
+                    if "reference_id" in doc.metadata:
+                        references.add(doc.metadata["reference_id"])
                 except Exception:
                     pass
 

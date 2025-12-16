@@ -9,12 +9,12 @@ Quality checks for content:
 """
 
 from .checks import (
-    check_placeholders,
-    check_terminology,
-    check_encoding,
-    run_quality_checks,
     QualityIssue,
     QualityReport,
+    check_encoding,
+    check_placeholders,
+    check_terminology,
+    run_quality_checks,
 )
 
 __all__ = [

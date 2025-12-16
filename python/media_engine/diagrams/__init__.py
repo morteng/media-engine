@@ -8,11 +8,11 @@ Provides diagram generation from YAML definitions:
 """
 
 from .generator import (
-    DiagramGenerator,
-    DiagramDefinition,
-    DiagramConfig,
-    Box,
     Arrow,
+    Box,
+    DiagramConfig,
+    DiagramDefinition,
+    DiagramGenerator,
     generate_diagram,
     generate_diagram_set,
 )

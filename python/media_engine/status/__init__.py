@@ -10,18 +10,18 @@ Comprehensive project status and dashboard views:
 """
 
 from .dashboard import (
-    ProjectDashboard,
     ContentStatus,
-    VideoStatus,
     DeliverableStatus,
+    ProjectDashboard,
+    VideoStatus,
     get_project_dashboard,
     print_dashboard,
 )
 from .views import (
-    print_document_status,
-    print_video_status,
-    print_quality_status,
     print_deliverable_status,
+    print_document_status,
+    print_quality_status,
+    print_video_status,
 )
 
 __all__ = [

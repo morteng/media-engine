@@ -13,13 +13,13 @@ A comprehensive system for managing documentation with:
 """
 
 from .document import Document, DocumentCollection
-from .schema import SchemaValidator, DesignSystem
-from .quality import QualityChecker
-from .references import ReferenceManager
+from .graph import DocumentGraph, DocumentGraphBuilder, GraphEdge, GraphNode
 from .index import SearchIndex
 from .provenance import ProvenanceTracker
-from .graph import DocumentGraph, DocumentGraphBuilder, GraphNode, GraphEdge
-from .translation import TranslationTracker, TranslationStatus
+from .quality import QualityChecker
+from .references import ReferenceManager
+from .schema import DesignSystem, SchemaValidator
+from .translation import TranslationStatus, TranslationTracker
 
 __all__ = [
     "Document",

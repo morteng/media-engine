@@ -6,13 +6,15 @@ Load and apply design system themes from YAML files.
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
+
 import yaml
 
 
 @dataclass
 class ColorPalette:
     """Color palette definition."""
+
     primary: str = "#000000"
     secondary: str = "#333333"
     accent: str = "#0066cc"
@@ -25,6 +27,7 @@ class ColorPalette:
 @dataclass
 class DarkColors:
     """Dark mode color overrides."""
+
     background: str = "#1a1a1a"
     text: str = "#f0f0f0"
     accent: str = "#3399ff"
@@ -35,6 +38,7 @@ class DarkColors:
 @dataclass
 class Typography:
     """Typography settings."""
+
     heading: str = "sans-serif"
     body: str = "sans-serif"
     code: str = "monospace"
@@ -45,6 +49,7 @@ class Typography:
 @dataclass
 class Theme:
     """Complete design system theme."""
+
     name: str = "default"
     colors: ColorPalette = field(default_factory=ColorPalette)
     dark: DarkColors = field(default_factory=DarkColors)
@@ -83,8 +88,7 @@ class Theme:
                 base_size=typography.get("base_size", 16),
                 scale=typography.get("scale", 1.25),
             ),
-            extra={k: v for k, v in data.items()
-                   if k not in ("name", "colors", "typography")},
+            extra={k: v for k, v in data.items() if k not in ("name", "colors", "typography")},
         )
 
     def get_color(self, name: str, dark_mode: bool = False) -> str:

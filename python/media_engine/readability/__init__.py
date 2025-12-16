@@ -16,27 +16,29 @@ Also checks:
 - Jargon density
 """
 
-import re
 import math
+import re
 from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
 from typing import Optional
-from enum import Enum
 
 
 class ReadabilityLevel(str, Enum):
     """Target audience reading levels."""
-    ELEMENTARY = "elementary"      # Grade 1-5
+
+    ELEMENTARY = "elementary"  # Grade 1-5
     MIDDLE_SCHOOL = "middle_school"  # Grade 6-8
-    HIGH_SCHOOL = "high_school"    # Grade 9-12
-    COLLEGE = "college"            # Grade 13-16
-    GRADUATE = "graduate"          # Grade 17+
-    TECHNICAL = "technical"        # Technical documentation
+    HIGH_SCHOOL = "high_school"  # Grade 9-12
+    COLLEGE = "college"  # Grade 13-16
+    GRADUATE = "graduate"  # Grade 17+
+    TECHNICAL = "technical"  # Technical documentation
 
 
 @dataclass
 class ReadabilityMetrics:
     """Computed readability metrics for content."""
+
     # Standard indices
     flesch_reading_ease: float = 0.0
     flesch_kincaid_grade: float = 0.0
@@ -69,6 +71,7 @@ class ReadabilityMetrics:
 @dataclass
 class ReadabilityIssue:
     """A readability problem detected in content."""
+
     issue_type: str
     message: str
     line_number: Optional[int] = None
@@ -80,6 +83,7 @@ class ReadabilityIssue:
 @dataclass
 class ReadabilityReport:
     """Complete readability analysis report."""
+
     metrics: ReadabilityMetrics
     issues: list[ReadabilityIssue] = field(default_factory=list)
     file_path: Optional[Path] = None
@@ -132,10 +136,10 @@ class TextAnalyzer:
     """Analyzes text for readability metrics."""
 
     # Sentence boundary pattern
-    SENTENCE_PATTERN = re.compile(r'[.!?]+(?:\s|$)')
+    SENTENCE_PATTERN = re.compile(r"[.!?]+(?:\s|$)")
 
     # Word pattern (alphanumeric sequences)
-    WORD_PATTERN = re.compile(r'\b[a-zA-Z]+\b')
+    WORD_PATTERN = re.compile(r"\b[a-zA-Z]+\b")
 
     # Complex word threshold (3+ syllables)
     COMPLEX_SYLLABLE_THRESHOLD = 3
@@ -154,23 +158,23 @@ class TextAnalyzer:
     def _clean_text(self, text: str) -> str:
         """Remove markdown formatting for analysis."""
         # Remove code blocks
-        text = re.sub(r'```[\s\S]*?```', '', text)
-        text = re.sub(r'`[^`]+`', '', text)
+        text = re.sub(r"```[\s\S]*?```", "", text)
+        text = re.sub(r"`[^`]+`", "", text)
 
         # Remove links but keep text
-        text = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', text)
+        text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
 
         # Remove headers
-        text = re.sub(r'^#+\s+', '', text, flags=re.MULTILINE)
+        text = re.sub(r"^#+\s+", "", text, flags=re.MULTILINE)
 
         # Remove emphasis markers
-        text = re.sub(r'\*\*([^*]+)\*\*', r'\1', text)
-        text = re.sub(r'\*([^*]+)\*', r'\1', text)
-        text = re.sub(r'__([^_]+)__', r'\1', text)
-        text = re.sub(r'_([^_]+)_', r'\1', text)
+        text = re.sub(r"\*\*([^*]+)\*\*", r"\1", text)
+        text = re.sub(r"\*([^*]+)\*", r"\1", text)
+        text = re.sub(r"__([^_]+)__", r"\1", text)
+        text = re.sub(r"_([^_]+)_", r"\1", text)
 
         # Remove HTML tags
-        text = re.sub(r'<[^>]+>', '', text)
+        text = re.sub(r"<[^>]+>", "", text)
 
         return text
 
@@ -193,8 +197,7 @@ class TextAnalyzer:
 
         # Complex words (3+ syllables)
         self.complex_words = [
-            w for w in self.words
-            if SyllableCounter.count(w) >= self.COMPLEX_SYLLABLE_THRESHOLD
+            w for w in self.words if SyllableCounter.count(w) >= self.COMPLEX_SYLLABLE_THRESHOLD
         ]
         self.complex_word_count = len(self.complex_words)
 
@@ -218,18 +221,10 @@ class TextAnalyzer:
 
         # Flesch Reading Ease
         # Higher = easier to read (0-100 scale)
-        flesch = (
-            206.835
-            - 1.015 * avg_sentence_length
-            - 84.6 * avg_syllables
-        )
+        flesch = 206.835 - 1.015 * avg_sentence_length - 84.6 * avg_syllables
 
         # Flesch-Kincaid Grade Level
-        fk_grade = (
-            0.39 * avg_sentence_length
-            + 11.8 * avg_syllables
-            - 15.59
-        )
+        fk_grade = 0.39 * avg_sentence_length + 11.8 * avg_syllables - 15.59
 
         # Gunning Fog Index
         complex_pct = self.complex_word_count / self.word_count * 100
@@ -239,7 +234,10 @@ class TextAnalyzer:
         if self.sentence_count >= 30:
             smog = 1.0430 * math.sqrt(self.complex_word_count * 30 / self.sentence_count) + 3.1291
         else:
-            smog = 1.0430 * math.sqrt(self.complex_word_count * 30 / max(1, self.sentence_count)) + 3.1291
+            smog = (
+                1.0430 * math.sqrt(self.complex_word_count * 30 / max(1, self.sentence_count))
+                + 3.1291
+            )
 
         # Coleman-Liau Index
         L = self.char_count / self.word_count * 100  # letters per 100 words
@@ -335,12 +333,14 @@ class ReadabilityChecker:
 
         # Check grade level
         if metrics.grade_level > self.target_grade:
-            issues.append(ReadabilityIssue(
-                issue_type="grade_level",
-                message=f"Content reads at grade {metrics.grade_level}, target is {self.target_grade}",
-                suggestion="Simplify vocabulary and shorten sentences",
-                severity="warning",
-            ))
+            issues.append(
+                ReadabilityIssue(
+                    issue_type="grade_level",
+                    message=f"Content reads at grade {metrics.grade_level}, target is {self.target_grade}",
+                    suggestion="Simplify vocabulary and shorten sentences",
+                    severity="warning",
+                )
+            )
 
         # Check long sentences
         for sent, word_count in analyzer.long_sentences:
@@ -351,32 +351,38 @@ class ReadabilityChecker:
                     line_num = i
                     break
 
-            issues.append(ReadabilityIssue(
-                issue_type="long_sentence",
-                message=f"Sentence has {word_count} words (max recommended: {self.max_sentence_length})",
-                line_number=line_num,
-                text_sample=sent[:100] + "..." if len(sent) > 100 else sent,
-                suggestion="Consider breaking into smaller sentences",
-                severity="info",
-            ))
+            issues.append(
+                ReadabilityIssue(
+                    issue_type="long_sentence",
+                    message=f"Sentence has {word_count} words (max recommended: {self.max_sentence_length})",
+                    line_number=line_num,
+                    text_sample=sent[:100] + "..." if len(sent) > 100 else sent,
+                    suggestion="Consider breaking into smaller sentences",
+                    severity="info",
+                )
+            )
 
         # Check complex word percentage
         if metrics.complex_word_percentage > self.max_complex_percentage:
-            issues.append(ReadabilityIssue(
-                issue_type="complex_words",
-                message=f"{metrics.complex_word_percentage}% complex words (max: {self.max_complex_percentage}%)",
-                suggestion="Use simpler alternatives for complex terms",
-                severity="warning",
-            ))
+            issues.append(
+                ReadabilityIssue(
+                    issue_type="complex_words",
+                    message=f"{metrics.complex_word_percentage}% complex words (max: {self.max_complex_percentage}%)",
+                    suggestion="Use simpler alternatives for complex terms",
+                    severity="warning",
+                )
+            )
 
         # Check for very low Flesch score
         if metrics.flesch_reading_ease < 30:
-            issues.append(ReadabilityIssue(
-                issue_type="flesch_score",
-                message=f"Flesch Reading Ease score of {metrics.flesch_reading_ease} is very difficult",
-                suggestion="Content is very difficult to read; simplify significantly",
-                severity="error",
-            ))
+            issues.append(
+                ReadabilityIssue(
+                    issue_type="flesch_score",
+                    message=f"Flesch Reading Ease score of {metrics.flesch_reading_ease} is very difficult",
+                    suggestion="Content is very difficult to read; simplify significantly",
+                    severity="error",
+                )
+            )
 
         passes = metrics.grade_level <= self.target_grade
 
@@ -400,11 +406,14 @@ class ReadabilityChecker:
             doc_target = ReadabilityLevel(doc.metadata["reading_level"])
             target_grade = self.LEVEL_TARGETS[doc_target]
             if report.metrics.grade_level > target_grade:
-                report.issues.insert(0, ReadabilityIssue(
-                    issue_type="document_target",
-                    message=f"Document targets {doc_target.value} but reads at grade {report.metrics.grade_level}",
-                    severity="error",
-                ))
+                report.issues.insert(
+                    0,
+                    ReadabilityIssue(
+                        issue_type="document_target",
+                        message=f"Document targets {doc_target.value} but reads at grade {report.metrics.grade_level}",
+                        severity="error",
+                    ),
+                )
                 report.passes_target = False
 
         return report
@@ -416,16 +425,18 @@ class ReadabilityChecker:
         for lang in project.languages:
             for chapter in project.list_chapters(lang):
                 report = self.check_document(chapter)
-                reports.append({
-                    "file": str(chapter.relative_to(project.root)),
-                    "language": lang,
-                    "grade_level": report.metrics.grade_level,
-                    "reading_level": report.metrics.reading_level.value,
-                    "word_count": report.metrics.word_count,
-                    "reading_time": report.metrics.reading_time_minutes,
-                    "passes_target": report.passes_target,
-                    "issue_count": len(report.issues),
-                })
+                reports.append(
+                    {
+                        "file": str(chapter.relative_to(project.root)),
+                        "language": lang,
+                        "grade_level": report.metrics.grade_level,
+                        "reading_level": report.metrics.reading_level.value,
+                        "word_count": report.metrics.word_count,
+                        "reading_time": report.metrics.reading_time_minutes,
+                        "passes_target": report.passes_target,
+                        "issue_count": len(report.issues),
+                    }
+                )
 
         # Summary
         total = len(reports)

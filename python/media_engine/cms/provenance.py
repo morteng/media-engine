@@ -2,12 +2,12 @@
 Provenance and version tracking for documents.
 """
 
-import json
 import hashlib
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, date
+import json
+from dataclasses import asdict, dataclass, field
+from datetime import date, datetime
 from pathlib import Path
-from typing import Optional, Any
+from typing import Optional
 
 from .document import Document, DocumentCollection
 
@@ -15,6 +15,7 @@ from .document import Document, DocumentCollection
 @dataclass
 class ChangeRecord:
     """Record of a document change."""
+
     timestamp: str
     version_before: str
     version_after: str
@@ -34,6 +35,7 @@ class ChangeRecord:
 @dataclass
 class DocumentProvenance:
     """Provenance information for a document."""
+
     path: str
     created: str
     changes: list[ChangeRecord] = field(default_factory=list)
@@ -126,11 +128,7 @@ class ProvenanceTracker:
         return self.provenance[path_str]
 
     def record_change(
-        self,
-        doc: Document,
-        change_type: str,
-        summary: str,
-        author: str = "AI-assisted"
+        self, doc: Document, change_type: str, summary: str, author: str = "AI-assisted"
     ) -> ChangeRecord:
         """Record a change to a document."""
         self.ensure_loaded()
@@ -164,11 +162,7 @@ class ProvenanceTracker:
         return record
 
     def record_review(
-        self,
-        doc: Document,
-        reviewer: str,
-        approved: bool,
-        comments: Optional[str] = None
+        self, doc: Document, reviewer: str, approved: bool, comments: Optional[str] = None
     ) -> None:
         """Record a review of a document."""
         self.ensure_loaded()
@@ -220,12 +214,24 @@ class ProvenanceTracker:
         description_lower = changes_description.lower()
 
         major_keywords = [
-            "breaking", "restructure", "rewrite", "overhaul",
-            "major", "completely", "redesign"
+            "breaking",
+            "restructure",
+            "rewrite",
+            "overhaul",
+            "major",
+            "completely",
+            "redesign",
         ]
         minor_keywords = [
-            "add", "new section", "new feature", "significant",
-            "diagram", "update", "enhance", "improve", "expand"
+            "add",
+            "new section",
+            "new feature",
+            "significant",
+            "diagram",
+            "update",
+            "enhance",
+            "improve",
+            "expand",
         ]
 
         for keyword in major_keywords:

@@ -4,12 +4,11 @@ Document and DocumentCollection classes for managing markdown documents with fro
 
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, date
+from datetime import date, datetime
 from pathlib import Path
-from typing import Optional, Any
+from typing import Any, Optional
 
 import frontmatter
-import yaml
 
 
 @dataclass
@@ -194,7 +193,7 @@ class Document:
     # Content analysis
     def find_internal_links(self) -> list[str]:
         """Find all internal markdown links."""
-        pattern = r'\[([^\]]+)\]\(([^)]+)\)'
+        pattern = r"\[([^\]]+)\]\(([^)]+)\)"
         links = []
         for match in re.finditer(pattern, self.content):
             link = match.group(2)
@@ -204,25 +203,25 @@ class Document:
 
     def find_citations(self) -> list[int]:
         """Find all citation numbers [1], [2], etc."""
-        pattern = r'\[(\d+)\]'
+        pattern = r"\[(\d+)\]"
         return [int(m.group(1)) for m in re.finditer(pattern, self.content)]
 
     def find_images(self) -> list[str]:
         """Find all image references."""
-        pattern = r'!\[([^\]]*)\]\(([^)]+)\)'
+        pattern = r"!\[([^\]]*)\]\(([^)]+)\)"
         return [m.group(2) for m in re.finditer(pattern, self.content)]
 
     def find_todos(self) -> list[tuple[int, str]]:
         """Find TODO, TBD, placeholder markers with line numbers."""
         todos = []
         patterns = [
-            r'TODO:?\s*(.*)',
-            r'TBD:?\s*(.*)',
-            r'\[placeholder\]',
-            r'\{\{[^}]+\}\}',
-            r'FIXME:?\s*(.*)',
+            r"TODO:?\s*(.*)",
+            r"TBD:?\s*(.*)",
+            r"\[placeholder\]",
+            r"\{\{[^}]+\}\}",
+            r"FIXME:?\s*(.*)",
         ]
-        for i, line in enumerate(self.content.split('\n'), 1):
+        for i, line in enumerate(self.content.split("\n"), 1):
             for pattern in patterns:
                 match = re.search(pattern, line, re.IGNORECASE)
                 if match:
@@ -233,17 +232,17 @@ class Document:
     def find_empty_sections(self) -> list[tuple[int, str]]:
         """Find section headers followed by no content."""
         empty = []
-        lines = self.content.split('\n')
+        lines = self.content.split("\n")
         for i, line in enumerate(lines):
-            if line.startswith('#'):
+            if line.startswith("#"):
                 # Check if next non-empty line is another header or end
                 j = i + 1
                 has_content = False
                 while j < len(lines):
                     next_line = lines[j].strip()
-                    if next_line.startswith('#') or next_line == '---':
+                    if next_line.startswith("#") or next_line == "---":
                         break
-                    if next_line and not next_line.startswith('```'):
+                    if next_line and not next_line.startswith("```"):
                         has_content = True
                         break
                     j += 1
@@ -254,8 +253,8 @@ class Document:
     def get_headings(self) -> list[tuple[int, int, str]]:
         """Get all headings with (line_number, level, text)."""
         headings = []
-        for i, line in enumerate(self.content.split('\n'), 1):
-            match = re.match(r'^(#{1,6})\s+(.+)$', line)
+        for i, line in enumerate(self.content.split("\n"), 1):
+            match = re.match(r"^(#{1,6})\s+(.+)$", line)
             if match:
                 level = len(match.group(1))
                 text = match.group(2).strip()
@@ -265,10 +264,10 @@ class Document:
     def word_count(self) -> int:
         """Count words in content (excluding code blocks)."""
         # Remove code blocks
-        text = re.sub(r'```[\s\S]*?```', '', self.content)
-        text = re.sub(r'`[^`]+`', '', text)
+        text = re.sub(r"```[\s\S]*?```", "", self.content)
+        text = re.sub(r"`[^`]+`", "", text)
         # Count words
-        words = re.findall(r'\b\w+\b', text)
+        words = re.findall(r"\b\w+\b", text)
         return len(words)
 
     # Version management

@@ -15,15 +15,12 @@ Features:
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional, Dict, Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List
 
 from openpyxl import Workbook
-from openpyxl.styles import (
-    Font, PatternFill, Border, Side, Alignment, NamedStyle
-)
 from openpyxl.chart import BarChart, LineChart, Reference
+from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Side
 from openpyxl.utils import get_column_letter
-from openpyxl.formatting.rule import CellIsRule
 
 if TYPE_CHECKING:
     from ..core.theme import Theme
@@ -31,13 +28,14 @@ if TYPE_CHECKING:
 
 def hex_to_argb(hex_color: str) -> str:
     """Convert hex color to ARGB format for openpyxl."""
-    hex_color = hex_color.lstrip('#')
+    hex_color = hex_color.lstrip("#")
     return f"FF{hex_color.upper()}"
 
 
 @dataclass
 class Column:
     """Column definition."""
+
     name: str
     width: float = 12
     format: str = "general"  # general, currency, percent, date, number
@@ -47,6 +45,7 @@ class Column:
 @dataclass
 class SheetData:
     """Data for a worksheet."""
+
     name: str
     title: str = ""
     columns: List[Column] = field(default_factory=list)
@@ -67,7 +66,7 @@ class XLSXBuilder:
         Args:
             theme: Theme for styling (uses defaults if not provided)
         """
-        from ..core.theme import Theme, COPPER_AND_CREAM
+        from ..core.theme import COPPER_AND_CREAM
 
         self.theme = theme or COPPER_AND_CREAM
 
@@ -91,14 +90,10 @@ class XLSXBuilder:
         header_style = NamedStyle(name="header")
         header_style.font = Font(name="Helvetica Neue", size=11, bold=True, color="FFFFFF")
         header_style.fill = PatternFill(
-            start_color=self.color_primary,
-            end_color=self.color_primary,
-            fill_type="solid"
+            start_color=self.color_primary, end_color=self.color_primary, fill_type="solid"
         )
         header_style.alignment = Alignment(horizontal="center", vertical="center")
-        header_style.border = Border(
-            bottom=Side(style='thin', color=self.color_primary)
-        )
+        header_style.border = Border(bottom=Side(style="thin", color=self.color_primary))
         self.wb.add_named_style(header_style)
 
         # Title style
@@ -117,7 +112,7 @@ class XLSXBuilder:
         number_style = NamedStyle(name="number")
         number_style.font = Font(name="Helvetica Neue", size=10, color=self.color_primary)
         number_style.alignment = Alignment(horizontal="right")
-        number_style.number_format = '#,##0'
+        number_style.number_format = "#,##0"
         self.wb.add_named_style(number_style)
 
         # Currency style
@@ -131,22 +126,18 @@ class XLSXBuilder:
         percent_style = NamedStyle(name="percent")
         percent_style.font = Font(name="Helvetica Neue", size=10, color=self.color_primary)
         percent_style.alignment = Alignment(horizontal="right")
-        percent_style.number_format = '0.0%'
+        percent_style.number_format = "0.0%"
         self.wb.add_named_style(percent_style)
 
         # Input style (editable cells)
         input_style = NamedStyle(name="input")
         input_style.font = Font(name="Helvetica Neue", size=10, color=self.color_primary)
-        input_style.fill = PatternFill(
-            start_color="FFFEF9",
-            end_color="FFFEF9",
-            fill_type="solid"
-        )
+        input_style.fill = PatternFill(start_color="FFFEF9", end_color="FFFEF9", fill_type="solid")
         input_style.border = Border(
-            left=Side(style='thin', color=self.color_accent),
-            right=Side(style='thin', color=self.color_accent),
-            top=Side(style='thin', color=self.color_accent),
-            bottom=Side(style='thin', color=self.color_accent)
+            left=Side(style="thin", color=self.color_accent),
+            right=Side(style="thin", color=self.color_accent),
+            top=Side(style="thin", color=self.color_accent),
+            bottom=Side(style="thin", color=self.color_accent),
         )
         input_style.alignment = Alignment(horizontal="right")
         self.wb.add_named_style(input_style)
@@ -155,9 +146,7 @@ class XLSXBuilder:
         highlight_style = NamedStyle(name="highlight")
         highlight_style.font = Font(name="Helvetica Neue", size=11, bold=True, color="FFFFFF")
         highlight_style.fill = PatternFill(
-            start_color=self.color_accent,
-            end_color=self.color_accent,
-            fill_type="solid"
+            start_color=self.color_accent, end_color=self.color_accent, fill_type="solid"
         )
         highlight_style.alignment = Alignment(horizontal="center", vertical="center")
         self.wb.add_named_style(highlight_style)
@@ -166,9 +155,7 @@ class XLSXBuilder:
         alt_row_style = NamedStyle(name="alt_row")
         alt_row_style.font = Font(name="Helvetica Neue", size=10, color=self.color_primary)
         alt_row_style.fill = PatternFill(
-            start_color="FFF7F4F1",
-            end_color="FFF7F4F1",
-            fill_type="solid"
+            start_color="FFF7F4F1", end_color="FFF7F4F1", fill_type="solid"
         )
         self.wb.add_named_style(alt_row_style)
 
@@ -207,7 +194,7 @@ class XLSXBuilder:
                 start_row=current_row,
                 start_column=1,
                 end_row=current_row,
-                end_column=len(columns) if columns else 1
+                end_column=len(columns) if columns else 1,
             )
             current_row += 2  # Leave a blank row
 
@@ -356,11 +343,13 @@ class XLSXBuilder:
                 if isinstance(col_def, str):
                     columns.append(Column(name=col_def))
                 else:
-                    columns.append(Column(
-                        name=col_def.get("name", ""),
-                        width=col_def.get("width", 12),
-                        format=col_def.get("format", "general"),
-                    ))
+                    columns.append(
+                        Column(
+                            name=col_def.get("name", ""),
+                            width=col_def.get("width", 12),
+                            format=col_def.get("format", "general"),
+                        )
+                    )
 
             # Add sheet
             self.add_sheet(

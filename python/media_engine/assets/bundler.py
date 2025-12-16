@@ -7,15 +7,15 @@ Bundles project assets for self-contained deliverable packages.
 import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional, Dict, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 from rich.console import Console
 
 from .fonts import download_theme_fonts, generate_font_faces
 
 if TYPE_CHECKING:
-    from ..core.theme import Theme
     from ..core.project import Project
+    from ..core.theme import Theme
 
 console = Console()
 
@@ -23,6 +23,7 @@ console = Console()
 @dataclass
 class AssetBundle:
     """Result of asset bundling."""
+
     output_dir: Path
     fonts_dir: Optional[Path] = None
     shared_dir: Optional[Path] = None

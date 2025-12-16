@@ -13,13 +13,14 @@ Features:
 """
 
 from pathlib import Path
-from typing import Optional
+
 import markdown
 
 # WeasyPrint import - graceful fallback
 try:
-    from weasyprint import HTML, CSS
+    from weasyprint import CSS, HTML
     from weasyprint.text.fonts import FontConfiguration
+
     HAS_WEASYPRINT = True
 except ImportError:
     HAS_WEASYPRINT = False
@@ -43,9 +44,7 @@ class PDFBuilder:
             theme: Theme instance for styling
         """
         if not HAS_WEASYPRINT:
-            raise RuntimeError(
-                "WeasyPrint not installed. Install with: pip install weasyprint"
-            )
+            raise RuntimeError("WeasyPrint not installed. Install with: pip install weasyprint")
 
         self.theme = theme
         self.font_config = FontConfiguration()
@@ -253,12 +252,14 @@ class PDFBuilder:
             Path to generated PDF
         """
         # Convert markdown to HTML
-        md = markdown.Markdown(extensions=[
-            'tables',
-            'fenced_code',
-            'toc',
-            'meta',
-        ])
+        md = markdown.Markdown(
+            extensions=[
+                "tables",
+                "fenced_code",
+                "toc",
+                "meta",
+            ]
+        )
         html_content = md.convert(content)
 
         # Build full HTML document
@@ -269,12 +270,12 @@ class PDFBuilder:
             parts.append(f"""
             <div class="cover-page">
                 <h1>{title}</h1>
-                {f'<p class="subtitle">{subtitle}</p>' if subtitle else ''}
+                {f'<p class="subtitle">{subtitle}</p>' if subtitle else ""}
             </div>
             """)
 
         # Table of contents
-        if include_toc and hasattr(md, 'toc'):
+        if include_toc and hasattr(md, "toc"):
             parts.append(f"""
             <div class="toc">
                 <h2>Contents</h2>
@@ -293,7 +294,7 @@ class PDFBuilder:
             <title>{title}</title>
         </head>
         <body>
-            {''.join(parts)}
+            {"".join(parts)}
         </body>
         </html>
         """

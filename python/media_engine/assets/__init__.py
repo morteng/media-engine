@@ -6,14 +6,14 @@ Asset management for projects:
 - Asset bundling for self-contained packages
 """
 
+from .bundler import (
+    AssetBundle,
+    bundle_project_assets,
+)
 from .fonts import (
+    FontConfig,
     download_google_fonts,
     generate_font_faces,
-    FontConfig,
-)
-from .bundler import (
-    bundle_project_assets,
-    AssetBundle,
 )
 
 __all__ = [

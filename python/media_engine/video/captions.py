@@ -15,9 +15,9 @@ Usage:
     caption_path = generate_webvtt(script)
 """
 
+from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Tuple
-from dataclasses import dataclass
 
 # Paths
 SCRIPT_DIR = Path(__file__).parent
@@ -28,8 +28,9 @@ CAPTIONS_DIR = PROJECT_ROOT / "docs" / "deliverables" / "assets" / "captions"
 @dataclass
 class CaptionEntry:
     """Represents a single caption entry."""
+
     start_time: float  # seconds
-    end_time: float    # seconds
+    end_time: float  # seconds
     text: str
     style: str = "default"
 
@@ -67,22 +68,24 @@ def generate_vtt_content(entries: List[CaptionEntry], title: str = "") -> str:
         lines.append("")
 
     # Add styling for caption types
-    lines.extend([
-        "STYLE",
-        "::cue(.emphasis) {",
-        "  color: #c45c3c;",
-        "  font-weight: bold;",
-        "}",
-        "",
-        "::cue(.warning) {",
-        "  color: #b8860b;",
-        "}",
-        "",
-        "::cue(.success) {",
-        "  color: #2d6a4f;",
-        "}",
-        ""
-    ])
+    lines.extend(
+        [
+            "STYLE",
+            "::cue(.emphasis) {",
+            "  color: #c45c3c;",
+            "  font-weight: bold;",
+            "}",
+            "",
+            "::cue(.warning) {",
+            "  color: #b8860b;",
+            "}",
+            "",
+            "::cue(.success) {",
+            "  color: #2d6a4f;",
+            "}",
+            "",
+        ]
+    )
 
     # Add caption entries
     for i, entry in enumerate(entries, 1):
@@ -138,12 +141,11 @@ def extract_captions_from_script(script) -> List[CaptionEntry]:
                 remaining_in_scene = scene.duration - caption.time
                 end_time = start_time + min(3.0, remaining_in_scene)
 
-            entries.append(CaptionEntry(
-                start_time=start_time,
-                end_time=end_time,
-                text=caption.text,
-                style=caption.style
-            ))
+            entries.append(
+                CaptionEntry(
+                    start_time=start_time, end_time=end_time, text=caption.text, style=caption.style
+                )
+            )
 
         cumulative_time += scene.duration
 
@@ -188,11 +190,11 @@ def extract_voiceover_captions(script) -> List[CaptionEntry]:
                     start_time = cumulative_time + (i * duration_per_sentence)
                     end_time = start_time + duration_per_sentence
 
-                    entries.append(CaptionEntry(
-                        start_time=start_time,
-                        end_time=end_time,
-                        text=sentence.strip()
-                    ))
+                    entries.append(
+                        CaptionEntry(
+                            start_time=start_time, end_time=end_time, text=sentence.strip()
+                        )
+                    )
 
         cumulative_time += scene.duration
 
@@ -204,7 +206,7 @@ def split_into_sentences(text: str) -> List[str]:
     import re
 
     # Split on sentence boundaries
-    sentences = re.split(r'(?<=[.!?])\s+', text)
+    sentences = re.split(r"(?<=[.!?])\s+", text)
 
     # Filter empty sentences
     sentences = [s.strip() for s in sentences if s.strip()]
@@ -246,7 +248,7 @@ def generate_webvtt(script, include_voiceover: bool = False) -> Path:
     output_path = script.get_caption_path()
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(output_path, 'w', encoding='utf-8') as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         f.write(vtt_content)
 
     print(f"  Captions saved: {output_path}")
@@ -302,12 +304,11 @@ def generate_webvtt_from_manifest(script, timing_manifest) -> Path:
                 remaining = timing.voiceover_duration - caption.time
                 end_time = start_time + min(3.0, max(0.1, remaining))
 
-            entries.append(CaptionEntry(
-                start_time=start_time,
-                end_time=end_time,
-                text=caption.text,
-                style=caption.style
-            ))
+            entries.append(
+                CaptionEntry(
+                    start_time=start_time, end_time=end_time, text=caption.text, style=caption.style
+                )
+            )
 
     entries.sort(key=lambda e: e.start_time)
 
@@ -318,7 +319,7 @@ def generate_webvtt_from_manifest(script, timing_manifest) -> Path:
     output_path = script.get_caption_path()
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(output_path, 'w', encoding='utf-8') as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         f.write(vtt_content)
 
     print(f"  Captions saved: {output_path}")
@@ -337,18 +338,19 @@ def validate_vtt(vtt_path: Path) -> Tuple[bool, List[str]]:
     if not vtt_path.exists():
         return False, ["File does not exist"]
 
-    with open(vtt_path, 'r', encoding='utf-8') as f:
+    with open(vtt_path, "r", encoding="utf-8") as f:
         content = f.read()
 
-    lines = content.split('\n')
+    lines = content.split("\n")
 
     # Check header
-    if not lines or not lines[0].strip().startswith('WEBVTT'):
+    if not lines or not lines[0].strip().startswith("WEBVTT"):
         issues.append("Missing WEBVTT header")
 
     # Check for timing issues
     import re
-    timestamp_pattern = r'(\d{2}:\d{2}:\d{2}\.\d{3})\s+-->\s+(\d{2}:\d{2}:\d{2}\.\d{3})'
+
+    timestamp_pattern = r"(\d{2}:\d{2}:\d{2}\.\d{3})\s+-->\s+(\d{2}:\d{2}:\d{2}\.\d{3})"
 
     last_end_time = 0.0
     for i, line in enumerate(lines):
@@ -362,10 +364,10 @@ def validate_vtt(vtt_path: Path) -> Tuple[bool, List[str]]:
 
             # Check for invalid timing
             if start >= end:
-                issues.append(f"Line {i+1}: Start time >= end time")
+                issues.append(f"Line {i + 1}: Start time >= end time")
 
             if start < last_end_time:
-                issues.append(f"Line {i+1}: Overlapping captions")
+                issues.append(f"Line {i + 1}: Overlapping captions")
 
             last_end_time = end
 
@@ -374,7 +376,7 @@ def validate_vtt(vtt_path: Path) -> Tuple[bool, List[str]]:
 
 def parse_timestamp(ts: str) -> float:
     """Parse WebVTT timestamp to seconds."""
-    parts = ts.split(':')
+    parts = ts.split(":")
     hours = int(parts[0])
     minutes = int(parts[1])
     seconds = float(parts[2])
@@ -385,6 +387,7 @@ def parse_timestamp(ts: str) -> float:
 def main():
     """Test caption generation."""
     import sys
+
     sys.path.insert(0, str(SCRIPT_DIR))
 
     from video_orchestrator import ScriptLoader
@@ -405,7 +408,7 @@ def main():
             # Validate
             is_valid, issues = validate_vtt(path)
             if not is_valid:
-                print(f"  Validation issues:")
+                print("  Validation issues:")
                 for issue in issues:
                     print(f"    - {issue}")
         except Exception as e:

@@ -3,10 +3,10 @@ Quality assurance checks for documents.
 """
 
 import re
+from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
-from collections import Counter
 
 from .document import Document, DocumentCollection
 
@@ -14,6 +14,7 @@ from .document import Document, DocumentCollection
 @dataclass
 class QualityIssue:
     """Represents a quality issue found in a document."""
+
     category: str  # completeness, consistency, readability, links, terminology
     severity: str  # error, warning, info
     message: str
@@ -28,6 +29,7 @@ class QualityIssue:
 @dataclass
 class QualityReport:
     """Quality report for a document."""
+
     document_path: str
     issues: list[QualityIssue] = field(default_factory=list)
     metrics: dict = field(default_factory=dict)
@@ -50,15 +52,17 @@ class QualityReport:
         severity: str,
         message: str,
         line: Optional[int] = None,
-        suggestion: Optional[str] = None
+        suggestion: Optional[str] = None,
     ) -> None:
-        self.issues.append(QualityIssue(
-            category=category,
-            severity=severity,
-            message=message,
-            line=line,
-            suggestion=suggestion
-        ))
+        self.issues.append(
+            QualityIssue(
+                category=category,
+                severity=severity,
+                message=message,
+                line=line,
+                suggestion=suggestion,
+            )
+        )
 
 
 class QualityChecker:
@@ -77,23 +81,31 @@ class QualityChecker:
 
     # Words that suggest incomplete content
     INCOMPLETE_MARKERS = [
-        r'\bTODO\b',
-        r'\bTBD\b',
-        r'\bFIXME\b',
-        r'\bXXX\b',
-        r'\[placeholder\]',
-        r'\{\{[^}]+\}\}',
-        r'\[TBD\]',
-        r'\[TODO\]',
-        r'\.\.\.',  # Ellipsis that might indicate incomplete
-        r'\[insert .+\]',
-        r'\[add .+\]',
+        r"\bTODO\b",
+        r"\bTBD\b",
+        r"\bFIXME\b",
+        r"\bXXX\b",
+        r"\[placeholder\]",
+        r"\{\{[^}]+\}\}",
+        r"\[TBD\]",
+        r"\[TODO\]",
+        r"\.\.\.",  # Ellipsis that might indicate incomplete
+        r"\[insert .+\]",
+        r"\[add .+\]",
     ]
 
     # Jargon that should be defined in glossary
     TECHNICAL_JARGON = [
-        "POS", "API", "SDK", "CMS", "CRUD", "webhook",
-        "86'd", "frontmatter", "pgvector", "FastAPI",
+        "POS",
+        "API",
+        "SDK",
+        "CMS",
+        "CRUD",
+        "webhook",
+        "86'd",
+        "frontmatter",
+        "pgvector",
+        "FastAPI",
     ]
 
     def __init__(self, docs_dir: Path, glossary: Optional[dict] = None):
@@ -128,7 +140,7 @@ class QualityChecker:
 
     def _check_completeness(self, doc: Document, report: QualityReport) -> None:
         """Check for incomplete content markers."""
-        lines = doc.content.split('\n')
+        lines = doc.content.split("\n")
 
         for i, line in enumerate(lines, 1):
             for pattern in self.INCOMPLETE_MARKERS:
@@ -138,7 +150,7 @@ class QualityChecker:
                         severity="warning",
                         message=f"Incomplete content marker found: {line.strip()[:50]}",
                         line=i,
-                        suggestion="Complete or remove placeholder content"
+                        suggestion="Complete or remove placeholder content",
                     )
                     break
 
@@ -149,7 +161,7 @@ class QualityChecker:
                 severity="warning",
                 message=f"Empty section: {heading}",
                 line=line_num,
-                suggestion="Add content or remove empty section"
+                suggestion="Add content or remove empty section",
             )
 
     def _check_consistency(self, doc: Document, report: QualityReport) -> None:
@@ -166,7 +178,7 @@ class QualityChecker:
                     category="consistency",
                     severity="warning",
                     message=f"Title mismatch: frontmatter '{doc.title}' vs H1 '{h1_text}'",
-                    suggestion="Ensure frontmatter title matches document H1"
+                    suggestion="Ensure frontmatter title matches document H1",
                 )
 
         # Check heading hierarchy (no skipped levels)
@@ -178,12 +190,12 @@ class QualityChecker:
                     severity="warning",
                     message=f"Skipped heading level: H{prev_level} to H{level}",
                     line=line_num,
-                    suggestion=f"Use H{prev_level + 1} instead of H{level}"
+                    suggestion=f"Use H{prev_level + 1} instead of H{level}",
                 )
             prev_level = level
 
         # Check for inconsistent list markers
-        bullet_types = re.findall(r'^(\s*)([*\-+])\s', content, re.MULTILINE)
+        bullet_types = re.findall(r"^(\s*)([*\-+])\s", content, re.MULTILINE)
         if bullet_types:
             markers = set(m[1] for m in bullet_types)
             if len(markers) > 1:
@@ -191,17 +203,17 @@ class QualityChecker:
                     category="consistency",
                     severity="info",
                     message=f"Mixed list markers used: {markers}",
-                    suggestion="Use consistent list markers (prefer -)"
+                    suggestion="Use consistent list markers (prefer -)",
                 )
 
     def _check_readability(self, doc: Document, report: QualityReport) -> None:
         """Check readability metrics."""
         # Calculate average sentence length
         # Remove code blocks first
-        text = re.sub(r'```[\s\S]*?```', '', doc.content)
-        text = re.sub(r'`[^`]+`', '', text)
+        text = re.sub(r"```[\s\S]*?```", "", doc.content)
+        text = re.sub(r"`[^`]+`", "", text)
 
-        sentences = re.split(r'[.!?]+', text)
+        sentences = re.split(r"[.!?]+", text)
         sentences = [s.strip() for s in sentences if s.strip()]
 
         if sentences:
@@ -211,20 +223,20 @@ class QualityChecker:
                     category="readability",
                     severity="info",
                     message=f"High average sentence length: {avg_words:.1f} words",
-                    suggestion="Consider breaking long sentences for clarity"
+                    suggestion="Consider breaking long sentences for clarity",
                 )
 
         # Check for very long paragraphs
-        paragraphs = re.split(r'\n\n+', doc.content)
+        paragraphs = re.split(r"\n\n+", doc.content)
         for i, para in enumerate(paragraphs):
-            if not para.startswith('#') and not para.startswith('```'):
+            if not para.startswith("#") and not para.startswith("```"):
                 word_count = len(para.split())
                 if word_count > 200:
                     report.add_issue(
                         category="readability",
                         severity="info",
                         message=f"Long paragraph ({word_count} words)",
-                        suggestion="Consider breaking into smaller paragraphs"
+                        suggestion="Consider breaking into smaller paragraphs",
                     )
 
     def _check_structure(self, doc: Document, report: QualityReport) -> None:
@@ -238,14 +250,14 @@ class QualityChecker:
                 category="structure",
                 severity="error",
                 message="Document has no H1 heading",
-                suggestion="Add a main title with # at the start"
+                suggestion="Add a main title with # at the start",
             )
         elif h1_count > 1:
             report.add_issue(
                 category="structure",
                 severity="warning",
                 message=f"Document has {h1_count} H1 headings (should have 1)",
-                suggestion="Use H2 for sections, keep single H1 for title"
+                suggestion="Use H2 for sections, keep single H1 for title",
             )
 
         # Should have some structure (at least H2s for chapters)
@@ -254,18 +266,18 @@ class QualityChecker:
                 category="structure",
                 severity="info",
                 message="Document has minimal structure",
-                suggestion="Consider adding more section headings"
+                suggestion="Consider adding more section headings",
             )
 
     def _check_terminology(self, doc: Document, report: QualityReport) -> None:
         """Check for terminology consistency."""
         content = doc.content
-        lines = content.split('\n')
+        lines = content.split("\n")
 
         for preferred, alternatives in self.TERMINOLOGY.items():
             for alt in alternatives:
                 # Case-sensitive search for most
-                pattern = r'\b' + re.escape(alt) + r'\b'
+                pattern = r"\b" + re.escape(alt) + r"\b"
                 for i, line in enumerate(lines, 1):
                     if re.search(pattern, line):
                         report.add_issue(
@@ -273,7 +285,7 @@ class QualityChecker:
                             severity="info",
                             message=f"Use '{preferred}' instead of '{alt}'",
                             line=i,
-                            suggestion=f"Replace with standard term: {preferred}"
+                            suggestion=f"Replace with standard term: {preferred}",
                         )
 
         # Check for undefined jargon (if glossary provided)
@@ -284,7 +296,7 @@ class QualityChecker:
                         category="terminology",
                         severity="info",
                         message=f"Technical term '{jargon}' not in glossary",
-                        suggestion="Consider adding to glossary or explaining on first use"
+                        suggestion="Consider adding to glossary or explaining on first use",
                     )
 
     def _check_links(self, doc: Document, report: QualityReport) -> None:
@@ -293,20 +305,20 @@ class QualityChecker:
 
         for link in links:
             # Resolve link path relative to document
-            if link.startswith('/'):
+            if link.startswith("/"):
                 link_path = self.docs_dir.parent / link[1:]
             else:
                 link_path = doc.path.parent / link
 
             # Remove any anchor
-            link_path = Path(str(link_path).split('#')[0])
+            link_path = Path(str(link_path).split("#")[0])
 
             if not link_path.exists():
                 report.add_issue(
                     category="links",
                     severity="error",
                     message=f"Broken link: {link}",
-                    suggestion="Fix path or remove broken link"
+                    suggestion="Fix path or remove broken link",
                 )
 
     def _check_citations(self, doc: Document, report: QualityReport) -> None:
@@ -324,7 +336,7 @@ class QualityChecker:
                     category="citations",
                     severity="error",
                     message=f"Citation [{cite_num}] has no reference in frontmatter",
-                    suggestion="Add reference to frontmatter or remove citation"
+                    suggestion="Add reference to frontmatter or remove citation",
                 )
 
         # Check for unused references
@@ -336,7 +348,7 @@ class QualityChecker:
                     category="citations",
                     severity="warning",
                     message=f"Reference [{ref_id}] '{ref.get('title', '')}' is not cited",
-                    suggestion="Add citation or remove unused reference"
+                    suggestion="Add citation or remove unused reference",
                 )
 
     def _check_images(self, doc: Document, report: QualityReport) -> None:
@@ -345,11 +357,11 @@ class QualityChecker:
 
         for img_path in images:
             # Skip external URLs
-            if img_path.startswith(('http://', 'https://')):
+            if img_path.startswith(("http://", "https://")):
                 continue
 
             # Resolve image path
-            if img_path.startswith('/'):
+            if img_path.startswith("/"):
                 full_path = self.docs_dir.parent / img_path[1:]
             else:
                 full_path = doc.path.parent / img_path
@@ -359,7 +371,7 @@ class QualityChecker:
                     category="images",
                     severity="error",
                     message=f"Missing image: {img_path}",
-                    suggestion="Generate image or fix path"
+                    suggestion="Generate image or fix path",
                 )
 
     def _calculate_metrics(self, doc: Document) -> dict:
@@ -367,24 +379,24 @@ class QualityChecker:
         content = doc.content
 
         # Word count (excluding code)
-        text = re.sub(r'```[\s\S]*?```', '', content)
-        text = re.sub(r'`[^`]+`', '', text)
+        text = re.sub(r"```[\s\S]*?```", "", content)
+        text = re.sub(r"`[^`]+`", "", text)
         words = len(text.split())
 
         # Heading count
         headings = doc.get_headings()
 
         # Code block count
-        code_blocks = len(re.findall(r'```', content)) // 2
+        code_blocks = len(re.findall(r"```", content)) // 2
 
         # Table count
-        tables = len(re.findall(r'^\|.+\|$', content, re.MULTILINE))
+        tables = len(re.findall(r"^\|.+\|$", content, re.MULTILINE))
 
         # Image count
         images = len(doc.find_images())
 
         # Link count
-        links = len(re.findall(r'\[([^\]]+)\]\(([^)]+)\)', content))
+        links = len(re.findall(r"\[([^\]]+)\]\(([^)]+)\)", content))
 
         return {
             "word_count": words,

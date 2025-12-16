@@ -15,18 +15,19 @@ from typing import List
 @dataclass
 class ThemeToggle:
     """Theme toggle button component."""
+
     default_theme: str = "dark"
 
     def render(self) -> str:
-        return '''
+        return """
 <button class="topbar-btn" id="theme-toggle">
     <span id="theme-icon">☀️</span>
     <span id="theme-text">Light</span>
 </button>
-'''
+"""
 
     def render_script(self) -> str:
-        return f'''
+        return f"""
 const themeToggle = document.getElementById('theme-toggle');
 const themeIcon = document.getElementById('theme-icon');
 const themeText = document.getElementById('theme-text');
@@ -50,7 +51,7 @@ themeToggle.addEventListener('click', () => {{
     const current = document.documentElement.getAttribute('data-theme');
     setTheme(current === 'light' ? 'dark' : 'light');
 }});
-'''
+"""
 
 
 @dataclass
@@ -58,14 +59,14 @@ class ReadingProgress:
     """Reading progress bar component."""
 
     def render(self) -> str:
-        return '''
+        return """
 <div class="progress-bar">
     <div class="progress-bar-fill" id="progress"></div>
 </div>
-'''
+"""
 
     def render_script(self) -> str:
-        return '''
+        return """
 const progressBar = document.getElementById('progress');
 window.addEventListener('scroll', () => {
     const scrollTop = window.scrollY;
@@ -73,10 +74,10 @@ window.addEventListener('scroll', () => {
     const progress = (scrollTop / docHeight) * 100;
     progressBar.style.width = progress + '%';
 });
-'''
+"""
 
     def render_css(self) -> str:
-        return '''
+        return """
 .progress-bar {
     position: fixed;
     top: 0;
@@ -93,7 +94,7 @@ window.addEventListener('scroll', () => {
     width: 0%;
     transition: width 0.1s ease;
 }
-'''
+"""
 
 
 @dataclass
@@ -101,12 +102,12 @@ class BackToTop:
     """Back to top button component."""
 
     def render(self) -> str:
-        return '''
+        return """
 <button class="back-to-top" id="back-to-top">↑</button>
-'''
+"""
 
     def render_script(self) -> str:
-        return '''
+        return """
 const backToTop = document.getElementById('back-to-top');
 window.addEventListener('scroll', () => {
     if (window.scrollY > 300) {
@@ -118,10 +119,10 @@ window.addEventListener('scroll', () => {
 backToTop.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 });
-'''
+"""
 
     def render_css(self) -> str:
-        return '''
+        return """
 .back-to-top {
     position: fixed;
     bottom: 32px;
@@ -151,12 +152,13 @@ backToTop.addEventListener('click', () => {
     background: var(--accent-hover);
     transform: translateY(-2px);
 }
-'''
+"""
 
 
 @dataclass
 class TocItem:
     """Table of contents item."""
+
     id: str
     title: str
     level: int = 1
@@ -165,6 +167,7 @@ class TocItem:
 @dataclass
 class Sidebar:
     """Sidebar navigation component."""
+
     title: str = ""
     version: str = ""
     logo_path: str = None
@@ -188,21 +191,21 @@ class Sidebar:
         if self.logo_path:
             logo_html = f'<img src="{self.logo_path}" alt="Logo" class="sidebar-logo">'
 
-        return f'''
+        return f"""
 <nav class="sidebar" id="sidebar">
     <div class="sidebar-header">
         {logo_html}
         <div class="sidebar-title">{self.title}</div>
-        {f'<div class="sidebar-version">Version {self.version}</div>' if self.version else ''}
+        {f'<div class="sidebar-version">Version {self.version}</div>' if self.version else ""}
     </div>
     <ul class="toc">
         {items_html}
     </ul>
 </nav>
-'''
+"""
 
     def render_script(self) -> str:
-        return '''
+        return """
 const tocItems = document.querySelectorAll('.toc-item');
 const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
@@ -218,10 +221,10 @@ const observer = new IntersectionObserver((entries) => {
 document.querySelectorAll('.chapter, h2[id], h3[id]').forEach(section => {
     observer.observe(section);
 });
-'''
+"""
 
     def render_css(self) -> str:
-        return '''
+        return """
 .sidebar {
     position: fixed;
     top: 0;
@@ -302,4 +305,4 @@ document.querySelectorAll('.chapter, h2[id], h3[id]').forEach(section => {
     padding-left: 44px;
     font-size: 12px;
 }
-'''
+"""

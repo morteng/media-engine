@@ -2,15 +2,14 @@
 Tests for media_engine.video module.
 """
 
-import pytest
 from pathlib import Path
 
 from media_engine.video.timeline import (
-    VideoTimeline,
     TimelineClip,
     TimelineTrack,
     TrackType,
     TransitionType,
+    VideoTimeline,
 )
 
 
@@ -159,20 +158,24 @@ class TestTimelineTrack:
     def test_track_duration(self):
         """Test track duration calculation."""
         track = TimelineTrack(name="main", type=TrackType.VIDEO)
-        track.add_clip(TimelineClip(
-            id="clip-1",
-            track=TrackType.VIDEO,
-            source_path=Path("a.mp4"),
-            start_time=0.0,
-            end_time=5.0,
-        ))
-        track.add_clip(TimelineClip(
-            id="clip-2",
-            track=TrackType.VIDEO,
-            source_path=Path("b.mp4"),
-            start_time=5.0,
-            end_time=12.0,
-        ))
+        track.add_clip(
+            TimelineClip(
+                id="clip-1",
+                track=TrackType.VIDEO,
+                source_path=Path("a.mp4"),
+                start_time=0.0,
+                end_time=5.0,
+            )
+        )
+        track.add_clip(
+            TimelineClip(
+                id="clip-2",
+                track=TrackType.VIDEO,
+                source_path=Path("b.mp4"),
+                start_time=5.0,
+                end_time=12.0,
+            )
+        )
         assert track.duration == 12.0
 
     def test_get_clip_at_time(self):
@@ -218,10 +221,10 @@ class TestTransitionType:
 # Video Builder Tests
 from media_engine.video.builder import (
     VideoBuilder,
-    VideoConfig,
-    VideoScript,
-    VideoScene,
     VideoBuildResult,
+    VideoConfig,
+    VideoScene,
+    VideoScript,
 )
 
 

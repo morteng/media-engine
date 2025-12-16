@@ -2,19 +2,16 @@
 Tests for media_engine.diagrams module.
 """
 
-import pytest
-from pathlib import Path
-
+from media_engine.core.theme import COPPER_AND_CREAM
 from media_engine.diagrams import (
-    DiagramGenerator,
-    DiagramDefinition,
-    DiagramConfig,
-    Box,
     Arrow,
+    Box,
+    DiagramConfig,
+    DiagramDefinition,
+    DiagramGenerator,
     generate_diagram,
     generate_diagram_set,
 )
-from media_engine.core.theme import Theme, COPPER_AND_CREAM
 
 
 class TestDiagramDefinition:
@@ -198,9 +195,7 @@ class TestDiagramGenerator:
         )
 
         generator = DiagramGenerator()
-        light, dark = generator.generate_both_themes(
-            definition, temp_dir, "test_diagram"
-        )
+        light, dark = generator.generate_both_themes(definition, temp_dir, "test_diagram")
 
         assert light.exists()
         assert dark.exists()

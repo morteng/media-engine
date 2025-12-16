@@ -7,20 +7,21 @@ Provides:
 - Consistent language and phrasing checks
 """
 
-import json
 import hashlib
+import json
 import re
+from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
-from collections import defaultdict
-
 
 # === Asset Integrity ===
+
 
 @dataclass
 class AssetChecksum:
     """Checksum record for an asset file."""
+
     path: str
     checksum: str
     algorithm: str = "sha256"
@@ -156,20 +157,37 @@ class AssetIntegrityChecker:
         for asset_path in self._find_all_assets():
             relative = str(asset_path.relative_to(self.project.root))
             if relative not in self._checksums:
-                results["untracked"].append({
-                    "status": "untracked",
-                    "path": relative,
-                })
+                results["untracked"].append(
+                    {
+                        "status": "untracked",
+                        "path": relative,
+                    }
+                )
 
         return results
 
     def _find_all_assets(self) -> list[Path]:
         """Find all asset files in the project."""
         asset_extensions = {
-            ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp",
-            ".pdf", ".doc", ".docx", ".xls", ".xlsx",
-            ".mp3", ".mp4", ".wav", ".mov",
-            ".ttf", ".otf", ".woff", ".woff2",
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".gif",
+            ".svg",
+            ".webp",
+            ".pdf",
+            ".doc",
+            ".docx",
+            ".xls",
+            ".xlsx",
+            ".mp3",
+            ".mp4",
+            ".wav",
+            ".mov",
+            ".ttf",
+            ".otf",
+            ".woff",
+            ".woff2",
         }
 
         assets = []
@@ -209,9 +227,11 @@ class AssetIntegrityChecker:
 
 # === Terminology Consistency ===
 
+
 @dataclass
 class GlossaryTerm:
     """A term in the glossary."""
+
     term: str
     definition: str
     preferred_forms: list[str] = field(default_factory=list)
@@ -260,14 +280,16 @@ class TerminologyChecker:
         terms = []
         for lang_terms in self._terms.values():
             for term in lang_terms:
-                terms.append({
-                    "term": term.term,
-                    "definition": term.definition,
-                    "preferred_forms": term.preferred_forms,
-                    "avoid_forms": term.avoid_forms,
-                    "context": term.context,
-                    "language": term.language,
-                })
+                terms.append(
+                    {
+                        "term": term.term,
+                        "definition": term.definition,
+                        "preferred_forms": term.preferred_forms,
+                        "avoid_forms": term.avoid_forms,
+                        "context": term.context,
+                        "language": term.language,
+                    }
+                )
         with open(self.glossary_path, "w") as f:
             json.dump({"terms": terms}, f, indent=2)
 
@@ -306,16 +328,20 @@ class TerminologyChecker:
         for term in self._terms.get(lang, []):
             # Check for forms to avoid
             for avoid in term.avoid_forms:
-                pattern = r'\b' + re.escape(avoid.lower()) + r'\b'
+                pattern = r"\b" + re.escape(avoid.lower()) + r"\b"
                 for match in re.finditer(pattern, content):
-                    issues.append({
-                        "type": "avoid_form",
-                        "term": term.term,
-                        "found": avoid,
-                        "preferred": term.preferred_forms[0] if term.preferred_forms else term.term,
-                        "position": match.start(),
-                        "context": content[max(0, match.start()-30):match.end()+30],
-                    })
+                    issues.append(
+                        {
+                            "type": "avoid_form",
+                            "term": term.term,
+                            "found": avoid,
+                            "preferred": term.preferred_forms[0]
+                            if term.preferred_forms
+                            else term.term,
+                            "position": match.start(),
+                            "context": content[max(0, match.start() - 30) : match.end() + 30],
+                        }
+                    )
 
         return issues
 
@@ -368,9 +394,7 @@ class TerminologyChecker:
                 "documents_with_issues": len(all_issues),
                 "total_issues": total_issues,
             },
-            "issues_by_document": {
-                path: len(issues) for path, issues in all_issues.items()
-            },
+            "issues_by_document": {path: len(issues) for path, issues in all_issues.items()},
             "sample_issues": [
                 {"document": path, "issue": issues[0]}
                 for path, issues in list(all_issues.items())[:5]
@@ -380,6 +404,7 @@ class TerminologyChecker:
 
 
 # === Combined Integrity Report ===
+
 
 def generate_full_integrity_report(project) -> dict:
     """Generate comprehensive integrity report."""

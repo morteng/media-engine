@@ -8,7 +8,7 @@ import re
 import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional, Dict
+from typing import Dict, List
 
 from rich.console import Console
 
@@ -18,6 +18,7 @@ console = Console()
 @dataclass
 class FontConfig:
     """Configuration for a font family."""
+
     name: str
     weights: List[int] = field(default_factory=lambda: [400])
     italic: bool = False
@@ -37,7 +38,9 @@ def get_google_fonts_url(font_name: str, weights: List[int]) -> str:
     """Build Google Fonts CSS URL."""
     weights_str = ";".join(str(w) for w in sorted(weights))
     font_encoded = font_name.replace(" ", "+")
-    return f"https://fonts.googleapis.com/css2?family={font_encoded}:wght@{weights_str}&display=swap"
+    return (
+        f"https://fonts.googleapis.com/css2?family={font_encoded}:wght@{weights_str}&display=swap"
+    )
 
 
 def download_google_fonts(
@@ -60,9 +63,7 @@ def download_google_fonts(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # User-Agent that requests woff2 format
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
-    }
+    headers = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"}
 
     downloaded = {}
 
@@ -89,12 +90,11 @@ def download_google_fonts(
 
             # Extract woff2 URLs
             woff2_urls = re.findall(
-                r"url\((https://fonts\.gstatic\.com/[^)]+\.woff2)\)",
-                css_content
+                r"url\((https://fonts\.gstatic\.com/[^)]+\.woff2)\)", css_content
             )
 
             font_files = []
-            for i, font_url in enumerate(woff2_urls[:len(font_config.weights)]):
+            for i, font_url in enumerate(woff2_urls[: len(font_config.weights)]):
                 weight = font_config.weights[i] if i < len(font_config.weights) else 400
                 filename = f"{font_name.lower().replace(' ', '-')}-{weight}.woff2"
                 dest = font_dir / filename
@@ -113,7 +113,9 @@ def download_google_fonts(
             downloaded[font_name] = font_files
 
             if console_output:
-                console.print(f"  [green]✓[/green] {font_name}: {len(font_files)} weights downloaded")
+                console.print(
+                    f"  [green]✓[/green] {font_name}: {len(font_files)} weights downloaded"
+                )
 
         except Exception as e:
             if console_output:

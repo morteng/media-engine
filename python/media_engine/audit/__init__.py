@@ -13,15 +13,16 @@ All entries are stored in JSON Lines format for easy querying.
 
 import json
 import os
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
-from dataclasses import dataclass, asdict
 
 
 @dataclass
 class AuditEntry:
     """A single audit log entry."""
+
     timestamp: str
     action: str
     category: str
@@ -73,7 +74,7 @@ class AuditLogger:
         details: str = None,
         user: str = None,
         file_path: Path = None,
-        **metadata
+        **metadata,
     ) -> AuditEntry:
         """
         Log an action to the audit trail.
@@ -192,6 +193,7 @@ class AuditLogger:
     def get_recent_activity(self, hours: int = 24) -> list[AuditEntry]:
         """Get recent activity within the specified hours."""
         from datetime import timedelta
+
         since = datetime.now() - timedelta(hours=hours)
         return self.get_entries(since=since)
 
@@ -224,6 +226,7 @@ class AuditLogger:
                 json.dump([e.to_dict() for e in entries], f, indent=2)
         elif format == "csv":
             import csv
+
             with open(output_path, "w", newline="") as f:
                 if entries:
                     writer = csv.DictWriter(f, fieldnames=entries[0].to_dict().keys())
@@ -252,11 +255,7 @@ def get_logger(project) -> AuditLogger:
 
 
 def log_action(
-    project,
-    action: str,
-    details: str = None,
-    user: str = None,
-    **metadata
+    project, action: str, details: str = None, user: str = None, **metadata
 ) -> AuditEntry:
     """Log an action for a project."""
     logger = get_logger(project)
@@ -271,6 +270,7 @@ def get_recent_entries(project, limit: int = 50) -> list[dict]:
 
 
 # === Predefined Actions ===
+
 
 class Actions:
     """Predefined action constants for consistency."""

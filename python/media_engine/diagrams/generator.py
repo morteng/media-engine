@@ -7,15 +7,13 @@ Supports light and dark themes with configurable styling.
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional, Any
-import yaml
+from typing import Optional
 
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
-import numpy as np
+import yaml
+from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
 
-from ..core.theme import Theme, COPPER_AND_CREAM
+from ..core.theme import COPPER_AND_CREAM, Theme
 
 # Default theme for diagrams
 DEFAULT_THEME = COPPER_AND_CREAM
@@ -24,6 +22,7 @@ DEFAULT_THEME = COPPER_AND_CREAM
 @dataclass
 class DiagramConfig:
     """Configuration for diagram generation."""
+
     width: float = 12
     height: float = 8
     dpi: int = 150
@@ -35,6 +34,7 @@ class DiagramConfig:
 @dataclass
 class Box:
     """A box element in a diagram."""
+
     id: str
     label: str
     x: float
@@ -49,6 +49,7 @@ class Box:
 @dataclass
 class Arrow:
     """An arrow connection between boxes."""
+
     from_id: str
     to_id: str
     label: str = ""
@@ -60,6 +61,7 @@ class Arrow:
 @dataclass
 class DiagramDefinition:
     """Complete diagram definition."""
+
     title: str
     description: str = ""
     boxes: list[Box] = field(default_factory=list)
@@ -71,28 +73,32 @@ class DiagramDefinition:
         """Create from dictionary/YAML data."""
         boxes = []
         for box_data in data.get("boxes", []):
-            boxes.append(Box(
-                id=box_data["id"],
-                label=box_data["label"],
-                x=box_data["x"],
-                y=box_data["y"],
-                width=box_data.get("width", 1.5),
-                height=box_data.get("height", 0.8),
-                color=box_data.get("color"),
-                text_color=box_data.get("text_color"),
-                style=box_data.get("style", "rounded"),
-            ))
+            boxes.append(
+                Box(
+                    id=box_data["id"],
+                    label=box_data["label"],
+                    x=box_data["x"],
+                    y=box_data["y"],
+                    width=box_data.get("width", 1.5),
+                    height=box_data.get("height", 0.8),
+                    color=box_data.get("color"),
+                    text_color=box_data.get("text_color"),
+                    style=box_data.get("style", "rounded"),
+                )
+            )
 
         arrows = []
         for arrow_data in data.get("arrows", []):
-            arrows.append(Arrow(
-                from_id=arrow_data["from"],
-                to_id=arrow_data["to"],
-                label=arrow_data.get("label", ""),
-                style=arrow_data.get("style", "solid"),
-                color=arrow_data.get("color"),
-                curved=arrow_data.get("curved", False),
-            ))
+            arrows.append(
+                Arrow(
+                    from_id=arrow_data["from"],
+                    to_id=arrow_data["to"],
+                    label=arrow_data.get("label", ""),
+                    style=arrow_data.get("style", "solid"),
+                    color=arrow_data.get("color"),
+                    curved=arrow_data.get("curved", False),
+                )
+            )
 
         config_data = data.get("config", {})
         config = DiagramConfig(

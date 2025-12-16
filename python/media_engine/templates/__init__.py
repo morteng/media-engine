@@ -9,22 +9,22 @@ Professional HTML templates with:
 - Self-contained offline support
 """
 
+from .components import (
+    BackToTop,
+    ReadingProgress,
+    Sidebar,
+    ThemeToggle,
+)
 from .html_document import (
-    DocumentTemplate,
-    CoverConfig,
     ChapterConfig,
+    CoverConfig,
+    DocumentTemplate,
     render_document,
 )
 from .html_index import (
     IndexTemplate,
     render_language_index,
     render_project_index,
-)
-from .components import (
-    ThemeToggle,
-    ReadingProgress,
-    BackToTop,
-    Sidebar,
 )
 
 __all__ = [

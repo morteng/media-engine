@@ -13,22 +13,24 @@ Prevents accidental leaks in published documentation.
 
 import re
 from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
 from typing import Optional
-from enum import Enum
 
 
 class SensitivityLevel(str, Enum):
     """Severity levels for sensitive content."""
+
     CRITICAL = "critical"  # API keys, passwords - blocks publish
-    HIGH = "high"          # PII, internal IPs - warns loudly
-    MEDIUM = "medium"      # Suspicious patterns - warns
-    LOW = "low"            # Potential issues - info
+    HIGH = "high"  # PII, internal IPs - warns loudly
+    MEDIUM = "medium"  # Suspicious patterns - warns
+    LOW = "low"  # Potential issues - info
 
 
 @dataclass
 class SensitiveMatch:
     """A detected sensitive content match."""
+
     pattern_name: str
     matched_text: str
     redacted_text: str
@@ -104,7 +106,6 @@ PATTERNS = {
         "level": SensitivityLevel.HIGH,
         "description": "JWT Token",
     },
-
     # PII - Personal Identifiable Information
     "email": {
         "pattern": r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}",
@@ -132,7 +133,6 @@ PATTERNS = {
         "level": SensitivityLevel.CRITICAL,
         "description": "Credit Card Number",
     },
-
     # Network/Infrastructure
     "ipv4_private": {
         "pattern": r"\b(?:10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}|172\.(?:1[6-9]|2[0-9]|3[01])\.[0-9]{1,3}\.[0-9]{1,3}|192\.168\.[0-9]{1,3}\.[0-9]{1,3})\b",
@@ -144,7 +144,6 @@ PATTERNS = {
         "level": SensitivityLevel.MEDIUM,
         "description": "Internal/Development URL",
     },
-
     # File paths that might be sensitive
     "windows_path": {
         "pattern": r"[A-Z]:\\(?:Users|Documents|Desktop)\\[^\s\"'<>]+",
@@ -230,16 +229,18 @@ class SensitiveContentScanner:
                     end = min(len(line), match.end() + 20)
                     context = line[start:end]
 
-                    matches.append(SensitiveMatch(
-                        pattern_name=name,
-                        matched_text=matched_text,
-                        redacted_text=redacted,
-                        line_number=line_num,
-                        column=match.start() + 1,
-                        level=config["level"],
-                        file_path=file_path,
-                        context=context,
-                    ))
+                    matches.append(
+                        SensitiveMatch(
+                            pattern_name=name,
+                            matched_text=matched_text,
+                            redacted_text=redacted,
+                            line_number=line_num,
+                            column=match.start() + 1,
+                            level=config["level"],
+                            file_path=file_path,
+                            context=context,
+                        )
+                    )
 
         return matches
 
@@ -337,11 +338,13 @@ class SensitiveContentScanner:
             key = str(match.file_path) if match.file_path else "unknown"
             if key not in by_file:
                 by_file[key] = []
-            by_file[key].append({
-                "line": match.line_number,
-                "pattern": match.pattern_name,
-                "level": match.level.value,
-            })
+            by_file[key].append(
+                {
+                    "line": match.line_number,
+                    "pattern": match.pattern_name,
+                    "level": match.level.value,
+                }
+            )
         return by_file
 
 

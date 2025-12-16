@@ -3,10 +3,10 @@ Cross-reference management for documents.
 """
 
 import re
-from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Optional, Any
 from collections import defaultdict
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Optional
 
 from .document import Document, DocumentCollection
 
@@ -14,6 +14,7 @@ from .document import Document, DocumentCollection
 @dataclass
 class Reference:
     """A reference to another document or external source."""
+
     source_doc: str  # Path of document containing the reference
     target: str  # Target path, URL, or reference ID
     ref_type: str  # internal, external, citation, image
@@ -28,6 +29,7 @@ class Reference:
 @dataclass
 class ReferenceIssue:
     """An issue with a reference."""
+
     reference: Reference
     issue_type: str  # broken, orphan, circular, missing_anchor
     message: str
@@ -63,8 +65,8 @@ class ReferenceManager:
         for link in doc.find_internal_links():
             anchor = None
             target = link
-            if '#' in link:
-                target, anchor = link.split('#', 1)
+            if "#" in link:
+                target, anchor = link.split("#", 1)
 
             ref = Reference(
                 source_doc=doc_path,
@@ -76,7 +78,7 @@ class ReferenceManager:
             self.reverse_refs[target or doc_path].append(ref)
 
         # External links
-        external_pattern = r'\[([^\]]+)\]\((https?://[^)]+)\)'
+        external_pattern = r"\[([^\]]+)\]\((https?://[^)]+)\)"
         for match in re.finditer(external_pattern, doc.content):
             ref = Reference(
                 source_doc=doc_path,
@@ -122,10 +124,7 @@ class ReferenceManager:
         issues = []
 
         # Get all document paths
-        doc_paths = {
-            str(doc.path.relative_to(self.docs_dir))
-            for doc in collection.all_documents
-        }
+        doc_paths = {str(doc.path.relative_to(self.docs_dir)) for doc in collection.all_documents}
 
         # Get all anchors per document
         doc_anchors: dict[str, set[str]] = {}
@@ -142,7 +141,7 @@ class ReferenceManager:
             # Check internal links
             if ref.ref_type == "internal":
                 target = ref.target
-                if target and not target.startswith('#'):
+                if target and not target.startswith("#"):
                     # Resolve relative path
                     source_dir = Path(ref.source_doc).parent
                     resolved = (source_dir / target).resolve()
@@ -154,36 +153,42 @@ class ReferenceManager:
                     # Check if target exists
                     full_path = self.docs_dir / target
                     if not full_path.exists() and resolved_rel not in doc_paths:
-                        issues.append(ReferenceIssue(
-                            reference=ref,
-                            issue_type="broken",
-                            message=f"Target document not found: {target}"
-                        ))
+                        issues.append(
+                            ReferenceIssue(
+                                reference=ref,
+                                issue_type="broken",
+                                message=f"Target document not found: {target}",
+                            )
+                        )
                     elif ref.anchor:
                         # Check anchor exists in target
                         target_path = resolved_rel if resolved_rel in doc_paths else target
                         if target_path in doc_anchors:
                             if ref.anchor not in doc_anchors[target_path]:
-                                issues.append(ReferenceIssue(
-                                    reference=ref,
-                                    issue_type="missing_anchor",
-                                    message=f"Anchor #{ref.anchor} not found in {target}"
-                                ))
+                                issues.append(
+                                    ReferenceIssue(
+                                        reference=ref,
+                                        issue_type="missing_anchor",
+                                        message=f"Anchor #{ref.anchor} not found in {target}",
+                                    )
+                                )
 
             # Check images
             elif ref.ref_type == "image":
-                if not ref.target.startswith(('http://', 'https://')):
+                if not ref.target.startswith(("http://", "https://")):
                     source_dir = Path(ref.source_doc).parent
                     img_path = self.docs_dir / source_dir / ref.target
                     if not img_path.exists():
                         # Also check from docs root
                         img_path = self.docs_dir.parent / ref.target
                         if not img_path.exists():
-                            issues.append(ReferenceIssue(
-                                reference=ref,
-                                issue_type="broken",
-                                message=f"Image not found: {ref.target}"
-                            ))
+                            issues.append(
+                                ReferenceIssue(
+                                    reference=ref,
+                                    issue_type="broken",
+                                    message=f"Image not found: {ref.target}",
+                                )
+                            )
 
         return issues
 
@@ -191,8 +196,8 @@ class ReferenceManager:
         """Convert a heading to an anchor ID."""
         # Lowercase, replace spaces with hyphens, remove special chars
         anchor = heading.lower()
-        anchor = re.sub(r'[^\w\s-]', '', anchor)
-        anchor = re.sub(r'\s+', '-', anchor)
+        anchor = re.sub(r"[^\w\s-]", "", anchor)
+        anchor = re.sub(r"\s+", "-", anchor)
         return anchor
 
     def get_incoming_refs(self, doc_path: str) -> list[Reference]:
@@ -212,7 +217,7 @@ class ReferenceManager:
         for doc in collection.all_documents:
             path = str(doc.path.relative_to(self.docs_dir))
             # Skip index/readme files
-            if doc.path.stem.lower() in ('index', 'readme', '00_introduction'):
+            if doc.path.stem.lower() in ("index", "readme", "00_introduction"):
                 continue
             if not self.reverse_refs.get(path):
                 orphans.append(doc)
@@ -254,8 +259,7 @@ class ReferenceManager:
 
         # Convert back to documents
         path_to_doc = {
-            str(doc.path.relative_to(self.docs_dir)): doc
-            for doc in collection.all_documents
+            str(doc.path.relative_to(self.docs_dir)): doc for doc in collection.all_documents
         }
 
         return [path_to_doc[p] for p in result if p in path_to_doc]
@@ -330,8 +334,7 @@ class ReferenceManager:
         # Collect external links
         external = [r for r in self.references if r.ref_type == "external"]
         ref_map["external_links"] = [
-            {"url": r.target, "text": r.text, "source": r.source_doc}
-            for r in external
+            {"url": r.target, "text": r.text, "source": r.source_doc} for r in external
         ]
 
         # Collect images

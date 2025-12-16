@@ -12,14 +12,13 @@ Features:
 - Segment concatenation
 """
 
-import asyncio
 import hashlib
 import os
 import re
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
 
 if TYPE_CHECKING:
     from ..core.project import Project
@@ -28,6 +27,7 @@ if TYPE_CHECKING:
 @dataclass
 class AudioSegment:
     """Represents a generated audio segment."""
+
     id: str
     text: str
     duration: float
@@ -38,6 +38,7 @@ class AudioSegment:
 @dataclass
 class VoiceoverResult:
     """Result of voiceover generation."""
+
     audio_path: Path
     total_duration: float
     segments: List[AudioSegment]
@@ -47,13 +48,13 @@ class VoiceoverResult:
 def get_api_key() -> str:
     """Get ElevenLabs API key from environment."""
     from dotenv import load_dotenv
+
     load_dotenv()
 
     key = os.environ.get("ELEVEN_LABS_API_KEY") or os.environ.get("ELEVENLABS_API_KEY")
     if not key:
         raise ValueError(
-            "ELEVEN_LABS_API_KEY not set. "
-            "Add it to .env file or export as environment variable."
+            "ELEVEN_LABS_API_KEY not set. Add it to .env file or export as environment variable."
         )
     return key
 
@@ -71,11 +72,11 @@ def clean_text(text: str) -> str:
         return ""
 
     # Remove markers
-    text = re.sub(r'\[pause:[0-9.]+\]', ' ', text)
-    text = re.sub(r'\[(emphasis|slower|faster|break)\]', '', text)
+    text = re.sub(r"\[pause:[0-9.]+\]", " ", text)
+    text = re.sub(r"\[(emphasis|slower|faster|break)\]", "", text)
 
     # Clean whitespace
-    text = re.sub(r'\s+', ' ', text).strip()
+    text = re.sub(r"\s+", " ", text).strip()
 
     return text
 
@@ -107,17 +108,17 @@ def calculate_pause(text: str, is_last: bool = False) -> float:
     if not clean:
         return 0.3
 
-    last_char = clean.rstrip()[-1] if clean.rstrip() else '.'
+    last_char = clean.rstrip()[-1] if clean.rstrip() else "."
 
     # Pause based on punctuation
-    if last_char == '?':
+    if last_char == "?":
         return 0.9  # Questions need comprehension time
-    elif last_char == '!':
+    elif last_char == "!":
         return 0.6  # Exclamations
-    elif last_char == '.':
+    elif last_char == ".":
         word_count = len(clean.split())
         return 0.5 if word_count < 5 else 0.4
-    elif last_char in [',', ';', ':']:
+    elif last_char in [",", ";", ":"]:
         return 0.25  # Continuing thought
     else:
         return 0.4
@@ -127,6 +128,7 @@ def measure_duration(audio_path: Path) -> float:
     """Measure duration of an audio file in seconds."""
     try:
         from pydub import AudioSegment
+
         audio = AudioSegment.from_mp3(str(audio_path))
         return len(audio) / 1000.0
     except Exception:
@@ -279,7 +281,7 @@ async def generate_voiceover(
 
     try:
         for i, (seg_id, text) in enumerate(texts):
-            is_last = (i == len(texts) - 1)
+            is_last = i == len(texts) - 1
             segment_path = temp_dir / f"{i:03d}_{seg_id}.mp3"
 
             if progress_callback:
@@ -305,13 +307,15 @@ async def generate_voiceover(
             # Calculate pause
             pause = calculate_pause(text, is_last)
 
-            segments.append(AudioSegment(
-                id=seg_id,
-                text=text,
-                duration=duration,
-                audio_path=path,
-                pause_after=pause,
-            ))
+            segments.append(
+                AudioSegment(
+                    id=seg_id,
+                    text=text,
+                    duration=duration,
+                    audio_path=path,
+                    pause_after=pause,
+                )
+            )
 
             if progress_callback:
                 progress_callback(seg_id, "done")
@@ -415,7 +419,7 @@ async def generate_voiceover_macos(
 
     try:
         for i, (seg_id, text) in enumerate(texts):
-            is_last = (i == len(texts) - 1)
+            is_last = i == len(texts) - 1
             clean = clean_text(text)
 
             if not clean:
@@ -424,28 +428,42 @@ async def generate_voiceover_macos(
             segment_path = temp_dir / f"{i:03d}.aiff"
 
             # Use macOS say command
-            subprocess.run([
-                'say', '-v', voice, '-o', str(segment_path), clean
-            ], check=True, capture_output=True)
+            subprocess.run(
+                ["say", "-v", voice, "-o", str(segment_path), clean],
+                check=True,
+                capture_output=True,
+            )
 
             # Convert to mp3
             mp3_path = temp_dir / f"{i:03d}.mp3"
-            subprocess.run([
-                'ffmpeg', '-y', '-i', str(segment_path),
-                '-c:a', 'libmp3lame', '-b:a', '192k',
-                str(mp3_path)
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-y",
+                    "-i",
+                    str(segment_path),
+                    "-c:a",
+                    "libmp3lame",
+                    "-b:a",
+                    "192k",
+                    str(mp3_path),
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             duration = measure_duration(mp3_path)
             pause = calculate_pause(text, is_last)
 
-            segments.append(AudioSegment(
-                id=seg_id,
-                text=text,
-                duration=duration,
-                audio_path=mp3_path,
-                pause_after=pause,
-            ))
+            segments.append(
+                AudioSegment(
+                    id=seg_id,
+                    text=text,
+                    duration=duration,
+                    audio_path=mp3_path,
+                    pause_after=pause,
+                )
+            )
 
         # Concatenate
         total_duration = await concatenate_segments(segments, output_path)

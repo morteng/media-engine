@@ -9,20 +9,20 @@ Provides REST API and WebSocket endpoints for:
 - Build operations
 """
 
-import asyncio
 import json
+import webbrowser
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
-import webbrowser
+from typing import Optional
 
 # FastAPI imports - graceful fallback
 try:
-    from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
-    from fastapi.staticfiles import StaticFiles
-    from fastapi.responses import HTMLResponse, FileResponse
-    from fastapi.middleware.cors import CORSMiddleware
     import uvicorn
+    from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+    from fastapi.middleware.cors import CORSMiddleware
+    from fastapi.responses import FileResponse, HTMLResponse
+    from fastapi.staticfiles import StaticFiles
+
     HAS_FASTAPI = True
 except ImportError:
     HAS_FASTAPI = False
@@ -44,11 +44,14 @@ class ConnectionManager:
         await websocket.accept()
         self.active_connections.append(websocket)
         # Notify others of new user
-        await self.broadcast({
-            "type": "user_joined",
-            "user_id": user_id,
-            "timestamp": datetime.now().isoformat(),
-        }, exclude=websocket)
+        await self.broadcast(
+            {
+                "type": "user_joined",
+                "user_id": user_id,
+                "timestamp": datetime.now().isoformat(),
+            },
+            exclude=websocket,
+        )
 
     def disconnect(self, websocket: WebSocket, user_id: str):
         self.active_connections.remove(websocket)
@@ -65,13 +68,15 @@ class ConnectionManager:
 
     async def update_cursor(self, user_id: str, file: str, line: int, col: int):
         self.user_cursors[user_id] = {"file": file, "line": line, "col": col}
-        await self.broadcast({
-            "type": "cursor_update",
-            "user_id": user_id,
-            "file": file,
-            "line": line,
-            "col": col,
-        })
+        await self.broadcast(
+            {
+                "type": "cursor_update",
+                "user_id": user_id,
+                "file": file,
+                "line": line,
+                "col": col,
+            }
+        )
 
 
 def create_app(project_path: Optional[Path] = None) -> "FastAPI":
@@ -85,9 +90,7 @@ def create_app(project_path: Optional[Path] = None) -> "FastAPI":
         FastAPI application instance
     """
     if not HAS_FASTAPI:
-        raise RuntimeError(
-            "FastAPI not installed. Install with: pip install media-engine[web]"
-        )
+        raise RuntimeError("FastAPI not installed. Install with: pip install media-engine[web]")
 
     app = FastAPI(
         title="Media Engine Dashboard",
@@ -165,6 +168,7 @@ def create_app(project_path: Optional[Path] = None) -> "FastAPI":
     async def get_translations():
         """Get all translation statuses."""
         from ..cms.translation import TranslationTracker
+
         project = get_project()
         tracker = TranslationTracker(project)
         statuses = tracker.get_all_statuses()
@@ -223,8 +227,7 @@ def create_app(project_path: Optional[Path] = None) -> "FastAPI":
                     # Find translation
                     status = None
                     for s in tracker.get_all_statuses():
-                        if (str(s.source_path) == str(source_path) and
-                            s.target_language == lang):
+                        if str(s.source_path) == str(source_path) and s.target_language == lang:
                             status = s
                             break
 
@@ -252,6 +255,7 @@ def create_app(project_path: Optional[Path] = None) -> "FastAPI":
     async def get_quality():
         """Run quality checks and return report."""
         from ..quality import run_quality_checks
+
         project = get_project()
         report = run_quality_checks(project, console_output=False)
 
@@ -276,6 +280,7 @@ def create_app(project_path: Optional[Path] = None) -> "FastAPI":
     async def get_validation():
         """Validate project and return report."""
         from ..validation import validate_project
+
         project = get_project()
         schema_path = project.root / "schema.yaml"
 
@@ -304,6 +309,7 @@ def create_app(project_path: Optional[Path] = None) -> "FastAPI":
     async def get_chapters(language: str):
         """Get chapters for a language."""
         from ..cms.document import Document
+
         project = get_project()
 
         if language not in project.languages:
@@ -323,8 +329,9 @@ def create_app(project_path: Optional[Path] = None) -> "FastAPI":
     @app.get("/api/document")
     async def get_document(path: str):
         """Get a document's content and metadata."""
-        from ..cms.document import Document
         import markdown
+
+        from ..cms.document import Document
 
         doc_path = Path(path)
         if not doc_path.exists():
@@ -333,13 +340,15 @@ def create_app(project_path: Optional[Path] = None) -> "FastAPI":
         doc = Document.load(doc_path)
 
         # Render markdown to HTML
-        md = markdown.Markdown(extensions=[
-            'tables',
-            'fenced_code',
-            'toc',
-            'meta',
-            'codehilite',
-        ])
+        md = markdown.Markdown(
+            extensions=[
+                "tables",
+                "fenced_code",
+                "toc",
+                "meta",
+                "codehilite",
+            ]
+        )
         html_content = md.convert(doc.content)
 
         return {
@@ -354,6 +363,7 @@ def create_app(project_path: Optional[Path] = None) -> "FastAPI":
     async def list_documents(language: str):
         """List all documents for a language with metadata."""
         from ..cms.document import Document
+
         project = get_project()
 
         if language not in project.languages:
@@ -364,71 +374,83 @@ def create_app(project_path: Optional[Path] = None) -> "FastAPI":
         # Chapters
         for chapter in project.list_chapters(language):
             doc = Document.load(chapter)
-            documents.append({
-                "path": str(chapter),
-                "filename": chapter.name,
-                "title": doc.title,
-                "type": "chapter",
-                "metadata": doc.metadata,
-            })
+            documents.append(
+                {
+                    "path": str(chapter),
+                    "filename": chapter.name,
+                    "title": doc.title,
+                    "type": "chapter",
+                    "metadata": doc.metadata,
+                }
+            )
 
         # Scripts
         for script in project.list_scripts(language):
-            documents.append({
-                "path": str(script),
-                "filename": script.name,
-                "title": script.stem.replace("_", " ").title(),
-                "type": "script",
-                "metadata": {},
-            })
+            documents.append(
+                {
+                    "path": str(script),
+                    "filename": script.name,
+                    "title": script.stem.replace("_", " ").title(),
+                    "type": "script",
+                    "metadata": {},
+                }
+            )
 
         # Diagrams
         diagrams_dir = project.content_dir / language / "diagrams"
         if diagrams_dir.exists():
             for diagram in diagrams_dir.glob("*.yaml"):
-                documents.append({
-                    "path": str(diagram),
-                    "filename": diagram.name,
-                    "title": diagram.stem.replace("_", " ").title(),
-                    "type": "diagram",
-                    "metadata": {},
-                })
+                documents.append(
+                    {
+                        "path": str(diagram),
+                        "filename": diagram.name,
+                        "title": diagram.stem.replace("_", " ").title(),
+                        "type": "diagram",
+                        "metadata": {},
+                    }
+                )
 
         # Slides
         slides_dir = project.content_dir / language / "slides"
         if slides_dir.exists():
             for slide in slides_dir.glob("*.yaml"):
-                documents.append({
-                    "path": str(slide),
-                    "filename": slide.name,
-                    "title": slide.stem.replace("_", " ").title(),
-                    "type": "slides",
-                    "metadata": {},
-                })
+                documents.append(
+                    {
+                        "path": str(slide),
+                        "filename": slide.name,
+                        "title": slide.stem.replace("_", " ").title(),
+                        "type": "slides",
+                        "metadata": {},
+                    }
+                )
 
         # Data
         data_dir = project.content_dir / language / "data"
         if data_dir.exists():
             for data_file in data_dir.glob("*.yaml"):
-                documents.append({
-                    "path": str(data_file),
-                    "filename": data_file.name,
-                    "title": data_file.stem.replace("_", " ").title(),
-                    "type": "data",
-                    "metadata": {},
-                })
+                documents.append(
+                    {
+                        "path": str(data_file),
+                        "filename": data_file.name,
+                        "title": data_file.stem.replace("_", " ").title(),
+                        "type": "data",
+                        "metadata": {},
+                    }
+                )
 
         # Demos
         demos_dir = project.content_dir / language / "demos"
         if demos_dir.exists():
             for demo in demos_dir.glob("*.yaml"):
-                documents.append({
-                    "path": str(demo),
-                    "filename": demo.name,
-                    "title": demo.stem.replace("_", " ").title(),
-                    "type": "demo",
-                    "metadata": {},
-                })
+                documents.append(
+                    {
+                        "path": str(demo),
+                        "filename": demo.name,
+                        "title": demo.stem.replace("_", " ").title(),
+                        "type": "demo",
+                        "metadata": {},
+                    }
+                )
 
         return {
             "language": language,
@@ -448,7 +470,7 @@ def create_app(project_path: Optional[Path] = None) -> "FastAPI":
 
         # Parse YAML if applicable
         parsed = None
-        if file_path.suffix in ('.yaml', '.yml'):
+        if file_path.suffix in (".yaml", ".yml"):
             try:
                 parsed = yaml.safe_load(content)
             except:
@@ -459,7 +481,7 @@ def create_app(project_path: Optional[Path] = None) -> "FastAPI":
             "filename": file_path.name,
             "content": content,
             "parsed": parsed,
-            "type": file_path.suffix.lstrip('.'),
+            "type": file_path.suffix.lstrip("."),
         }
 
     @app.post("/api/document")
@@ -478,11 +500,13 @@ def create_app(project_path: Optional[Path] = None) -> "FastAPI":
         doc.save()
 
         # Broadcast change to collaborators
-        await manager.broadcast({
-            "type": "document_saved",
-            "path": path,
-            "timestamp": datetime.now().isoformat(),
-        })
+        await manager.broadcast(
+            {
+                "type": "document_saved",
+                "path": path,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
 
         return {"status": "saved", "path": path}
 
@@ -524,21 +548,26 @@ def create_app(project_path: Optional[Path] = None) -> "FastAPI":
                     )
                 elif data.get("type") == "edit":
                     # Broadcast edit to other users
-                    await manager.broadcast({
-                        "type": "edit",
-                        "user_id": user_id,
-                        "file": data.get("file"),
-                        "changes": data.get("changes"),
-                        "timestamp": datetime.now().isoformat(),
-                    }, exclude=websocket)
+                    await manager.broadcast(
+                        {
+                            "type": "edit",
+                            "user_id": user_id,
+                            "file": data.get("file"),
+                            "changes": data.get("changes"),
+                            "timestamp": datetime.now().isoformat(),
+                        },
+                        exclude=websocket,
+                    )
 
         except WebSocketDisconnect:
             manager.disconnect(websocket, user_id)
-            await manager.broadcast({
-                "type": "user_left",
-                "user_id": user_id,
-                "timestamp": datetime.now().isoformat(),
-            })
+            await manager.broadcast(
+                {
+                    "type": "user_left",
+                    "user_id": user_id,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
 
     return app
 
@@ -1297,18 +1326,19 @@ def run_dashboard(
         open_browser: Whether to open browser automatically
     """
     if not HAS_FASTAPI:
-        raise RuntimeError(
-            "FastAPI not installed. Install with: pip install media-engine[web]"
-        )
+        raise RuntimeError("FastAPI not installed. Install with: pip install media-engine[web]")
 
     app = create_app(project_path)
 
     if open_browser:
         import threading
+
         def open_browser_delayed():
             import time
+
             time.sleep(1)
             webbrowser.open(f"http://{host}:{port}")
+
         threading.Thread(target=open_browser_delayed, daemon=True).start()
 
     uvicorn.run(app, host=host, port=port)

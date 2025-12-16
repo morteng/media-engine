@@ -10,21 +10,22 @@ Validates both internal and external links in documentation:
 Caches results to avoid hammering external servers.
 """
 
-import re
-import json
 import hashlib
-import urllib.request
+import json
+import re
 import urllib.error
+import urllib.request
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from enum import Enum
 from pathlib import Path
 from typing import Optional
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from enum import Enum
 
 
 class LinkStatus(str, Enum):
     """Link validation status."""
+
     VALID = "valid"
     BROKEN = "broken"
     TIMEOUT = "timeout"
@@ -36,6 +37,7 @@ class LinkStatus(str, Enum):
 @dataclass
 class LinkResult:
     """Result of link validation."""
+
     url: str
     status: LinkStatus
     status_code: Optional[int] = None
@@ -111,8 +113,8 @@ class LinkChecker:
     ]
 
     # Link patterns in markdown
-    MD_LINK_PATTERN = re.compile(r'\[([^\]]*)\]\(([^)]+)\)')
-    MD_IMAGE_PATTERN = re.compile(r'!\[([^\]]*)\]\(([^)]+)\)')
+    MD_LINK_PATTERN = re.compile(r"\[([^\]]*)\]\(([^)]+)\)")
+    MD_IMAGE_PATTERN = re.compile(r"!\[([^\]]*)\]\(([^)]+)\)")
     HTML_LINK_PATTERN = re.compile(r'href=["\']([^"\']+)["\']')
     HTML_IMG_PATTERN = re.compile(r'src=["\']([^"\']+)["\']')
 
@@ -148,40 +150,46 @@ class LinkChecker:
                 continue
 
             # Remove inline code before checking for links
-            line_without_code = re.sub(r'`[^`]+`', '', line)
+            line_without_code = re.sub(r"`[^`]+`", "", line)
 
             # Markdown links
             for match in self.MD_LINK_PATTERN.finditer(line_without_code):
                 text, url = match.groups()
-                links.append({
-                    "url": url,
-                    "text": text,
-                    "type": "link",
-                    "source_file": source_file,
-                    "source_line": line_num,
-                })
+                links.append(
+                    {
+                        "url": url,
+                        "text": text,
+                        "type": "link",
+                        "source_file": source_file,
+                        "source_line": line_num,
+                    }
+                )
 
             # Markdown images
             for match in self.MD_IMAGE_PATTERN.finditer(line_without_code):
                 alt, url = match.groups()
-                links.append({
-                    "url": url,
-                    "text": alt,
-                    "type": "image",
-                    "source_file": source_file,
-                    "source_line": line_num,
-                })
+                links.append(
+                    {
+                        "url": url,
+                        "text": alt,
+                        "type": "image",
+                        "source_file": source_file,
+                        "source_line": line_num,
+                    }
+                )
 
             # HTML links
             for match in self.HTML_LINK_PATTERN.finditer(line_without_code):
                 url = match.group(1)
-                links.append({
-                    "url": url,
-                    "text": "",
-                    "type": "html_link",
-                    "source_file": source_file,
-                    "source_line": line_num,
-                })
+                links.append(
+                    {
+                        "url": url,
+                        "text": "",
+                        "type": "html_link",
+                        "source_file": source_file,
+                        "source_line": line_num,
+                    }
+                )
 
         return links
 
@@ -217,9 +225,7 @@ class LinkChecker:
 
         try:
             req = urllib.request.Request(
-                url,
-                method="HEAD",
-                headers={"User-Agent": "MediaEngine-LinkChecker/1.0"}
+                url, method="HEAD", headers={"User-Agent": "MediaEngine-LinkChecker/1.0"}
             )
             with urllib.request.urlopen(req, timeout=self.timeout) as response:
                 elapsed = (datetime.now() - start_time).total_seconds() * 1000

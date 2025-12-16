@@ -11,12 +11,12 @@ Checks content for common issues:
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Dict, Optional, TYPE_CHECKING
-import yaml
+from typing import TYPE_CHECKING, Dict, List
 
+import yaml
+from rich import box
 from rich.console import Console
 from rich.table import Table
-from rich import box
 
 if TYPE_CHECKING:
     from ..core.project import Project
@@ -27,6 +27,7 @@ console = Console()
 @dataclass
 class QualityIssue:
     """A quality issue found in content."""
+
     type: str  # placeholder, terminology, encoding, empty
     severity: str  # error, warning, info
     file_path: Path
@@ -38,6 +39,7 @@ class QualityIssue:
 @dataclass
 class QualityReport:
     """Report of all quality issues."""
+
     issues: List[QualityIssue] = field(default_factory=list)
     files_checked: int = 0
     passed: bool = True
@@ -58,16 +60,16 @@ class QualityReport:
 
 # Placeholder patterns
 PLACEHOLDER_PATTERNS = [
-    (r'\bTODO\b', 'TODO marker found'),
-    (r'\bTBD\b', 'TBD marker found'),
-    (r'\bFIXME\b', 'FIXME marker found'),
-    (r'\bXXX\b', 'XXX marker found'),
-    (r'\[placeholder\]', 'Placeholder marker'),
-    (r'\[TBD\]', 'TBD marker'),
-    (r'\[TODO\]', 'TODO marker'),
-    (r'<placeholder>', 'Placeholder marker'),
-    (r'\$\{.*?\}', 'Template variable not replaced'),
-    (r'\{\{.*?\}\}', 'Template variable not replaced'),
+    (r"\bTODO\b", "TODO marker found"),
+    (r"\bTBD\b", "TBD marker found"),
+    (r"\bFIXME\b", "FIXME marker found"),
+    (r"\bXXX\b", "XXX marker found"),
+    (r"\[placeholder\]", "Placeholder marker"),
+    (r"\[TBD\]", "TBD marker"),
+    (r"\[TODO\]", "TODO marker"),
+    (r"<placeholder>", "Placeholder marker"),
+    (r"\$\{.*?\}", "Template variable not replaced"),
+    (r"\{\{.*?\}\}", "Template variable not replaced"),
 ]
 
 
@@ -86,24 +88,26 @@ def check_placeholders(
         List of issues found
     """
     issues = []
-    lines = content.split('\n')
+    lines = content.split("\n")
 
     for line_num, line in enumerate(lines, 1):
         # Skip code blocks
-        if line.strip().startswith('```'):
+        if line.strip().startswith("```"):
             continue
 
         for pattern, message in PLACEHOLDER_PATTERNS:
             matches = re.finditer(pattern, line, re.IGNORECASE)
             for match in matches:
-                issues.append(QualityIssue(
-                    type="placeholder",
-                    severity="warning",
-                    file_path=file_path,
-                    line=line_num,
-                    message=message,
-                    context=line.strip()[:80],
-                ))
+                issues.append(
+                    QualityIssue(
+                        type="placeholder",
+                        severity="warning",
+                        file_path=file_path,
+                        line=line_num,
+                        message=message,
+                        context=line.strip()[:80],
+                    )
+                )
 
     return issues
 
@@ -111,16 +115,16 @@ def check_placeholders(
 # Norwegian character patterns for encoding issues
 NORWEGIAN_ISSUES = [
     # Mojibake patterns (UTF-8 read as Latin-1)
-    (r'Ã¦', 'æ', 'Encoding issue: should be æ'),
-    (r'Ã¸', 'ø', 'Encoding issue: should be ø'),
-    (r'Ã¥', 'å', 'Encoding issue: should be å'),
-    (r'Ã†', 'Æ', 'Encoding issue: should be Æ'),
-    (r'Ã˜', 'Ø', 'Encoding issue: should be Ø'),
-    (r'Ã…', 'Å', 'Encoding issue: should be Å'),
+    (r"Ã¦", "æ", "Encoding issue: should be æ"),
+    (r"Ã¸", "ø", "Encoding issue: should be ø"),
+    (r"Ã¥", "å", "Encoding issue: should be å"),
+    (r"Ã†", "Æ", "Encoding issue: should be Æ"),
+    (r"Ã˜", "Ø", "Encoding issue: should be Ø"),
+    (r"Ã…", "Å", "Encoding issue: should be Å"),
     # Common typos
-    (r'\baa\b', 'å', 'Possible typo: aa → å'),
-    (r'\boe\b', 'ø', 'Possible typo: oe → ø'),
-    (r'\bae\b', 'æ', 'Possible typo: ae → æ'),
+    (r"\baa\b", "å", "Possible typo: aa → å"),
+    (r"\boe\b", "ø", "Possible typo: oe → ø"),
+    (r"\bae\b", "æ", "Possible typo: ae → æ"),
 ]
 
 
@@ -144,23 +148,25 @@ def check_encoding(
         return []
 
     issues = []
-    lines = content.split('\n')
+    lines = content.split("\n")
 
     for line_num, line in enumerate(lines, 1):
         # Skip lines that are documentation examples (patterns inside backticks)
         # Remove inline code before checking
-        line_without_code = re.sub(r'`[^`]+`', '', line)
+        line_without_code = re.sub(r"`[^`]+`", "", line)
 
         for pattern, replacement, message in NORWEGIAN_ISSUES:
             if re.search(pattern, line_without_code):
-                issues.append(QualityIssue(
-                    type="encoding",
-                    severity="error" if "Encoding" in message else "warning",
-                    file_path=file_path,
-                    line=line_num,
-                    message=message,
-                    context=line.strip()[:80],
-                ))
+                issues.append(
+                    QualityIssue(
+                        type="encoding",
+                        severity="error" if "Encoding" in message else "warning",
+                        file_path=file_path,
+                        line=line_num,
+                        message=message,
+                        context=line.strip()[:80],
+                    )
+                )
 
     return issues
 
@@ -202,24 +208,26 @@ def check_terminology(
         return []
 
     issues = []
-    lines = content.split('\n')
+    lines = content.split("\n")
 
     for line_num, line in enumerate(lines, 1):
         # Skip code blocks
-        if line.strip().startswith('```'):
+        if line.strip().startswith("```"):
             continue
 
         line_lower = line.lower()
         for incorrect, correct in glossary.items():
             if incorrect in line_lower:
-                issues.append(QualityIssue(
-                    type="terminology",
-                    severity="info",
-                    file_path=file_path,
-                    line=line_num,
-                    message=f'Use "{correct}" instead of "{incorrect}"',
-                    context=line.strip()[:80],
-                ))
+                issues.append(
+                    QualityIssue(
+                        type="terminology",
+                        severity="info",
+                        file_path=file_path,
+                        line=line_num,
+                        message=f'Use "{correct}" instead of "{incorrect}"',
+                        context=line.strip()[:80],
+                    )
+                )
 
     return issues
 
@@ -239,7 +247,7 @@ def check_empty_sections(
         List of issues found
     """
     issues = []
-    lines = content.split('\n')
+    lines = content.split("\n")
 
     prev_header_line = None
     prev_header_text = None
@@ -247,7 +255,7 @@ def check_empty_sections(
 
     for line_num, line in enumerate(lines, 1):
         # Track code blocks
-        if line.strip().startswith('```'):
+        if line.strip().startswith("```"):
             in_code_block = not in_code_block
             # Code block delimiter counts as content - reset header tracking
             prev_header_line = None
@@ -259,24 +267,26 @@ def check_empty_sections(
             continue
 
         # Check if current line is a header
-        header_match = re.match(r'^(#{1,6})\s+(.+)$', line)
+        header_match = re.match(r"^(#{1,6})\s+(.+)$", line)
 
         if header_match:
             # If previous was a header and we're on another header, first was empty
             if prev_header_line is not None:
-                issues.append(QualityIssue(
-                    type="empty",
-                    severity="warning",
-                    file_path=file_path,
-                    line=prev_header_line,
-                    message="Empty section - no content after header",
-                    context=prev_header_text,
-                ))
+                issues.append(
+                    QualityIssue(
+                        type="empty",
+                        severity="warning",
+                        file_path=file_path,
+                        line=prev_header_line,
+                        message="Empty section - no content after header",
+                        context=prev_header_text,
+                    )
+                )
 
             prev_header_line = line_num
             prev_header_text = line.strip()
 
-        elif line.strip() and not line.startswith('#'):
+        elif line.strip() and not line.startswith("#"):
             # Non-empty, non-header content resets the check
             prev_header_line = None
             prev_header_text = None
@@ -340,9 +350,11 @@ def print_quality_report(report: QualityReport):
         console.print(f"\n[green]✓ All {report.files_checked} files passed quality checks[/green]")
         return
 
-    console.print(f"\n[bold]Quality Report[/bold]")
+    console.print("\n[bold]Quality Report[/bold]")
     console.print(f"Files checked: {report.files_checked}")
-    console.print(f"Issues found: {len(report.issues)} ({report.error_count} errors, {report.warning_count} warnings)")
+    console.print(
+        f"Issues found: {len(report.issues)} ({report.error_count} errors, {report.warning_count} warnings)"
+    )
     console.print()
 
     # Group by file

@@ -2,13 +2,10 @@
 Tests for media_engine.builders module.
 """
 
-import pytest
-from pathlib import Path
-
-from media_engine.builders.html import HTMLBuilder, HTMLConfig, build_html
-from media_engine.builders.pptx import PPTXBuilder, SlideContent, build_pptx
-from media_engine.builders.xlsx import XLSXBuilder, Column, build_xlsx
-from media_engine.core.theme import Theme, COPPER_AND_CREAM
+from media_engine.builders.html import HTMLBuilder, HTMLConfig
+from media_engine.builders.pptx import PPTXBuilder, SlideContent
+from media_engine.builders.xlsx import Column, XLSXBuilder
+from media_engine.core.theme import COPPER_AND_CREAM
 
 
 class TestHTMLBuilder:

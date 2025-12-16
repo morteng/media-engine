@@ -5,20 +5,22 @@ A Project is the main entry point for media-engine. It loads project.yaml,
 manages content, and coordinates builds.
 """
 
+import hashlib
+import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
-import json
-import hashlib
+
 import yaml
 
-from .config import Config, load_config
+from .config import Config
 from .theme import Theme, load_theme
 
 
 @dataclass
 class LanguageConfig:
     """Configuration for a single language."""
+
     code: str
     name: str
     voice_id: str = ""
@@ -266,6 +268,7 @@ class Project:
 
         # Copy to cache
         import shutil
+
         shutil.copy2(audio_path, cache_path)
 
         # Update manifest
@@ -335,6 +338,7 @@ class Project:
             Number of items cleared
         """
         import shutil
+
         count = 0
 
         if cache_type in (None, "all", "voiceover"):

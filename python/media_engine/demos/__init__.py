@@ -11,31 +11,33 @@ Supports embedding interactive demos in documentation:
 Demos are defined as YAML files and rendered to self-contained HTML.
 """
 
-import json
-import html
 import hashlib
+import html
+import json
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Optional, Any
 from enum import Enum
+from pathlib import Path
+from typing import Any, Optional
 
 
 class DemoType(str, Enum):
     """Types of interactive demos."""
-    CODE_PLAYGROUND = "code_playground"    # HTML/CSS/JS editor
-    DATA_VIZ = "data_viz"                  # Charts and graphs
+
+    CODE_PLAYGROUND = "code_playground"  # HTML/CSS/JS editor
+    DATA_VIZ = "data_viz"  # Charts and graphs
     INTERACTIVE_DIAGRAM = "interactive_diagram"  # Clickable diagrams
-    FORM_DEMO = "form_demo"                # Form with validation
-    API_EXPLORER = "api_explorer"          # API endpoint tester
-    CALCULATOR = "calculator"              # Interactive calculator
-    TIMELINE = "timeline"                  # Interactive timeline
-    COMPARISON = "comparison"              # Side-by-side comparison
-    QUIZ = "quiz"                          # Interactive quiz
+    FORM_DEMO = "form_demo"  # Form with validation
+    API_EXPLORER = "api_explorer"  # API endpoint tester
+    CALCULATOR = "calculator"  # Interactive calculator
+    TIMELINE = "timeline"  # Interactive timeline
+    COMPARISON = "comparison"  # Side-by-side comparison
+    QUIZ = "quiz"  # Interactive quiz
 
 
 @dataclass
 class DemoConfig:
     """Configuration for an interactive demo."""
+
     id: str
     type: DemoType
     title: str
@@ -183,7 +185,7 @@ class DemoRenderer:
                 doc.write('<style>' + cssCode + '</style>' + htmlCode + '<script>' + jsCode + '<\\/script>');
                 doc.close();
             }}
-            {'runDemo_' + config.id + '();' if config.autorun else ''}
+            {"runDemo_" + config.id + "();" if config.autorun else ""}
         </script>
         """
 
@@ -426,7 +428,9 @@ class DemoRenderer:
                        oninput="calculate_{config.id}()" style="width: 100px;">
             </div>
             """
-            js_vars.append(f'const {name} = parseFloat(document.getElementById("var-{config.id}-{name}").value) || 0;')
+            js_vars.append(
+                f'const {name} = parseFloat(document.getElementById("var-{config.id}-{name}").value) || 0;'
+            )
 
         return f"""
         {self._base_styles(config)}
@@ -473,7 +477,7 @@ class DemoRenderer:
             desc = html.escape(event.get("description", ""))
 
             events_html += f"""
-            <div class="timeline-item" style="{'flex-direction: row-reverse;' if i % 2 else ''}">
+            <div class="timeline-item" style="{"flex-direction: row-reverse;" if i % 2 else ""}">
                 <div class="timeline-content">
                     <div class="timeline-date">{date}</div>
                     <div class="timeline-title">{title}</div>
@@ -726,7 +730,7 @@ class DemoBuilder:
     def __init__(self, project):
         self.project = project
         self.loader = DemoLoader(project)
-        self.renderer = DemoRenderer(theme=project.theme if hasattr(project, 'theme') else None)
+        self.renderer = DemoRenderer(theme=project.theme if hasattr(project, "theme") else None)
 
     def build_demo(self, demo_path: Path) -> str:
         """Build a single demo to HTML."""

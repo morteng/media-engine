@@ -16,13 +16,13 @@ Features:
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional, Dict, Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
 
 from pptx import Presentation
-from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
-from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE
+from pptx.enum.text import PP_ALIGN
+from pptx.util import Inches, Pt
 
 if TYPE_CHECKING:
     from ..core.theme import Theme
@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 
 def hex_to_rgb(hex_color: str) -> RGBColor:
     """Convert hex color to RGBColor."""
-    hex_color = hex_color.lstrip('#')
+    hex_color = hex_color.lstrip("#")
     r = int(hex_color[0:2], 16)
     g = int(hex_color[2:4], 16)
     b = int(hex_color[4:6], 16)
@@ -40,6 +40,7 @@ def hex_to_rgb(hex_color: str) -> RGBColor:
 @dataclass
 class SlideContent:
     """Content for a single slide."""
+
     type: str  # title, content, two_column, image, quote, section
     title: str = ""
     subtitle: str = ""
@@ -63,7 +64,7 @@ class PPTXBuilder:
         Args:
             theme: Theme for styling (uses defaults if not provided)
         """
-        from ..core.theme import Theme, COPPER_AND_CREAM
+        from ..core.theme import COPPER_AND_CREAM
 
         self.theme = theme or COPPER_AND_CREAM
 
@@ -119,9 +120,7 @@ class PPTXBuilder:
         alignment: PP_ALIGN = PP_ALIGN.LEFT,
     ):
         """Add a text box to a slide."""
-        txBox = slide.shapes.add_textbox(
-            Inches(left), Inches(top), Inches(width), Inches(height)
-        )
+        txBox = slide.shapes.add_textbox(Inches(left), Inches(top), Inches(width), Inches(height))
         tf = txBox.text_frame
         tf.word_wrap = True
 
@@ -146,9 +145,7 @@ class PPTXBuilder:
         font_size: int = 18,
     ):
         """Add a bulleted list to a slide."""
-        txBox = slide.shapes.add_textbox(
-            Inches(left), Inches(top), Inches(width), Inches(height)
-        )
+        txBox = slide.shapes.add_textbox(Inches(left), Inches(top), Inches(width), Inches(height))
         tf = txBox.text_frame
         tf.word_wrap = True
 
@@ -176,8 +173,12 @@ class PPTXBuilder:
 
         # Title
         self._add_text_box(
-            slide, title,
-            left=0.8, top=2.5, width=11.7, height=1.5,
+            slide,
+            title,
+            left=0.8,
+            top=2.5,
+            width=11.7,
+            height=1.5,
             font_name=self.font_heading,
             font_size=54,
             font_color=self.color_primary,
@@ -188,8 +189,12 @@ class PPTXBuilder:
         # Subtitle
         if subtitle:
             self._add_text_box(
-                slide, subtitle,
-                left=0.8, top=4.2, width=11.7, height=0.8,
+                slide,
+                subtitle,
+                left=0.8,
+                top=4.2,
+                width=11.7,
+                height=0.8,
                 font_name=self.font_body,
                 font_size=24,
                 font_color=self.color_muted,
@@ -198,8 +203,7 @@ class PPTXBuilder:
 
         # Accent bar
         shape = slide.shapes.add_shape(
-            MSO_SHAPE.RECTANGLE,
-            Inches(5.5), Inches(4.0), Inches(2.3), Inches(0.05)
+            MSO_SHAPE.RECTANGLE, Inches(5.5), Inches(4.0), Inches(2.3), Inches(0.05)
         )
         shape.fill.solid()
         shape.fill.fore_color.rgb = self.color_accent
@@ -223,8 +227,12 @@ class PPTXBuilder:
 
         # Title
         self._add_text_box(
-            slide, title,
-            left=0.8, top=0.5, width=11.7, height=0.8,
+            slide,
+            title,
+            left=0.8,
+            top=0.5,
+            width=11.7,
+            height=0.8,
             font_name=self.font_heading,
             font_size=36,
             font_color=self.color_primary,
@@ -233,8 +241,7 @@ class PPTXBuilder:
 
         # Accent underline
         shape = slide.shapes.add_shape(
-            MSO_SHAPE.RECTANGLE,
-            Inches(0.8), Inches(1.2), Inches(1.5), Inches(0.03)
+            MSO_SHAPE.RECTANGLE, Inches(0.8), Inches(1.2), Inches(1.5), Inches(0.03)
         )
         shape.fill.solid()
         shape.fill.fore_color.rgb = self.color_accent
@@ -243,8 +250,12 @@ class PPTXBuilder:
         # Bullets
         if bullets:
             self._add_bullet_list(
-                slide, bullets,
-                left=0.8, top=1.5, width=11.7, height=5.5,
+                slide,
+                bullets,
+                left=0.8,
+                top=1.5,
+                width=11.7,
+                height=5.5,
                 font_size=20,
             )
 
@@ -269,8 +280,12 @@ class PPTXBuilder:
 
         # Title
         self._add_text_box(
-            slide, title,
-            left=0.8, top=0.5, width=11.7, height=0.8,
+            slide,
+            title,
+            left=0.8,
+            top=0.5,
+            width=11.7,
+            height=0.8,
             font_name=self.font_heading,
             font_size=36,
             font_color=self.color_primary,
@@ -279,8 +294,12 @@ class PPTXBuilder:
 
         # Left column title
         self._add_text_box(
-            slide, left_title,
-            left=0.8, top=1.5, width=5.5, height=0.5,
+            slide,
+            left_title,
+            left=0.8,
+            top=1.5,
+            width=5.5,
+            height=0.5,
             font_name=self.font_heading,
             font_size=24,
             font_color=self.color_accent,
@@ -289,15 +308,23 @@ class PPTXBuilder:
 
         # Left column bullets
         self._add_bullet_list(
-            slide, left_bullets,
-            left=0.8, top=2.1, width=5.5, height=4.5,
+            slide,
+            left_bullets,
+            left=0.8,
+            top=2.1,
+            width=5.5,
+            height=4.5,
             font_size=18,
         )
 
         # Right column title
         self._add_text_box(
-            slide, right_title,
-            left=7.0, top=1.5, width=5.5, height=0.5,
+            slide,
+            right_title,
+            left=7.0,
+            top=1.5,
+            width=5.5,
+            height=0.5,
             font_name=self.font_heading,
             font_size=24,
             font_color=self.color_accent,
@@ -306,8 +333,12 @@ class PPTXBuilder:
 
         # Right column bullets
         self._add_bullet_list(
-            slide, right_bullets,
-            left=7.0, top=2.1, width=5.5, height=4.5,
+            slide,
+            right_bullets,
+            left=7.0,
+            top=2.1,
+            width=5.5,
+            height=4.5,
             font_size=18,
         )
 
@@ -330,8 +361,12 @@ class PPTXBuilder:
 
         # Title
         self._add_text_box(
-            slide, title,
-            left=0.8, top=0.5, width=11.7, height=0.8,
+            slide,
+            title,
+            left=0.8,
+            top=0.5,
+            width=11.7,
+            height=0.8,
             font_name=self.font_heading,
             font_size=36,
             font_color=self.color_primary,
@@ -341,16 +376,18 @@ class PPTXBuilder:
         # Image
         if image_path.exists():
             slide.shapes.add_picture(
-                str(image_path),
-                Inches(1.5), Inches(1.5),
-                width=Inches(10.3), height=Inches(5.2)
+                str(image_path), Inches(1.5), Inches(1.5), width=Inches(10.3), height=Inches(5.2)
             )
 
         # Caption
         if caption:
             self._add_text_box(
-                slide, caption,
-                left=0.8, top=6.9, width=11.7, height=0.4,
+                slide,
+                caption,
+                left=0.8,
+                top=6.9,
+                width=11.7,
+                height=0.4,
                 font_size=14,
                 font_color=self.color_muted,
                 alignment=PP_ALIGN.CENTER,
@@ -374,8 +411,12 @@ class PPTXBuilder:
 
         # Quote
         self._add_text_box(
-            slide, f'"{quote}"',
-            left=1.5, top=2.0, width=10.3, height=3.0,
+            slide,
+            f'"{quote}"',
+            left=1.5,
+            top=2.0,
+            width=10.3,
+            height=3.0,
             font_name=self.font_heading,
             font_size=32,
             font_color=hex_to_rgb("#ffffff"),
@@ -385,8 +426,12 @@ class PPTXBuilder:
         # Author
         if author:
             self._add_text_box(
-                slide, f"— {author}",
-                left=1.5, top=5.0, width=10.3, height=0.5,
+                slide,
+                f"— {author}",
+                left=1.5,
+                top=5.0,
+                width=10.3,
+                height=0.5,
                 font_size=20,
                 font_color=self.color_accent,
                 alignment=PP_ALIGN.CENTER,
@@ -410,8 +455,12 @@ class PPTXBuilder:
 
         # Section number/title
         self._add_text_box(
-            slide, title,
-            left=0.8, top=3.0, width=11.7, height=1.0,
+            slide,
+            title,
+            left=0.8,
+            top=3.0,
+            width=11.7,
+            height=1.0,
             font_name=self.font_heading,
             font_size=48,
             font_color=hex_to_rgb("#ffffff"),
@@ -421,8 +470,12 @@ class PPTXBuilder:
 
         if subtitle:
             self._add_text_box(
-                slide, subtitle,
-                left=0.8, top=4.2, width=11.7, height=0.6,
+                slide,
+                subtitle,
+                left=0.8,
+                top=4.2,
+                width=11.7,
+                height=0.6,
                 font_size=24,
                 font_color=hex_to_rgb("#ffffff"),
                 alignment=PP_ALIGN.CENTER,
@@ -442,8 +495,10 @@ class PPTXBuilder:
         elif content.type == "two_column":
             return self.add_two_column_slide(
                 content.title,
-                "Left", content.left_bullets,
-                "Right", content.right_bullets,
+                "Left",
+                content.left_bullets,
+                "Right",
+                content.right_bullets,
                 content.notes,
             )
         elif content.type == "image":
@@ -502,8 +557,10 @@ class PPTXBuilder:
                 quote = " ".join(quote_lines)
                 # Check for author
                 if "—" in quote or "-" in quote:
-                    parts = re.split(r'[—-]', quote, 1)
-                    self.add_quote_slide(parts[0].strip(), parts[1].strip() if len(parts) > 1 else "")
+                    parts = re.split(r"[—-]", quote, 1)
+                    self.add_quote_slide(
+                        parts[0].strip(), parts[1].strip() if len(parts) > 1 else ""
+                    )
                 else:
                     self.add_quote_slide(quote)
 

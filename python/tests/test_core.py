@@ -2,11 +2,8 @@
 Tests for media_engine.core module.
 """
 
-import pytest
-from pathlib import Path
-
-from media_engine.core.config import Config, VoiceoverConfig, VideoConfig, load_config
-from media_engine.core.theme import Theme, ColorPalette, load_theme, COPPER_AND_CREAM
+from media_engine.core.config import Config, load_config
+from media_engine.core.theme import COPPER_AND_CREAM, Theme, load_theme
 
 
 class TestConfig:

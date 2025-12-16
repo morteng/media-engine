@@ -6,10 +6,10 @@ Builds full-text search indexes from project documents.
 
 import json
 import re
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
 
 from rich.console import Console
 
@@ -22,6 +22,7 @@ console = Console()
 @dataclass
 class IndexEntry:
     """A single entry in the search index."""
+
     id: str
     title: str
     path: str
@@ -43,6 +44,7 @@ class IndexEntry:
 @dataclass
 class SearchResult:
     """A search result with relevance score."""
+
     entry: IndexEntry
     score: float
     matches: List[str] = field(default_factory=list)
@@ -51,6 +53,7 @@ class SearchResult:
 @dataclass
 class SearchIndex:
     """Full-text search index."""
+
     entries: List[IndexEntry] = field(default_factory=list)
     created_at: str = ""
     version: str = "1.0"
@@ -113,11 +116,13 @@ class SearchIndex:
                     matches.append(f"content: {count} matches")
 
             if score > 0:
-                results.append(SearchResult(
-                    entry=entry,
-                    score=score,
-                    matches=list(set(matches)),  # Dedupe
-                ))
+                results.append(
+                    SearchResult(
+                        entry=entry,
+                        score=score,
+                        matches=list(set(matches)),  # Dedupe
+                    )
+                )
 
         # Sort by score descending
         results.sort(key=lambda r: r.score, reverse=True)
@@ -125,12 +130,15 @@ class SearchIndex:
 
     def to_json(self) -> str:
         """Export index as JSON string."""
-        return json.dumps({
-            "version": self.version,
-            "created_at": self.created_at,
-            "entry_count": len(self.entries),
-            "entries": [e.to_dict() for e in self.entries],
-        }, indent=2)
+        return json.dumps(
+            {
+                "version": self.version,
+                "created_at": self.created_at,
+                "entry_count": len(self.entries),
+                "entries": [e.to_dict() for e in self.entries],
+            },
+            indent=2,
+        )
 
     def save(self, path: Path):
         """Save index to file."""
@@ -152,7 +160,7 @@ class SearchIndex:
 def extract_headings(content: str) -> List[str]:
     """Extract markdown headings from content."""
     headings = []
-    for match in re.finditer(r'^#{1,6}\s+(.+)$', content, re.MULTILINE):
+    for match in re.finditer(r"^#{1,6}\s+(.+)$", content, re.MULTILINE):
         headings.append(match.group(1).strip())
     return headings
 
@@ -160,20 +168,20 @@ def extract_headings(content: str) -> List[str]:
 def extract_excerpt(content: str, max_length: int = 200) -> str:
     """Extract first paragraph as excerpt."""
     # Remove frontmatter
-    content = re.sub(r'^---\n.*?\n---\n', '', content, flags=re.DOTALL)
+    content = re.sub(r"^---\n.*?\n---\n", "", content, flags=re.DOTALL)
 
     # Remove headings
-    content = re.sub(r'^#{1,6}\s+.+$', '', content, flags=re.MULTILINE)
+    content = re.sub(r"^#{1,6}\s+.+$", "", content, flags=re.MULTILINE)
 
     # Get first substantial paragraph
-    paragraphs = [p.strip() for p in content.split('\n\n') if p.strip()]
+    paragraphs = [p.strip() for p in content.split("\n\n") if p.strip()]
     for para in paragraphs:
         # Skip code blocks, lists, etc.
-        if para.startswith('```') or para.startswith('-') or para.startswith('|'):
+        if para.startswith("```") or para.startswith("-") or para.startswith("|"):
             continue
         if len(para) > 50:
             if len(para) > max_length:
-                return para[:max_length].rsplit(' ', 1)[0] + '...'
+                return para[:max_length].rsplit(" ", 1)[0] + "..."
             return para
 
     return ""
@@ -182,25 +190,25 @@ def extract_excerpt(content: str, max_length: int = 200) -> str:
 def clean_content(content: str) -> str:
     """Clean content for indexing."""
     # Remove frontmatter
-    content = re.sub(r'^---\n.*?\n---\n', '', content, flags=re.DOTALL)
+    content = re.sub(r"^---\n.*?\n---\n", "", content, flags=re.DOTALL)
 
     # Remove code blocks
-    content = re.sub(r'```[\s\S]*?```', '', content)
+    content = re.sub(r"```[\s\S]*?```", "", content)
 
     # Remove inline code
-    content = re.sub(r'`[^`]+`', '', content)
+    content = re.sub(r"`[^`]+`", "", content)
 
     # Remove links but keep text
-    content = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', content)
+    content = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", content)
 
     # Remove images
-    content = re.sub(r'!\[[^\]]*\]\([^)]+\)', '', content)
+    content = re.sub(r"!\[[^\]]*\]\([^)]+\)", "", content)
 
     # Remove HTML tags
-    content = re.sub(r'<[^>]+>', '', content)
+    content = re.sub(r"<[^>]+>", "", content)
 
     # Normalize whitespace
-    content = re.sub(r'\s+', ' ', content)
+    content = re.sub(r"\s+", " ", content)
 
     return content.strip()
 
@@ -223,6 +231,7 @@ def index_document(
     """
     try:
         from ..cms import Document
+
         doc = Document.load(path)
 
         content = clean_content(doc.content)
@@ -230,9 +239,9 @@ def index_document(
         excerpt = extract_excerpt(doc.content)
 
         # Extract tags from frontmatter
-        tags = doc.metadata.get('tags', [])
+        tags = doc.metadata.get("tags", [])
         if isinstance(tags, str):
-            tags = [t.strip() for t in tags.split(',')]
+            tags = [t.strip() for t in tags.split(",")]
 
         return IndexEntry(
             id=f"{language}/{doc_type}/{path.stem}",
@@ -244,8 +253,8 @@ def index_document(
             excerpt=excerpt,
             headings=headings,
             tags=tags,
-            last_modified=doc.metadata.get('last_modified'),
-            version=doc.metadata.get('version'),
+            last_modified=doc.metadata.get("last_modified"),
+            version=doc.metadata.get("version"),
             word_count=len(content.split()),
         )
     except Exception as e:

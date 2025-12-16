@@ -3,10 +3,10 @@ Document graph generation for visualizing document relationships.
 """
 
 import json
+from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional, Any
-from collections import defaultdict
+from typing import Any, Optional
 
 from .document import Document, DocumentCollection
 
@@ -14,6 +14,7 @@ from .document import Document, DocumentCollection
 @dataclass
 class GraphNode:
     """A node in the document graph."""
+
     doc_id: str
     title: str
     doc_type: str
@@ -25,6 +26,7 @@ class GraphNode:
 @dataclass
 class GraphEdge:
     """An edge in the document graph."""
+
     source: str
     target: str
     edge_type: str  # depends_on, references, sources
@@ -33,6 +35,7 @@ class GraphEdge:
 @dataclass
 class DocumentGraph:
     """Graph representing document relationships."""
+
     nodes: dict[str, GraphNode] = field(default_factory=dict)
     edges: list[GraphEdge] = field(default_factory=list)
 
@@ -187,7 +190,7 @@ class DocumentGraphBuilder:
                 "orphans": len(self.get_orphans()),
                 "roots": len(self.get_root_documents()),
                 "leaves": len(self.get_leaf_documents()),
-            }
+            },
         }
 
     def save(self, output_path: Path) -> None:
@@ -228,7 +231,7 @@ class DocumentGraphBuilder:
 
         for edge in self.graph.edges:
             style = edge_styles.get(edge.edge_type, "-->")
-            lines.append(f'    {self._safe_id(edge.source)} {style} {self._safe_id(edge.target)}')
+            lines.append(f"    {self._safe_id(edge.source)} {style} {self._safe_id(edge.target)}")
 
         # Add styling
         lines.append("")
@@ -236,7 +239,7 @@ class DocumentGraphBuilder:
             nodes_of_type = [n.doc_id for n in self.graph.nodes.values() if n.doc_type == doc_type]
             if nodes_of_type:
                 node_list = ",".join(self._safe_id(n) for n in nodes_of_type)
-                lines.append(f'    style {node_list} {color}')
+                lines.append(f"    style {node_list} {color}")
 
         return "\n".join(lines)
 
@@ -274,7 +277,11 @@ class DocumentGraphBuilder:
             lines.append("")
 
         # Leaf documents (final outputs)
-        leaves = [l for l in self.get_leaf_documents() if self.graph.nodes[l].doc_type.startswith("deliverable")]
+        leaves = [
+            l
+            for l in self.get_leaf_documents()
+            if self.graph.nodes[l].doc_type.startswith("deliverable")
+        ]
         if leaves:
             lines.append("## Deliverable Outputs")
             for doc_id in leaves:

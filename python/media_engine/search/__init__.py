@@ -8,9 +8,9 @@ Full-text search indexing:
 """
 
 from .indexer import (
+    IndexEntry,
     SearchIndex,
     SearchResult,
-    IndexEntry,
     build_search_index,
     search_documents,
 )

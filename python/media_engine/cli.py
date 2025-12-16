@@ -15,20 +15,16 @@ Usage:
 
 import argparse
 import json
-import shutil
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
+from rich import box
 from rich.console import Console
 from rich.table import Table
-from rich.panel import Panel
-from rich.tree import Tree
-from rich import box
 
+from .cms import Document
 from .core import Project, find_project
-from .cms import Document, DocumentCollection
-
 
 console = Console()
 
@@ -41,7 +37,7 @@ def cmd_status(args):
         sys.exit(1)
 
     # Check for specific view
-    view = getattr(args, 'view', None)
+    view = getattr(args, "view", None)
 
     if args.json:
         status = project.get_status()
@@ -52,19 +48,19 @@ def cmd_status(args):
     from .status import (
         get_project_dashboard,
         print_dashboard,
-        print_document_status,
-        print_video_status,
-        print_quality_status,
         print_deliverable_status,
+        print_document_status,
+        print_quality_status,
+        print_video_status,
     )
     from .status.views import print_build_tree, print_cache_status
 
     if view == "docs":
-        print_document_status(project, getattr(args, 'lang', None))
+        print_document_status(project, getattr(args, "lang", None))
     elif view == "videos":
-        print_video_status(project, getattr(args, 'lang', None))
+        print_video_status(project, getattr(args, "lang", None))
     elif view == "quality":
-        print_quality_status(project, getattr(args, 'lang', None))
+        print_quality_status(project, getattr(args, "lang", None))
     elif view == "deliverables":
         print_deliverable_status(project)
     elif view == "tree":
@@ -130,7 +126,9 @@ def cmd_build(args):
 
     # Summary
     console.print()
-    console.print(f"Built: {len(results['built'])}, Skipped: {len(results['skipped'])}, Failed: {len(results['failed'])}")
+    console.print(
+        f"Built: {len(results['built'])}, Skipped: {len(results['skipped'])}, Failed: {len(results['failed'])}"
+    )
 
     if args.json:
         print(json.dumps(results, indent=2))
@@ -188,6 +186,7 @@ def _build_pdf(project: Project, lang: str, deps: list[Path], output_dir: Path) 
     try:
         # Try weasyprint first
         from weasyprint import HTML
+
         HTML(filename=str(html_path)).write_pdf(str(pdf_path))
         return pdf_path
     except ImportError:
@@ -196,6 +195,7 @@ def _build_pdf(project: Project, lang: str, deps: list[Path], output_dir: Path) 
     try:
         # Fall back to wkhtmltopdf via subprocess
         import subprocess
+
         result = subprocess.run(
             ["wkhtmltopdf", "--quiet", str(html_path), str(pdf_path)],
             capture_output=True,
@@ -251,7 +251,7 @@ def _build_xlsx(project: Project, lang: str, output_dir: Path) -> Path | None:
 
 def _build_diagrams(project: Project, lang: str, output_dir: Path) -> Path | None:
     """Build diagrams from YAML definitions."""
-    from .diagrams import DiagramGenerator, DiagramDefinition
+    from .diagrams import DiagramDefinition, DiagramGenerator
 
     diagrams_dir = project.get_content_path(lang, "diagrams")
     if not diagrams_dir.exists():
@@ -283,6 +283,7 @@ def _build_diagrams(project: Project, lang: str, output_dir: Path) -> Path | Non
 def _build_video(project: Project, lang: str, output_dir: Path) -> Path | None:
     """Build video from script definitions."""
     import asyncio
+
     from .video import VideoBuilder, VideoScript
 
     scripts_dir = project.get_content_path(lang, "scripts")
@@ -318,7 +319,9 @@ def _build_video(project: Project, lang: str, output_dir: Path) -> Path | None:
                 voice_id = project.config.voiceover.voice_id if project.config.voiceover else None
 
             if not voice_id:
-                console.print(f"    [yellow]{script_file.stem}: no voice_id configured (skipping voiceover)[/yellow]")
+                console.print(
+                    f"    [yellow]{script_file.stem}: no voice_id configured (skipping voiceover)[/yellow]"
+                )
                 # Still export props for Remotion
                 props_path = videos_output / f"{script_file.stem}.props.json"
                 _export_video_props_only(script, props_path, project)
@@ -327,11 +330,13 @@ def _build_video(project: Project, lang: str, output_dir: Path) -> Path | None:
                 continue
 
             # Build with voiceover
-            result = asyncio.run(builder.build(
-                script_path=script_file,
-                output_dir=videos_output,
-                render=False,  # Don't render, just generate assets
-            ))
+            result = asyncio.run(
+                builder.build(
+                    script_path=script_file,
+                    output_dir=videos_output,
+                    render=False,  # Don't render, just generate assets
+                )
+            )
 
             if result.success:
                 if result.audio_path:
@@ -358,7 +363,7 @@ def _export_video_props_only(script, output_path: Path, project: Project):
 
     fps = 30
     if project.config.video:
-        fps = getattr(project.config.video, 'fps', 30)
+        fps = getattr(project.config.video, "fps", 30)
 
     props = {
         "title": script.title,
@@ -369,13 +374,15 @@ def _export_video_props_only(script, output_path: Path, project: Project):
     }
 
     for scene in script.scenes:
-        props["scenes"].append({
-            "id": scene.id,
-            "type": scene.type,
-            "title": scene.title,
-            "text": scene.text,
-            "visual": scene.visual,
-        })
+        props["scenes"].append(
+            {
+                "id": scene.id,
+                "type": scene.type,
+                "title": scene.title,
+                "text": scene.text,
+                "visual": scene.visual,
+            }
+        )
 
     output_path.write_text(json.dumps(props, indent=2))
 
@@ -387,7 +394,7 @@ def cmd_publish(args):
         console.print("[red]No project.yaml found[/red]")
         sys.exit(1)
 
-    from .publish import publish_project, PublishConfig
+    from .publish import PublishConfig, publish_project
 
     # Determine output directory
     output_dir = Path(args.output) if args.output else project.publish_dir
@@ -422,6 +429,7 @@ def cmd_quality(args):
 
     if args.json:
         import json
+
         issues_data = [
             {
                 "type": i.type,
@@ -433,13 +441,18 @@ def cmd_quality(args):
             }
             for i in report.issues
         ]
-        print(json.dumps({
-            "passed": report.passed,
-            "files_checked": report.files_checked,
-            "error_count": report.error_count,
-            "warning_count": report.warning_count,
-            "issues": issues_data,
-        }, indent=2))
+        print(
+            json.dumps(
+                {
+                    "passed": report.passed,
+                    "files_checked": report.files_checked,
+                    "error_count": report.error_count,
+                    "warning_count": report.warning_count,
+                    "issues": issues_data,
+                },
+                indent=2,
+            )
+        )
         return
 
     if not report.passed:
@@ -460,14 +473,16 @@ def cmd_stale(args):
             try:
                 doc = Document.load(chapter_path)
                 if doc.is_stale:
-                    stale_items.append({
-                        "path": str(chapter_path.relative_to(project.root)),
-                        "language": lang,
-                        "title": doc.title,
-                        "days_since_modified": doc.days_since_modified,
-                        "freshness_days": doc.freshness_days,
-                        "status": doc.freshness_status,
-                    })
+                    stale_items.append(
+                        {
+                            "path": str(chapter_path.relative_to(project.root)),
+                            "language": lang,
+                            "title": doc.title,
+                            "days_since_modified": doc.days_since_modified,
+                            "freshness_days": doc.freshness_days,
+                            "status": doc.freshness_status,
+                        }
+                    )
             except Exception:
                 pass
 
@@ -510,7 +525,7 @@ def cmd_cache(args):
         status = project.get_status()
         cache = status["cache"]
 
-        console.print(f"[bold]Cache Status[/bold]")
+        console.print("[bold]Cache Status[/bold]")
         console.print(f"  Voiceover files: {cache['voiceover_items']}")
         console.print(f"  Builds tracked: {cache['builds_tracked']}")
 
@@ -520,7 +535,7 @@ def cmd_cache(args):
             total_size = sum(f.stat().st_size for f in cache_dir.rglob("*") if f.is_file())
             console.print(f"  Cache size: {total_size / 1024 / 1024:.1f} MB")
         else:
-            console.print(f"  Cache size: 0 MB")
+            console.print("  Cache size: 0 MB")
 
     elif args.cache_command == "clear":
         cache_type = None
@@ -542,7 +557,7 @@ def cmd_search(args):
         console.print("[red]No project.yaml found[/red]")
         sys.exit(1)
 
-    from .search import build_search_index, search_documents, SearchIndex
+    from .search import SearchIndex, build_search_index
 
     query = args.query
 
@@ -590,7 +605,11 @@ def cmd_search(args):
     table.add_column("Excerpt", width=50)
 
     for result in results:
-        excerpt = result.entry.excerpt[:47] + "..." if len(result.entry.excerpt) > 50 else result.entry.excerpt
+        excerpt = (
+            result.entry.excerpt[:47] + "..."
+            if len(result.entry.excerpt) > 50
+            else result.entry.excerpt
+        )
         table.add_row(
             f"{result.score:.0f}",
             result.entry.title,
@@ -685,7 +704,7 @@ def cmd_pack(args):
         sys.exit(1)
 
     if not result.success:
-        console.print(f"[yellow]Pack generated with missing items[/yellow]")
+        console.print("[yellow]Pack generated with missing items[/yellow]")
         for item in result.items_missing:
             console.print(f"  [red]Missing: {item}[/red]")
         sys.exit(1)
@@ -757,7 +776,7 @@ def _translation_status(tracker, args):
         console.print("[dim]No translations found[/dim]")
         return
 
-    console.print(f"\n[bold]Translation Status[/bold]")
+    console.print("\n[bold]Translation Status[/bold]")
 
     table = Table(box=box.ROUNDED)
     table.add_column("Source", style="cyan")
@@ -786,7 +805,7 @@ def _translation_status(tracker, args):
     if outdated_count > 0:
         console.print(f"\n[yellow]⚠ {outdated_count} translation(s) need updating[/yellow]")
     else:
-        console.print(f"\n[green]✓ All translations are current[/green]")
+        console.print("\n[green]✓ All translations are current[/green]")
 
 
 def _translation_outdated(tracker, args):
@@ -811,7 +830,7 @@ def _translation_outdated(tracker, args):
         console.print("[green]✓ No outdated translations[/green]")
         return
 
-    console.print(f"\n[bold]Outdated Translations[/bold]")
+    console.print("\n[bold]Outdated Translations[/bold]")
 
     table = Table(box=box.ROUNDED)
     table.add_column("Translation", style="cyan")
@@ -864,7 +883,9 @@ def _translation_missing(tracker, project, args):
         table.add_row(doc.title, doc.version)
 
     console.print(table)
-    console.print(f"\n[yellow]⚠ {len(missing)} document(s) need translation to {target_lang}[/yellow]")
+    console.print(
+        f"\n[yellow]⚠ {len(missing)} document(s) need translation to {target_lang}[/yellow]"
+    )
 
 
 def cmd_init(args):
@@ -917,7 +938,7 @@ paths:
   assets: "assets"
   output: "output"
 """)
-        console.print(f"  [green]Created project.yaml[/green]")
+        console.print("  [green]Created project.yaml[/green]")
 
     # Create theme.yaml
     theme_yaml = project_dir / "theme.yaml"
@@ -945,7 +966,7 @@ typography:
   base_size: 16
   scale: 1.25
 """)
-        console.print(f"  [green]Created theme.yaml[/green]")
+        console.print("  [green]Created theme.yaml[/green]")
 
     # Create sample chapter
     sample_chapter = project_dir / "content/en/chapters/01_introduction.md"
@@ -954,7 +975,7 @@ typography:
 title: "Introduction"
 version: "0.1.0"
 status: "draft"
-last_modified: "{datetime.now().strftime('%Y-%m-%d')}"
+last_modified: "{datetime.now().strftime("%Y-%m-%d")}"
 freshness_days: 30
 ---
 
@@ -966,11 +987,11 @@ Welcome to {project_name}.
 
 This is your first chapter. Edit this file to add your content.
 """)
-        console.print(f"  [green]Created sample chapter[/green]")
+        console.print("  [green]Created sample chapter[/green]")
 
-    console.print(f"\n[bold green]Project initialized![/bold green]")
-    console.print(f"  Run [cyan]media-engine status[/cyan] to see project status")
-    console.print(f"  Run [cyan]media-engine build[/cyan] to build outputs")
+    console.print("\n[bold green]Project initialized![/bold green]")
+    console.print("  Run [cyan]media-engine status[/cyan] to see project status")
+    console.print("  Run [cyan]media-engine build[/cyan] to build outputs")
 
 
 def cmd_dashboard(args):
@@ -1022,7 +1043,7 @@ def cmd_provenance(args):
             console.print(f"  Expired: {report['summary']['expired_claims']}")
             console.print(f"  Expiring soon: {report['summary']['expiring_soon']}")
             console.print("\n[bold]By Status:[/bold]")
-            for status, count in report['by_status'].items():
+            for status, count in report["by_status"].items():
                 console.print(f"  {status}: {count}")
 
     elif args.provenance_command == "claims":
@@ -1031,11 +1052,16 @@ def cmd_provenance(args):
         expiring = tracker.get_expiring_soon()
 
         if args.json:
-            print(json.dumps({
-                "unverified": [(str(p), c.to_dict()) for p, c in unverified],
-                "expired": [(str(p), c.to_dict()) for p, c in expired],
-                "expiring_soon": [(str(p), c.to_dict()) for p, c in expiring],
-            }, indent=2))
+            print(
+                json.dumps(
+                    {
+                        "unverified": [(str(p), c.to_dict()) for p, c in unverified],
+                        "expired": [(str(p), c.to_dict()) for p, c in expired],
+                        "expiring_soon": [(str(p), c.to_dict()) for p, c in expiring],
+                    },
+                    indent=2,
+                )
+            )
         else:
             if unverified:
                 console.print(f"[bold yellow]Unverified Claims ({len(unverified)}):[/bold yellow]")
@@ -1086,9 +1112,9 @@ def cmd_integrity(args):
             console.print(f"  Missing: {len(results['missing'])}")
             console.print(f"  Untracked: {len(results['untracked'])}")
 
-            if results['modified']:
+            if results["modified"]:
                 console.print("\n[bold red]Modified assets:[/bold red]")
-                for item in results['modified']:
+                for item in results["modified"]:
                     console.print(f"  {item['path']}")
 
     elif args.integrity_command == "record":
@@ -1121,7 +1147,7 @@ def cmd_readability(args):
         console.print("[red]No project.yaml found[/red]")
         sys.exit(1)
 
-    from .readability import check_readability, ReadabilityLevel
+    from .readability import ReadabilityLevel, check_readability
 
     target = ReadabilityLevel(args.target) if args.target else ReadabilityLevel.HIGH_SCHOOL
     report = check_readability(project, target_level=target)
@@ -1137,10 +1163,10 @@ def cmd_readability(args):
         console.print(f"  Average grade level: {s['average_grade_level']}")
         console.print(f"  Total reading time: {s['total_reading_time_minutes']:.1f} min")
 
-        if s['failing'] > 0:
-            console.print(f"\n[yellow]Documents above target level:[/yellow]")
-            for doc in report['documents']:
-                if not doc['passes_target']:
+        if s["failing"] > 0:
+            console.print("\n[yellow]Documents above target level:[/yellow]")
+            for doc in report["documents"]:
+                if not doc["passes_target"]:
                     console.print(f"  {doc['file']}: grade {doc['grade_level']}")
 
 
@@ -1167,9 +1193,9 @@ def cmd_gaps(args):
         console.print(f"  Medium: {s['medium']}")
         console.print(f"  Low: {s['low']}")
 
-        if s['total_gaps'] > 0:
+        if s["total_gaps"] > 0:
             console.print("\n[bold]By Type:[/bold]")
-            for gap_type, gaps in report['by_type'].items():
+            for gap_type, gaps in report["by_type"].items():
                 console.print(f"  {gap_type}: {len(gaps)}")
 
 
@@ -1194,11 +1220,11 @@ def cmd_links(args):
         console.print(f"  [red]Broken: {s['broken']}[/red]")
         console.print(f"  [yellow]Timeout: {s['timeout']}[/yellow]")
 
-        if report['broken_links']:
+        if report["broken_links"]:
             console.print("\n[bold red]Broken Links:[/bold red]")
-            for link in report['broken_links'][:10]:
+            for link in report["broken_links"][:10]:
                 console.print(f"  {link['url']}")
-                if link['file']:
+                if link["file"]:
                     console.print(f"    in {link['file']}:{link['line']}")
 
 
@@ -1225,15 +1251,17 @@ def cmd_security(args):
         console.print(f"  Medium: {s['medium']}")
         console.print(f"  Low: {s['low']}")
 
-        if s['blocks_publish']:
+        if s["blocks_publish"]:
             console.print("\n[bold red]⚠ CRITICAL ISSUES FOUND - Publishing blocked[/bold red]")
 
-        if report['matches']:
+        if report["matches"]:
             console.print("\n[bold]Findings:[/bold]")
-            for match in report['matches'][:10]:
-                level_color = {"critical": "red", "high": "yellow"}.get(match['level'], "white")
-                console.print(f"  [{level_color}]{match['pattern']}[/{level_color}]: {match['redacted']}")
-                if match['file']:
+            for match in report["matches"][:10]:
+                level_color = {"critical": "red", "high": "yellow"}.get(match["level"], "white")
+                console.print(
+                    f"  [{level_color}]{match['pattern']}[/{level_color}]: {match['redacted']}"
+                )
+                if match["file"]:
                     console.print(f"    in {match['file']}:{match['line']}")
 
 
@@ -1244,8 +1272,9 @@ def cmd_changelog(args):
         console.print("[red]No project.yaml found[/red]")
         sys.exit(1)
 
-    from .changelog import generate_changelog
     from datetime import datetime, timedelta
+
+    from .changelog import generate_changelog
 
     since = None
     if args.since:
@@ -1308,9 +1337,12 @@ def main():
 
     # status
     status_parser = subparsers.add_parser("status", help="Show project status")
-    status_parser.add_argument("view", nargs="?",
-                               choices=["docs", "videos", "quality", "deliverables", "tree", "cache"],
-                               help="Specific view: docs, videos, quality, deliverables, tree, cache")
+    status_parser.add_argument(
+        "view",
+        nargs="?",
+        choices=["docs", "videos", "quality", "deliverables", "tree", "cache"],
+        help="Specific view: docs, videos, quality, deliverables, tree, cache",
+    )
     status_parser.add_argument("--lang", help="Filter by language")
     status_parser.add_argument("--json", action="store_true", help="Output as JSON")
 
@@ -1323,11 +1355,15 @@ def main():
 
     # publish
     publish_parser = subparsers.add_parser("publish", help="Publish complete deliverable package")
-    publish_parser.add_argument("--output", "-o", help="Output directory (default: project publish_dir)")
+    publish_parser.add_argument(
+        "--output", "-o", help="Output directory (default: project publish_dir)"
+    )
     publish_parser.add_argument("--no-fonts", action="store_true", help="Skip font bundling")
     publish_parser.add_argument("--no-diagrams", action="store_true", help="Skip diagram bundling")
     publish_parser.add_argument("--no-videos", action="store_true", help="Skip video bundling")
-    publish_parser.add_argument("--no-index", action="store_true", help="Skip navigation index generation")
+    publish_parser.add_argument(
+        "--no-index", action="store_true", help="Skip navigation index generation"
+    )
     publish_parser.add_argument("--zip", action="store_true", help="Create ZIP archive")
 
     # quality
@@ -1422,8 +1458,11 @@ def main():
 
     # readability
     read_parser = subparsers.add_parser("readability", help="Readability analysis")
-    read_parser.add_argument("--target", choices=["elementary", "middle_school", "high_school", "college", "graduate", "technical"],
-                             help="Target reading level")
+    read_parser.add_argument(
+        "--target",
+        choices=["elementary", "middle_school", "high_school", "college", "graduate", "technical"],
+        help="Target reading level",
+    )
     read_parser.add_argument("--json", action="store_true", help="Output as JSON")
 
     # gaps
@@ -1433,12 +1472,16 @@ def main():
 
     # links
     links_parser = subparsers.add_parser("links", help="Link validation")
-    links_parser.add_argument("--internal-only", action="store_true", help="Only check internal links")
+    links_parser.add_argument(
+        "--internal-only", action="store_true", help="Only check internal links"
+    )
     links_parser.add_argument("--json", action="store_true", help="Output as JSON")
 
     # security
     sec_parser = subparsers.add_parser("security", help="Security scan for sensitive content")
-    sec_parser.add_argument("--include-assets", action="store_true", help="Also scan YAML/JSON assets")
+    sec_parser.add_argument(
+        "--include-assets", action="store_true", help="Also scan YAML/JSON assets"
+    )
     sec_parser.add_argument("--json", action="store_true", help="Output as JSON")
 
     # changelog

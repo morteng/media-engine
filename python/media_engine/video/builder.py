@@ -12,20 +12,18 @@ Usage:
     result = await builder.build("mvp-demo.yaml")
 """
 
-import asyncio
 import json
 import subprocess
-import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional, Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
+
 import yaml
 
 from .voiceover import (
-    generate_voiceover,
     VoiceoverResult,
-    AudioSegment,
     clean_text,
+    generate_voiceover,
 )
 
 if TYPE_CHECKING:
@@ -35,6 +33,7 @@ if TYPE_CHECKING:
 @dataclass
 class VideoConfig:
     """Video production configuration."""
+
     width: int = 1920
     height: int = 1080
     fps: int = 30
@@ -46,6 +45,7 @@ class VideoConfig:
 @dataclass
 class CaptionEntry:
     """A caption entry with timing."""
+
     id: str
     text: str
     start_time: float
@@ -56,6 +56,7 @@ class CaptionEntry:
 @dataclass
 class VideoScene:
     """A scene in the video."""
+
     id: str
     type: str  # intro, content, demo, transition, outro
     title: Optional[str] = None
@@ -69,6 +70,7 @@ class VideoScene:
 @dataclass
 class VideoScript:
     """Complete video script definition."""
+
     name: str
     title: str
     language: str
@@ -89,14 +91,16 @@ class VideoScript:
             if isinstance(content, str):
                 content = {"text": content}
 
-            scenes.append(VideoScene(
-                id=scene_data.get("id", f"scene_{len(scenes)}"),
-                type=scene_data.get("type", "content"),
-                title=scene_data.get("title"),
-                text=content.get("text") or content.get("narration"),
-                duration=scene_data.get("duration"),
-                visual=scene_data.get("visual", {}),
-            ))
+            scenes.append(
+                VideoScene(
+                    id=scene_data.get("id", f"scene_{len(scenes)}"),
+                    type=scene_data.get("type", "content"),
+                    title=scene_data.get("title"),
+                    text=content.get("text") or content.get("narration"),
+                    duration=scene_data.get("duration"),
+                    visual=scene_data.get("visual", {}),
+                )
+            )
 
         return cls(
             name=path.stem,
@@ -110,6 +114,7 @@ class VideoScript:
 @dataclass
 class VideoBuildResult:
     """Result of video build process."""
+
     video_path: Optional[Path] = None
     audio_path: Optional[Path] = None
     captions_path: Optional[Path] = None
@@ -310,12 +315,14 @@ class VideoBuilder:
 
         for segment in voiceover.segments:
             if segment.text and clean_text(segment.text):
-                entries.append(CaptionEntry(
-                    id=segment.id,
-                    text=clean_text(segment.text),
-                    start_time=current_time,
-                    end_time=current_time + segment.duration,
-                ))
+                entries.append(
+                    CaptionEntry(
+                        id=segment.id,
+                        text=clean_text(segment.text),
+                        start_time=current_time,
+                        end_time=current_time + segment.duration,
+                    )
+                )
             current_time += segment.duration + segment.pause_after
 
         # Generate VTT content
@@ -366,16 +373,18 @@ class VideoBuilder:
         }
 
         for scene in script.scenes:
-            props["scenes"].append({
-                "id": scene.id,
-                "type": scene.type,
-                "title": scene.title,
-                "text": clean_text(scene.text) if scene.text else None,
-                "startFrame": int((scene.audio_start or 0) * self.config.fps),
-                "endFrame": int((scene.audio_end or 0) * self.config.fps),
-                "durationFrames": int((scene.duration or 0) * self.config.fps),
-                "visual": scene.visual,
-            })
+            props["scenes"].append(
+                {
+                    "id": scene.id,
+                    "type": scene.type,
+                    "title": scene.title,
+                    "text": clean_text(scene.text) if scene.text else None,
+                    "startFrame": int((scene.audio_start or 0) * self.config.fps),
+                    "endFrame": int((scene.audio_end or 0) * self.config.fps),
+                    "durationFrames": int((scene.duration or 0) * self.config.fps),
+                    "visual": scene.visual,
+                }
+            )
 
         output_path.write_text(json.dumps(props, indent=2))
 
@@ -394,19 +403,23 @@ class VideoBuilder:
             cwd=remotion_project,
         )
         if result.returncode != 0:
-            raise RuntimeError(
-                "Remotion not available. Install with: npm install @remotion/cli"
-            )
+            raise RuntimeError("Remotion not available. Install with: npm install @remotion/cli")
 
         # Render video
         cmd = [
-            "npx", "remotion", "render",
+            "npx",
+            "remotion",
+            "render",
             "Main",  # Composition ID
             str(output_path),
-            "--props", str(props_path),
-            "--audio-file", str(audio_path),
-            "--codec", self.config.codec,
-            "--crf", str(self.config.crf),
+            "--props",
+            str(props_path),
+            "--audio-file",
+            str(audio_path),
+            "--codec",
+            self.config.codec,
+            "--crf",
+            str(self.config.crf),
         ]
 
         result = subprocess.run(

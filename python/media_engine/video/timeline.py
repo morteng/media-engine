@@ -24,25 +24,27 @@ Usage:
     timeline.to_resolve_edl()    # DaVinci Resolve EDL
 """
 
-import json
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+
 import yaml
 
 
 class TrackType(Enum):
     """Types of timeline tracks."""
-    VIDEO = "video"           # Main video (screen recording)
-    GRAPHICS = "graphics"     # Motion graphics overlay
-    AUDIO = "audio"           # Voiceover audio
-    MUSIC = "music"           # Background music
-    CAPTION = "caption"       # Subtitles/captions
+
+    VIDEO = "video"  # Main video (screen recording)
+    GRAPHICS = "graphics"  # Motion graphics overlay
+    AUDIO = "audio"  # Voiceover audio
+    MUSIC = "music"  # Background music
+    CAPTION = "caption"  # Subtitles/captions
 
 
 class TransitionType(Enum):
     """Types of transitions between clips."""
+
     CUT = "cut"
     CROSSFADE = "crossfade"
     FADE_IN = "fade_in"
@@ -54,12 +56,13 @@ class TransitionType(Enum):
 @dataclass
 class TimelineClip:
     """A single clip on the timeline."""
+
     id: str
     track: TrackType
     source_path: Optional[Path]  # None for generated clips
-    start_time: float           # Timeline position (seconds)
-    end_time: float             # End position (seconds)
-    source_in: float = 0        # Source clip in point
+    start_time: float  # Timeline position (seconds)
+    end_time: float  # End position (seconds)
+    source_in: float = 0  # Source clip in point
     source_out: Optional[float] = None  # Source clip out point
 
     # Transform properties
@@ -114,6 +117,7 @@ class TimelineClip:
 @dataclass
 class TimelineTrack:
     """A track in the timeline."""
+
     name: str
     type: TrackType
     clips: List[TimelineClip] = field(default_factory=list)
@@ -144,6 +148,7 @@ class TimelineTrack:
 @dataclass
 class VideoTimeline:
     """Master timeline for video production."""
+
     id: str
     name: str
     duration: float
@@ -175,11 +180,7 @@ class VideoTimeline:
         """Get all tracks of a specific type."""
         return [t for t in self.tracks.values() if t.type == track_type]
 
-    def add_clip(
-        self,
-        track_name: str,
-        clip: TimelineClip
-    ) -> TimelineClip:
+    def add_clip(self, track_name: str, clip: TimelineClip) -> TimelineClip:
         """Add a clip to a specific track."""
         track = self.get_track(track_name)
         if track is None:
@@ -208,7 +209,7 @@ class VideoTimeline:
                     "type": track.type.value,
                     "muted": track.muted,
                     "locked": track.locked,
-                    "clips": [c.to_dict() for c in track.clips]
+                    "clips": [c.to_dict() for c in track.clips],
                 }
                 for name, track in self.tracks.items()
             },
@@ -219,50 +220,50 @@ class VideoTimeline:
                 "audio_codec": self.audio_codec,
                 "video_bitrate": self.video_bitrate,
                 "audio_bitrate": self.audio_bitrate,
-            }
+            },
         }
 
     def save(self, path: Path) -> Path:
         """Save timeline to YAML file."""
         path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             yaml.dump(self.to_dict(), f, sort_keys=False)
         return path
 
     @classmethod
-    def load(cls, path: Path) -> 'VideoTimeline':
+    def load(cls, path: Path) -> "VideoTimeline":
         """Load timeline from YAML file."""
         with open(path) as f:
             data = yaml.safe_load(f)
 
         timeline = cls(
-            id=data['id'],
-            name=data['name'],
-            duration=data['duration'],
-            width=data.get('width', 1920),
-            height=data.get('height', 1080),
-            fps=data.get('fps', 30),
+            id=data["id"],
+            name=data["name"],
+            duration=data["duration"],
+            width=data.get("width", 1920),
+            height=data.get("height", 1080),
+            fps=data.get("fps", 30),
         )
 
         # Load tracks
-        for name, track_data in data.get('tracks', {}).items():
-            track = timeline.add_track(name, TrackType(track_data['type']))
-            track.muted = track_data.get('muted', False)
-            track.locked = track_data.get('locked', False)
+        for name, track_data in data.get("tracks", {}).items():
+            track = timeline.add_track(name, TrackType(track_data["type"]))
+            track.muted = track_data.get("muted", False)
+            track.locked = track_data.get("locked", False)
 
-            for clip_data in track_data.get('clips', []):
+            for clip_data in track_data.get("clips", []):
                 clip = TimelineClip(
-                    id=clip_data['id'],
-                    track=TrackType(clip_data['track']),
-                    source_path=Path(clip_data['source']) if clip_data.get('source') else None,
-                    start_time=clip_data['start'],
-                    end_time=clip_data['end'],
-                    source_in=clip_data.get('source_in', 0),
-                    source_out=clip_data.get('source_out'),
-                    position=tuple(clip_data.get('position', [0, 0])),
-                    scale=clip_data.get('scale', 1.0),
-                    opacity=clip_data.get('opacity', 1.0),
-                    metadata=clip_data.get('metadata', {}),
+                    id=clip_data["id"],
+                    track=TrackType(clip_data["track"]),
+                    source_path=Path(clip_data["source"]) if clip_data.get("source") else None,
+                    start_time=clip_data["start"],
+                    end_time=clip_data["end"],
+                    source_in=clip_data.get("source_in", 0),
+                    source_out=clip_data.get("source_out"),
+                    position=tuple(clip_data.get("position", [0, 0])),
+                    scale=clip_data.get("scale", 1.0),
+                    opacity=clip_data.get("opacity", 1.0),
+                    metadata=clip_data.get("metadata", {}),
                 )
                 track.add_clip(clip)
 
@@ -319,9 +320,7 @@ class VideoTimeline:
                         ref = f"g{len(layer_refs)}"
                         x, y = clip.position
                         # Create graphics overlay with timing
-                        filter_parts.append(
-                            f"[{idx}:v]setpts=PTS-STARTPTS[{ref}]"
-                        )
+                        filter_parts.append(f"[{idx}:v]setpts=PTS-STARTPTS[{ref}]")
                         layer_refs.append(ref)
 
         # Build overlay chain
@@ -344,11 +343,11 @@ class VideoTimeline:
 
         command = (
             f"ffmpeg -y {' '.join(inputs)} "
-            f"-filter_complex \"{filter_complex}\" "
-            f"-map \"[{final_video}]\" -map 0:a? "
+            f'-filter_complex "{filter_complex}" '
+            f'-map "[{final_video}]" -map 0:a? '
             f"-c:v {self.video_codec} -b:v {self.video_bitrate} "
             f"-c:a {self.audio_codec} -b:a {self.audio_bitrate} "
-            f"\"{self.output_path}\""
+            f'"{self.output_path}"'
         )
 
         return command
@@ -363,10 +362,7 @@ class TimelineBuilder:
     """
 
     def from_script(
-        self,
-        script: Any,
-        timing_manifest: Any,
-        graphics_manifest: Optional[Any] = None
+        self, script: Any, timing_manifest: Any, graphics_manifest: Optional[Any] = None
     ) -> VideoTimeline:
         """
         Build timeline from video script and timing manifest.
@@ -419,7 +415,7 @@ class TimelineBuilder:
                 metadata={
                     "scene_id": scene.id,
                     "voiceover": scene.voiceover,
-                }
+                },
             )
             video_track.add_clip(video_clip)
 
@@ -430,11 +426,13 @@ class TimelineBuilder:
                     track=TrackType.CAPTION,
                     source_path=None,
                     start_time=scene_timing.cumulative_start + caption.time,
-                    end_time=scene_timing.cumulative_start + caption.time + (caption.duration or 3.0),
+                    end_time=scene_timing.cumulative_start
+                    + caption.time
+                    + (caption.duration or 3.0),
                     metadata={
                         "text": caption.text,
                         "style": caption.style,
-                    }
+                    },
                 )
                 caption_track.add_clip(caption_clip)
 
@@ -453,7 +451,7 @@ class TimelineBuilder:
                     metadata={
                         "type": graphic.type.value,
                         "params": graphic.params,
-                    }
+                    },
                 )
                 graphics_track.add_clip(graphics_clip)
 
@@ -465,23 +463,25 @@ class TimelineBuilder:
     def _position_to_coords(self, position: str) -> Tuple[int, int]:
         """Convert position name to pixel coordinates."""
         positions = {
-            'center': (960, 540),
-            'top': (960, 100),
-            'bottom': (960, 980),
-            'top-left': (200, 100),
-            'top-right': (1720, 100),
-            'bottom-left': (200, 980),
-            'bottom-right': (1720, 980),
+            "center": (960, 540),
+            "top": (960, 100),
+            "bottom": (960, 980),
+            "top-left": (200, 100),
+            "top-right": (1720, 100),
+            "bottom-left": (200, 980),
+            "bottom-right": (1720, 980),
         }
         return positions.get(position, (960, 540))
 
 
 def print_timeline_summary(timeline: VideoTimeline):
     """Print a human-readable timeline summary."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"TIMELINE: {timeline.name}")
-    print(f"Duration: {timeline.duration:.1f}s | {timeline.width}x{timeline.height} @ {timeline.fps}fps")
-    print(f"{'='*60}")
+    print(
+        f"Duration: {timeline.duration:.1f}s | {timeline.width}x{timeline.height} @ {timeline.fps}fps"
+    )
+    print(f"{'=' * 60}")
 
     for track_name, track in timeline.tracks.items():
         print(f"\n[{track.type.value.upper()}] {track_name}")
@@ -490,14 +490,16 @@ def print_timeline_summary(timeline: VideoTimeline):
         for clip in track.clips:
             duration = clip.end_time - clip.start_time
             source = clip.source_path.name if clip.source_path else "generated"
-            print(f"  {clip.start_time:6.1f}s - {clip.end_time:6.1f}s ({duration:.1f}s) | {clip.id}")
-            if clip.metadata.get('text'):
-                print(f"           └─ \"{clip.metadata['text'][:40]}...\"")
+            print(
+                f"  {clip.start_time:6.1f}s - {clip.end_time:6.1f}s ({duration:.1f}s) | {clip.id}"
+            )
+            if clip.metadata.get("text"):
+                print(f'           └─ "{clip.metadata["text"][:40]}..."')
 
-    print(f"\n{'='*60}\n")
+    print(f"\n{'=' * 60}\n")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Demo: Create a sample timeline
     timeline = VideoTimeline(
         id="demo-timeline",
@@ -511,30 +513,36 @@ if __name__ == '__main__':
     audio_track = timeline.add_track("A1", TrackType.AUDIO)
 
     # Add demo clips
-    video_track.add_clip(TimelineClip(
-        id="intro",
-        track=TrackType.VIDEO,
-        source_path=Path("demo.mp4"),
-        start_time=0,
-        end_time=60,
-    ))
+    video_track.add_clip(
+        TimelineClip(
+            id="intro",
+            track=TrackType.VIDEO,
+            source_path=Path("demo.mp4"),
+            start_time=0,
+            end_time=60,
+        )
+    )
 
-    graphics_track.add_clip(TimelineClip(
-        id="stat-30percent",
-        track=TrackType.GRAPHICS,
-        source_path=Path("stat_counter.webm"),
-        start_time=10,
-        end_time=14,
-        position=(1720, 980),
-    ))
+    graphics_track.add_clip(
+        TimelineClip(
+            id="stat-30percent",
+            track=TrackType.GRAPHICS,
+            source_path=Path("stat_counter.webm"),
+            start_time=10,
+            end_time=14,
+            position=(1720, 980),
+        )
+    )
 
-    audio_track.add_clip(TimelineClip(
-        id="voiceover",
-        track=TrackType.AUDIO,
-        source_path=Path("voiceover.mp3"),
-        start_time=0,
-        end_time=60,
-    ))
+    audio_track.add_clip(
+        TimelineClip(
+            id="voiceover",
+            track=TrackType.AUDIO,
+            source_path=Path("voiceover.mp3"),
+            start_time=0,
+            end_time=60,
+        )
+    )
 
     # Print summary
     print_timeline_summary(timeline)

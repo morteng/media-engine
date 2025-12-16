@@ -7,21 +7,21 @@ Document validation:
 - Cross-document link checking
 """
 
-from .schema import (
-    SchemaValidator,
-    SchemaError,
-    validate_frontmatter,
-    load_schema,
-)
 from .references import (
-    ReferenceValidator,
     ReferenceError,
-    validate_references,
+    ReferenceValidator,
     validate_links,
+    validate_references,
+)
+from .schema import (
+    SchemaError,
+    SchemaValidator,
+    load_schema,
+    validate_frontmatter,
 )
 from .validator import (
-    ValidationReport,
     ValidationIssue,
+    ValidationReport,
     validate_project,
 )
 

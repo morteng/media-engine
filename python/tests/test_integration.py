@@ -5,16 +5,14 @@ These tests verify that all components work together correctly
 using the actual demo project content.
 """
 
-import pytest
-from pathlib import Path
-import tempfile
-import shutil
 import json
+import shutil
+from pathlib import Path
 
-from media_engine.core.project import Project, find_project
+import pytest
 from media_engine.cms.document import Document
 from media_engine.cms.translation import TranslationTracker
-
+from media_engine.core.project import Project
 
 # Path to demo project
 DEMO_PROJECT_PATH = Path(__file__).parent.parent.parent / "demo"
@@ -135,7 +133,7 @@ class TestDemoProjectBuilds:
 
     def test_diagram_generation(self, demo_project_copy, temp_dir):
         """Test diagram generation from YAML."""
-        from media_engine.diagrams import DiagramGenerator, DiagramDefinition
+        from media_engine.diagrams import DiagramDefinition, DiagramGenerator
 
         diagram_path = demo_project_copy.get_content_path("en", "diagrams", "architecture.yaml")
 
@@ -145,9 +143,7 @@ class TestDemoProjectBuilds:
         definition = DiagramDefinition.from_yaml(diagram_path)
         generator = DiagramGenerator(theme=demo_project_copy.theme)
 
-        light_path, dark_path = generator.generate_both_themes(
-            definition, temp_dir, "architecture"
-        )
+        light_path, dark_path = generator.generate_both_themes(definition, temp_dir, "architecture")
 
         assert light_path.exists()
         assert dark_path.exists()
@@ -185,7 +181,9 @@ class TestDemoProjectQuality:
         report = run_quality_checks(demo_project_copy, console_output=False)
 
         # Demo project should have no errors
-        assert report.error_count == 0, f"Errors found: {[i.message for i in report.issues if i.severity == 'error']}"
+        assert report.error_count == 0, (
+            f"Errors found: {[i.message for i in report.issues if i.severity == 'error']}"
+        )
 
     def test_validation_passes(self, demo_project_copy):
         """Test that demo project passes validation."""
@@ -200,7 +198,9 @@ class TestDemoProjectQuality:
         )
 
         # Allow some warnings but no errors
-        assert report.error_count == 0, f"Validation errors: {[i.message for i in report.issues if i.severity == 'error']}"
+        assert report.error_count == 0, (
+            f"Validation errors: {[i.message for i in report.issues if i.severity == 'error']}"
+        )
 
 
 class TestDemoProjectSearch:
@@ -237,7 +237,10 @@ class TestDemoProjectSearch:
 
         assert len(results) > 0
         # First result should be the introduction chapter
-        assert "introduction" in results[0].entry.title.lower() or "introduksjon" in results[0].entry.title.lower()
+        assert (
+            "introduction" in results[0].entry.title.lower()
+            or "introduksjon" in results[0].entry.title.lower()
+        )
 
 
 class TestDemoProjectTranslation:

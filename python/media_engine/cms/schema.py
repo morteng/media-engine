@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 
@@ -16,6 +16,7 @@ from .document import Document
 @dataclass
 class ValidationError:
     """Represents a validation error."""
+
     field: str
     message: str
     severity: str = "error"  # error, warning, info
@@ -27,6 +28,7 @@ class ValidationError:
 @dataclass
 class ValidationResult:
     """Result of schema validation."""
+
     valid: bool
     errors: list[ValidationError] = field(default_factory=list)
     warnings: list[ValidationError] = field(default_factory=list)
@@ -102,11 +104,7 @@ class SchemaValidator:
         return result
 
     def _validate_field(
-        self,
-        field_name: str,
-        value: Any,
-        schema: dict,
-        result: ValidationResult
+        self, field_name: str, value: Any, schema: dict, result: ValidationResult
     ) -> None:
         """Validate a single field against its schema."""
         field_type = schema.get("type")
@@ -165,7 +163,7 @@ class SchemaValidator:
     def _validate_version_format(self, doc: Document, result: ValidationResult) -> None:
         """Validate semantic version format."""
         version = doc.version
-        if not re.match(r'^\d+\.\d+\.\d+$', version):
+        if not re.match(r"^\d+\.\d+\.\d+$", version):
             result.add_error("version", f"Invalid version format '{version}' (expected X.Y.Z)")
 
     def _validate_dates(self, doc: Document, result: ValidationResult) -> None:
@@ -339,27 +337,23 @@ class DesignSystem:
             # Figure
             "figure.figsize": (
                 diagram_defaults.get("width", 12),
-                diagram_defaults.get("height", 8)
+                diagram_defaults.get("height", 8),
             ),
             "figure.dpi": diagram_defaults.get("dpi", 150),
             "figure.facecolor": "white",
             "figure.edgecolor": "white",
-
             # Fonts
             "font.family": "sans-serif",
             "font.sans-serif": [self.heading_font, "DejaVu Sans"],
             "font.size": diagram_fonts.get("size_label", 10),
-
             # Axes
             "axes.facecolor": "white",
             "axes.edgecolor": self.get_color("border"),
             "axes.labelcolor": self.primary_color,
             "axes.titlesize": diagram_fonts.get("size_title", 14),
             "axes.titleweight": "bold",
-
             # Text
             "text.color": self.primary_color,
-
             # Lines
             "lines.linewidth": self.config.get("diagrams", {}).get("lines", {}).get("width", 1.5),
         }

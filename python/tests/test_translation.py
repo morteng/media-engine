@@ -3,12 +3,8 @@ Tests for translation tracking functionality.
 """
 
 import pytest
-from pathlib import Path
-import tempfile
-import shutil
-
-from media_engine.cms.translation import TranslationTracker, TranslationStatus
 from media_engine.cms.document import Document
+from media_engine.cms.translation import TranslationTracker
 from media_engine.core.project import Project
 
 

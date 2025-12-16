@@ -12,15 +12,16 @@ When a document changes, dependent documents are flagged for review.
 
 import json
 import re
+from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional, Set
-from collections import defaultdict
 
 
 @dataclass
 class DependencyInfo:
     """Information about a dependency."""
+
     source: Path
     target: Path
     dep_type: str  # reference, asset, translation, include
@@ -207,26 +208,30 @@ class DependencyGraph:
 
         # 1. Scan for markdown links to other documents
         # Pattern: [text](path.md) or [text](../path.md)
-        link_pattern = r'\[([^\]]+)\]\(([^)]+\.md)\)'
+        link_pattern = r"\[([^\]]+)\]\(([^)]+\.md)\)"
         for match in re.finditer(link_pattern, content):
             link_text, link_path = match.groups()
             target = self._resolve_path(doc_path, link_path)
             if target:
                 self.add_dependency(
-                    doc_path, target, "reference",
+                    doc_path,
+                    target,
+                    "reference",
                     context=f"Link: {link_text}",
                 )
 
         # 2. Scan for image references
         # Pattern: ![alt](path) or ![alt](path.png)
-        img_pattern = r'!\[([^\]]*)\]\(([^)]+)\)'
+        img_pattern = r"!\[([^\]]*)\]\(([^)]+)\)"
         for match in re.finditer(img_pattern, content):
             alt_text, img_path = match.groups()
-            if not img_path.startswith(('http://', 'https://')):
+            if not img_path.startswith(("http://", "https://")):
                 target = self._resolve_path(doc_path, img_path)
                 if target:
                     self.add_dependency(
-                        doc_path, target, "asset",
+                        doc_path,
+                        target,
+                        "asset",
                         context=f"Image: {alt_text or img_path}",
                     )
 
@@ -250,9 +255,9 @@ class DependencyGraph:
         """Resolve a relative path from a base document."""
         try:
             # Handle various path formats
-            if relative.startswith('/'):
+            if relative.startswith("/"):
                 # Absolute from content root
-                target = self.project.content_dir / relative.lstrip('/')
+                target = self.project.content_dir / relative.lstrip("/")
             else:
                 # Relative to current document
                 target = (base.parent / relative).resolve()
@@ -293,19 +298,13 @@ class DependencyGraph:
         """Get most referenced documents."""
         counts = {target: len(sources) for target, sources in self._reverse.items()}
         sorted_items = sorted(counts.items(), key=lambda x: x[1], reverse=True)
-        return [
-            {"path": path, "reference_count": count}
-            for path, count in sorted_items[:limit]
-        ]
+        return [{"path": path, "reference_count": count} for path, count in sorted_items[:limit]]
 
     def _get_most_dependencies(self, limit: int) -> list[dict]:
         """Get documents with most dependencies."""
         counts = {source: len(deps) for source, deps in self._forward.items()}
         sorted_items = sorted(counts.items(), key=lambda x: x[1], reverse=True)
-        return [
-            {"path": path, "dependency_count": count}
-            for path, count in sorted_items[:limit]
-        ]
+        return [{"path": path, "dependency_count": count} for path, count in sorted_items[:limit]]
 
     def visualize_dot(self) -> str:
         """Generate DOT format for visualization."""

@@ -2,18 +2,18 @@
 Tests for the links module - link validation.
 """
 
-import pytest
 import json
-from pathlib import Path
-from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, MagicMock
 import urllib.error
+from datetime import datetime, timedelta
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
 
+import pytest
 from media_engine.links import (
-    LinkStatus,
-    LinkResult,
     LinkCache,
     LinkChecker,
+    LinkResult,
+    LinkStatus,
     check_links,
 )
 
@@ -406,6 +406,7 @@ class TestLinkCheckerProject:
         if not demo_path.exists():
             pytest.skip("Demo project not found")
         from media_engine.core.project import Project
+
         return Project.load(demo_path)
 
     def test_check_project_internal_only(self, demo_project):
@@ -439,6 +440,7 @@ class TestCheckLinksFunction:
         if not demo_path.exists():
             pytest.skip("Demo project not found")
         from media_engine.core.project import Project
+
         return Project.load(demo_path)
 
     def test_check_links_function(self, demo_project):

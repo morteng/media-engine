@@ -9,9 +9,8 @@ Links all deliverables in an organized, branded way.
 """
 
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import List, Dict, Optional, TYPE_CHECKING
 from datetime import datetime
+from typing import TYPE_CHECKING, List, Optional
 
 from jinja2 import Template
 
@@ -22,6 +21,7 @@ if TYPE_CHECKING:
 @dataclass
 class DeliverableItem:
     """A deliverable item for the index."""
+
     name: str
     path: str
     description: str = ""
@@ -32,6 +32,7 @@ class DeliverableItem:
 @dataclass
 class DeliverableCategory:
     """Category of deliverables."""
+
     name: str
     icon: str = ""
     items: List[DeliverableItem] = field(default_factory=list)
@@ -40,13 +41,14 @@ class DeliverableCategory:
 @dataclass
 class LanguageInfo:
     """Language information for project index."""
+
     code: str
     name: str
     path: str
 
 
 # Project Index Template (root index.html)
-PROJECT_INDEX_TEMPLATE = '''<!DOCTYPE html>
+PROJECT_INDEX_TEMPLATE = """<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
@@ -227,11 +229,11 @@ PROJECT_INDEX_TEMPLATE = '''<!DOCTYPE html>
         });
     </script>
 </body>
-</html>'''
+</html>"""
 
 
 # Language Index Template (en/index.html)
-LANGUAGE_INDEX_TEMPLATE = '''<!DOCTYPE html>
+LANGUAGE_INDEX_TEMPLATE = """<!DOCTYPE html>
 <html lang="{{ lang_code }}" data-theme="dark">
 <head>
     <meta charset="UTF-8">
@@ -464,7 +466,7 @@ LANGUAGE_INDEX_TEMPLATE = '''<!DOCTYPE html>
         });
     </script>
 </body>
-</html>'''
+</html>"""
 
 
 class IndexTemplate:
@@ -472,6 +474,7 @@ class IndexTemplate:
 
     def __init__(self, theme: "Theme" = None):
         from ..core.theme import COPPER_AND_CREAM
+
         self.theme = theme or COPPER_AND_CREAM
         self.project_template = Template(PROJECT_INDEX_TEMPLATE)
         self.language_template = Template(LANGUAGE_INDEX_TEMPLATE)
@@ -535,6 +538,4 @@ def render_language_index(
 ) -> str:
     """Convenience function to render language index."""
     template = IndexTemplate(theme=theme)
-    return template.render_language_index(
-        project_name, lang_code, lang_name, categories, logo_path
-    )
+    return template.render_language_index(project_name, lang_code, lang_name, categories, logo_path)

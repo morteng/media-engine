@@ -13,13 +13,14 @@ Helps ensure comprehensive documentation.
 
 import re
 from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
 from typing import Optional
-from enum import Enum
 
 
 class GapType(str, Enum):
     """Types of content gaps."""
+
     MISSING_TOPIC = "missing_topic"
     MISSING_TRANSLATION = "missing_translation"
     MISSING_REFERENCE = "missing_reference"
@@ -32,15 +33,17 @@ class GapType(str, Enum):
 
 class GapSeverity(str, Enum):
     """Severity of content gaps."""
-    CRITICAL = "critical"    # Blocks publishing
-    HIGH = "high"           # Should fix soon
-    MEDIUM = "medium"       # Should address
-    LOW = "low"             # Nice to have
+
+    CRITICAL = "critical"  # Blocks publishing
+    HIGH = "high"  # Should fix soon
+    MEDIUM = "medium"  # Should address
+    LOW = "low"  # Nice to have
 
 
 @dataclass
 class ContentGap:
     """A detected content gap."""
+
     gap_type: GapType
     severity: GapSeverity
     description: str
@@ -52,6 +55,7 @@ class ContentGap:
 @dataclass
 class TopicCoverage:
     """Coverage analysis for a topic."""
+
     topic: str
     covered: bool
     documents: list[str] = field(default_factory=list)
@@ -76,7 +80,7 @@ class TopicAnalyzer:
                 doc = Document.load(chapter)
 
                 # Extract headings as topics
-                headings = re.findall(r'^#+\s+(.+)$', doc.content, re.MULTILINE)
+                headings = re.findall(r"^#+\s+(.+)$", doc.content, re.MULTILINE)
 
                 rel_path = str(chapter.relative_to(self.project.root))
 
@@ -108,12 +112,14 @@ class TopicAnalyzer:
                     matching_docs.extend(docs)
 
             if not covered:
-                gaps.append(ContentGap(
-                    gap_type=GapType.MISSING_TOPIC,
-                    severity=GapSeverity.MEDIUM,
-                    description=f"Topic '{topic}' is not covered in documentation",
-                    suggestion=f"Add a section or document covering: {topic}",
-                ))
+                gaps.append(
+                    ContentGap(
+                        gap_type=GapType.MISSING_TOPIC,
+                        severity=GapSeverity.MEDIUM,
+                        description=f"Topic '{topic}' is not covered in documentation",
+                        suggestion=f"Add a section or document covering: {topic}",
+                    )
+                )
 
         return gaps
 
@@ -122,7 +128,7 @@ class ReferenceAnalyzer:
     """Analyzes cross-references for broken or missing links."""
 
     # Pattern for internal references
-    REF_PATTERN = re.compile(r'\[([^\]]+)\]\(([^)]+)\)')
+    REF_PATTERN = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 
     def __init__(self, project):
         self.project = project
@@ -140,7 +146,7 @@ class ReferenceAnalyzer:
                 rel = str(chapter.relative_to(self.project.content_dir))
                 all_paths.add(rel)
                 # Also add without extension
-                all_paths.add(rel.rsplit('.', 1)[0])
+                all_paths.add(rel.rsplit(".", 1)[0])
 
         # Check references in each document
         for lang in self.project.languages:
@@ -152,30 +158,34 @@ class ReferenceAnalyzer:
                     text, url = match.groups()
 
                     # Skip external URLs
-                    if url.startswith(('http://', 'https://', 'mailto:', '#')):
+                    if url.startswith(("http://", "https://", "mailto:", "#")):
                         continue
 
                     # Resolve relative path
-                    if url.startswith('/'):
-                        target = url.lstrip('/')
+                    if url.startswith("/"):
+                        target = url.lstrip("/")
                     else:
-                        target = str((chapter.parent / url).resolve().relative_to(self.project.content_dir))
+                        target = str(
+                            (chapter.parent / url).resolve().relative_to(self.project.content_dir)
+                        )
 
                     # Remove anchor
-                    target = target.split('#')[0]
+                    target = target.split("#")[0]
 
                     # Check if target exists
                     target_path = self.project.content_dir / target
                     if not target_path.exists() and target not in all_paths:
                         # Check with .md extension
                         if not (self.project.content_dir / f"{target}.md").exists():
-                            gaps.append(ContentGap(
-                                gap_type=GapType.MISSING_REFERENCE,
-                                severity=GapSeverity.HIGH,
-                                description=f"Reference to '{url}' does not exist",
-                                location=doc_rel,
-                                suggestion=f"Create '{target}' or fix the reference",
-                            ))
+                            gaps.append(
+                                ContentGap(
+                                    gap_type=GapType.MISSING_REFERENCE,
+                                    severity=GapSeverity.HIGH,
+                                    description=f"Reference to '{url}' does not exist",
+                                    location=doc_rel,
+                                    suggestion=f"Create '{target}' or fix the reference",
+                                )
+                            )
 
         return gaps
 
@@ -213,14 +223,16 @@ class TranslationGapAnalyzer:
             # Find missing
             for rel, source_path in source_docs.items():
                 if rel not in existing:
-                    gaps.append(ContentGap(
-                        gap_type=GapType.MISSING_TRANSLATION,
-                        severity=GapSeverity.MEDIUM,
-                        description=f"'{rel}' not translated to {lang}",
-                        location=str(source_path.relative_to(self.project.root)),
-                        suggestion=f"Create translation: {lang}/{rel}",
-                        related_content=[str(source_path)],
-                    ))
+                    gaps.append(
+                        ContentGap(
+                            gap_type=GapType.MISSING_TRANSLATION,
+                            severity=GapSeverity.MEDIUM,
+                            description=f"'{rel}' not translated to {lang}",
+                            location=str(source_path.relative_to(self.project.root)),
+                            suggestion=f"Create translation: {lang}/{rel}",
+                            related_content=[str(source_path)],
+                        )
+                    )
 
         return gaps
 
@@ -241,6 +253,7 @@ class SchemaGapAnalyzer:
             return gaps
 
         import yaml
+
         with open(schema_path) as f:
             schema = yaml.safe_load(f)
 
@@ -264,12 +277,14 @@ class SchemaGapAnalyzer:
         # Find undocumented
         for field_name, field_config in schema.get("properties", {}).items():
             if field_name not in documented:
-                gaps.append(ContentGap(
-                    gap_type=GapType.MISSING_SCHEMA,
-                    severity=GapSeverity.LOW,
-                    description=f"Schema field '{field_name}' is not documented",
-                    suggestion=f"Add documentation for: {field_name}",
-                ))
+                gaps.append(
+                    ContentGap(
+                        gap_type=GapType.MISSING_SCHEMA,
+                        severity=GapSeverity.LOW,
+                        description=f"Schema field '{field_name}' is not documented",
+                        suggestion=f"Add documentation for: {field_name}",
+                    )
+                )
 
         return gaps
 
@@ -295,7 +310,7 @@ class OrphanAnalyzer:
                 all_docs[rel] = chapter
 
         # Find all internal links
-        link_pattern = re.compile(r'\[([^\]]+)\]\(([^)]+)\)')
+        link_pattern = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 
         for rel, path in all_docs.items():
             doc = Document.load(path)
@@ -304,39 +319,43 @@ class OrphanAnalyzer:
                 url = match.group(2)
 
                 # Skip external
-                if url.startswith(('http://', 'https://', 'mailto:')):
+                if url.startswith(("http://", "https://", "mailto:")):
                     continue
 
                 # Resolve path
-                if url.startswith('/'):
-                    target = url.lstrip('/')
+                if url.startswith("/"):
+                    target = url.lstrip("/")
                 else:
-                    target = str((path.parent / url).resolve().relative_to(self.project.content_dir))
+                    target = str(
+                        (path.parent / url).resolve().relative_to(self.project.content_dir)
+                    )
 
-                target = target.split('#')[0]
-                if not target.endswith('.md'):
-                    target += '.md'
+                target = target.split("#")[0]
+                if not target.endswith(".md"):
+                    target += ".md"
 
                 linked_docs.add(target)
 
         # Find orphans (excluding index files)
         for rel, path in all_docs.items():
             name = path.stem.lower()
-            if name in ('index', 'readme', '00_', '01_introduction', 'introduksjon'):
+            if name in ("index", "readme", "00_", "01_introduction", "introduksjon"):
                 continue
 
             if rel not in linked_docs:
                 # Check if it's a chapter 1 (entry point)
-                if '01_' in path.name or 'introduction' in path.name.lower():
+                if "01_" in path.name or "introduction" in path.name.lower():
                     continue
 
-                gaps.append(ContentGap(
-                    gap_type=GapType.ORPHAN_CONTENT,
-                    severity=GapSeverity.LOW,
-                    description=f"'{rel}' is not linked from any other document",
-                    location=rel,
-                    suggestion="Add a link to this document from relevant content",
-                ))
+                gaps.append(
+                    ContentGap(
+                        gap_type=GapType.ORPHAN_CONTENT,
+                        severity=GapSeverity.LOW,
+                        description=f"'{rel}' is not linked from any other document",
+                        location=rel,
+                        suggestion="Add a link to this document from relevant content",
+                    )
+                )
 
         return gaps
 
@@ -396,12 +415,14 @@ class ContentGapAnalyzer:
         for gap in gaps:
             if gap.gap_type not in by_type:
                 by_type[gap.gap_type] = []
-            by_type[gap.gap_type].append({
-                "severity": gap.severity.value,
-                "description": gap.description,
-                "location": gap.location,
-                "suggestion": gap.suggestion,
-            })
+            by_type[gap.gap_type].append(
+                {
+                    "severity": gap.severity.value,
+                    "description": gap.description,
+                    "location": gap.location,
+                    "suggestion": gap.suggestion,
+                }
+            )
 
         # Group by severity
         by_severity = {s: 0 for s in GapSeverity}

@@ -15,7 +15,7 @@ Features:
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 import markdown
 from jinja2 import Template
@@ -336,6 +336,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 @dataclass
 class HTMLConfig:
     """Configuration for HTML generation."""
+
     include_toc: bool = False
     footer: str = ""
     lang: str = "en"
@@ -351,7 +352,7 @@ class HTMLBuilder:
         Args:
             theme: Theme for styling (uses defaults if not provided)
         """
-        from ..core.theme import Theme, COPPER_AND_CREAM
+        from ..core.theme import COPPER_AND_CREAM
 
         self.theme = theme or COPPER_AND_CREAM
         self.template = Template(HTML_TEMPLATE)
@@ -359,23 +360,23 @@ class HTMLBuilder:
         # Markdown processor with extensions
         self.md = markdown.Markdown(
             extensions=[
-                'tables',
-                'fenced_code',
-                'codehilite',
-                'toc',
-                'meta',
-                'attr_list',
+                "tables",
+                "fenced_code",
+                "codehilite",
+                "toc",
+                "meta",
+                "attr_list",
             ],
             extension_configs={
-                'codehilite': {
-                    'css_class': 'highlight',
-                    'guess_lang': False,
+                "codehilite": {
+                    "css_class": "highlight",
+                    "guess_lang": False,
                 },
-                'toc': {
-                    'permalink': True,
-                    'permalink_class': 'anchor',
+                "toc": {
+                    "permalink": True,
+                    "permalink_class": "anchor",
                 },
-            }
+            },
         )
 
     def build(
@@ -405,7 +406,7 @@ class HTMLBuilder:
 
         # Get TOC if enabled
         toc_html = ""
-        if config.include_toc and hasattr(self.md, 'toc'):
+        if config.include_toc and hasattr(self.md, "toc"):
             toc_html = self.md.toc
 
         # Render template
@@ -442,11 +443,12 @@ class HTMLBuilder:
         # Extract title from first H1 if not provided
         if not title:
             import re
-            match = re.search(r'^#\s+(.+)$', content, re.MULTILINE)
+
+            match = re.search(r"^#\s+(.+)$", content, re.MULTILINE)
             if match:
                 title = match.group(1)
             else:
-                title = source_path.stem.replace('_', ' ').title()
+                title = source_path.stem.replace("_", " ").title()
 
         return self.build(content, title, config)
 

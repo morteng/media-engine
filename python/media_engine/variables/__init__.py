@@ -12,11 +12,12 @@ Prevents hardcoded values that become stale.
 
 import os
 import re
-import yaml
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
+
+import yaml
 
 
 @dataclass
@@ -146,7 +147,7 @@ class ContentInterpolator:
     """
 
     # Pattern for {{variable}} or {{ variable }}
-    PATTERN = re.compile(r'\{\{\s*([a-zA-Z_][a-zA-Z0-9_.]*)\s*\}\}')
+    PATTERN = re.compile(r"\{\{\s*([a-zA-Z_][a-zA-Z0-9_.]*)\s*\}\}")
 
     def __init__(self, variables: VariableSet):
         self.variables = variables
@@ -250,9 +251,7 @@ class ProjectInterpolator:
         return {
             "total_files_with_issues": len(issues),
             "issues": issues,
-            "all_missing": list(set(
-                var for vars in issues.values() for var in vars
-            )),
+            "all_missing": list(set(var for vars in issues.values() for var in vars)),
         }
 
     def get_available_variables(self) -> dict:

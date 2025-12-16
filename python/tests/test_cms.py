@@ -2,9 +2,6 @@
 Tests for media_engine.cms module.
 """
 
-import pytest
-from pathlib import Path
-
 from media_engine.cms.document import Document, DocumentCollection
 
 

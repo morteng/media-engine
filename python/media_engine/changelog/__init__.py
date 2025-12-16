@@ -13,13 +13,14 @@ Supports multiple output formats.
 import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
 from typing import Optional
-from enum import Enum
 
 
 class ChangeType(str, Enum):
     """Types of changes for categorization."""
+
     ADDED = "added"
     CHANGED = "changed"
     DEPRECATED = "deprecated"
@@ -33,6 +34,7 @@ class ChangeType(str, Enum):
 @dataclass
 class ChangeEntry:
     """A single changelog entry."""
+
     type: ChangeType
     description: str
     date: datetime
@@ -45,6 +47,7 @@ class ChangeEntry:
 @dataclass
 class ChangelogVersion:
     """A version section in the changelog."""
+
     version: str
     date: datetime
     entries: list[ChangeEntry] = field(default_factory=list)
@@ -84,7 +87,8 @@ class GitHistoryParser:
     ) -> list[dict]:
         """Get git commits within date range."""
         cmd = [
-            "git", "log",
+            "git",
+            "log",
             "--format=%H|%an|%aI|%s",
             "--date=iso",
         ]
@@ -113,12 +117,14 @@ class GitHistoryParser:
                 continue
             parts = line.split("|", 3)
             if len(parts) == 4:
-                commits.append({
-                    "hash": parts[0],
-                    "author": parts[1],
-                    "date": datetime.fromisoformat(parts[2].replace("Z", "+00:00")),
-                    "message": parts[3],
-                })
+                commits.append(
+                    {
+                        "hash": parts[0],
+                        "author": parts[1],
+                        "date": datetime.fromisoformat(parts[2].replace("Z", "+00:00")),
+                        "message": parts[3],
+                    }
+                )
 
         return commits
 
@@ -178,15 +184,17 @@ class GitHistoryParser:
             # Filter to content files for documentation changelog
             content_files = [f for f in files if f.startswith("content/") or f.endswith(".md")]
 
-            entries.append(ChangeEntry(
-                type=change_type,
-                description=description,
-                date=commit["date"],
-                author=commit["author"],
-                commit=commit["hash"][:7],
-                files=content_files if content_files else files[:5],  # Limit file list
-                breaking=breaking,
-            ))
+            entries.append(
+                ChangeEntry(
+                    type=change_type,
+                    description=description,
+                    date=commit["date"],
+                    author=commit["author"],
+                    commit=commit["hash"][:7],
+                    files=content_files if content_files else files[:5],  # Limit file list
+                    breaking=breaking,
+                )
+            )
 
         return entries
 
@@ -217,19 +225,23 @@ class DocumentVersionTracker:
 
                 # Create entry based on status
                 if status == "published":
-                    entries.append(ChangeEntry(
-                        type=ChangeType.DOCUMENTATION,
-                        description=f"Published: {doc.title}",
-                        date=mtime,
-                        files=[str(chapter_path.relative_to(self.project.root))],
-                    ))
+                    entries.append(
+                        ChangeEntry(
+                            type=ChangeType.DOCUMENTATION,
+                            description=f"Published: {doc.title}",
+                            date=mtime,
+                            files=[str(chapter_path.relative_to(self.project.root))],
+                        )
+                    )
                 elif "translated" in doc.metadata.get("tags", []):
-                    entries.append(ChangeEntry(
-                        type=ChangeType.TRANSLATION,
-                        description=f"Translated: {doc.title} ({lang})",
-                        date=mtime,
-                        files=[str(chapter_path.relative_to(self.project.root))],
-                    ))
+                    entries.append(
+                        ChangeEntry(
+                            type=ChangeType.TRANSLATION,
+                            description=f"Translated: {doc.title} ({lang})",
+                            date=mtime,
+                            files=[str(chapter_path.relative_to(self.project.root))],
+                        )
+                    )
 
         return entries
 

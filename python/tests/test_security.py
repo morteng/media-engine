@@ -2,16 +2,15 @@
 Tests for the security module - sensitive content detection.
 """
 
-import pytest
 from pathlib import Path
-import tempfile
 
+import pytest
 from media_engine.security import (
-    SensitivityLevel,
-    SensitiveMatch,
-    SensitiveContentScanner,
-    scan_for_secrets,
     PATTERNS,
+    SensitiveContentScanner,
+    SensitiveMatch,
+    SensitivityLevel,
+    scan_for_secrets,
 )
 
 
@@ -396,11 +395,11 @@ class TestScanForSecrets:
     @pytest.fixture
     def demo_project(self):
         """Load demo project if available."""
-        from media_engine.core import find_project
         demo_path = Path(__file__).parent.parent.parent / "demo"
         if not demo_path.exists():
             pytest.skip("Demo project not found")
         from media_engine.core.project import Project
+
         return Project.load(demo_path)
 
     def test_scan_project_returns_report(self, demo_project):
@@ -451,6 +450,7 @@ SSN: 123-45-6789
 """)
 
         from media_engine.core.project import Project
+
         project = Project.load(tmp_path)
 
         with pytest.raises(ValueError, match="critical security issues"):

@@ -2,16 +2,14 @@
 Tests for the variables module - content variable interpolation.
 """
 
-import pytest
-import os
 from pathlib import Path
-from datetime import datetime
 
+import pytest
 from media_engine.variables import (
-    VariableSet,
-    VariableLoader,
     ContentInterpolator,
     ProjectInterpolator,
+    VariableLoader,
+    VariableSet,
     interpolate_content,
     validate_variables,
 )
@@ -47,24 +45,28 @@ class TestVariableSet:
 
     def test_get_custom_variable(self):
         """Test getting custom variables."""
-        vs = VariableSet(custom={
-            "pricing": {"starter": "$10", "pro": "$50"},
-            "company": "Acme Inc",
-        })
+        vs = VariableSet(
+            custom={
+                "pricing": {"starter": "$10", "pro": "$50"},
+                "company": "Acme Inc",
+            }
+        )
         assert vs.get("pricing.starter") == "$10"
         assert vs.get("pricing.pro") == "$50"
         assert vs.get("company") == "Acme Inc"
 
     def test_get_nested_custom(self):
         """Test getting deeply nested custom variables."""
-        vs = VariableSet(custom={
-            "config": {
-                "api": {
-                    "endpoint": "https://api.example.com",
-                    "version": "v2",
+        vs = VariableSet(
+            custom={
+                "config": {
+                    "api": {
+                        "endpoint": "https://api.example.com",
+                        "version": "v2",
+                    }
                 }
             }
-        })
+        )
         assert vs.get("config.api.endpoint") == "https://api.example.com"
         assert vs.get("config.api.version") == "v2"
 
@@ -205,6 +207,7 @@ class TestVariableLoader:
         if not demo_path.exists():
             pytest.skip("Demo project not found")
         from media_engine.core.project import Project
+
         return Project.load(demo_path)
 
     def test_load_project_variables(self, demo_project):
@@ -261,6 +264,7 @@ class TestProjectInterpolator:
         if not demo_path.exists():
             pytest.skip("Demo project not found")
         from media_engine.core.project import Project
+
         return Project.load(demo_path)
 
     def test_create_interpolator(self, demo_project):
@@ -298,6 +302,7 @@ class TestConvenienceFunctions:
         if not demo_path.exists():
             pytest.skip("Demo project not found")
         from media_engine.core.project import Project
+
         return Project.load(demo_path)
 
     def test_interpolate_content(self, demo_project):
