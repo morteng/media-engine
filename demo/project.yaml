@@ -14,11 +14,11 @@ localization:
     "en":
       name: "English"
       locale: "en-US"
-      voice_id: ""  # Add your ElevenLabs voice ID here
+      voice_id: "UEKYgullGqaF0keqT8Bu"
     "no":  # Must quote 'no' - YAML parses it as False otherwise
       name: "Norwegian"
       locale: "nb-NO"
-      voice_id: ""  # Add your Norwegian voice ID here
+      voice_id: "s2xtA7B2CTXPPlJzch1v"
 
 # Voiceover settings
 voiceover:

@@ -59,16 +59,21 @@ class DemoRenderer:
 
     def _get_colors(self):
         """Extract colors from theme."""
-        if self.theme:
-            self.primary = self.theme.colors.get("primary", "#2c2522")
-            self.accent = self.theme.colors.get("accent", "#0066cc")
-            self.bg = self.theme.colors.get("background", "#ffffff")
-            self.text = self.theme.colors.get("text", "#2c2522")
+        if self.theme and hasattr(self.theme, "colors"):
+            colors = self.theme.colors
+            self.primary = getattr(colors, "primary", "#2c2522")
+            self.accent = getattr(colors, "accent", "#0066cc")
+            self.bg = getattr(colors, "background", "#ffffff")
+            self.text = getattr(colors, "text", "#2c2522")
         else:
             self.primary = "#2c2522"
             self.accent = "#0066cc"
             self.bg = "#ffffff"
             self.text = "#2c2522"
+
+    def _js_safe_id(self, id: str) -> str:
+        """Convert ID to valid JavaScript identifier (replace hyphens with underscores)."""
+        return id.replace("-", "_")
 
     def render(self, config: DemoConfig) -> str:
         """Render demo to HTML."""
@@ -145,6 +150,7 @@ class DemoRenderer:
         html_code = html.escape(config.data.get("html", "<h1>Hello World</h1>"))
         css_code = html.escape(config.data.get("css", "h1 { color: blue; }"))
         js_code = html.escape(config.data.get("js", "console.log('Ready!');"))
+        js_id = self._js_safe_id(config.id)
 
         return f"""
         {self._base_styles(config)}
@@ -165,7 +171,7 @@ class DemoRenderer:
                             <label style="font-weight: 600;">JavaScript</label>
                             <textarea id="js-{config.id}" class="demo-input" style="width: 100%; height: 80px; font-family: monospace;">{js_code}</textarea>
                         </div>
-                        <button class="demo-btn" onclick="runDemo_{config.id}()">Run</button>
+                        <button class="demo-btn" onclick="runDemo_{js_id}()">Run</button>
                     </div>
                     <div>
                         <label style="font-weight: 600;">Output</label>
@@ -175,7 +181,7 @@ class DemoRenderer:
             </div>
         </div>
         <script>
-            function runDemo_{config.id}() {{
+            function runDemo_{js_id}() {{
                 const htmlCode = document.getElementById('html-{config.id}').value;
                 const cssCode = document.getElementById('css-{config.id}').value;
                 const jsCode = document.getElementById('js-{config.id}').value;
@@ -185,7 +191,7 @@ class DemoRenderer:
                 doc.write('<style>' + cssCode + '</style>' + htmlCode + '<script>' + jsCode + '<\\/script>');
                 doc.close();
             }}
-            {"runDemo_" + config.id + "();" if config.autorun else ""}
+            {"runDemo_" + js_id + "();" if config.autorun else ""}
         </script>
         """
 
@@ -245,7 +251,7 @@ class DemoRenderer:
             nodes_html += f"""
             <div class="diagram-node" data-id="{node_id}"
                  style="left: {x}px; top: {y}px;"
-                 onclick="showInfo_{config.id}('{node_id}', '{desc}')">
+                 onclick="showInfo_{self._js_safe_id(config.id)}('{node_id}', '{desc}')">
                 {label}
             </div>
             """
@@ -291,7 +297,7 @@ class DemoRenderer:
             </div>
         </div>
         <script>
-            function showInfo_{config.id}(nodeId, description) {{
+            function showInfo_{self._js_safe_id(config.id)}(nodeId, description) {{
                 document.getElementById('info-{config.id}').innerHTML =
                     '<strong>' + nodeId + '</strong><br>' + description;
             }}
@@ -323,7 +329,7 @@ class DemoRenderer:
         <div class="demo-container-{config.id}">
             <div class="demo-header-{config.id}">{html.escape(config.title)}</div>
             <div class="demo-body-{config.id}">
-                <form id="form-{config.id}" onsubmit="return submitForm_{config.id}(event)">
+                <form id="form-{config.id}" onsubmit="return submitForm_{self._js_safe_id(config.id)}(event)">
                     {fields_html}
                     <button type="submit" class="demo-btn">Submit</button>
                 </form>
@@ -331,7 +337,7 @@ class DemoRenderer:
             </div>
         </div>
         <script>
-            function submitForm_{config.id}(e) {{
+            function submitForm_{self._js_safe_id(config.id)}(e) {{
                 e.preventDefault();
                 const form = document.getElementById('form-{config.id}');
                 const data = new FormData(form);
@@ -372,12 +378,12 @@ class DemoRenderer:
                     <textarea id="body-{config.id}" class="demo-input"
                               style="width: 100%; height: 80px; font-family: monospace;">{{}}</textarea>
                 </div>
-                <button class="demo-btn" onclick="sendRequest_{config.id}()">Send Request</button>
+                <button class="demo-btn" onclick="sendRequest_{self._js_safe_id(config.id)}()">Send Request</button>
                 <div class="demo-output" id="response-{config.id}">Response will appear here...</div>
             </div>
         </div>
         <script>
-            async function sendRequest_{config.id}() {{
+            async function sendRequest_{self._js_safe_id(config.id)}() {{
                 const select = document.getElementById('endpoint-{config.id}');
                 const [method, path] = select.value.split('|');
                 const body = document.getElementById('body-{config.id}').value;
@@ -425,7 +431,7 @@ class DemoRenderer:
                 <label style="font-weight: 600;">{label}</label>
                 <input type="number" id="var-{config.id}-{name}" class="demo-input"
                        value="{default}" min="{min_val}" max="{max_val}" step="{step}"
-                       oninput="calculate_{config.id}()" style="width: 100px;">
+                       oninput="calculate_{self._js_safe_id(config.id)}()" style="width: 100px;">
             </div>
             """
             js_vars.append(
@@ -452,7 +458,7 @@ class DemoRenderer:
             </div>
         </div>
         <script>
-            function calculate_{config.id}() {{
+            function calculate_{self._js_safe_id(config.id)}() {{
                 try {{
                     {chr(10).join(js_vars)}
                     const result = {formula};
@@ -462,7 +468,7 @@ class DemoRenderer:
                     document.getElementById('result-{config.id}').textContent = 'Error';
                 }}
             }}
-            calculate_{config.id}();
+            calculate_{self._js_safe_id(config.id)}();
         </script>
         """
 
@@ -625,7 +631,7 @@ class DemoRenderer:
             <div class="demo-body-{config.id}">
                 <form id="quiz-{config.id}">
                     {questions_html}
-                    <button type="button" class="demo-btn" onclick="checkQuiz_{config.id}()">
+                    <button type="button" class="demo-btn" onclick="checkQuiz_{self._js_safe_id(config.id)}()">
                         Check Answers
                     </button>
                 </form>
@@ -633,7 +639,7 @@ class DemoRenderer:
             </div>
         </div>
         <script>
-            function checkQuiz_{config.id}() {{
+            function checkQuiz_{self._js_safe_id(config.id)}() {{
                 const form = document.getElementById('quiz-{config.id}');
                 const questions = form.querySelectorAll('.quiz-question');
                 let correct = 0;

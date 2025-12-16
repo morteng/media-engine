@@ -1,0 +1,190 @@
+# Video Production Pipeline Diagram
+# Shows the complete flow from script to final video
+
+title: "Video Production Pipeline"
+description: "End-to-end video production workflow in Media Engine"
+
+config:
+  width: 16
+  height: 8
+  dpi: 200
+  format: png
+  font_scale: 1.0
+  style: "flow"
+
+boxes:
+  # Input
+  - id: script
+    label: "Video Script\n(YAML)"
+    x: 0
+    y: 4
+    width: 2.2
+    height: 1.2
+    color: "#e8f4f8"
+    border: "#3182ce"
+
+  # Processing Stage 1: Parse
+  - id: parser
+    label: "Script\nParser"
+    x: 3
+    y: 4
+    width: 2.0
+    height: 1.2
+    color: "#dbeafe"
+    border: "#2563eb"
+
+  # Processing Stage 2: Generate (parallel)
+  - id: voiceover_gen
+    label: "Voiceover\nGeneration"
+    x: 6
+    y: 6
+    width: 2.2
+    height: 1.0
+    color: "#fce7f3"
+    border: "#db2777"
+
+  - id: caption_gen
+    label: "Caption\nGeneration"
+    x: 6
+    y: 4
+    width: 2.2
+    height: 1.0
+    color: "#fef3c7"
+    border: "#d97706"
+
+  - id: props_gen
+    label: "Remotion\nProps"
+    x: 6
+    y: 2
+    width: 2.2
+    height: 1.0
+    color: "#d1fae5"
+    border: "#059669"
+
+  # Processing Stage 3: Render
+  - id: remotion
+    label: "Remotion\nRenderer"
+    x: 9.5
+    y: 4
+    width: 2.2
+    height: 1.2
+    color: "#e0e7ff"
+    border: "#4f46e5"
+
+  # Output
+  - id: mp4
+    label: "MP4\nVideo"
+    x: 13
+    y: 5
+    width: 2.0
+    height: 1.0
+    color: "#c45c3c"
+    text_color: "#ffffff"
+
+  - id: vtt
+    label: "VTT\nCaptions"
+    x: 13
+    y: 3
+    width: 2.0
+    height: 1.0
+    color: "#c45c3c"
+    text_color: "#ffffff"
+
+  # External Services
+  - id: elevenlabs
+    label: "ElevenLabs\nAPI"
+    x: 6
+    y: 8
+    width: 2.2
+    height: 0.8
+    color: "#f3e8ff"
+    border: "#9333ea"
+    style: "external"
+
+  - id: cache
+    label: "Audio\nCache"
+    x: 3
+    y: 7
+    width: 1.8
+    height: 0.8
+    color: "#f1f5f9"
+    border: "#64748b"
+    style: "storage"
+
+arrows:
+  # Main flow
+  - from: script
+    to: parser
+    label: "parse"
+
+  - from: parser
+    to: voiceover_gen
+    label: ""
+
+  - from: parser
+    to: caption_gen
+    label: ""
+
+  - from: parser
+    to: props_gen
+    label: ""
+
+  # External service
+  - from: voiceover_gen
+    to: elevenlabs
+    label: "TTS"
+    style: "dashed"
+
+  # Cache interaction
+  - from: cache
+    to: voiceover_gen
+    label: "cached"
+    style: "<->"
+
+  # Converge to renderer
+  - from: voiceover_gen
+    to: remotion
+    label: "audio"
+
+  - from: caption_gen
+    to: remotion
+    label: "timing"
+
+  - from: props_gen
+    to: remotion
+    label: "scenes"
+
+  # Output
+  - from: remotion
+    to: mp4
+    label: ""
+
+  - from: caption_gen
+    to: vtt
+    label: ""
+
+annotations:
+  - text: "INPUT"
+    x: 1.1
+    y: 3
+    style: "stage_label"
+
+  - text: "PARSE"
+    x: 4
+    y: 3
+    style: "stage_label"
+
+  - text: "GENERATE"
+    x: 7.1
+    y: 1
+    style: "stage_label"
+
+  - text: "RENDER"
+    x: 10.6
+    y: 3
+    style: "stage_label"
+
+  - text: "OUTPUT"
+    x: 14
+    y: 2
+    style: "stage_label"

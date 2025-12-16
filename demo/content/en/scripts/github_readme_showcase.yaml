@@ -1,0 +1,523 @@
+# Media Engine GitHub README Showcase Video Script
+# A comprehensive demonstration of all media-engine capabilities
+# Duration: ~3 minutes | Resolution: 1920x1080 @ 30fps
+
+metadata:
+  title: "Media Engine: Agent-Operated Media Production"
+  description: "Complete showcase of media-engine capabilities for the GitHub README"
+  language: "en"
+  duration: 180
+  version: "1.0.0"
+  voice_style: "professional"
+  target_audience: "developers"
+
+# Scene breakdown showing all major features
+scenes:
+  # ============================================================
+  # ACT 1: INTRODUCTION (0:00 - 0:25)
+  # ============================================================
+
+  - id: opening_hook
+    type: intro
+    title: "The Problem"
+    duration: 8
+    content:
+      text: "You write great content. But turning it into polished documents, presentations, and videos? That takes forever."
+    visual:
+      background: "dark"
+      animation: "fade_in"
+      show_logo: false
+    voiceover: true
+    transition: "fade"
+
+  - id: title_reveal
+    type: intro
+    title: "Media Engine"
+    duration: 7
+    content:
+      text: "Meet Media Engine. The agent-operated framework that transforms your content into professional media, automatically."
+    visual:
+      background: "gradient"
+      show_logo: true
+      animation: "copper-sweep"
+      logo_animation: "scale_bounce"
+    voiceover: true
+    transition: "copper-sweep"
+
+  - id: tagline
+    type: content
+    title: "Write Once, Publish Everywhere"
+    duration: 10
+    content:
+      text: "Write once in Markdown. Publish everywhere. HTML documents, PDF reports, PowerPoint decks, Excel spreadsheets, and full video productions. All from a single source of truth."
+    visual:
+      text_reveal: "word-by-word"
+      icons:
+        - "markdown"
+        - "arrow"
+        - "html"
+        - "pdf"
+        - "pptx"
+        - "xlsx"
+        - "mp4"
+      icon_animation: "stagger_reveal"
+    voiceover: true
+
+  # ============================================================
+  # ACT 2: CORE FEATURES DEMO (0:25 - 1:30)
+  # ============================================================
+
+  - id: feature_overview
+    type: section
+    title: "Core Capabilities"
+    duration: 3
+    content:
+      text: "Let's see what Media Engine can do."
+    visual:
+      background: "grid"
+      text_style: "heading"
+    voiceover: true
+    transition: "wipe"
+
+  # Feature 1: Content Management
+  - id: feature_cms
+    type: feature
+    title: "Smart Content Management"
+    duration: 12
+    content:
+      text: "Start with Markdown files organized by language. Frontmatter metadata tracks versions, status, and dependencies. The CMS module handles document discovery, frontmatter parsing, and content relationships automatically."
+    visual:
+      feature_card:
+        icon: "document"
+        highlight: "copper"
+      code_preview:
+        language: "yaml"
+        content: |
+          ---
+          title: "Getting Started"
+          version: "1.2.0"
+          status: "final"
+          depends_on:
+            - "chapters/02_setup"
+          ---
+      animation: "slide_in_left"
+    voiceover: true
+
+  # Feature 2: Multi-format Building
+  - id: feature_builders
+    type: feature
+    title: "Multi-Format Builders"
+    duration: 15
+    content:
+      text: "Define your content once. Builders transform it into any format you need. HTML with responsive design and syntax highlighting. PDF documents ready for print. PowerPoint presentations from YAML definitions. Excel spreadsheets with formulas and charts. All styled consistently with your theme."
+    visual:
+      feature_card:
+        icon: "build"
+        highlight: "copper"
+      output_showcase:
+        items:
+          - format: "HTML"
+            description: "Responsive web docs"
+            icon: "html"
+          - format: "PDF"
+            description: "Print-ready reports"
+            icon: "pdf"
+          - format: "PPTX"
+            description: "Slide decks from YAML"
+            icon: "pptx"
+          - format: "XLSX"
+            description: "Data with formulas"
+            icon: "xlsx"
+      animation: "grid_reveal"
+    voiceover: true
+
+  # Feature 3: Video Production Pipeline
+  - id: feature_video
+    type: feature
+    title: "Automated Video Production"
+    duration: 18
+    content:
+      text: "This is where it gets powerful. Define video scripts in YAML. Media Engine generates voiceovers using ElevenLabs, with smart caching so you only pay for new content. Captions are created automatically in WebVTT format. Motion graphics render through Remotion, with professional animations, transitions, and overlays. The entire pipeline is automated, from script to final cut."
+    visual:
+      feature_card:
+        icon: "video"
+        highlight: "copper"
+      pipeline_diagram: "video_pipeline"
+      components:
+        - "YAML Script"
+        - "Voiceover (TTS)"
+        - "Captions (VTT)"
+        - "Motion Graphics"
+        - "Final Video"
+      animation: "flow_reveal"
+    voiceover: true
+
+  # Feature 4: Browser Capture
+  - id: feature_capture
+    type: demo
+    title: "Browser Demo Capture"
+    duration: 12
+    content:
+      text: "Need to show your product in action? The capture system records browser sessions with Playwright. Define your demo steps in a manifest, and it handles the recording, conversion, and poster frame generation."
+    visual:
+      screen_recording:
+        description: "Show terminal running capture workflow"
+        command: "media-engine capture --manifest demos.yaml"
+      overlay:
+        type: "callout"
+        text: "Automated browser recording"
+        position: "bottom-right"
+    voiceover: true
+
+  # Feature 5: Translation Tracking
+  - id: feature_translation
+    type: feature
+    title: "Multi-Language Support"
+    duration: 12
+    content:
+      text: "Working in multiple languages? Track translation status across your entire content library. See which translations are outdated, which are missing, and which are synced. The system compares source versions to catch when translations need updates."
+    visual:
+      feature_card:
+        icon: "globe"
+        highlight: "copper"
+      translation_matrix:
+        languages: ["en", "no", "de", "fr"]
+        status_colors:
+          synced: "green"
+          outdated: "yellow"
+          missing: "red"
+      animation: "matrix_reveal"
+    voiceover: true
+
+  # ============================================================
+  # ACT 3: QUALITY & SECURITY (1:30 - 2:00)
+  # ============================================================
+
+  - id: quality_section
+    type: section
+    title: "Quality & Security"
+    duration: 3
+    content:
+      text: "Built-in quality assurance keeps your content professional."
+    visual:
+      background: "particles"
+      text_style: "heading"
+    voiceover: true
+    transition: "radial"
+
+  - id: feature_quality
+    type: feature
+    title: "Content Quality Checks"
+    duration: 10
+    content:
+      text: "Automated quality checks catch issues before publishing. Readability scoring, link validation, reference checking, freshness tracking, and schema validation. All integrated into your CI pipeline."
+    visual:
+      feature_card:
+        icon: "check"
+        highlight: "copper"
+      quality_metrics:
+        - metric: "Readability"
+          icon: "readability"
+        - metric: "Links"
+          icon: "link"
+        - metric: "References"
+          icon: "reference"
+        - metric: "Freshness"
+          icon: "calendar"
+      animation: "checklist_reveal"
+    voiceover: true
+
+  - id: feature_security
+    type: feature
+    title: "Security Scanning"
+    duration: 10
+    content:
+      text: "Before you publish, the security scanner detects sensitive content. API keys, credentials, PII, internal URLs. Catch secrets before they reach your public repository."
+    visual:
+      feature_card:
+        icon: "shield"
+        highlight: "copper"
+      security_scan:
+        detected:
+          - type: "API Key"
+            severity: "high"
+          - type: "Email"
+            severity: "medium"
+        status: "blocked"
+      animation: "scan_sweep"
+    voiceover: true
+
+  - id: feature_provenance
+    type: feature
+    title: "Provenance & Approval"
+    duration: 7
+    content:
+      text: "Track document provenance with full audit trails. Route content through approval workflows from draft to published."
+    visual:
+      feature_card:
+        icon: "audit"
+        highlight: "copper"
+      workflow:
+        states: ["draft", "in_review", "approved", "published"]
+        current: "in_review"
+      animation: "state_flow"
+    voiceover: true
+
+  # ============================================================
+  # ACT 4: DEVELOPER EXPERIENCE (2:00 - 2:30)
+  # ============================================================
+
+  - id: dx_section
+    type: section
+    title: "Developer Experience"
+    duration: 3
+    content:
+      text: "Designed for developers, powered by AI agents."
+    visual:
+      background: "gradient"
+      text_style: "heading"
+    voiceover: true
+    transition: "copper-sweep"
+
+  - id: feature_cli
+    type: demo
+    title: "Powerful CLI"
+    duration: 12
+    content:
+      text: "A complete command-line interface for every operation. Build outputs, check quality, validate content, track translations, scan for security issues, and launch the web dashboard. Everything scriptable, everything automatable."
+    visual:
+      screen_recording:
+        description: "Terminal showing CLI commands"
+        commands:
+          - "media-engine status"
+          - "media-engine build"
+          - "media-engine quality"
+          - "media-engine translation status"
+          - "media-engine security"
+      code_style: "terminal"
+      animation: "type_commands"
+    voiceover: true
+
+  - id: feature_mcp
+    type: feature
+    title: "AI Agent Integration"
+    duration: 12
+    content:
+      text: "The MCP server exposes over twenty tools for AI agent integration. Connect Claude Desktop, or any MCP-compatible agent, to manage your entire media production workflow conversationally. Read documents, update metadata, trigger builds, check quality. AI handles the busywork."
+    visual:
+      feature_card:
+        icon: "ai"
+        highlight: "copper"
+      mcp_tools:
+        categories:
+          - name: "Content"
+            tools: ["read_document", "update_metadata", "search_content"]
+          - name: "Build"
+            tools: ["build_html", "build_pptx", "build_video"]
+          - name: "Quality"
+            tools: ["quality_check", "validate_project"]
+      animation: "tool_grid"
+    voiceover: true
+
+  - id: feature_dashboard
+    type: demo
+    title: "Web Dashboard"
+    duration: 8
+    content:
+      text: "Prefer a visual interface? The web dashboard gives you translation matrices, quality tracking, and build controls in your browser. Real-time updates via WebSocket."
+    visual:
+      screen_recording:
+        description: "Browser showing dashboard interface"
+        url: "http://localhost:8080"
+      highlight_areas:
+        - "Translation matrix"
+        - "Quality issues"
+        - "Build controls"
+      animation: "dashboard_tour"
+    voiceover: true
+
+  # ============================================================
+  # ACT 5: CLOSING (2:30 - 3:00)
+  # ============================================================
+
+  - id: stats_showcase
+    type: content
+    title: "By the Numbers"
+    duration: 10
+    content:
+      text: "Media Engine delivers real productivity gains."
+    visual:
+      background: "dark"
+      stat_grid:
+        stats:
+          - value: 5
+            label: "Output Formats"
+            suffix: "+"
+          - value: 20
+            label: "MCP Tools"
+            suffix: "+"
+          - value: 90
+            label: "Time Saved"
+            suffix: "%"
+          - value: 100
+            label: "Automation"
+            suffix: "%"
+        animation: "count_up"
+        stagger_delay: 15
+    voiceover: true
+
+  - id: getting_started
+    type: content
+    title: "Get Started"
+    duration: 10
+    content:
+      text: "Get started in seconds. Install with pip, initialize your project, add your content, and build. It's that simple."
+    visual:
+      code_blocks:
+        - command: "pip install media-engine[all]"
+          label: "Install"
+        - command: "media-engine init"
+          label: "Initialize"
+        - command: "media-engine build"
+          label: "Build"
+      animation: "step_reveal"
+    voiceover: true
+
+  - id: closing
+    type: outro
+    title: "Media Engine"
+    duration: 10
+    content:
+      text: "Media Engine. Write content. Generate media. Ship faster. Star us on GitHub and join the community."
+    visual:
+      background: "gradient"
+      show_logo: true
+      logo_animation: "pulse"
+      cta: "pip install media-engine"
+      links:
+        github: "github.com/example/media-engine"
+        docs: "media-engine.dev"
+      social_proof:
+        - icon: "github"
+          text: "Star on GitHub"
+        - icon: "discord"
+          text: "Join Discord"
+    voiceover: true
+    transition: "fade_out"
+
+# ============================================================
+# VOICEOVER CONFIGURATION
+# ============================================================
+
+voiceover:
+  voice_id: ""  # Uses project default from project.yaml
+  style: "professional"
+  pace: "medium"
+  emphasis:
+    - word: "Media Engine"
+      style: "strong"
+    - word: "automatically"
+      style: "emphasis"
+    - word: "powerful"
+      style: "emphasis"
+
+# ============================================================
+# MOTION GRAPHICS CONFIGURATION
+# ============================================================
+
+graphics:
+  theme: "copper-cream"
+
+  transitions:
+    default: "copper-sweep"
+    section: "radial"
+    feature: "slide"
+
+  backgrounds:
+    intro: "gradient"
+    feature: "dark"
+    demo: "grid"
+    outro: "gradient"
+
+  overlays:
+    feature_cards:
+      style: "glass"
+      border: "copper"
+    code_blocks:
+      style: "terminal"
+      highlight: "syntax"
+    stats:
+      style: "glow"
+      animation: "count_up"
+
+  text_styles:
+    heading:
+      font: "Fraunces"
+      weight: 600
+      animation: "word_reveal"
+    body:
+      font: "Source Sans 3"
+      weight: 400
+      animation: "fade_in"
+    code:
+      font: "JetBrains Mono"
+      style: "syntax_highlight"
+
+# ============================================================
+# AUDIO CONFIGURATION
+# ============================================================
+
+audio:
+  background_music:
+    track: "ambient_tech"
+    volume: 0.15
+    fade_in: 2.0
+    fade_out: 3.0
+
+  sound_effects:
+    transition: "whoosh_soft"
+    stat_count: "tick"
+    feature_reveal: "chime"
+
+# ============================================================
+# CAPTION CONFIGURATION
+# ============================================================
+
+captions:
+  enabled: true
+  format: "vtt"
+  styling:
+    position: "bottom"
+    background: "semi-transparent"
+    font_size: "medium"
+
+  # Special styling for emphasized words
+  highlights:
+    - pattern: "Media Engine"
+      class: "brand"
+    - pattern: "automatically|automated"
+      class: "emphasis"
+
+# ============================================================
+# RENDER CONFIGURATION
+# ============================================================
+
+render:
+  resolution:
+    width: 1920
+    height: 1080
+  fps: 30
+  codec: "h264"
+  quality: "high"
+
+  outputs:
+    - format: "mp4"
+      filename: "media-engine-showcase"
+    - format: "webm"
+      filename: "media-engine-showcase"
+
+  thumbnails:
+    - timestamp: 7
+      filename: "thumbnail-title"
+    - timestamp: 45
+      filename: "thumbnail-features"

@@ -529,6 +529,216 @@ def create_app(project_path: Optional[Path] = None) -> "FastAPI":
 
         return {"entries": entries[-limit:]}
 
+    @app.get("/api/media")
+    async def get_media_files():
+        """Get all generated media files with source document info."""
+        project = get_project()
+        media_files = []
+
+        # Scan output directory for media files
+        output_dir = project.output_dir
+        if output_dir.exists():
+            # Audio files (voiceovers)
+            for mp3 in output_dir.rglob("*.mp3"):
+                rel_path = mp3.relative_to(output_dir)
+                source_script = _find_source_script(project, mp3)
+                media_files.append({
+                    "path": str(mp3),
+                    "relative_path": str(rel_path),
+                    "filename": mp3.name,
+                    "type": "audio",
+                    "format": "mp3",
+                    "size": mp3.stat().st_size,
+                    "modified": datetime.fromtimestamp(mp3.stat().st_mtime).isoformat(),
+                    "source": source_script,
+                    "url": f"/media/{rel_path}",
+                })
+
+            # Caption files (VTT)
+            for vtt in output_dir.rglob("*.vtt"):
+                rel_path = vtt.relative_to(output_dir)
+                source_script = _find_source_script(project, vtt)
+                media_files.append({
+                    "path": str(vtt),
+                    "relative_path": str(rel_path),
+                    "filename": vtt.name,
+                    "type": "captions",
+                    "format": "vtt",
+                    "size": vtt.stat().st_size,
+                    "modified": datetime.fromtimestamp(vtt.stat().st_mtime).isoformat(),
+                    "source": source_script,
+                    "url": f"/media/{rel_path}",
+                })
+
+            # Video props files
+            for props in output_dir.rglob("props.json"):
+                rel_path = props.relative_to(output_dir)
+                source_script = _find_source_script(project, props)
+                media_files.append({
+                    "path": str(props),
+                    "relative_path": str(rel_path),
+                    "filename": props.name,
+                    "type": "video_props",
+                    "format": "json",
+                    "size": props.stat().st_size,
+                    "modified": datetime.fromtimestamp(props.stat().st_mtime).isoformat(),
+                    "source": source_script,
+                    "url": f"/media/{rel_path}",
+                })
+
+            # Demo HTML files
+            demos_dir = output_dir / "demos"
+            if demos_dir.exists():
+                for html in demos_dir.rglob("*.html"):
+                    rel_path = html.relative_to(output_dir)
+                    source_demo = _find_source_demo(project, html)
+                    media_files.append({
+                        "path": str(html),
+                        "relative_path": str(rel_path),
+                        "filename": html.name,
+                        "type": "demo",
+                        "format": "html",
+                        "size": html.stat().st_size,
+                        "modified": datetime.fromtimestamp(html.stat().st_mtime).isoformat(),
+                        "source": source_demo,
+                        "url": f"/media/{rel_path}",
+                    })
+
+            # Video files (MP4)
+            for mp4 in output_dir.rglob("*.mp4"):
+                rel_path = mp4.relative_to(output_dir)
+                source_script = _find_source_script(project, mp4)
+                media_files.append({
+                    "path": str(mp4),
+                    "relative_path": str(rel_path),
+                    "filename": mp4.name,
+                    "type": "video",
+                    "format": "mp4",
+                    "size": mp4.stat().st_size,
+                    "modified": datetime.fromtimestamp(mp4.stat().st_mtime).isoformat(),
+                    "source": source_script,
+                    "url": f"/media/{rel_path}",
+                })
+
+            # HTML documents
+            for html in output_dir.rglob("*.html"):
+                # Skip demos (handled separately)
+                if "demos" in str(html):
+                    continue
+                rel_path = html.relative_to(output_dir)
+                media_files.append({
+                    "path": str(html),
+                    "relative_path": str(rel_path),
+                    "filename": html.name,
+                    "type": "document",
+                    "format": "html",
+                    "size": html.stat().st_size,
+                    "modified": datetime.fromtimestamp(html.stat().st_mtime).isoformat(),
+                    "source": None,
+                    "url": f"/media/{rel_path}",
+                })
+
+            # PDF files
+            for pdf in output_dir.rglob("*.pdf"):
+                rel_path = pdf.relative_to(output_dir)
+                media_files.append({
+                    "path": str(pdf),
+                    "relative_path": str(rel_path),
+                    "filename": pdf.name,
+                    "type": "document",
+                    "format": "pdf",
+                    "size": pdf.stat().st_size,
+                    "modified": datetime.fromtimestamp(pdf.stat().st_mtime).isoformat(),
+                    "source": None,
+                    "url": f"/media/{rel_path}",
+                })
+
+        # Group by type for summary
+        by_type = {}
+        for f in media_files:
+            t = f["type"]
+            if t not in by_type:
+                by_type[t] = []
+            by_type[t].append(f)
+
+        return {
+            "total": len(media_files),
+            "by_type": {t: len(files) for t, files in by_type.items()},
+            "files": media_files,
+            "output_dir": str(output_dir),
+        }
+
+    def _find_source_script(project: Project, media_file: Path) -> Optional[dict]:
+        """Find the source script for a generated media file."""
+        # Media files are typically in output/{lang}/videos/{script_name}.mp3
+        # Or output/{lang}/scripts/{script_name}/...
+        parts = media_file.parts
+
+        # Try to find language in path
+        lang = None
+        for part in parts:
+            if part in project.languages:
+                lang = part
+                break
+
+        if not lang:
+            return None
+
+        # Get script name from filename (without extension)
+        script_name = media_file.stem
+
+        # Look for matching script in content directory
+        script_path = project.content_dir / lang / "scripts" / f"{script_name}.yaml"
+        if script_path.exists():
+            return {
+                "path": str(script_path),
+                "name": script_name,
+                "language": lang,
+                "type": "script",
+            }
+
+        # Also check for scripts folder structure (output/{lang}/scripts/{name}/...)
+        for i, part in enumerate(parts):
+            if part == "scripts" and i + 1 < len(parts):
+                folder_name = parts[i + 1]
+                script_path = project.content_dir / lang / "scripts" / f"{folder_name}.yaml"
+                if script_path.exists():
+                    return {
+                        "path": str(script_path),
+                        "name": folder_name,
+                        "language": lang,
+                        "type": "script",
+                    }
+
+        return None
+
+    def _find_source_demo(project: Project, demo_file: Path) -> Optional[dict]:
+        """Find the source demo config for a generated demo HTML."""
+        # Demo files are in output/demos/{lang}/demos/{demo_name}.html
+        demo_name = demo_file.stem
+        parts = demo_file.parts
+        for i, part in enumerate(parts):
+            if part in project.languages:
+                lang = part
+                demo_path = project.content_dir / lang / "demos" / f"{demo_name}.yaml"
+                if demo_path.exists():
+                    return {
+                        "path": str(demo_path),
+                        "name": demo_name,
+                        "language": lang,
+                        "type": "demo",
+                    }
+        return None
+
+    @app.get("/media/{path:path}")
+    async def serve_media(path: str):
+        """Serve media files from output directory."""
+        project = get_project()
+        file_path = project.output_dir / path
+        if not file_path.exists():
+            raise HTTPException(404, f"Media file not found: {path}")
+        return FileResponse(file_path)
+
     # === WebSocket for Real-time Collaboration ===
 
     @app.websocket("/ws/{user_id}")
@@ -747,6 +957,115 @@ def generate_dashboard_html() -> str:
         body.light-mode .issue-warning { background: #fef3c7; border-left-color: #f59e0b; }
         body.light-mode .issue-error { background: #fee2e2; border-left-color: #ef4444; }
         body.light-mode .matrix-cell { color: #fff; }
+
+        /* Media tab styles */
+        .media-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1rem; }
+        .media-item {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            transition: all 0.2s;
+        }
+        .media-item:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .media-item-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
+        .media-item-title { font-weight: 600; word-break: break-all; }
+        .media-item-type {
+            font-size: 0.65rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .type-audio { background: #8b5cf6; color: #fff; }
+        .type-video { background: #ef4444; color: #fff; }
+        .type-demo { background: #22c55e; color: #fff; }
+        .type-captions { background: #f59e0b; color: #000; }
+        .type-document { background: #3b82f6; color: #fff; }
+        .type-video_props { background: #6366f1; color: #fff; }
+        .media-item-meta { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+        .media-item-source { font-size: 0.75rem; color: var(--text-muted); padding: 0.5rem; background: var(--bg-card); border-radius: 0.25rem; margin-top: 0.5rem; }
+        .media-item-source a { color: var(--primary); text-decoration: none; }
+        .media-item-source a:hover { text-decoration: underline; }
+        .media-item-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+        .media-btn {
+            padding: 0.35rem 0.75rem;
+            border-radius: 0.25rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text);
+            transition: all 0.2s;
+        }
+        .media-btn:hover { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .media-btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .media-btn-primary:hover { opacity: 0.9; }
+
+        /* Audio player styles */
+        .audio-player {
+            width: 100%;
+            margin-top: 0.5rem;
+            height: 40px;
+            border-radius: 0.25rem;
+        }
+
+        /* Media modal styles */
+        .media-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .media-modal-content {
+            background: var(--bg-card);
+            border-radius: 0.5rem;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .media-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        #media-preview-body {
+            padding: 1rem;
+            overflow: auto;
+            max-height: calc(90vh - 60px);
+        }
+        #media-preview-body iframe {
+            width: 800px;
+            height: 600px;
+            border: none;
+            background: #fff;
+        }
+        #media-preview-body video {
+            max-width: 100%;
+            max-height: 70vh;
+        }
+        #media-preview-body audio {
+            width: 100%;
+            min-width: 400px;
+        }
+        #media-preview-body pre {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 0.25rem;
+            overflow: auto;
+            max-height: 500px;
+            font-size: 0.85rem;
+        }
     </style>
 </head>
 <body>
@@ -765,6 +1084,7 @@ def generate_dashboard_html() -> str:
         <div class="tabs">
             <button class="tab active" onclick="showTab('overview')">Overview</button>
             <button class="tab" onclick="showTab('documents')">Documents</button>
+            <button class="tab" onclick="showTab('media')">Media</button>
             <button class="tab" onclick="showTab('translations')">Translations</button>
             <button class="tab" onclick="showTab('quality')">Quality</button>
             <button class="tab" onclick="showTab('activity')">Activity</button>
@@ -836,6 +1156,56 @@ def generate_dashboard_html() -> str:
                     <div class="doc-preview-content preview-mode" id="preview-content">
                         <div class="empty-state">Select a document from the list to preview</div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-media" style="display: none;">
+            <div class="grid grid-4" style="margin-bottom: 1.5rem;">
+                <div class="card">
+                    <div class="card-title">Audio Files</div>
+                    <div class="stat" id="stat-audio">-</div>
+                    <div class="stat-label">voiceovers</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Videos</div>
+                    <div class="stat" id="stat-video">-</div>
+                    <div class="stat-label">rendered</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Demos</div>
+                    <div class="stat" id="stat-demos">-</div>
+                    <div class="stat-label">interactive</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Documents</div>
+                    <div class="stat" id="stat-docs-output">-</div>
+                    <div class="stat-label">generated</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Generated Media Files</div>
+                    <div>
+                        <select id="media-filter" class="lang-select" style="width: auto;" onchange="filterMedia()">
+                            <option value="all">All Types</option>
+                            <option value="audio">Audio</option>
+                            <option value="video">Video</option>
+                            <option value="demo">Interactive Demos</option>
+                            <option value="captions">Captions</option>
+                            <option value="document">Documents</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="media-list"><div class="loading">Loading...</div></div>
+            </div>
+            <div id="media-preview-modal" class="media-modal" style="display: none;">
+                <div class="media-modal-content">
+                    <div class="media-modal-header">
+                        <strong id="media-preview-title">Preview</strong>
+                        <button onclick="closeMediaPreview()" style="background: none; border: none; color: var(--text); font-size: 1.5rem; cursor: pointer;">&times;</button>
+                    </div>
+                    <div id="media-preview-body"></div>
                 </div>
             </div>
         </div>
@@ -1004,7 +1374,162 @@ def generate_dashboard_html() -> str:
             if (name === 'documents' && !documentsLoaded) {
                 initDocumentBrowser();
             }
+            if (name === 'media' && !mediaLoaded) {
+                loadMedia();
+            }
         }
+
+        // Media tab state
+        let mediaLoaded = false;
+        let mediaData = null;
+
+        async function loadMedia() {
+            const mediaList = document.getElementById('media-list');
+            mediaList.innerHTML = '<div class="loading">Loading media files...</div>';
+
+            try {
+                mediaData = await fetchAPI('/api/media');
+                mediaLoaded = true;
+
+                // Update stats
+                document.getElementById('stat-audio').textContent = mediaData.by_type.audio || 0;
+                document.getElementById('stat-video').textContent = mediaData.by_type.video || 0;
+                document.getElementById('stat-demos').textContent = mediaData.by_type.demo || 0;
+                document.getElementById('stat-docs-output').textContent = mediaData.by_type.document || 0;
+
+                renderMediaList(mediaData.files);
+            } catch (e) {
+                mediaList.innerHTML = '<div class="empty-state">Error loading media files</div>';
+            }
+        }
+
+        function filterMedia() {
+            if (!mediaData) return;
+            const filter = document.getElementById('media-filter').value;
+            const filtered = filter === 'all'
+                ? mediaData.files
+                : mediaData.files.filter(f => f.type === filter);
+            renderMediaList(filtered);
+        }
+
+        function renderMediaList(files) {
+            const mediaList = document.getElementById('media-list');
+
+            if (files.length === 0) {
+                mediaList.innerHTML = '<div class="empty-state">No media files found</div>';
+                return;
+            }
+
+            let html = '<div class="media-grid">';
+            for (const file of files) {
+                const sizeStr = formatFileSize(file.size);
+                const dateStr = new Date(file.modified).toLocaleString();
+
+                html += '<div class="media-item">';
+                html += '<div class="media-item-header">';
+                html += '<div class="media-item-title">' + escapeHtml(file.filename) + '</div>';
+                html += '<span class="media-item-type type-' + file.type + '">' + file.type + '</span>';
+                html += '</div>';
+                html += '<div class="media-item-meta">';
+                html += '<div>' + sizeStr + ' &middot; ' + file.format.toUpperCase() + '</div>';
+                html += '<div>' + dateStr + '</div>';
+                html += '</div>';
+
+                // Source document link
+                if (file.source) {
+                    html += '<div class="media-item-source">';
+                    html += 'Source: <a href="#" onclick="viewSourceDoc(\\'' + escapeHtml(file.source.path) + '\\', \\'' + file.source.type + '\\'); return false;">';
+                    html += escapeHtml(file.source.name) + ' (' + file.source.language + ')';
+                    html += '</a>';
+                    html += '</div>';
+                }
+
+                // Inline audio player for audio files
+                if (file.type === 'audio') {
+                    html += '<audio class="audio-player" controls preload="none">';
+                    html += '<source src="' + file.url + '" type="audio/mpeg">';
+                    html += '</audio>';
+                }
+
+                // Action buttons
+                html += '<div class="media-item-actions">';
+                if (file.type === 'audio' || file.type === 'video' || file.type === 'demo') {
+                    html += '<button class="media-btn media-btn-primary" onclick="previewMedia(\\'' + escapeHtml(file.url) + '\\', \\'' + file.type + '\\', \\'' + escapeHtml(file.filename) + '\\')">Preview</button>';
+                }
+                if (file.type === 'captions' || file.type === 'video_props') {
+                    html += '<button class="media-btn" onclick="viewFileContent(\\'' + escapeHtml(file.path) + '\\', \\'' + escapeHtml(file.filename) + '\\')">View</button>';
+                }
+                html += '<a href="' + file.url + '" download class="media-btn">Download</a>';
+                html += '</div>';
+                html += '</div>';
+            }
+            html += '</div>';
+            mediaList.innerHTML = html;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        function previewMedia(url, type, filename) {
+            const modal = document.getElementById('media-preview-modal');
+            const title = document.getElementById('media-preview-title');
+            const body = document.getElementById('media-preview-body');
+
+            title.textContent = filename;
+
+            if (type === 'audio') {
+                body.innerHTML = '<audio controls autoplay style="width: 100%;"><source src="' + url + '" type="audio/mpeg"></audio>';
+            } else if (type === 'video') {
+                body.innerHTML = '<video controls autoplay><source src="' + url + '" type="video/mp4"></video>';
+            } else if (type === 'demo') {
+                body.innerHTML = '<iframe src="' + url + '"></iframe>';
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        async function viewFileContent(path, filename) {
+            const modal = document.getElementById('media-preview-modal');
+            const title = document.getElementById('media-preview-title');
+            const body = document.getElementById('media-preview-body');
+
+            title.textContent = filename;
+            body.innerHTML = '<div class="loading">Loading...</div>';
+            modal.style.display = 'flex';
+
+            try {
+                const data = await fetchAPI('/api/file?path=' + encodeURIComponent(path));
+                body.innerHTML = '<pre>' + escapeHtml(data.content) + '</pre>';
+            } catch (e) {
+                body.innerHTML = '<div class="empty-state">Error loading file</div>';
+            }
+        }
+
+        function viewSourceDoc(path, type) {
+            // Switch to documents tab and load the source
+            showTab('documents');
+            setTimeout(() => {
+                loadDocumentDirect(path, type);
+            }, 100);
+        }
+
+        function closeMediaPreview() {
+            const modal = document.getElementById('media-preview-modal');
+            const body = document.getElementById('media-preview-body');
+            // Stop any playing media
+            body.innerHTML = '';
+            modal.style.display = 'none';
+        }
+
+        // Close modal on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeMediaPreview();
+            }
+        });
 
         // Document browser state
         let documentsLoaded = false;

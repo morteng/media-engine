@@ -1,0 +1,216 @@
+# Media Engine Feature Matrix
+# Comprehensive spreadsheet showing all features and capabilities
+
+sheets:
+  - name: "Feature Matrix"
+    title: "Media Engine Feature Matrix"
+    description: "Complete list of features by category"
+    columns:
+      - name: "Feature"
+        width: 35
+      - name: "Category"
+        width: 18
+      - name: "Status"
+        width: 12
+      - name: "CLI Command"
+        width: 25
+      - name: "MCP Tool"
+        width: 25
+    rows:
+      # Content Management
+      - ["Markdown Parsing", "Content", "Stable", "N/A", "read_document"]
+      - ["YAML Frontmatter", "Content", "Stable", "N/A", "update_document_metadata"]
+      - ["Version Tracking", "Content", "Stable", "N/A", "increment_document_version"]
+      - ["Dependency Graphs", "Content", "Stable", "media-engine deps", "N/A"]
+      - ["Full-Text Search", "Content", "Stable", "N/A", "search_content"]
+      - ["Translation Tracking", "Content", "Stable", "media-engine translation", "translation_status"]
+      - ["Content Variables", "Content", "Stable", "N/A", "N/A"]
+
+      # Builders
+      - ["HTML Builder", "Build", "Stable", "media-engine build --html", "build_html"]
+      - ["PDF Builder", "Build", "Stable", "media-engine build --pdf", "build_pdf"]
+      - ["PPTX Builder", "Build", "Stable", "media-engine build --pptx", "build_pptx"]
+      - ["XLSX Builder", "Build", "Stable", "media-engine build --xlsx", "build_xlsx"]
+      - ["Diagram Builder", "Build", "Stable", "media-engine build --diagrams", "N/A"]
+      - ["Demo Builder", "Build", "Stable", "media-engine demos build", "N/A"]
+
+      # Video
+      - ["Video Scripts", "Video", "Stable", "media-engine build --video", "N/A"]
+      - ["Voiceover (TTS)", "Video", "Stable", "N/A", "N/A"]
+      - ["Caption Generation", "Video", "Stable", "N/A", "N/A"]
+      - ["Browser Capture", "Video", "Stable", "media-engine capture", "N/A"]
+      - ["Remotion Render", "Video", "Stable", "N/A", "N/A"]
+
+      # Quality
+      - ["Quality Checks", "Quality", "Stable", "media-engine quality", "quality_check"]
+      - ["Schema Validation", "Quality", "Stable", "N/A", "validate_project"]
+      - ["Link Validation", "Quality", "Stable", "media-engine links", "N/A"]
+      - ["Readability Analysis", "Quality", "Stable", "media-engine readability", "N/A"]
+      - ["Gap Analysis", "Quality", "Stable", "media-engine gaps", "N/A"]
+      - ["Freshness Tracking", "Quality", "Stable", "N/A", "N/A"]
+
+      # Security
+      - ["Secret Detection", "Security", "Stable", "media-engine security", "N/A"]
+      - ["PII Scanning", "Security", "Stable", "media-engine security", "N/A"]
+      - ["Audit Logging", "Security", "Stable", "N/A", "log_action"]
+      - ["Provenance Tracking", "Security", "Stable", "media-engine provenance", "N/A"]
+      - ["Approval Workflow", "Security", "Stable", "media-engine provenance", "N/A"]
+      - ["Integrity Verification", "Security", "Stable", "media-engine integrity", "N/A"]
+
+      # Interface
+      - ["CLI", "Interface", "Stable", "media-engine", "N/A"]
+      - ["MCP Server", "Interface", "Stable", "media-engine-mcp", "N/A"]
+      - ["Web Dashboard", "Interface", "Stable", "media-engine dashboard", "N/A"]
+      - ["Python API", "Interface", "Stable", "N/A", "N/A"]
+
+  - name: "Output Formats"
+    title: "Supported Output Formats"
+    description: "All output formats with their capabilities"
+    columns:
+      - name: "Format"
+        width: 12
+      - name: "Extension"
+        width: 12
+      - name: "Builder"
+        width: 18
+      - name: "Theming"
+        width: 12
+      - name: "Multi-Language"
+        width: 15
+      - name: "Use Case"
+        width: 35
+    rows:
+      - ["HTML", ".html", "HTMLBuilder", "Yes", "Yes", "Web documentation, responsive design"]
+      - ["PDF", ".pdf", "PDFBuilder", "Yes", "Yes", "Print-ready reports, formal documents"]
+      - ["PowerPoint", ".pptx", "PPTXBuilder", "Yes", "Yes", "Presentations, pitch decks"]
+      - ["Excel", ".xlsx", "XLSXBuilder", "Partial", "Yes", "Data exports, calculations, tracking"]
+      - ["Video", ".mp4", "VideoBuilder", "Yes", "Yes", "Product demos, explainers, marketing"]
+      - ["Captions", ".vtt", "CaptionBuilder", "N/A", "Yes", "Video subtitles, accessibility"]
+      - ["Diagram", ".png/.svg", "DiagramBuilder", "Yes", "N/A", "Technical illustrations, architecture"]
+
+  - name: "MCP Tools"
+    title: "MCP Server Tools"
+    description: "All tools exposed via MCP for AI agent integration"
+    columns:
+      - name: "Tool Name"
+        width: 28
+      - name: "Category"
+        width: 15
+      - name: "Description"
+        width: 50
+    rows:
+      - ["project_status", "Project", "Get overall project status and statistics"]
+      - ["project_config", "Project", "Read project configuration"]
+      - ["refresh_project", "Project", "Reload project from disk"]
+      - ["list_chapters", "Content", "List all chapters with metadata"]
+      - ["read_document", "Content", "Read document content and frontmatter"]
+      - ["update_document_metadata", "Content", "Update document frontmatter"]
+      - ["increment_document_version", "Content", "Bump document version number"]
+      - ["translation_status", "Translation", "Get translation status overview"]
+      - ["outdated_translations", "Translation", "List outdated translations"]
+      - ["missing_translations", "Translation", "List missing translations"]
+      - ["mark_translation_synced", "Translation", "Mark translation as synced"]
+      - ["quality_check", "Quality", "Run quality checks on content"]
+      - ["validate_project", "Quality", "Validate project structure and schema"]
+      - ["search_content", "Search", "Full-text search across documents"]
+      - ["build_html", "Build", "Generate HTML output"]
+      - ["build_pptx", "Build", "Generate PowerPoint output"]
+      - ["build_xlsx", "Build", "Generate Excel output"]
+      - ["cache_status", "Cache", "Get build cache status"]
+      - ["clear_cache", "Cache", "Clear build cache"]
+      - ["log_action", "Audit", "Log an action to audit trail"]
+      - ["get_audit_log", "Audit", "Retrieve audit log entries"]
+
+  - name: "CLI Commands"
+    title: "CLI Command Reference"
+    description: "Complete CLI command listing"
+    columns:
+      - name: "Command"
+        width: 30
+      - name: "Description"
+        width: 45
+      - name: "Common Options"
+        width: 30
+    rows:
+      - ["media-engine status", "Show project status overview", "--view [content|translation|quality]"]
+      - ["media-engine build", "Build all outputs", "--html --pdf --pptx --xlsx --video"]
+      - ["media-engine quality", "Run quality checks", "--strict --fix"]
+      - ["media-engine translation status", "Show translation status", "--language <code>"]
+      - ["media-engine translation outdated", "List outdated translations", ""]
+      - ["media-engine translation missing", "List missing translations", ""]
+      - ["media-engine security", "Scan for sensitive content", "--include-assets"]
+      - ["media-engine links", "Validate links", "--internal-only --external-only"]
+      - ["media-engine readability", "Analyze readability", "--target <level>"]
+      - ["media-engine gaps", "Find content gaps", "--topics <list>"]
+      - ["media-engine changelog", "Generate changelog", "--days <n> -o <file>"]
+      - ["media-engine provenance report", "Provenance report", ""]
+      - ["media-engine provenance claims", "List claims needing verification", ""]
+      - ["media-engine provenance queue", "Documents awaiting review", ""]
+      - ["media-engine integrity record", "Record asset checksums", ""]
+      - ["media-engine integrity verify", "Verify asset integrity", ""]
+      - ["media-engine integrity terms", "Check terminology consistency", ""]
+      - ["media-engine demos list", "List available demos", ""]
+      - ["media-engine demos build", "Build interactive demos", ""]
+      - ["media-engine dashboard", "Launch web dashboard", "--port <n>"]
+      - ["media-engine capture", "Record browser demos", "--manifest <file>"]
+
+  - name: "Productivity Metrics"
+    title: "Time Savings Analysis"
+    description: "Estimated productivity gains with Media Engine"
+    columns:
+      - name: "Task"
+        width: 35
+      - name: "Manual (hours)"
+        width: 18
+        format: number
+      - name: "Automated (hours)"
+        width: 18
+        format: number
+      - name: "Time Saved"
+        width: 15
+        format: percent
+    rows:
+      - ["Format single document (HTML/PDF)", 2, 0.1, 0.95]
+      - ["Create PowerPoint from content", 4, 0.2, 0.95]
+      - ["Generate data spreadsheet", 3, 0.1, 0.97]
+      - ["Produce 60-second video", 8, 1.0, 0.875]
+      - ["Translate and sync 10 docs", 5, 0.5, 0.90]
+      - ["Run quality checks", 2, 0.05, 0.975]
+      - ["Security audit", 3, 0.1, 0.97]
+      - ["Total per content cycle", 27, 2.05, 0.924]
+    summary:
+      - label: "Average Time Saved"
+        value: "92%"
+      - label: "ROI (at $100/hr)"
+        value: "$2,495/cycle"
+
+  - name: "Language Support"
+    title: "Supported Languages"
+    description: "Languages with built-in support"
+    columns:
+      - name: "Language"
+        width: 20
+      - name: "Code"
+        width: 10
+      - name: "TTS Voice"
+        width: 15
+      - name: "Translation"
+        width: 15
+      - name: "Notes"
+        width: 30
+    rows:
+      - ["English", "en", "Yes", "Source", "Default source language"]
+      - ["Norwegian", "no", "Yes", "Yes", "Full support"]
+      - ["German", "de", "Yes", "Yes", "Full support"]
+      - ["French", "fr", "Yes", "Yes", "Full support"]
+      - ["Spanish", "es", "Yes", "Yes", "Full support"]
+      - ["Italian", "it", "Yes", "Yes", "Full support"]
+      - ["Dutch", "nl", "Yes", "Yes", "Full support"]
+      - ["Portuguese", "pt", "Yes", "Yes", "Full support"]
+      - ["Swedish", "sv", "Yes", "Yes", "Full support"]
+      - ["Danish", "da", "Yes", "Yes", "Full support"]
+      - ["Finnish", "fi", "Yes", "Yes", "Full support"]
+      - ["Polish", "pl", "Yes", "Yes", "Full support"]
+      - ["Japanese", "ja", "Yes", "Yes", "Full support"]
+      - ["Korean", "ko", "Yes", "Yes", "Full support"]
+      - ["Chinese (Simplified)", "zh", "Yes", "Yes", "Full support"]

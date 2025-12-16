@@ -1,232 +1,157 @@
 # Media Engine
 
-Agent-based media production framework for automated content generation.
+**Agent-operated media production framework for automated content generation.**
+
+Write content once in Markdown. Generate professional documents, presentations, videos, and interactive demos automatically.
+
+[![CI](https://github.com/morteng/media-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/morteng/media-engine/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+---
+
+## What It Does
+
+Media Engine transforms your Markdown content into multiple output formats:
+
+| Input | Outputs |
+|-------|---------|
+| Markdown chapters | HTML documents, PDF reports |
+| YAML scripts | Voiceover audio, captions, video |
+| YAML slide definitions | PowerPoint presentations |
+| YAML data files | Excel spreadsheets with charts |
+| YAML demo configs | Interactive HTML demos |
+| YAML diagram specs | SVG/PNG diagrams |
+
+All outputs are styled consistently using your theme configuration.
+
+---
 
 ## Features
 
-- **CMS** - Document management with frontmatter, versioning, and freshness tracking
-- **Video** - Timeline sequencing, screen capture, voiceover generation, captions
-- **Diagrams** - Matplotlib-based diagram generation with light/dark theming
-- **Builders** - HTML, PowerPoint, and Excel generation with theming
-- **Templates** - Professional HTML templates with sidebar, theme toggle, progress bar
-- **Assets** - Google Fonts downloading, asset bundling for offline use
-- **Quality** - Placeholder detection, terminology consistency, encoding validation
-- **Search** - Full-text search index with relevance scoring
-- **Validation** - Schema validation for frontmatter, reference and link checking
-- **Packs** - Curated ZIP bundles for specific audiences (investor, pilot)
-- **Publish** - Self-contained deliverable packages with navigation indexes
-- **Remotion** - React-based motion graphics components
+### Content Management
+- **Markdown + YAML frontmatter** - Version tracking, status workflow, dependency graphs
+- **Multi-language support** - Translation tracking with outdated detection
+- **Full-text search** - Indexed search with relevance scoring
 
-## Installation
+### Document Generation
+- **HTML** - Responsive design, syntax highlighting, dark mode
+- **PDF** - Print-ready documents
+- **PowerPoint** - Slide decks from YAML definitions
+- **Excel** - Spreadsheets with formulas and charts
+- **Diagrams** - Matplotlib-based with theming
 
-```bash
-# Clone the repository
-git clone https://github.com/morteng/media-engine.git
-cd media-engine
+### Video Production
+- **Voiceover** - ElevenLabs TTS with smart caching
+- **Captions** - Auto-generated WebVTT
+- **Motion graphics** - Remotion React components
+- **Browser capture** - Playwright-based screen recording
 
-# Install Python dependencies
-uv sync
+### Quality Assurance
+- **Readability scoring** - Flesch, Fog, SMOG indexes
+- **Link validation** - Internal and external URL checking
+- **Reference checking** - Cross-document reference validation
+- **Schema validation** - Frontmatter structure enforcement
+- **Security scanning** - API keys, PII, secrets detection
 
-# Install Remotion dependencies (optional)
-cd remotion && npm install
-```
+### Integrations
+- **CLI** - Full command-line interface
+- **MCP Server** - 20+ tools for AI agent integration
+- **Web Dashboard** - Real-time project management UI
+- **GitHub Actions** - CI/CD workflow templates
+- **Python API** - Programmatic access to all features
 
-## CLI Usage
-
-```bash
-# Initialize a new project
-media-engine init my-project
-
-# Show project status
-media-engine status              # Full dashboard
-media-engine status docs         # Document status
-media-engine status videos       # Video production status
-media-engine status quality      # Quality check summary
-
-# Build outputs
-media-engine build               # Build all formats
-media-engine build --only html   # Build HTML only
-media-engine build --force       # Force rebuild
-
-# Quality checks
-media-engine quality             # Run quality checks
-media-engine quality --json      # JSON output
-
-# Search documents
-media-engine search "query"      # Search project content
-media-engine search "api" --limit 10  # Limit results
-media-engine index               # Build/update search index
-
-# Validate content
-media-engine validate            # Full schema + reference validation
-media-engine validate --refs-only  # Only check references
-media-engine validate --schema custom.yaml  # Custom schema
-
-# Generate audience packs
-media-engine pack investor       # Investor materials ZIP
-media-engine pack pilot          # Pilot customer materials ZIP
-media-engine pack investor -o ./dist  # Custom output
-
-# Publish deliverables
-media-engine publish             # Full self-contained package
-media-engine publish --zip       # Create ZIP archive
-media-engine publish -o ./dist   # Custom output directory
-```
+---
 
 ## Quick Start
 
-### Document Management
+```bash
+# Install
+pip install media-engine
 
-```python
-from media_engine import Document, DocumentCollection, find_project
+# Or with all optional features
+pip install media-engine[all]
 
-# Find and load project
-project = find_project()
+# Initialize project
+media-engine init my-project
+cd my-project
 
-# Load documents
-for doc in project.list_chapters("en"):
-    print(f"{doc.title}: v{doc.version} - {doc.freshness_status}")
+# Build all outputs
+media-engine build
+
+# Launch dashboard
+media-engine dashboard
 ```
 
-### Video Timeline
+---
 
-```python
-from media_engine.video import Timeline, TimelineClip
+## CLI Reference
 
-# Create timeline
-timeline = Timeline(fps=30)
-timeline.add_clip(TimelineClip(
-    source="demo.mp4",
-    start_frame=0,
-    duration_frames=300
-))
+```bash
+# Project status
+media-engine status              # Full dashboard
+media-engine status docs         # Document status
+media-engine status videos       # Video production status
 
-# Export FFmpeg command
-ffmpeg_cmd = timeline.export_ffmpeg("output.mp4")
+# Build outputs
+media-engine build               # Build all formats
+media-engine build --only html   # HTML only
+media-engine build --force       # Force rebuild
+
+# Quality & validation
+media-engine quality             # Run quality checks
+media-engine validate            # Schema + reference validation
+media-engine security            # Scan for secrets/PII
+media-engine links               # Validate all links
+
+# Translation tracking
+media-engine translation status    # All translation pairs
+media-engine translation outdated  # Outdated translations
+media-engine translation missing   # Missing translations
+
+# Content analysis
+media-engine readability         # Readability scores
+media-engine gaps                # Content gap analysis
+media-engine search "query"      # Full-text search
+
+# Interactive demos
+media-engine demos list          # List available demos
+media-engine demos build         # Build to HTML
+
+# Publishing
+media-engine publish             # Self-contained package
+media-engine pack investor       # Curated audience pack
+
+# Dashboard
+media-engine dashboard           # Launch web UI
 ```
 
-### Quality Checks
-
-```python
-from media_engine import run_quality_checks, find_project
-
-project = find_project()
-report = run_quality_checks(project)
-
-print(f"Checked {report.files_checked} files")
-print(f"Found {report.error_count} errors, {report.warning_count} warnings")
-```
-
-### Publishing
-
-```python
-from media_engine import publish_project, PublishConfig, find_project
-
-project = find_project()
-config = PublishConfig(
-    output_dir=Path("./dist"),
-    include_fonts=True,
-    generate_indexes=True,
-    zip_output=True,
-)
-
-result = publish_project(project, config)
-print(f"Published {result.documents_copied} documents")
-```
-
-### Search Index
-
-```python
-from media_engine import build_search_index, find_project
-
-project = find_project()
-index = build_search_index(project)
-
-# Search with relevance scoring
-results = index.search("authentication", limit=10)
-for result in results:
-    print(f"{result.score:.0f} - {result.entry.title}")
-
-# Save/load index
-index.save("search_index.json")
-```
-
-### Validation
-
-```python
-from media_engine import validate_project, find_project
-
-project = find_project()
-report = validate_project(project, schema_path=Path("schema.yaml"))
-
-print(f"Files: {report.files_checked}")
-print(f"Errors: {report.error_count}, Warnings: {report.warning_count}")
-
-for issue in report.issues:
-    print(f"  {issue.severity}: {issue.file_path.name} - {issue.message}")
-```
-
-### Audience Packs
-
-```python
-from media_engine import generate_investor_pack, generate_pilot_pack, find_project
-
-project = find_project()
-
-# Generate investor materials ZIP
-result = generate_investor_pack(project, output_dir=Path("./dist"))
-print(f"Created {result.output_path} ({result.items_included} items)")
-
-# Generate pilot customer pack
-result = generate_pilot_pack(project, create_zip=True)
-```
-
-### Remotion Components
-
-```tsx
-import { TitleCard, StatCounter, Background } from '@media-engine/remotion';
-
-export const MyVideo = () => (
-  <>
-    <Background variant="gradient" />
-    <TitleCard title="My Title" tagline="Subtitle here" />
-    <StatCounter value={100} suffix="%" label="Completion" />
-  </>
-);
-```
+---
 
 ## Project Structure
 
 ```
-media-engine/
-├── python/
-│   ├── media_engine/
-│   │   ├── cms/          # Document management
-│   │   ├── video/        # Video production pipeline
-│   │   ├── diagrams/     # Diagram generation
-│   │   ├── builders/     # HTML, PPTX, XLSX builders
-│   │   ├── templates/    # Professional HTML templates
-│   │   ├── assets/       # Font downloading, bundling
-│   │   ├── quality/      # Quality checks
-│   │   ├── search/       # Full-text search indexing
-│   │   ├── validation/   # Schema and reference validation
-│   │   ├── packs/        # Audience pack generators
-│   │   ├── publish/      # Deliverable packaging
-│   │   ├── status/       # Project dashboards
-│   │   ├── core/         # Config, theme, project
-│   │   └── cli.py        # Command-line interface
-│   └── tests/            # Test suite
-├── remotion/
-│   └── src/
-│       ├── components/   # Motion graphics
-│       └── lib/          # Animation utilities
-├── demo/                 # Demo project
-└── pyproject.toml
+my-project/
+├── project.yaml          # Project configuration
+├── theme.yaml            # Design tokens
+├── schema.yaml           # Frontmatter validation
+├── content/
+│   ├── en/
+│   │   ├── chapters/     # Markdown documentation
+│   │   ├── scripts/      # Video script YAML
+│   │   ├── slides/       # Presentation YAML
+│   │   ├── diagrams/     # Diagram definitions
+│   │   ├── demos/        # Interactive demo configs
+│   │   └── data/         # Spreadsheet data
+│   └── no/               # Norwegian translations
+├── assets/               # Images, fonts, media
+└── output/               # Generated files
 ```
+
+---
 
 ## Configuration
 
-Create a `project.yaml` in your project root:
+### project.yaml
 
 ```yaml
 project:
@@ -238,7 +163,11 @@ localization:
   languages:
     en:
       name: "English"
+      locale: "en-US"
       voice_id: "your-elevenlabs-voice-id"
+    "no":  # Quote "no" - YAML interprets bare 'no' as false
+      name: "Norwegian"
+      locale: "nb-NO"
 
 voiceover:
   provider: "elevenlabs"
@@ -256,31 +185,225 @@ paths:
   output: "output"
 ```
 
-Create a `theme.yaml` for design tokens:
+### theme.yaml
 
 ```yaml
 name: "My Theme"
 
 colors:
-  primary: "#2c2522"
-  secondary: "#4a4340"
-  accent: "#c45c3c"
-  background: "#fdfbf9"
-  text: "#2c2522"
-
-  dark:
-    background: "#1a1816"
-    text: "#f5f2ef"
-    accent: "#d4775a"
+  primary: "#1a365d"
+  accent: "#3182ce"
+  background: "#ffffff"
+  text: "#1a202c"
 
 typography:
-  heading: "Fraunces"
+  heading: "Inter"
   body: "Source Sans 3"
   code: "JetBrains Mono"
-  base_size: 16
-  scale: 1.25
 ```
+
+---
+
+## Python API
+
+```python
+from media_engine import find_project, run_quality_checks
+
+# Load project
+project = find_project()
+
+# List documents
+for doc in project.list_chapters("en"):
+    print(f"{doc.stem}: v{doc.metadata.get('version', '?')}")
+
+# Run quality checks
+report = run_quality_checks(project)
+print(f"Found {report.error_count} errors, {report.warning_count} warnings")
+
+# Build outputs
+from media_engine.builders import HTMLBuilder
+builder = HTMLBuilder(project)
+builder.build_all()
+```
+
+---
+
+## MCP Server (AI Agent Integration)
+
+Connect Claude Desktop or any MCP-compatible agent:
+
+```bash
+# Run MCP server
+media-engine-mcp --project /path/to/project
+```
+
+**Claude Desktop config** (`~/.claude/claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "media-engine": {
+      "command": "media-engine-mcp",
+      "args": ["-p", "/path/to/project"]
+    }
+  }
+}
+```
+
+**Available tools:** `project_status`, `list_chapters`, `read_document`, `update_document_metadata`, `translation_status`, `quality_check`, `build_html`, `search_content`, and 12 more.
+
+---
+
+## Web Dashboard
+
+```bash
+media-engine dashboard
+# Opens http://localhost:8080
+```
+
+Features:
+- **Overview** - Project stats, translation matrix, recent issues
+- **Documents** - Browse and preview all content types
+- **Media** - View generated audio, video, demos with source links
+- **Translations** - Full translation status matrix
+- **Quality** - Issue tracking with file navigation
+- **Activity** - Audit log of all operations
+
+---
+
+## Video Production Pipeline
+
+Define video scripts in YAML:
+
+```yaml
+id: product-demo
+title: "Product Demo"
+duration: 120
+scenes:
+  - type: title
+    text: "Welcome to Our Product"
+    duration: 5
+  - type: demo
+    action: "Show the dashboard"
+    voiceover: "Let me show you the main dashboard."
+    duration: 10
+```
+
+Build with voiceover and captions:
+
+```bash
+media-engine build --only video
+```
+
+Generates:
+- `output/en/videos/product-demo.mp3` - Voiceover audio
+- `output/en/videos/product-demo.vtt` - Captions
+- `output/en/videos/product-demo/props.json` - Remotion render props
+
+---
+
+## Interactive Demos
+
+Create calculator, playground, comparison, and quiz demos:
+
+```yaml
+# content/en/demos/pricing.yaml
+id: pricing-calc
+type: calculator
+title: "Pricing Calculator"
+data:
+  formula: "(users * 10) + (storage * 0.05)"
+  variables:
+    - name: users
+      label: "Number of Users"
+      default: 100
+    - name: storage
+      label: "Storage (GB)"
+      default: 500
+```
+
+Build demos:
+
+```bash
+media-engine demos build
+# Creates interactive HTML in output/demos/
+```
+
+---
+
+## Security Scanning
+
+Detect sensitive content before publishing:
+
+```bash
+media-engine security
+media-engine security --include-assets
+```
+
+Detects:
+- API keys (AWS, GitHub, OpenAI, Anthropic, Stripe)
+- PII (emails, phone numbers, SSN patterns)
+- Internal URLs and private IPs
+- Credentials and secrets
+
+---
+
+## Installation Options
+
+```bash
+# Core only
+pip install media-engine
+
+# With specific features
+pip install media-engine[web]      # Dashboard
+pip install media-engine[mcp]      # MCP server
+pip install media-engine[pdf]      # PDF generation
+pip install media-engine[all]      # Everything
+
+# Development
+git clone https://github.com/morteng/media-engine.git
+cd media-engine
+uv sync
+```
+
+---
+
+## Repository Structure
+
+```
+media-engine/
+├── python/
+│   └── media_engine/        # Main Python package
+│       ├── core/            # Config, Project, Theme
+│       ├── cms/             # Document management
+│       ├── video/           # Video production
+│       ├── builders/        # Output generators
+│       ├── quality/         # Quality checks
+│       ├── security/        # Secret/PII detection
+│       ├── web/             # Dashboard (FastAPI)
+│       ├── mcp/             # MCP server
+│       └── cli.py           # CLI interface
+├── remotion/                # Motion graphics (React)
+├── demo/                    # Reference project
+└── pyproject.toml
+```
+
+---
 
 ## License
 
 MIT
+
+---
+
+## Contributing
+
+Contributions welcome! Please read our contributing guidelines and submit PRs.
+
+```bash
+# Run tests
+uv run pytest
+
+# Lint
+uv run ruff check python/
+```

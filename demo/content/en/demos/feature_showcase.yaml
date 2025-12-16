@@ -1,0 +1,219 @@
+# Media Engine Feature Showcase
+# Interactive demo showing all major capabilities
+
+id: feature-showcase
+type: comparison
+title: "Media Engine Feature Showcase"
+description: "Explore all the features Media Engine offers for automated media production."
+
+data:
+  items:
+    - name: "Content Management"
+      icon: "document"
+      features:
+        markdown_support: true
+        frontmatter_metadata: true
+        version_tracking: true
+        dependency_graph: true
+        multi_language: true
+        status_workflow: true
+        full_text_search: true
+        description: "Organize content in Markdown with YAML frontmatter. Track versions, dependencies, and status across multiple languages."
+
+    - name: "Document Generation"
+      icon: "build"
+      features:
+        html_output: true
+        pdf_output: true
+        pptx_output: true
+        xlsx_output: true
+        diagram_output: true
+        theme_support: true
+        template_system: true
+        description: "Generate HTML, PDF, PowerPoint, Excel, and diagrams from a single source. Consistent theming across all outputs."
+
+    - name: "Video Production"
+      icon: "video"
+      features:
+        yaml_scripts: true
+        voiceover_tts: true
+        caption_generation: true
+        motion_graphics: true
+        browser_capture: true
+        audio_caching: true
+        remotion_render: true
+        description: "Full video production pipeline: scripts to voiceovers to motion graphics to final render. Automated and cached."
+
+    - name: "Quality Assurance"
+      icon: "check"
+      features:
+        readability_scoring: true
+        link_validation: true
+        reference_checking: true
+        freshness_tracking: true
+        schema_validation: true
+        gap_analysis: true
+        ci_integration: true
+        description: "Automated quality checks: readability, links, references, freshness, and schema validation. CI/CD ready."
+
+    - name: "Security"
+      icon: "shield"
+      features:
+        secret_detection: true
+        pii_scanning: true
+        api_key_detection: true
+        internal_url_detection: true
+        audit_logging: true
+        provenance_tracking: true
+        approval_workflow: true
+        description: "Detect secrets, PII, and sensitive content before publishing. Full audit trails and approval workflows."
+
+    - name: "Integration"
+      icon: "plug"
+      features:
+        cli_interface: true
+        mcp_server: true
+        web_dashboard: true
+        python_api: true
+        github_actions: true
+        agent_compatible: true
+        webhook_support: true
+        description: "CLI, MCP server for AI agents, web dashboard, Python API. Works with Claude Desktop and any MCP client."
+
+  features:
+    - id: markdown_support
+      name: "Markdown Content"
+      category: "content"
+    - id: frontmatter_metadata
+      name: "YAML Frontmatter"
+      category: "content"
+    - id: version_tracking
+      name: "Version Tracking"
+      category: "content"
+    - id: dependency_graph
+      name: "Dependency Graph"
+      category: "content"
+    - id: multi_language
+      name: "Multi-Language"
+      category: "content"
+    - id: status_workflow
+      name: "Status Workflow"
+      category: "content"
+    - id: full_text_search
+      name: "Full-Text Search"
+      category: "content"
+
+    - id: html_output
+      name: "HTML Output"
+      category: "build"
+    - id: pdf_output
+      name: "PDF Output"
+      category: "build"
+    - id: pptx_output
+      name: "PPTX Output"
+      category: "build"
+    - id: xlsx_output
+      name: "XLSX Output"
+      category: "build"
+    - id: diagram_output
+      name: "Diagram Output"
+      category: "build"
+    - id: theme_support
+      name: "Theme Support"
+      category: "build"
+    - id: template_system
+      name: "Template System"
+      category: "build"
+
+    - id: yaml_scripts
+      name: "YAML Scripts"
+      category: "video"
+    - id: voiceover_tts
+      name: "Voiceover (TTS)"
+      category: "video"
+    - id: caption_generation
+      name: "Caption Generation"
+      category: "video"
+    - id: motion_graphics
+      name: "Motion Graphics"
+      category: "video"
+    - id: browser_capture
+      name: "Browser Capture"
+      category: "video"
+    - id: audio_caching
+      name: "Audio Caching"
+      category: "video"
+    - id: remotion_render
+      name: "Remotion Render"
+      category: "video"
+
+    - id: readability_scoring
+      name: "Readability Scoring"
+      category: "quality"
+    - id: link_validation
+      name: "Link Validation"
+      category: "quality"
+    - id: reference_checking
+      name: "Reference Checking"
+      category: "quality"
+    - id: freshness_tracking
+      name: "Freshness Tracking"
+      category: "quality"
+    - id: schema_validation
+      name: "Schema Validation"
+      category: "quality"
+    - id: gap_analysis
+      name: "Gap Analysis"
+      category: "quality"
+    - id: ci_integration
+      name: "CI Integration"
+      category: "quality"
+
+    - id: secret_detection
+      name: "Secret Detection"
+      category: "security"
+    - id: pii_scanning
+      name: "PII Scanning"
+      category: "security"
+    - id: api_key_detection
+      name: "API Key Detection"
+      category: "security"
+    - id: internal_url_detection
+      name: "Internal URL Detection"
+      category: "security"
+    - id: audit_logging
+      name: "Audit Logging"
+      category: "security"
+    - id: provenance_tracking
+      name: "Provenance Tracking"
+      category: "security"
+    - id: approval_workflow
+      name: "Approval Workflow"
+      category: "security"
+
+    - id: cli_interface
+      name: "CLI Interface"
+      category: "integration"
+    - id: mcp_server
+      name: "MCP Server"
+      category: "integration"
+    - id: web_dashboard
+      name: "Web Dashboard"
+      category: "integration"
+    - id: python_api
+      name: "Python API"
+      category: "integration"
+    - id: github_actions
+      name: "GitHub Actions"
+      category: "integration"
+    - id: agent_compatible
+      name: "AI Agent Compatible"
+      category: "integration"
+    - id: webhook_support
+      name: "Webhook Support"
+      category: "integration"
+
+width: "100%"
+height: "auto"
+theme: "copper-cream"
+interactive: true

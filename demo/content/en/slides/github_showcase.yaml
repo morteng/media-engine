@@ -1,0 +1,312 @@
+# Media Engine GitHub Showcase Presentation
+# Comprehensive slide deck for README and demo purposes
+
+title: "Media Engine"
+subtitle: "Agent-Operated Media Production"
+version: "1.0.0"
+author: "Media Engine Team"
+
+slides:
+  # ============================================================
+  # TITLE & INTRODUCTION
+  # ============================================================
+
+  - type: title
+    title: "Media Engine"
+    subtitle: "Agent-Operated Media Production Framework"
+    notes: "Opening slide - emphasize 'agent-operated' as the key differentiator"
+
+  - type: content
+    title: "The Problem"
+    bullets:
+      - "Content creation is time-consuming"
+      - "Manual formatting leads to inconsistencies"
+      - "Multi-format publishing multiplies effort"
+      - "Video production requires specialized skills"
+      - "Translation tracking is error-prone"
+      - "Quality assurance is often an afterthought"
+    notes: "Pain points that Media Engine solves"
+
+  - type: quote
+    quote: "Write once. Publish everywhere. Automatically."
+    author: "Media Engine Philosophy"
+    notes: "Core value proposition"
+
+  # ============================================================
+  # CORE CAPABILITIES
+  # ============================================================
+
+  - type: section
+    title: "Core Capabilities"
+    subtitle: "What Media Engine Does"
+
+  - type: content
+    title: "Content Management"
+    bullets:
+      - "Markdown content with YAML frontmatter"
+      - "Version tracking and dependency graphs"
+      - "Multi-language support with translation tracking"
+      - "Document status workflow (draft → published)"
+      - "Full-text search indexing"
+      - "Schema validation for metadata"
+    notes: "CMS capabilities - foundation of the system"
+
+  - type: two_column
+    title: "Input → Output"
+    left_title: "You Write"
+    left_bullets:
+      - "Markdown documents"
+      - "YAML data files"
+      - "Video scripts (YAML)"
+      - "Slide definitions"
+      - "Diagram specs"
+    right_title: "You Get"
+    right_bullets:
+      - "HTML documents"
+      - "PDF reports"
+      - "PowerPoint decks"
+      - "Excel spreadsheets"
+      - "MP4 videos with captions"
+    notes: "Transformation capabilities"
+
+  - type: content
+    title: "Multi-Format Builders"
+    bullets:
+      - "HTML: Responsive web documents with syntax highlighting"
+      - "PDF: Print-ready documents via WeasyPrint"
+      - "PPTX: PowerPoint from YAML definitions"
+      - "XLSX: Excel with formulas and charts"
+      - "Diagrams: Box-and-arrow technical illustrations"
+      - "Videos: Full production pipeline"
+    notes: "Builder capabilities in detail"
+
+  # ============================================================
+  # VIDEO PRODUCTION
+  # ============================================================
+
+  - type: section
+    title: "Video Production"
+    subtitle: "From Script to Screen"
+
+  - type: content
+    title: "Video Production Pipeline"
+    bullets:
+      - "Define videos in YAML scripts"
+      - "AI voiceover generation (ElevenLabs TTS)"
+      - "Smart audio caching (pay once per segment)"
+      - "Automatic caption generation (WebVTT)"
+      - "Motion graphics via Remotion"
+      - "Browser capture for demos (Playwright)"
+    notes: "Video pipeline overview"
+
+  - type: content
+    title: "Motion Graphics Components"
+    bullets:
+      - "TitleCard: Animated title sequences"
+      - "StatCounter: Count-up number animations"
+      - "FeatureCard: Feature showcase cards"
+      - "TextReveal: Word-by-word text reveals"
+      - "Transitions: Professional scene transitions"
+      - "Backgrounds: Animated gradient backgrounds"
+    notes: "Remotion component library"
+
+  - type: content
+    title: "Video Script Structure"
+    bullets:
+      - "Metadata: title, language, duration"
+      - "Scenes: intro, content, demo, outro"
+      - "Visual configs: backgrounds, animations"
+      - "Voiceover text per scene"
+      - "Transition specifications"
+      - "Caption styling options"
+    notes: "YAML script anatomy"
+
+  # ============================================================
+  # QUALITY & SECURITY
+  # ============================================================
+
+  - type: section
+    title: "Quality & Security"
+    subtitle: "Built-In Assurance"
+
+  - type: content
+    title: "Quality Checks"
+    bullets:
+      - "Readability scoring (Flesch, Fog, SMOG)"
+      - "Link validation (internal and external)"
+      - "Reference verification"
+      - "Content freshness tracking"
+      - "Schema validation for frontmatter"
+      - "Gap analysis for missing content"
+    notes: "Quality assurance features"
+
+  - type: content
+    title: "Security Scanning"
+    bullets:
+      - "API key detection (AWS, GitHub, OpenAI, etc.)"
+      - "Credential scanning"
+      - "PII detection (emails, phones, SSN)"
+      - "Internal URL identification"
+      - "Private IP address detection"
+      - "Pre-publish security gates"
+    notes: "Security features"
+
+  - type: content
+    title: "Provenance & Approval"
+    bullets:
+      - "Full audit logging"
+      - "Document provenance tracking"
+      - "Approval workflow (draft → review → approved → published)"
+      - "Reviewer assignment and tracking"
+      - "Change history with timestamps"
+      - "Compliance-ready audit trails"
+    notes: "Governance and compliance features"
+
+  # ============================================================
+  # DEVELOPER EXPERIENCE
+  # ============================================================
+
+  - type: section
+    title: "Developer Experience"
+    subtitle: "Built for Automation"
+
+  - type: content
+    title: "Command-Line Interface"
+    bullets:
+      - "media-engine status - Project overview"
+      - "media-engine build - Generate all outputs"
+      - "media-engine quality - Run quality checks"
+      - "media-engine translation - Manage translations"
+      - "media-engine security - Security scanning"
+      - "media-engine dashboard - Launch web UI"
+    notes: "CLI commands"
+
+  - type: content
+    title: "MCP Server (AI Agents)"
+    bullets:
+      - "20+ tools exposed via MCP protocol"
+      - "Works with Claude Desktop"
+      - "Content: read, update, search documents"
+      - "Build: trigger HTML, PDF, PPTX generation"
+      - "Quality: run checks, validate project"
+      - "Cache: manage build caching"
+    notes: "AI agent integration"
+
+  - type: content
+    title: "Web Dashboard"
+    bullets:
+      - "Translation matrix visualization"
+      - "Quality issue tracking"
+      - "Build controls and status"
+      - "Real-time updates via WebSocket"
+      - "Responsive design for all devices"
+      - "No installation required (browser-based)"
+    notes: "Web dashboard features"
+
+  - type: content
+    title: "Python API"
+    bullets:
+      - "from media_engine import find_project"
+      - "Project.load() for programmatic access"
+      - "Builder classes for each output format"
+      - "Quality check functions"
+      - "Async-ready throughout"
+      - "Type hints on all functions"
+    notes: "Programmatic usage"
+
+  # ============================================================
+  # GETTING STARTED
+  # ============================================================
+
+  - type: section
+    title: "Get Started"
+    subtitle: "Up and Running in Minutes"
+
+  - type: content
+    title: "Installation"
+    bullets:
+      - "pip install media-engine"
+      - "pip install media-engine[all]  # All features"
+      - "pip install media-engine[video]  # Video support"
+      - "pip install media-engine[pdf]  # PDF support"
+      - "pip install media-engine[web]  # Web dashboard"
+      - "pip install media-engine[mcp]  # MCP server"
+    notes: "Installation options"
+
+  - type: content
+    title: "Quick Start"
+    bullets:
+      - "1. media-engine init  # Initialize project"
+      - "2. Add content to content/ directory"
+      - "3. media-engine build  # Generate outputs"
+      - "4. media-engine quality  # Check quality"
+      - "5. media-engine publish  # Package deliverables"
+    notes: "Getting started workflow"
+
+  - type: content
+    title: "Project Structure"
+    bullets:
+      - "project.yaml - Project configuration"
+      - "theme.yaml - Design system"
+      - "schema.yaml - Frontmatter validation"
+      - "content/en/ - English content"
+      - "content/no/ - Norwegian content"
+      - "assets/ - Media files"
+    notes: "File structure overview"
+
+  # ============================================================
+  # CLOSING
+  # ============================================================
+
+  - type: section
+    title: "Why Media Engine?"
+    subtitle: "The Benefits"
+
+  - type: two_column
+    title: "Before vs After"
+    left_title: "Manual Process"
+    left_bullets:
+      - "Hours of formatting"
+      - "Inconsistent styling"
+      - "Error-prone translations"
+      - "Manual video editing"
+      - "Quality issues slip through"
+    right_title: "With Media Engine"
+    right_bullets:
+      - "Automated generation"
+      - "Consistent theming"
+      - "Translation tracking"
+      - "Script-to-video pipeline"
+      - "Built-in quality gates"
+    notes: "Value proposition comparison"
+
+  - type: content
+    title: "Use Cases"
+    bullets:
+      - "Technical documentation"
+      - "Product marketing materials"
+      - "Training content and videos"
+      - "Investor materials"
+      - "Multi-language content libraries"
+      - "Compliance documentation"
+    notes: "Target use cases"
+
+  - type: quote
+    quote: "AI handles the busywork. You make the calls."
+    author: "Media Engine"
+    notes: "Closing philosophy"
+
+  - type: content
+    title: "Next Steps"
+    bullets:
+      - "Star us on GitHub"
+      - "pip install media-engine[all]"
+      - "media-engine init"
+      - "Read the documentation"
+      - "Join the community"
+    notes: "Call to action"
+
+  - type: title
+    title: "Media Engine"
+    subtitle: "Write Content. Generate Media. Ship Faster."
+    notes: "Closing slide"

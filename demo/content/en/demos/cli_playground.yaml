@@ -1,0 +1,221 @@
+# Media Engine CLI Playground
+# Interactive terminal simulator showing CLI commands
+
+id: cli-playground
+type: code_playground
+title: "Try Media Engine CLI"
+description: "Explore Media Engine commands in this interactive terminal simulator."
+
+data:
+  html: |
+    <div class="terminal">
+      <div class="terminal-header">
+        <div class="terminal-buttons">
+          <span class="btn red"></span>
+          <span class="btn yellow"></span>
+          <span class="btn green"></span>
+        </div>
+        <span class="terminal-title">media-engine</span>
+      </div>
+      <div class="terminal-body" id="output">
+        <div class="welcome">
+          <div class="logo">MEDIA ENGINE</div>
+          <p>Agent-Operated Media Production Framework</p>
+          <p class="hint">Type a command or click a button below:</p>
+        </div>
+      </div>
+      <div class="terminal-input">
+        <span class="prompt">$</span>
+        <input type="text" id="cmd" placeholder="media-engine help" autofocus>
+      </div>
+      <div class="quick-commands">
+        <button onclick="runCommand('status')">status</button>
+        <button onclick="runCommand('build')">build</button>
+        <button onclick="runCommand('quality')">quality</button>
+        <button onclick="runCommand('translation status')">translation</button>
+        <button onclick="runCommand('security')">security</button>
+        <button onclick="runCommand('help')">help</button>
+      </div>
+    </div>
+
+  css: |
+    * { box-sizing: border-box; }
+
+    .terminal {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      background: #1a1a2e;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    .terminal-header {
+      background: #16213e;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .terminal-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .btn.red { background: #ff5f56; }
+    .btn.yellow { background: #ffbd2e; }
+    .btn.green { background: #27c93f; }
+
+    .terminal-title {
+      color: #8892b0;
+      font-size: 13px;
+    }
+
+    .terminal-body {
+      padding: 20px;
+      min-height: 280px;
+      max-height: 280px;
+      overflow-y: auto;
+      color: #e6e6e6;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .welcome .logo {
+      color: #c45c3c;
+      font-size: 24px;
+      font-weight: bold;
+      letter-spacing: 4px;
+      margin-bottom: 10px;
+    }
+
+    .welcome p {
+      margin: 5px 0;
+      color: #8892b0;
+    }
+
+    .hint { color: #64ffda !important; }
+
+    .terminal-input {
+      display: flex;
+      align-items: center;
+      padding: 12px 20px;
+      background: #0f0f1a;
+      border-top: 1px solid #2a2a4a;
+    }
+
+    .prompt {
+      color: #64ffda;
+      margin-right: 10px;
+      font-weight: bold;
+    }
+
+    .terminal-input input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #e6e6e6;
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .quick-commands {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 12px 20px;
+      background: #0f0f1a;
+      border-top: 1px solid #2a2a4a;
+    }
+
+    .quick-commands button {
+      background: #2a2a4a;
+      border: 1px solid #3a3a5a;
+      color: #64ffda;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+
+    .quick-commands button:hover {
+      background: #3a3a5a;
+      border-color: #64ffda;
+    }
+
+    .cmd-line {
+      margin: 8px 0;
+    }
+
+    .cmd-line .user-cmd {
+      color: #64ffda;
+    }
+
+    .output-text { color: #e6e6e6; }
+    .output-success { color: #27c93f; }
+    .output-warning { color: #ffbd2e; }
+    .output-error { color: #ff5f56; }
+    .output-info { color: #64b5f6; }
+    .output-dim { color: #8892b0; }
+
+  js: |
+    const output = document.getElementById('output');
+    const cmdInput = document.getElementById('cmd');
+
+    const commands = {
+      'help': '<span class="output-info">Media Engine CLI</span>\n\n<span class="output-dim">Usage:</span> media-engine [command] [options]\n\n<span class="output-info">Commands:</span>\n  status          Show project status overview\n  build           Build all outputs (HTML, PDF, PPTX, etc.)\n  quality         Run content quality checks\n  translation     Translation management\n  security        Scan for sensitive content\n  dashboard       Launch web dashboard\n\n<span class="output-dim">Run</span> media-engine [command] --help <span class="output-dim">for details</span>',
+
+      'status': '<span class="output-info">Media Engine Project Status</span>\n<span class="output-dim">===================================================</span>\n\n<span class="output-success">OK</span> Project: Media Engine Demo\n<span class="output-success">OK</span> Config:  project.yaml\n\n<span class="output-info">Content:</span>\n  Chapters:     16 documents\n  Scripts:      4 video scripts\n  Slides:       2 presentations\n  Diagrams:     3 diagrams\n  Demos:        5 interactive demos\n\n<span class="output-info">Languages:</span>\n  English (en): 16 chapters <span class="output-success">OK</span>\n  Norwegian (no): 15 chapters <span class="output-success">OK</span>\n\n<span class="output-success">All quality checks passed!</span>',
+
+      'build': '<span class="output-info">Building all outputs...</span>\n\n<span class="output-dim">[1/6]</span> Building HTML documents...\n       <span class="output-success">OK</span> 32 HTML files generated\n\n<span class="output-dim">[2/6]</span> Building PDF documents...\n       <span class="output-success">OK</span> 16 PDF files generated\n\n<span class="output-dim">[3/6]</span> Building presentations...\n       <span class="output-success">OK</span> 2 PPTX files generated\n\n<span class="output-dim">[4/6]</span> Building spreadsheets...\n       <span class="output-success">OK</span> 2 XLSX files generated\n\n<span class="output-dim">[5/6]</span> Building diagrams...\n       <span class="output-success">OK</span> 6 diagrams rendered\n\n<span class="output-dim">[6/6]</span> Building demos...\n       <span class="output-success">OK</span> 5 interactive demos\n\n<span class="output-success">Build complete!</span> Output: ./dist/',
+
+      'quality': '<span class="output-info">Running quality checks...</span>\n\n<span class="output-info">Schema Validation:</span>\n  <span class="output-success">OK</span> 31/31 documents have valid frontmatter\n\n<span class="output-info">Link Validation:</span>\n  <span class="output-success">OK</span> 42 internal links valid\n  <span class="output-success">OK</span> 18 external links valid\n\n<span class="output-info">Freshness:</span>\n  <span class="output-success">OK</span> No stale documents\n\n<span class="output-info">Readability:</span>\n  Average Flesch-Kincaid: 8.2\n  <span class="output-success">OK</span> All documents within target\n\n<span class="output-success">All quality checks passed!</span>',
+
+      'translation status': '<span class="output-info">Translation Status</span>\n<span class="output-dim">===================================================</span>\n\n<span class="output-info">Language Pairs:</span> English -> Norwegian\n\n<span class="output-success">Synced (15):</span>\n  OK 01_introduction.md -> 01_introduksjon.md\n  OK 02_content_management.md -> 02_innholdsstyring.md\n  OK 03_video_production.md -> 03_videoproduksjon.md\n  <span class="output-dim">... and 12 more</span>\n\n<span class="output-warning">Outdated (0):</span> None\n<span class="output-error">Missing (1):</span>\n  16_github_showcase.md\n\n<span class="output-info">15/16 translations synced</span>',
+
+      'security': '<span class="output-info">Security Scan</span>\n<span class="output-dim">===================================================</span>\n\nScanning for sensitive content...\n\n<span class="output-info">Checked:</span>\n  - API keys (AWS, GitHub, OpenAI, Anthropic)\n  - Credentials and passwords\n  - PII (emails, phone numbers, SSN)\n  - Internal URLs and private IPs\n\n<span class="output-info">Results:</span>\n  Documents scanned: 31\n  Assets scanned: 12\n\n<span class="output-success">OK No sensitive content detected</span>',
+
+      'dashboard': '<span class="output-info">Launching web dashboard...</span>\n\n<span class="output-success">OK</span> Server started on <span class="output-info">http://localhost:8080</span>\n\n<span class="output-dim">Features available:</span>\n  - Translation matrix view\n  - Quality issue tracking\n  - Build controls\n  - Real-time updates\n\n<span class="output-dim">Press Ctrl+C to stop</span>'
+    };
+
+    function runCommand(cmd) {
+      const fullCmd = cmd === 'help' ? 'help' : 'media-engine ' + cmd;
+
+      const welcome = output.querySelector('.welcome');
+      if (welcome) welcome.remove();
+
+      const cmdLine = document.createElement('div');
+      cmdLine.className = 'cmd-line';
+      cmdLine.innerHTML = '<span class="prompt">$</span> <span class="user-cmd">' + fullCmd + '</span>';
+      output.appendChild(cmdLine);
+
+      const result = document.createElement('div');
+      result.className = 'cmd-output';
+      result.innerHTML = (commands[cmd] || '<span class="output-error">Unknown command: ' + cmd + '</span>').replace(/\n/g, '<br>');
+      output.appendChild(result);
+
+      output.scrollTop = output.scrollHeight;
+      cmdInput.value = '';
+    }
+
+    cmdInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        var cmd = cmdInput.value.trim().replace('media-engine ', '');
+        if (cmd) runCommand(cmd);
+      }
+    });
+
+width: "100%"
+height: "520px"
+editable: false
+autorun: true
+theme: "dark"
