@@ -124,8 +124,8 @@ def get_content_status(project: "Project", language: str) -> ContentStatus:
             doc_status = DocumentStatus(
                 path=chapter_path,
                 title=doc.title,
-                status=doc.frontmatter.get("status", "draft"),
-                version=doc.frontmatter.get("version", "0.0.0"),
+                status=doc.metadata.get("status", "draft"),
+                version=doc.metadata.get("version", "0.0.0"),
                 last_modified=doc.last_modified,
                 word_count=len(doc.content.split()),
                 freshness_status=doc.freshness_status,
