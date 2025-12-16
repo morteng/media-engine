@@ -1,24 +1,21 @@
 {
   "name": "@media-engine/remotion",
   "version": "0.1.0",
-  "description": "Remotion motion graphics components for Media Engine",
-  "main": "src/index.ts",
-  "types": "src/index.ts",
+  "description": "Remotion motion graphics for Media Engine",
   "scripts": {
+    "start": "remotion studio",
+    "build": "remotion render Main out/video.mp4",
+    "render": "remotion render",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": [
-    "remotion",
-    "motion-graphics",
-    "video",
-    "react"
-  ],
-  "peerDependencies": {
-    "react": ">=18.0.0",
-    "remotion": ">=4.0.0"
+  "dependencies": {
+    "@remotion/cli": "^4.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "remotion": "^4.0.0"
   },
   "devDependencies": {
-    "@types/react": "^19.0.0",
+    "@types/react": "^18.0.0",
     "typescript": "^5.0.0"
   }
 }

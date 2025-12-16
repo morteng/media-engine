@@ -65,11 +65,13 @@ All outputs are styled consistently using your theme configuration.
 ## Quick Start
 
 ```bash
-# Install
-pip install media-engine
+# Clone and install
+git clone https://github.com/morteng/media-engine.git
+cd media-engine
+uv sync
 
-# Or with all optional features
-pip install media-engine[all]
+# Or with pip
+pip install -e ".[all]"
 
 # Initialize project
 media-engine init my-project
@@ -348,22 +350,22 @@ Detects:
 
 ---
 
-## Installation Options
+## Installation
 
 ```bash
-# Core only
-pip install media-engine
-
-# With specific features
-pip install media-engine[web]      # Dashboard
-pip install media-engine[mcp]      # MCP server
-pip install media-engine[pdf]      # PDF generation
-pip install media-engine[all]      # Everything
-
-# Development
+# Clone repository
 git clone https://github.com/morteng/media-engine.git
 cd media-engine
+
+# Install with uv (recommended)
 uv sync
+
+# Or with pip (editable install)
+pip install -e "."              # Core only
+pip install -e ".[web]"         # With dashboard
+pip install -e ".[mcp]"         # With MCP server
+pip install -e ".[pdf]"         # With PDF generation
+pip install -e ".[all]"         # Everything
 ```
 
 ---
