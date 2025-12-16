@@ -31,6 +31,8 @@ Søkesystemet:
 
 ## Bygge en søkeindeks
 
+Opprett og oppdater søkeindekser med CLI eller Python API.
+
 ### CLI
 
 ```bash

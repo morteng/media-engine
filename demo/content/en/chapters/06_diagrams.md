@@ -97,6 +97,8 @@ arrows:
 
 ## Generating Diagrams
 
+Generate diagrams from YAML definitions using either the CLI or Python API.
+
 ### Python API
 
 ```python
@@ -137,6 +139,8 @@ The diagram generator uses your theme colors:
 Both light and dark versions are generated automatically for each diagram.
 
 ## Styling Options
+
+Customize diagram appearance with colors, fonts, and spacing.
 
 ### Custom Box Colors
 

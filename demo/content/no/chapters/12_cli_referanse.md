@@ -27,6 +27,8 @@ media-engine <kommando> [alternativer]
 
 ## Kommandoer
 
+Tilgjengelige kommandoer for å administrere Media Engine-prosjektet ditt.
+
 ### status
 
 Vis prosjektstatus og dashbord.
@@ -112,6 +114,8 @@ media-engine init [MAPPE] [--name NAVN]
 | 1 | Feil |
 
 ## Vanlige arbeidsflyter
+
+Typiske kommandosekvenser for vanlige oppgaver.
 
 ### Innholdsoppdateringssyklus
 

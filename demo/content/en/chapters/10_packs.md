@@ -25,6 +25,8 @@ Audience packs are subsets of your project content, bundled for a specific purpo
 
 ## Generating Packs
 
+Generate audience-specific content packages using the CLI or Python API.
+
 ### CLI
 
 ```bash
@@ -64,6 +66,8 @@ result = generate_pilot_pack(project, output_dir=Path("./dist"))
 ```
 
 ## Pack Contents
+
+Each pack type includes specific materials tailored for its audience.
 
 ### Investor Pack
 
@@ -154,6 +158,8 @@ Each pack includes a manifest:
 ```
 
 ## Use Cases
+
+Common scenarios for using audience packs in your workflow.
 
 ### Investor Outreach
 

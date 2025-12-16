@@ -28,6 +28,8 @@ Målgruppepakker er delmengder av prosjektinnholdet, pakket for et spesifikt for
 
 ## Generere pakker
 
+Generer målgruppespesifikke innholdspakker med CLI eller Python API.
+
 ### CLI
 
 ```bash
@@ -59,6 +61,8 @@ print(f"Elementer: {result.items_included}")
 ```
 
 ## Pakkeinnhold
+
+Hver pakketype inkluderer spesifikt materiale tilpasset sin målgruppe.
 
 ### Investorpakke
 

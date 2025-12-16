@@ -243,8 +243,21 @@ def check_empty_sections(
 
     prev_header_line = None
     prev_header_text = None
+    in_code_block = False
 
     for line_num, line in enumerate(lines, 1):
+        # Track code blocks
+        if line.strip().startswith('```'):
+            in_code_block = not in_code_block
+            # Code block delimiter counts as content - reset header tracking
+            prev_header_line = None
+            prev_header_text = None
+            continue
+
+        # Skip lines inside code blocks (comments like # can look like headers)
+        if in_code_block:
+            continue
+
         # Check if current line is a header
         header_match = re.match(r'^(#{1,6})\s+(.+)$', line)
 

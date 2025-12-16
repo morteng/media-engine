@@ -28,6 +28,8 @@ The search system:
 
 ## Building a Search Index
 
+Create and update search indexes using the CLI or Python API.
+
 ### CLI
 
 ```bash

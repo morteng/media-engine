@@ -31,6 +31,8 @@ Valideringssystemet sjekker:
 
 ## Kjøre validering
 
+Kjør valideringssjekker med CLI eller Python API.
+
 ### CLI
 
 ```bash

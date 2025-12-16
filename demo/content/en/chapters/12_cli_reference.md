@@ -24,6 +24,8 @@ media-engine <command> [options]
 
 ## Commands
 
+Available commands for managing your Media Engine project.
+
 ### status
 
 Show project status and dashboard.
@@ -248,6 +250,8 @@ media-engine quality --json | jq '.error_count'
 ```
 
 ## Common Workflows
+
+Typical command sequences for common tasks.
 
 ### Initial Setup
 

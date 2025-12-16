@@ -28,6 +28,8 @@ The validation system checks:
 
 ## Running Validation
 
+Run validation checks using the CLI or Python API.
+
 ### CLI
 
 ```bash

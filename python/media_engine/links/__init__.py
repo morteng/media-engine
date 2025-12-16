@@ -135,10 +135,23 @@ class LinkChecker:
         """Extract all links from markdown/HTML content."""
         links = []
         lines = content.split("\n")
+        in_code_block = False
 
         for line_num, line in enumerate(lines, 1):
+            # Track code blocks
+            if line.strip().startswith("```"):
+                in_code_block = not in_code_block
+                continue
+
+            # Skip lines inside code blocks
+            if in_code_block:
+                continue
+
+            # Remove inline code before checking for links
+            line_without_code = re.sub(r'`[^`]+`', '', line)
+
             # Markdown links
-            for match in self.MD_LINK_PATTERN.finditer(line):
+            for match in self.MD_LINK_PATTERN.finditer(line_without_code):
                 text, url = match.groups()
                 links.append({
                     "url": url,
@@ -149,7 +162,7 @@ class LinkChecker:
                 })
 
             # Markdown images
-            for match in self.MD_IMAGE_PATTERN.finditer(line):
+            for match in self.MD_IMAGE_PATTERN.finditer(line_without_code):
                 alt, url = match.groups()
                 links.append({
                     "url": url,
@@ -160,7 +173,7 @@ class LinkChecker:
                 })
 
             # HTML links
-            for match in self.HTML_LINK_PATTERN.finditer(line):
+            for match in self.HTML_LINK_PATTERN.finditer(line_without_code):
                 url = match.group(1)
                 links.append({
                     "url": url,
