@@ -1,39 +1,17 @@
-# Media Engine Documentation CI/CD
-#
-# Runs on every push to validate and build documentation.
-# Publishes to GitHub Pages on main branch.
-
-name: Documentation
+# Media Engine Documentation
+name: Docs
 
 on:
   push:
     branches: [main]
     paths:
-      - 'demo/content/**'
-      - 'demo/project.yaml'
-      - 'demo/theme.yaml'
-      - 'demo/schema.yaml'
+      - 'demo/**'
       - 'python/**'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'demo/content/**'
-      - 'demo/project.yaml'
-      - 'python/**'
-  workflow_dispatch:  # Allow manual trigger
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: true
+  workflow_dispatch:
 
 jobs:
   validate:
-    name: Validate Content
+    name: Validate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -42,169 +20,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
 
-      - name: Install media-engine
-        run: |
-          pip install -e ".[dev]"
+      - name: Install
+        run: pip install -e ".[dev]"
 
-      - name: Run quality checks
+      - name: Quality check
         run: |
           cd demo
-          media-engine quality --json > quality-report.json
-          cat quality-report.json
-
-      - name: Validate schema
-        run: |
-          cd demo
-          media-engine validate --json > validation-report.json
-          cat validation-report.json
-
-      - name: Check translations
-        run: |
-          cd demo
-          media-engine translation status --json > translation-report.json
-          cat translation-report.json
-
-      - name: Security scan
-        run: |
-          cd demo
-          python -c "
-          import sys
-          sys.path.insert(0, '../python')
-          from media_engine.core import find_project
-          from media_engine.security import scan_for_secrets
-          project = find_project()
-          try:
-              report = scan_for_secrets(project, block_on_critical=True)
-              print(f'Security scan passed: {report[\"summary\"]}')
-          except ValueError as e:
-              print(f'SECURITY ISSUE: {e}')
-              sys.exit(1)
-          "
-
-      - name: Upload reports
-        uses: actions/upload-artifact@v4
-        with:
-          name: validation-reports
-          path: |
-            demo/quality-report.json
-            demo/validation-report.json
-            demo/translation-report.json
-
-  build:
-    name: Build Documentation
-    needs: validate
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-
-      - name: Install media-engine
-        run: |
-          pip install -e ".[all]"
-
-      - name: Build HTML for all languages
-        run: |
-          cd demo
-          media-engine build --only html --json > build-report.json
-          cat build-report.json
-
-      - name: Build search index
-        run: |
-          cd demo
-          media-engine index --output output/search-index.json
-
-      - name: Generate changelog
-        run: |
-          cd demo
-          python -c "
-          import sys
-          sys.path.insert(0, '../python')
-          from media_engine.core import find_project
-          from media_engine.changelog import generate_changelog
-          project = find_project()
-          changelog = generate_changelog(project)
-          with open('output/CHANGELOG.md', 'w') as f:
-              f.write(changelog)
-          print('Changelog generated')
-          " || echo "Changelog generation skipped"
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: documentation
-          path: demo/output/
-
-  deploy:
-    name: Deploy to GitHub Pages
-    needs: build
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: documentation
-          path: ./dist
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload to Pages
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./dist
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-
-  notify:
-    name: Notify on Failure
-    needs: [validate, build]
-    if: failure()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Create issue on failure
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const title = `Documentation build failed: ${context.sha.substring(0, 7)}`;
-            const body = `
-            ## Documentation Build Failed
-
-            **Commit:** ${context.sha}
-            **Branch:** ${context.ref}
-            **Workflow:** ${context.workflow}
-
-            [View workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
-
-            Please check the validation and build logs for details.
-            `;
-
-            // Check if issue already exists
-            const issues = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              labels: 'documentation,ci-failure'
-            });
-
-            if (issues.data.length === 0) {
-              await github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: title,
-                body: body,
-                labels: ['documentation', 'ci-failure']
-              });
-            }
+          media-engine quality
+          media-engine validate
