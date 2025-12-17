@@ -62,6 +62,7 @@ class PublishResult:
 def collect_deliverables(
     project: "Project",
     language: str,
+    output_dir: Optional[Path] = None,
 ) -> List[DeliverableCategory]:
     """
     Collect all deliverables for a language into categories.
@@ -69,12 +70,14 @@ def collect_deliverables(
     Args:
         project: Project to collect from
         language: Language code
+        output_dir: Output directory to scan (defaults to project output dir)
 
     Returns:
         List of categorized deliverables
     """
     categories = []
-    lang_output = project.output_dir / language
+    base_dir = output_dir if output_dir else project.output_dir
+    lang_output = base_dir / language
 
     # Proposal/Document
     proposal_items = []
@@ -82,10 +85,10 @@ def collect_deliverables(
     if proposal_path.exists():
         proposal_items.append(
             DeliverableItem(
-                title="Full Proposal",
+                name="Full Proposal",
                 path="proposal.html",
                 description="Complete proposal document",
-                type="html",
+                file_type="html",
             )
         )
 
@@ -94,10 +97,10 @@ def collect_deliverables(
     if pdf_path.exists():
         proposal_items.append(
             DeliverableItem(
-                title="Full Proposal (PDF)",
+                name="Full Proposal (PDF)",
                 path="proposal.pdf",
                 description="Printable PDF version",
-                type="pdf",
+                file_type="pdf",
             )
         )
 
@@ -117,17 +120,17 @@ def collect_deliverables(
         for pres in presentations_dir.glob("*.html"):
             presentation_items.append(
                 DeliverableItem(
-                    title=pres.stem.replace("_", " ").title(),
+                    name=pres.stem.replace("_", " ").title(),
                     path=f"presentations/{pres.name}",
-                    type="html",
+                    file_type="html",
                 )
             )
         for pres in presentations_dir.glob("*.pptx"):
             presentation_items.append(
                 DeliverableItem(
-                    title=f"{pres.stem.replace('_', ' ').title()} (PowerPoint)",
+                    name=f"{pres.stem.replace('_', ' ').title()} (PowerPoint)",
                     path=f"presentations/{pres.name}",
-                    type="pptx",
+                    file_type="pptx",
                 )
             )
 
@@ -147,9 +150,9 @@ def collect_deliverables(
         for video in videos_dir.glob("*.mp4"):
             video_items.append(
                 DeliverableItem(
-                    title=video.stem.replace("-", " ").replace("_", " ").title(),
+                    name=video.stem.replace("-", " ").replace("_", " ").title(),
                     path=f"videos/{video.name}",
-                    type="video",
+                    file_type="mp4",
                 )
             )
 
@@ -169,9 +172,9 @@ def collect_deliverables(
         for ss in spreadsheets_dir.glob("*.xlsx"):
             spreadsheet_items.append(
                 DeliverableItem(
-                    title=ss.stem.replace("_", " ").title(),
+                    name=ss.stem.replace("_", " ").title(),
                     path=f"spreadsheets/{ss.name}",
-                    type="xlsx",
+                    file_type="xlsx",
                 )
             )
 
@@ -191,9 +194,9 @@ def collect_deliverables(
         for diagram in diagrams_dir.glob("*.png"):
             diagram_items.append(
                 DeliverableItem(
-                    title=diagram.stem.replace("_", " ").title(),
+                    name=diagram.stem.replace("_", " ").title(),
                     path=f"diagrams/{diagram.name}",
-                    type="image",
+                    file_type="png",
                 )
             )
 
@@ -230,13 +233,13 @@ def generate_navigation_indexes(
     # Collect language info
     languages = []
     for lang in project.languages:
-        lang_config = project.languages.get(lang, {})
+        lang_config = project.languages.get(lang)
+        lang_name = getattr(lang_config, "name", lang.upper()) if lang_config else lang.upper()
         languages.append(
             LanguageInfo(
                 code=lang,
-                name=lang_config.get("name", lang.upper()),
-                flag=lang_config.get("flag", ""),
-                native_name=lang_config.get("native_name", ""),
+                name=lang_name,
+                path=f"{lang}/index.html",
             )
         )
 
@@ -245,24 +248,17 @@ def generate_navigation_indexes(
         lang_dir = output_dir / lang_info.code
         lang_dir.mkdir(parents=True, exist_ok=True)
 
-        categories = collect_deliverables(project, lang_info.code)
+        categories = collect_deliverables(project, lang_info.code, output_dir)
 
-        # Get theme colors for CSS
-        theme_colors = {}
-        if hasattr(project, "theme"):
-            theme_colors = {
-                "primary": project.theme.colors.text,
-                "secondary": project.theme.colors.secondary,
-                "accent": project.theme.colors.accent,
-                "background": project.theme.colors.background,
-            }
+        # Get theme for rendering
+        theme = project.theme if hasattr(project, "theme") else None
 
         index_html = render_language_index(
-            language=lang_info,
-            categories=categories,
             project_name=project.name,
-            project_tagline=getattr(project, "tagline", ""),
-            theme_colors=theme_colors,
+            lang_code=lang_info.code,
+            lang_name=lang_info.name,
+            categories=categories,
+            theme=theme,
             logo_path="../shared/logo.svg"
             if (output_dir / "shared" / "logo.svg").exists()
             else None,
@@ -276,20 +272,13 @@ def generate_navigation_indexes(
             console.print(f"  [green]✓[/green] Generated {lang_info.code}/index.html")
 
     # Generate root index
-    theme_colors = {}
-    if hasattr(project, "theme"):
-        theme_colors = {
-            "primary": project.theme.colors.text,
-            "secondary": project.theme.colors.secondary,
-            "accent": project.theme.colors.accent,
-            "background": project.theme.colors.background,
-        }
+    theme = project.theme if hasattr(project, "theme") else None
 
     root_html = render_project_index(
         project_name=project.name,
-        project_tagline=getattr(project, "tagline", ""),
         languages=languages,
-        theme_colors=theme_colors,
+        theme=theme,
+        tagline=getattr(project, "tagline", ""),
         logo_path="shared/logo.svg" if (output_dir / "shared" / "logo.svg").exists() else None,
     )
 
@@ -341,15 +330,22 @@ def copy_documents(
             count += 1
 
         # Copy subdirectories
-        for subdir in ["presentations", "spreadsheets"]:
+        for subdir in ["presentations", "spreadsheets", "deliverables"]:
             src_subdir = src_dir / subdir
             if src_subdir.exists():
-                dest_subdir = dest_dir / subdir
-                dest_subdir.mkdir(exist_ok=True)
-                for f in src_subdir.glob("*"):
-                    if f.is_file():
-                        shutil.copy2(f, dest_subdir / f.name)
-                        count += 1
+                # For deliverables, copy to root of lang dir, not subdir
+                if subdir == "deliverables":
+                    for f in src_subdir.glob("*.pdf"):
+                        if f.is_file():
+                            shutil.copy2(f, dest_dir / f.name)
+                            count += 1
+                else:
+                    dest_subdir = dest_dir / subdir
+                    dest_subdir.mkdir(exist_ok=True)
+                    for f in src_subdir.glob("*"):
+                        if f.is_file():
+                            shutil.copy2(f, dest_subdir / f.name)
+                            count += 1
 
     if console_output:
         console.print(f"  [green]✓[/green] Copied {count} documents")

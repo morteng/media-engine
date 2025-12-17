@@ -91,12 +91,22 @@ class VideoScript:
             if isinstance(content, str):
                 content = {"text": content}
 
+            # Support multiple voiceover field names
+            text = (
+                scene_data.get("voiceover")  # New format
+                or content.get("text")
+                or content.get("narration")
+            )
+            # Handle multiline voiceover
+            if isinstance(text, str):
+                text = text.strip()
+
             scenes.append(
                 VideoScene(
                     id=scene_data.get("id", f"scene_{len(scenes)}"),
-                    type=scene_data.get("type", "content"),
-                    title=scene_data.get("title"),
-                    text=content.get("text") or content.get("narration"),
+                    type=scene_data.get("type", scene_data.get("scene_type", "content")),
+                    title=scene_data.get("title") or scene_data.get("name"),
+                    text=text,
                     duration=scene_data.get("duration"),
                     visual=scene_data.get("visual", {}),
                 )

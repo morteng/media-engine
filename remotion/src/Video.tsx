@@ -1,8 +1,8 @@
 /**
- * Video Component - Enhanced Motion Graphics Renderer
+ * Video Component - Electric Aurora Edition
  *
- * Renders rich, animated scenes using all available motion graphics components.
- * Supports multiple scene types, transitions, overlays, and data-driven animations.
+ * Dynamic, vibrant video renderer with kinetic typography,
+ * aurora backgrounds, and exciting transitions.
  */
 
 import React from "react";
@@ -16,16 +16,19 @@ import {
 } from "remotion";
 import { Background } from "./components/Background";
 import { TitleCard } from "./components/TitleCard";
-import { TextReveal, HighlightText, Typewriter } from "./components/TextReveal";
-import { Transition } from "./components/Transition";
+import { TextReveal, HighlightText, Typewriter, GradientText, CharacterReveal, AnimatedCounter } from "./components/TextReveal";
+import { Transition, TransitionType } from "./components/Transition";
 import { StatCounter, StatGrid } from "./components/StatCounter";
-import { FeatureCard, FeatureList } from "./components/FeatureCard";
+import { FeatureCard } from "./components/FeatureCard";
 import { Overlay } from "./components/Overlay";
-import { colors, typography, gradients, icons } from "./lib/theme";
+import { colors, typography, gradients, glows, icons } from "./lib/theme";
 
 // ============================================================================
 // Types
 // ============================================================================
+
+type BackgroundVariant = 'dark' | 'aurora' | 'grid' | 'particles' | 'pulse' | 'cyber' | 'waves';
+type TextEffect = 'fade-up' | 'bounce' | 'elastic' | 'wave' | 'split' | 'scale-pop' | 'rotate' | 'glitch';
 
 interface StatData {
   value: number;
@@ -34,45 +37,51 @@ interface StatData {
   prefix?: string;
 }
 
-interface FeatureCardData {
-  icon?: keyof typeof icons;
-  highlight?: string;
-}
-
-interface OverlayData {
-  type: "stat" | "callout" | "lower_third";
-  text: string;
-  label?: string;
-  position?: "center" | "bottom" | "bottom-right" | "top-right" | "top-left";
-  animation?: "scale" | "slide_up" | "fade_in" | "word-by-word";
-  delay?: number;
-  duration?: number;
-}
-
-interface CodeBlock {
-  command: string;
-  label?: string;
-}
-
 interface SceneVisual {
-  background?: "dark" | "gradient" | "grid" | "particles";
-  animation?: string;
+  background?: BackgroundVariant;
+  intensity?: 'low' | 'medium' | 'high';
+  transition_in?: TransitionType;
+  transition_out?: TransitionType;
+  text_effect?: TextEffect;
   show_logo?: boolean;
-  text_reveal?: string;
+  glow?: boolean;
+  gradient_text?: boolean;
+  logo_glow?: boolean;
+  logo_only?: boolean;
+  fade_out?: boolean;
+  pulse_animation?: boolean;
   stat_grid?: {
     stats: StatData[];
     animation?: string;
     stagger_delay?: number;
   };
-  feature_card?: FeatureCardData;
-  overlay?: OverlayData;
-  code_blocks?: CodeBlock[];
-  cta?: string;
+  feature_card?: {
+    icon?: string;
+    highlight?: 'cyan' | 'purple' | 'hot' | 'neon';
+  };
+  terminal?: {
+    commands?: string[];
+  };
+  pipeline?: string[];
+  metrics?: string[];
+  icons?: string[];
+  code_preview?: string;
+  cta?: {
+    primary?: string;
+    secondary?: string;
+  } | string;
+  // Two-line layout with emphasized subtitle
+  two_line_layout?: boolean;
+  subtitle_emphasis?: boolean;
+  // Flying output icons for demo scenes
+  flying_outputs?: boolean;
+  output_icons?: string[];
+  output_animation?: string;
 }
 
 interface Scene {
   id: string;
-  type: "intro" | "content" | "feature" | "demo" | "section" | "cta" | "outro";
+  type: 'intro' | 'content' | 'feature' | 'demo' | 'section' | 'outro';
   title?: string;
   text?: string;
   startFrame: number;
@@ -84,64 +93,124 @@ interface Scene {
 interface VideoProps {
   title: string;
   scenes: Scene[];
-  fps?: number;
-  width?: number;
-  height?: number;
+  theme?: string;
 }
+
+// ============================================================================
+// Utility Functions
+// ============================================================================
+
+const getHighlightColor = (highlight?: string): string => {
+  switch (highlight) {
+    case 'cyan': return colors.accent;
+    case 'purple': return colors.accentSecondary;
+    case 'hot': return colors.accentHot;
+    case 'neon': return colors.accentNeon;
+    default: return colors.accent;
+  }
+};
 
 // ============================================================================
 // Scene Renderers
 // ============================================================================
 
 /**
- * Intro Scene - Logo reveal, title card with spring animation
+ * Intro Scene - Dynamic title reveals with gradient text and glows
  */
 const IntroScene: React.FC<{
   scene: Scene;
   sceneFrame: number;
-  sceneProgress: number;
-}> = ({ scene, sceneFrame, sceneProgress }) => {
+}> = ({ scene, sceneFrame }) => {
   const { fps } = useVideoConfig();
+  const visual = scene.visual || {};
 
-  const showLogo = scene.visual?.show_logo;
-  const textRevealStyle = scene.visual?.text_reveal;
+  // Logo reveal with title card
+  if (visual.show_logo && visual.gradient_text) {
+    const titleScale = spring({
+      frame: sceneFrame,
+      fps,
+      config: { damping: 10, stiffness: 100, mass: 0.6 },
+    });
 
-  // If it's a logo reveal scene
-  if (showLogo) {
+    const glowPulse = Math.sin(sceneFrame * 0.1) * 0.3 + 0.7;
+
     return (
-      <TitleCard
-        title={scene.title || ""}
-        tagline={scene.text || ""}
-        variant="intro"
-      />
+      <AbsoluteFill
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <div style={{ transform: `scale(${titleScale})` }}>
+          <GradientText
+            text={scene.title || ''}
+            size="display"
+            delay={5}
+          />
+        </div>
+
+        {/* Subtitle */}
+        {scene.text && (
+          <div
+            style={{
+              marginTop: 40,
+              opacity: interpolate(sceneFrame, [20, 40], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
+            }}
+          >
+            <TextReveal
+              text={scene.text}
+              variant="tagline"
+              effect={visual.text_effect || 'bounce'}
+              delay={25}
+              framesPerWord={4}
+              glow={visual.glow}
+            />
+          </div>
+        )}
+
+        {/* Glow ring */}
+        {visual.glow && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '600px',
+              height: '600px',
+              borderRadius: '50%',
+              border: `2px solid ${colors.accent}`,
+              boxShadow: glows.multi,
+              opacity: glowPulse * 0.3,
+            }}
+          />
+        )}
+      </AbsoluteFill>
     );
   }
 
-  // Text-focused intro (like "The Problem" hook)
-  const titleOpacity = interpolate(
+  // Text-focused intro (hook scene)
+  const opacity = interpolate(
     sceneFrame,
-    [0, 20, scene.durationFrames - 20, scene.durationFrames],
+    [0, 15, scene.durationFrames - 10, scene.durationFrames],
     [0, 1, 1, 0],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
   );
-
-  const titleScale = spring({
-    frame: sceneFrame,
-    fps,
-    config: { damping: 15, stiffness: 80, mass: 0.8 },
-  });
 
   return (
     <AbsoluteFill
       style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
         padding: 100,
+        opacity,
       }}
     >
-      {scene.title && scene.title !== "The Hook" && (
+      {scene.title && scene.title !== scene.text && (
         <h2
           style={{
             fontFamily: typography.fonts.body,
@@ -149,594 +218,817 @@ const IntroScene: React.FC<{
             fontWeight: typography.weights.medium,
             color: colors.accent,
             marginBottom: 30,
-            textTransform: "uppercase",
-            letterSpacing: "0.2em",
-            opacity: titleOpacity,
+            textTransform: 'uppercase',
+            letterSpacing: '0.2em',
+            textShadow: `0 0 20px ${colors.accent}66`,
           }}
         >
           {scene.title}
         </h2>
       )}
 
-      <div
-        style={{
-          transform: `scale(${titleScale})`,
-          opacity: titleOpacity,
-          maxWidth: 1400,
-        }}
-      >
-        {textRevealStyle === "word-by-word" ? (
-          <TextReveal
-            text={scene.text || ""}
-            variant="heading"
-            framesPerWord={8}
-            delay={15}
-          />
-        ) : (
-          <h1
-            style={{
-              fontFamily: typography.fonts.heading,
-              fontSize: typography.sizes.display,
-              fontWeight: typography.weights.bold,
-              color: colors.dark.textPrimary,
-              textAlign: "center",
-              lineHeight: 1.2,
-              textShadow: `0 4px 40px ${colors.accent}33`,
-            }}
-          >
-            {scene.text}
-          </h1>
-        )}
-      </div>
+      <TextReveal
+        text={scene.text || ''}
+        variant="heading"
+        effect={visual.text_effect || 'bounce'}
+        framesPerWord={6}
+        delay={10}
+        glow
+        maxWidth={1400}
+      />
     </AbsoluteFill>
   );
 };
 
 /**
- * Content Scene - Text reveals, stats, code blocks
+ * Content Scene - Stats, text reveals, icons
  */
 const ContentScene: React.FC<{
   scene: Scene;
   sceneFrame: number;
-  sceneProgress: number;
-}> = ({ scene, sceneFrame, sceneProgress }) => {
+}> = ({ scene, sceneFrame }) => {
   const { fps } = useVideoConfig();
+  const visual = scene.visual || {};
+  const statGrid = visual.stat_grid;
+  const icons_list = visual.icons;
 
-  const statGrid = scene.visual?.stat_grid;
-  const codeBlocks = scene.visual?.code_blocks;
-
-  // Fade in/out
   const opacity = interpolate(
     sceneFrame,
-    [0, 20, scene.durationFrames - 15, scene.durationFrames],
+    [0, 15, scene.durationFrames - 15, scene.durationFrames],
     [0, 1, 1, 0],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
   );
 
-  // Stats scene
+  // Stats scene with animated counters
   if (statGrid) {
     return (
       <AbsoluteFill
         style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
           opacity,
         }}
       >
         {scene.title && (
-          <h2
-            style={{
-              fontFamily: typography.fonts.heading,
-              fontSize: typography.sizes.h2,
-              fontWeight: typography.weights.bold,
-              color: colors.dark.textPrimary,
-              marginBottom: 80,
-              textAlign: "center",
-            }}
-          >
-            {scene.title}
-          </h2>
-        )}
-        <StatGrid
-          stats={statGrid.stats}
-          staggerDelay={statGrid.stagger_delay || 15}
-        />
-      </AbsoluteFill>
-    );
-  }
-
-  // Code blocks scene (like "Get Started")
-  if (codeBlocks && codeBlocks.length > 0) {
-    return (
-      <AbsoluteFill
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: 100,
-          opacity,
-        }}
-      >
-        {scene.title && (
-          <h2
-            style={{
-              fontFamily: typography.fonts.heading,
-              fontSize: typography.sizes.h1,
-              fontWeight: typography.weights.bold,
-              color: colors.dark.textPrimary,
-              marginBottom: 60,
-            }}
-          >
-            {scene.title}
-          </h2>
+          <div style={{ marginBottom: 80 }}>
+            <GradientText text={scene.title} size="h1" delay={0} />
+          </div>
         )}
 
         <div
           style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 24,
-            width: "100%",
-            maxWidth: 900,
+            display: 'flex',
+            gap: 100,
+            justifyContent: 'center',
           }}
         >
-          {codeBlocks.map((block, index) => {
-            const blockDelay = index * 25;
-            const blockOpacity = interpolate(
-              sceneFrame - blockDelay,
-              [0, 15],
-              [0, 1],
-              { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
-            );
-            const blockX = interpolate(
-              sceneFrame - blockDelay,
+          {statGrid.stats.map((stat, index) => {
+            const delay = index * (statGrid.stagger_delay || 15);
+            const statOpacity = interpolate(
+              sceneFrame - delay,
               [0, 20],
-              [-30, 0],
-              {
-                extrapolateLeft: "clamp",
-                extrapolateRight: "clamp",
-                easing: Easing.out(Easing.cubic),
-              }
+              [0, 1],
+              { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
+            );
+            const statY = interpolate(
+              sceneFrame - delay,
+              [0, 25],
+              [40, 0],
+              { extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) }
             );
 
             return (
               <div
                 key={index}
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 24,
-                  opacity: blockOpacity,
-                  transform: `translateX(${blockX}px)`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  opacity: statOpacity,
+                  transform: `translateY(${statY}px)`,
                 }}
               >
-                {block.label && (
-                  <span
-                    style={{
-                      fontFamily: typography.fonts.body,
-                      fontSize: typography.sizes.body,
-                      fontWeight: typography.weights.medium,
-                      color: colors.accent,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.1em",
-                      width: 100,
-                    }}
-                  >
-                    {block.label}
-                  </span>
-                )}
-                <div
+                <AnimatedCounter
+                  value={stat.value}
+                  delay={delay + 5}
+                  duration={40}
+                  suffix={stat.suffix}
+                  prefix={stat.prefix}
+                />
+                <span
                   style={{
-                    flex: 1,
-                    background: colors.dark.bgSecondary,
-                    borderRadius: 12,
-                    padding: "20px 28px",
-                    border: `1px solid ${colors.dark.border}`,
+                    fontFamily: typography.fonts.body,
+                    fontSize: typography.sizes.h4,
+                    fontWeight: typography.weights.medium,
+                    color: colors.dark.textSecondary,
+                    marginTop: 16,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.15em',
                   }}
                 >
-                  <Typewriter
-                    text={block.command}
-                    delay={blockDelay + 10}
-                    charsPerFrame={2}
-                  />
-                </div>
+                  {stat.label}
+                </span>
               </div>
             );
           })}
         </div>
+      </AbsoluteFill>
+    );
+  }
 
+  // Two-line layout with emphasized subtitle (e.g., "Documentation... All by hand.")
+  if (visual.two_line_layout) {
+    return (
+      <AbsoluteFill
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 100,
+          opacity,
+        }}
+      >
+        {/* Main title text */}
+        {scene.title && (
+          <div style={{ marginBottom: 40 }}>
+            <TextReveal
+              text={scene.title}
+              variant="heading"
+              effect={visual.text_effect || "elastic"}
+              delay={0}
+              framesPerWord={4}
+              maxWidth={1400}
+            />
+          </div>
+        )}
+
+        {/* Emphasized subtitle on its own line */}
         {scene.text && (
-          <p
+          <div
             style={{
-              fontFamily: typography.fonts.body,
-              fontSize: typography.sizes.h4,
-              color: colors.dark.textSecondary,
-              marginTop: 50,
-              textAlign: "center",
-              maxWidth: 800,
-              opacity: interpolate(sceneFrame, [60, 80], [0, 1], {
-                extrapolateLeft: "clamp",
-                extrapolateRight: "clamp",
-              }),
+              opacity: interpolate(sceneFrame, [40, 60], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
+              transform: `scale(${interpolate(sceneFrame, [40, 70], [0.8, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })})`,
             }}
           >
-            {scene.text}
-          </p>
+            <span
+              style={{
+                fontFamily: typography.fonts.heading,
+                fontSize: typography.sizes.h1,
+                fontWeight: typography.weights.heavy,
+                color: colors.accentHot,
+                textShadow: `0 0 40px ${colors.accentHot}88, 0 0 80px ${colors.accentHot}44`,
+                letterSpacing: '0.05em',
+              }}
+            >
+              {scene.text}
+            </span>
+          </div>
+        )}
+
+        {/* Icons below */}
+        {icons_list && icons_list.length > 0 && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 30,
+              marginTop: 60,
+            }}
+          >
+            {icons_list.map((iconName, index) => {
+              const iconDelay = 70 + index * 8;
+              const iconScale = spring({
+                frame: sceneFrame - iconDelay,
+                fps,
+                config: { damping: 8, stiffness: 150, mass: 0.5 },
+              });
+
+              return (
+                <div
+                  key={index}
+                  style={{
+                    transform: `scale(${Math.max(0, iconScale)})`,
+                    opacity: interpolate(sceneFrame - iconDelay, [0, 10], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 70,
+                      height: 70,
+                      borderRadius: 14,
+                      background: colors.dark.bgTertiary,
+                      border: `2px solid ${[colors.accent, colors.accentSecondary, colors.accentHot, colors.accentNeon][index % 4]}`,
+                      boxShadow: `0 0 20px ${[colors.accent, colors.accentSecondary, colors.accentHot, colors.accentNeon][index % 4]}44`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontFamily: typography.fonts.mono,
+                      fontSize: 12,
+                      fontWeight: typography.weights.bold,
+                      color: colors.dark.textPrimary,
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {iconName.slice(0, 4)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </AbsoluteFill>
     );
   }
 
-  // Default content scene with text reveal
+  // Icons showcase scene
+  if (icons_list && icons_list.length > 0) {
+    return (
+      <AbsoluteFill
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 100,
+          opacity,
+        }}
+      >
+        {scene.title && (
+          <div style={{ marginBottom: 50 }}>
+            <TextReveal
+              text={scene.title}
+              variant="heading"
+              effect="bounce"
+              delay={0}
+              framesPerWord={5}
+              glow
+            />
+          </div>
+        )}
+
+        {scene.text && (
+          <TextReveal
+            text={scene.text}
+            variant="tagline"
+            effect="elastic"
+            delay={20}
+            framesPerWord={4}
+          />
+        )}
+
+        {/* Icon flow visualization */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 30,
+            marginTop: 60,
+          }}
+        >
+          {icons_list.map((iconName, index) => {
+            const iconDelay = 30 + index * 8;
+            const iconScale = spring({
+              frame: sceneFrame - iconDelay,
+              fps,
+              config: { damping: 8, stiffness: 150, mass: 0.5 },
+            });
+            const isArrow = iconName === 'arrow';
+
+            return (
+              <div
+                key={index}
+                style={{
+                  transform: `scale(${Math.max(0, iconScale)})`,
+                  opacity: interpolate(sceneFrame - iconDelay, [0, 10], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
+                }}
+              >
+                {isArrow ? (
+                  <div
+                    style={{
+                      width: 60,
+                      height: 4,
+                      background: gradients.aurora,
+                      borderRadius: 2,
+                      boxShadow: glows.cyan,
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: 80,
+                      height: 80,
+                      borderRadius: 16,
+                      background: colors.dark.bgTertiary,
+                      border: `2px solid ${[colors.accent, colors.accentSecondary, colors.accentHot, colors.accentNeon][index % 4]}`,
+                      boxShadow: `0 0 20px ${[colors.accent, colors.accentSecondary, colors.accentHot, colors.accentNeon][index % 4]}44`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontFamily: typography.fonts.mono,
+                      fontSize: 14,
+                      fontWeight: typography.weights.bold,
+                      color: colors.dark.textPrimary,
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {iconName.slice(0, 4)}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </AbsoluteFill>
+    );
+  }
+
+  // Default content scene
   return (
     <AbsoluteFill
       style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
         padding: 100,
         opacity,
       }}
     >
       {scene.title && (
+        <div style={{ marginBottom: 50 }}>
+          <TextReveal
+            text={scene.title}
+            variant="heading"
+            effect={visual.text_effect || 'bounce'}
+            delay={0}
+            framesPerWord={5}
+            glow
+          />
+        </div>
+      )}
+      {scene.text && (
+        <TextReveal
+          text={scene.text}
+          variant="body"
+          effect="fade-up"
+          framesPerWord={4}
+          maxWidth={1200}
+          delay={scene.title ? 25 : 0}
+        />
+      )}
+    </AbsoluteFill>
+  );
+};
+
+/**
+ * Feature Scene - Feature cards with pipeline visualizations
+ */
+const FeatureScene: React.FC<{
+  scene: Scene;
+  sceneFrame: number;
+}> = ({ scene, sceneFrame }) => {
+  const { fps } = useVideoConfig();
+  const visual = scene.visual || {};
+  const featureCard = visual.feature_card;
+  const pipeline = visual.pipeline;
+  const metrics = visual.metrics;
+
+  const opacity = interpolate(
+    sceneFrame,
+    [0, 15, scene.durationFrames - 15, scene.durationFrames],
+    [0, 1, 1, 0],
+    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
+  );
+
+  const highlightColor = getHighlightColor(featureCard?.highlight);
+
+  // Map icon names
+  const iconMapping: Record<string, keyof typeof icons> = {
+    video: 'play',
+    shield: 'shield',
+    ai: 'ai',
+    check: 'check',
+    document: 'document',
+    code: 'code',
+    chart: 'chart',
+    sync: 'sync',
+  };
+  const mappedIcon = iconMapping[featureCard?.icon || 'check'] || 'check';
+
+  return (
+    <AbsoluteFill
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 80,
+        opacity,
+      }}
+    >
+      {/* Title with glow */}
+      <div
+        style={{
+          marginBottom: 40,
+          textAlign: 'center',
+        }}
+      >
         <h2
           style={{
             fontFamily: typography.fonts.heading,
             fontSize: typography.sizes.h1,
             fontWeight: typography.weights.bold,
             color: colors.dark.textPrimary,
-            marginBottom: 50,
-            textAlign: "center",
+            textShadow: `0 0 40px ${highlightColor}44`,
+            marginBottom: 16,
           }}
         >
           {scene.title}
         </h2>
-      )}
-      <TextReveal
-        text={scene.text || ""}
-        variant="body"
-        framesPerWord={5}
-        maxWidth={1200}
-        delay={scene.title ? 20 : 0}
-      />
-    </AbsoluteFill>
-  );
-};
-
-/**
- * Feature Scene - Feature cards with icons and descriptions
- */
-const FeatureScene: React.FC<{
-  scene: Scene;
-  sceneFrame: number;
-  sceneProgress: number;
-}> = ({ scene, sceneFrame, sceneProgress }) => {
-  const { fps } = useVideoConfig();
-
-  const featureCard = scene.visual?.feature_card;
-  const iconName = featureCard?.icon || "check";
-
-  // Map scene icons to available theme icons
-  const iconMapping: Record<string, keyof typeof icons> = {
-    document: "menu",
-    build: "sync",
-    video: "clock",
-    globe: "locations",
-    check: "check",
-    shield: "shield",
-    audit: "calendar",
-    ai: "ai",
-  };
-
-  const mappedIcon = iconMapping[iconName] || "check";
-
-  const opacity = interpolate(
-    sceneFrame,
-    [0, 20, scene.durationFrames - 20, scene.durationFrames],
-    [0, 1, 1, 0],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
-  );
-
-  return (
-    <AbsoluteFill
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 80,
-        opacity,
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          gap: 80,
-          alignItems: "center",
-          maxWidth: 1600,
-        }}
-      >
-        {/* Feature Card */}
-        <div style={{ flex: "0 0 auto" }}>
-          <FeatureCard
-            icon={mappedIcon}
-            title={scene.title || ""}
-            description=""
-            delay={0}
-          />
-        </div>
-
-        {/* Description */}
-        <div style={{ flex: 1 }}>
-          <TextReveal
-            text={scene.text || ""}
-            variant="body"
-            framesPerWord={4}
-            align="left"
-            delay={15}
-          />
-        </div>
+        <div
+          style={{
+            width: interpolate(sceneFrame, [10, 30], [0, 200], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
+            height: 4,
+            background: `linear-gradient(90deg, ${highlightColor}, ${colors.accentSecondary})`,
+            borderRadius: 2,
+            margin: '0 auto',
+            boxShadow: `0 0 20px ${highlightColor}`,
+          }}
+        />
       </div>
+
+      {/* Description */}
+      <div style={{ marginBottom: 50, maxWidth: 1000 }}>
+        <TextReveal
+          text={scene.text || ''}
+          variant="body"
+          effect="fade-up"
+          framesPerWord={4}
+          delay={15}
+        />
+      </div>
+
+      {/* Pipeline visualization */}
+      {pipeline && pipeline.length > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 20,
+          }}
+        >
+          {pipeline.map((step, index) => {
+            const stepDelay = 30 + index * 12;
+            const stepScale = spring({
+              frame: sceneFrame - stepDelay,
+              fps,
+              config: { damping: 10, stiffness: 120, mass: 0.5 },
+            });
+
+            return (
+              <React.Fragment key={index}>
+                <div
+                  style={{
+                    padding: '20px 32px',
+                    background: colors.dark.bgTertiary,
+                    borderRadius: 12,
+                    border: `2px solid ${[colors.accent, colors.accentSecondary, colors.accentHot, colors.accentNeon][index % 4]}`,
+                    transform: `scale(${Math.max(0, stepScale)})`,
+                    boxShadow: `0 0 20px ${[colors.accent, colors.accentSecondary, colors.accentHot, colors.accentNeon][index % 4]}44`,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: typography.fonts.mono,
+                      fontSize: typography.sizes.body,
+                      fontWeight: typography.weights.semibold,
+                      color: colors.dark.textPrimary,
+                    }}
+                  >
+                    {step}
+                  </span>
+                </div>
+                {index < pipeline.length - 1 && (
+                  <div
+                    style={{
+                      width: 40,
+                      height: 3,
+                      background: gradients.aurora,
+                      borderRadius: 2,
+                      opacity: interpolate(sceneFrame - stepDelay - 5, [0, 10], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
+                    }}
+                  />
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Metrics visualization */}
+      {metrics && metrics.length > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            gap: 30,
+            marginTop: 20,
+          }}
+        >
+          {metrics.map((metric, index) => {
+            const metricDelay = 30 + index * 10;
+            const checkScale = spring({
+              frame: sceneFrame - metricDelay,
+              fps,
+              config: { damping: 8, stiffness: 200, mass: 0.4 },
+            });
+
+            return (
+              <div
+                key={index}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  transform: `scale(${Math.max(0, checkScale)})`,
+                }}
+              >
+                <div
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    background: colors.success,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: `0 0 15px ${colors.success}66`,
+                  }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+                    <path d={icons.check} />
+                  </svg>
+                </div>
+                <span
+                  style={{
+                    fontFamily: typography.fonts.body,
+                    fontSize: typography.sizes.body,
+                    fontWeight: typography.weights.medium,
+                    color: colors.dark.textPrimary,
+                  }}
+                >
+                  {metric}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </AbsoluteFill>
   );
 };
 
 /**
- * Demo Scene - Screen recordings, terminal output, overlays
+ * Demo Scene - Terminal with neon styling and flying outputs
  */
 const DemoScene: React.FC<{
   scene: Scene;
   sceneFrame: number;
-  sceneProgress: number;
-}> = ({ scene, sceneFrame, sceneProgress }) => {
+}> = ({ scene, sceneFrame }) => {
   const { fps } = useVideoConfig();
-
-  const overlay = scene.visual?.overlay;
+  const visual = scene.visual || {};
+  const terminal = visual.terminal;
+  const flyingOutputs = visual.flying_outputs;
+  const outputIcons = visual.output_icons || [];
 
   const opacity = interpolate(
     sceneFrame,
     [0, 15, scene.durationFrames - 15, scene.durationFrames],
     [0, 1, 1, 0],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
   );
 
-  // Simulated terminal/demo area
-  const terminalScale = interpolate(
-    sceneFrame,
-    [0, 25],
-    [0.95, 1],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.cubic) }
-  );
+  const terminalScale = spring({
+    frame: sceneFrame,
+    fps,
+    config: { damping: 12, stiffness: 100, mass: 0.6 },
+  });
+
+  // Flying output icon positions (around the terminal)
+  const flyingPositions = [
+    { x: -300, y: -150, angle: -15 },
+    { x: 350, y: -120, angle: 10 },
+    { x: -350, y: 100, angle: -10 },
+    { x: 380, y: 80, angle: 15 },
+    { x: -200, y: 200, angle: -5 },
+  ];
 
   return (
     <AbsoluteFill style={{ opacity }}>
       {/* Title */}
       <div
         style={{
-          position: "absolute",
+          position: 'absolute',
           top: 80,
-          left: 100,
-          right: 100,
+          left: 0,
+          right: 0,
+          textAlign: 'center',
         }}
       >
-        <h2
-          style={{
-            fontFamily: typography.fonts.heading,
-            fontSize: typography.sizes.h2,
-            fontWeight: typography.weights.bold,
-            color: colors.dark.textPrimary,
-            marginBottom: 20,
-          }}
-        >
-          {scene.title}
-        </h2>
-        <div
-          style={{
-            width: 120,
-            height: 4,
-            background: gradients.copperGlow,
-            borderRadius: 2,
-          }}
-        />
+        <GradientText text={scene.title || ''} size="h2" delay={0} />
       </div>
 
-      {/* Demo content area */}
+      {/* Subtitle text */}
+      {scene.text && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 160,
+            left: 0,
+            right: 0,
+            textAlign: 'center',
+            opacity: interpolate(sceneFrame, [20, 40], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
+          }}
+        >
+          <span
+            style={{
+              fontFamily: typography.fonts.body,
+              fontSize: typography.sizes.h4,
+              color: colors.dark.textSecondary,
+            }}
+          >
+            {scene.text}
+          </span>
+        </div>
+      )}
+
+      {/* Flying output icons */}
+      {flyingOutputs && outputIcons.length > 0 && (
+        <AbsoluteFill
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {outputIcons.map((iconName, index) => {
+            const iconDelay = 60 + index * 15;
+            const iconProgress = interpolate(
+              sceneFrame - iconDelay,
+              [0, 30],
+              [0, 1],
+              { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
+            );
+            const pos = flyingPositions[index % flyingPositions.length];
+            const floatY = Math.sin((sceneFrame + index * 30) * 0.05) * 10;
+            const iconColor = [colors.accent, colors.accentSecondary, colors.accentHot, colors.accentNeon, colors.success][index % 5];
+
+            return (
+              <div
+                key={index}
+                style={{
+                  position: 'absolute',
+                  transform: `translate(${pos.x}px, ${pos.y + floatY}px) rotate(${pos.angle}deg) scale(${iconProgress})`,
+                  opacity: iconProgress,
+                }}
+              >
+                <div
+                  style={{
+                    width: 90,
+                    height: 110,
+                    background: `linear-gradient(135deg, ${colors.dark.bgSecondary}, ${colors.dark.bgTertiary})`,
+                    borderRadius: 12,
+                    border: `2px solid ${iconColor}`,
+                    boxShadow: `0 0 30px ${iconColor}66, 0 10px 40px rgba(0,0,0,0.4)`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                  }}
+                >
+                  {/* Document icon top fold */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      right: 0,
+                      width: 20,
+                      height: 20,
+                      background: iconColor,
+                      clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
+                      borderRadius: '0 12px 0 0',
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontFamily: typography.fonts.mono,
+                      fontSize: 16,
+                      fontWeight: typography.weights.bold,
+                      color: iconColor,
+                      textTransform: 'uppercase',
+                      textShadow: `0 0 10px ${iconColor}`,
+                    }}
+                  >
+                    {iconName.toUpperCase()}
+                  </span>
+                  {/* Mini content lines */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: 50 }}>
+                    <div style={{ height: 3, background: `${colors.dark.textMuted}44`, borderRadius: 2 }} />
+                    <div style={{ height: 3, background: `${colors.dark.textMuted}44`, borderRadius: 2, width: '80%' }} />
+                    <div style={{ height: 3, background: `${colors.dark.textMuted}44`, borderRadius: 2, width: '60%' }} />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </AbsoluteFill>
+      )}
+
+      {/* Terminal */}
       <AbsoluteFill
         style={{
           top: 200,
           bottom: 150,
-          left: 100,
-          right: 100,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          left: 250,
+          right: 250,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
         <div
           style={{
-            width: "100%",
-            height: "100%",
-            background: colors.dark.bgSecondary,
+            width: '100%',
+            maxWidth: 700,
+            background: `${colors.dark.bgPrimary}ee`,
             borderRadius: 20,
-            border: `1px solid ${colors.dark.border}`,
+            border: `2px solid ${colors.accent}`,
+            boxShadow: glows.cyan,
             transform: `scale(${terminalScale})`,
-            display: "flex",
-            flexDirection: "column",
-            padding: 40,
-            overflow: "hidden",
+            overflow: 'hidden',
           }}
         >
           {/* Terminal header */}
           <div
             style={{
-              display: "flex",
-              gap: 8,
-              marginBottom: 30,
+              padding: '16px 24px',
+              background: colors.dark.bgSecondary,
+              borderBottom: `1px solid ${colors.dark.border}`,
+              display: 'flex',
+              gap: 10,
             }}
           >
-            <div
-              style={{
-                width: 14,
-                height: 14,
-                borderRadius: "50%",
-                background: "#ff5f57",
-              }}
-            />
-            <div
-              style={{
-                width: 14,
-                height: 14,
-                borderRadius: "50%",
-                background: "#febc2e",
-              }}
-            />
-            <div
-              style={{
-                width: 14,
-                height: 14,
-                borderRadius: "50%",
-                background: "#28c840",
-              }}
-            />
+            <div style={{ width: 14, height: 14, borderRadius: '50%', background: colors.accentHot }} />
+            <div style={{ width: 14, height: 14, borderRadius: '50%', background: colors.warning }} />
+            <div style={{ width: 14, height: 14, borderRadius: '50%', background: colors.success }} />
           </div>
 
           {/* Terminal content */}
-          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div
-              style={{
-                fontFamily: typography.fonts.mono,
-                fontSize: 28,
-                color: colors.dark.textPrimary,
-                textAlign: "center",
-                maxWidth: 1000,
-                lineHeight: 1.6,
-              }}
-            >
+          <div style={{ padding: 32 }}>
+            {terminal?.commands ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {terminal.commands.map((cmd, index) => {
+                  const cmdDelay = 15 + index * 20;
+                  return (
+                    <div key={index}>
+                      <Typewriter
+                        text={cmd}
+                        delay={cmdDelay}
+                        charsPerFrame={2.5}
+                        variant="terminal"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
               <Typewriter
-                text={scene.text || ""}
+                text={scene.text || ''}
                 delay={20}
-                charsPerFrame={1.5}
+                charsPerFrame={2}
+                variant="terminal"
               />
-            </div>
+            )}
           </div>
         </div>
       </AbsoluteFill>
-
-      {/* Overlay */}
-      {overlay && (
-        <Overlay
-          type={overlay.type}
-          text={overlay.text}
-          label={overlay.label}
-          position={overlay.position || "bottom-right"}
-          animation={overlay.animation || "slide_up"}
-          delay={30}
-          duration={scene.durationFrames - 60}
-        />
-      )}
     </AbsoluteFill>
   );
 };
 
 /**
- * Section Scene - Transition/header scenes between major sections
- */
-const SectionScene: React.FC<{
-  scene: Scene;
-  sceneFrame: number;
-  sceneProgress: number;
-}> = ({ scene, sceneFrame, sceneProgress }) => {
-  const { fps } = useVideoConfig();
-
-  const titleScale = spring({
-    frame: sceneFrame,
-    fps,
-    config: { damping: 12, stiffness: 100, mass: 0.5 },
-  });
-
-  const opacity = interpolate(
-    sceneFrame,
-    [0, 15, scene.durationFrames - 10, scene.durationFrames],
-    [0, 1, 1, 0],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
-  );
-
-  const lineWidth = interpolate(
-    sceneFrame,
-    [10, 35],
-    [0, 300],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.cubic) }
-  );
-
-  return (
-    <AbsoluteFill
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        opacity,
-      }}
-    >
-      <h1
-        style={{
-          fontFamily: typography.fonts.heading,
-          fontSize: typography.sizes.display,
-          fontWeight: typography.weights.bold,
-          color: colors.dark.textPrimary,
-          transform: `scale(${titleScale})`,
-          textShadow: `0 4px 30px ${colors.accent}44`,
-        }}
-      >
-        {scene.title}
-      </h1>
-
-      <div
-        style={{
-          width: lineWidth,
-          height: 4,
-          background: gradients.copperGlow,
-          borderRadius: 2,
-          marginTop: 30,
-          boxShadow: `0 0 20px ${colors.accent}66`,
-        }}
-      />
-
-      {scene.text && (
-        <p
-          style={{
-            fontFamily: typography.fonts.body,
-            fontSize: typography.sizes.h3,
-            fontWeight: typography.weights.light,
-            color: colors.dark.textSecondary,
-            marginTop: 40,
-            opacity: interpolate(sceneFrame, [20, 40], [0, 1], {
-              extrapolateLeft: "clamp",
-              extrapolateRight: "clamp",
-            }),
-          }}
-        >
-          {scene.text}
-        </p>
-      )}
-    </AbsoluteFill>
-  );
-};
-
-/**
- * Outro Scene - CTA, logo, closing
+ * Outro Scene - CTA with glowing elements
  */
 const OutroScene: React.FC<{
   scene: Scene;
   sceneFrame: number;
-  sceneProgress: number;
-}> = ({ scene, sceneFrame, sceneProgress }) => {
+}> = ({ scene, sceneFrame }) => {
   const { fps } = useVideoConfig();
-
-  const cta = scene.visual?.cta;
+  const visual = scene.visual || {};
+  const cta = visual.cta;
 
   const logoScale = spring({
     frame: sceneFrame,
@@ -747,61 +1039,71 @@ const OutroScene: React.FC<{
   const opacity = interpolate(
     sceneFrame,
     [0, 20, scene.durationFrames - 30, scene.durationFrames],
-    [0, 1, 1, 0],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+    [0, 1, 1, visual.fade_out ? 0 : 1],
+    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
   );
 
-  const ctaOpacity = interpolate(
-    sceneFrame,
-    [30, 50],
-    [0, 1],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
-  );
+  const glowPulse = visual.pulse_animation
+    ? Math.sin(sceneFrame * 0.08) * 0.4 + 0.6
+    : 1;
 
-  const ctaY = interpolate(
-    sceneFrame,
-    [30, 55],
-    [30, 0],
-    { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: Easing.out(Easing.cubic) }
-  );
+  // Logo only mode
+  if (visual.logo_only) {
+    return (
+      <AbsoluteFill
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          opacity,
+        }}
+      >
+        <div style={{ transform: `scale(${logoScale})` }}>
+          <GradientText text="ME" size="display" delay={0} />
+        </div>
+      </AbsoluteFill>
+    );
+  }
 
   return (
     <AbsoluteFill
       style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
         opacity,
       }}
     >
       {/* Logo/Title */}
-      <h1
-        style={{
-          fontFamily: typography.fonts.heading,
-          fontSize: 140,
-          fontWeight: typography.weights.bold,
-          color: colors.dark.textPrimary,
-          transform: `scale(${logoScale})`,
-          textShadow: `0 4px 40px ${colors.accent}44`,
-          marginBottom: 30,
-        }}
-      >
-        {scene.title}
-      </h1>
+      <div style={{ transform: `scale(${logoScale})`, marginBottom: 30 }}>
+        {visual.gradient_text ? (
+          <GradientText text={scene.title || ''} size="display" delay={5} />
+        ) : (
+          <h1
+            style={{
+              fontFamily: typography.fonts.display,
+              fontSize: typography.sizes.display,
+              fontWeight: typography.weights.heavy,
+              color: colors.dark.textPrimary,
+              textShadow: visual.logo_glow ? glows.multi : undefined,
+            }}
+          >
+            {scene.title}
+          </h1>
+        )}
+      </div>
 
-      {/* Copper accent line */}
+      {/* Accent line */}
       <div
         style={{
-          width: interpolate(sceneFrame, [10, 30], [0, 250], {
-            extrapolateLeft: "clamp",
-            extrapolateRight: "clamp",
-          }),
+          width: interpolate(sceneFrame, [10, 30], [0, 300], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
           height: 4,
-          background: gradients.copperGlow,
+          background: gradients.aurora,
           borderRadius: 2,
-          marginBottom: 50,
-          boxShadow: `0 0 25px ${colors.accent}66`,
+          marginBottom: 40,
+          boxShadow: glows.multi,
+          opacity: glowPulse,
         }}
       />
 
@@ -810,7 +1112,8 @@ const OutroScene: React.FC<{
         <TextReveal
           text={scene.text}
           variant="tagline"
-          framesPerWord={6}
+          effect="wave"
+          framesPerWord={5}
           delay={20}
           maxWidth={1000}
         />
@@ -821,17 +1124,17 @@ const OutroScene: React.FC<{
         <div
           style={{
             marginTop: 60,
-            opacity: ctaOpacity,
-            transform: `translateY(${ctaY}px)`,
+            opacity: interpolate(sceneFrame, [40, 60], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
+            transform: `translateY(${interpolate(sceneFrame, [40, 65], [30, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) })}px)`,
           }}
         >
           <div
             style={{
               background: `${colors.dark.bgSecondary}ee`,
               borderRadius: 16,
-              padding: "24px 48px",
+              padding: '24px 48px',
               border: `2px solid ${colors.accent}`,
-              boxShadow: `0 0 30px ${colors.accent}33`,
+              boxShadow: `0 0 ${30 * glowPulse}px ${colors.accent}66`,
             }}
           >
             <span
@@ -840,11 +1143,31 @@ const OutroScene: React.FC<{
                 fontSize: typography.sizes.h3,
                 fontWeight: typography.weights.medium,
                 color: colors.accent,
+                textShadow: `0 0 10px ${colors.accent}`,
               }}
             >
-              {cta}
+              {typeof cta === 'string' ? cta : cta.primary}
             </span>
           </div>
+
+          {typeof cta !== 'string' && cta.secondary && (
+            <div
+              style={{
+                marginTop: 20,
+                textAlign: 'center',
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: typography.fonts.mono,
+                  fontSize: typography.sizes.small,
+                  color: colors.dark.textMuted,
+                }}
+              >
+                {cta.secondary}
+              </span>
+            </div>
+          )}
         </div>
       )}
     </AbsoluteFill>
@@ -855,9 +1178,9 @@ const OutroScene: React.FC<{
 // Main Video Component
 // ============================================================================
 
-export const Video: React.FC<VideoProps> = ({ title, scenes }) => {
+export const Video: React.FC<VideoProps> = ({ title, scenes, theme }) => {
   const frame = useCurrentFrame();
-  const { fps, durationInFrames } = useVideoConfig();
+  const { fps } = useVideoConfig();
 
   // Find current scene
   const currentSceneIndex = scenes.findIndex(
@@ -865,130 +1188,60 @@ export const Video: React.FC<VideoProps> = ({ title, scenes }) => {
   );
   const currentScene = scenes[currentSceneIndex];
 
-  // Get next scene for transitions
-  const nextScene = scenes[currentSceneIndex + 1];
-  const prevScene = scenes[currentSceneIndex - 1];
-
-  // No scene found - show default background
   if (!currentScene) {
     return (
       <AbsoluteFill style={{ backgroundColor: colors.dark.bgPrimary }}>
-        <Background variant="gradient" />
+        <Background variant="aurora" />
       </AbsoluteFill>
     );
   }
 
   const sceneFrame = frame - currentScene.startFrame;
-  const sceneProgress = sceneFrame / currentScene.durationFrames;
+  const visual = currentScene.visual || {};
 
-  // Determine background variant
-  const bgVariant = (currentScene.visual?.background || "dark") as
-    | "dark"
-    | "gradient"
-    | "grid"
-    | "particles";
+  // Background variant
+  const bgVariant = (visual.background || 'dark') as BackgroundVariant;
+  const bgIntensity = visual.intensity || 'medium';
 
-  // Determine transition type based on scene animation property
-  const getTransitionType = (animation?: string): "copper-sweep" | "fade" | "wipe" | "radial" => {
-    switch (animation) {
-      case "copper-sweep":
-        return "copper-sweep";
-      case "wipe":
-        return "wipe";
-      case "radial":
-        return "radial";
-      default:
-        return "fade";
-    }
-  };
+  // Transition types
+  const transitionIn = visual.transition_in || 'fade';
+  const showTransitionIn = currentSceneIndex > 0 && sceneFrame < fps * 0.6;
 
-  // Check if we need a transition in (first 20 frames of scene, except first scene)
-  const showTransitionIn = currentSceneIndex > 0 && sceneFrame < fps * 0.7;
-  const transitionInType = getTransitionType(currentScene.visual?.animation);
-
-  // Check if we need a transition out (last 20 frames of scene, except last scene)
-  const framesUntilEnd = currentScene.durationFrames - sceneFrame;
-  const showTransitionOut = currentSceneIndex < scenes.length - 1 && framesUntilEnd < fps * 0.5;
-
-  // Render scene content based on type
+  // Render scene based on type
   const renderScene = () => {
     switch (currentScene.type) {
-      case "intro":
-        return (
-          <IntroScene
-            scene={currentScene}
-            sceneFrame={sceneFrame}
-            sceneProgress={sceneProgress}
-          />
-        );
-      case "content":
-        return (
-          <ContentScene
-            scene={currentScene}
-            sceneFrame={sceneFrame}
-            sceneProgress={sceneProgress}
-          />
-        );
-      case "feature":
-        return (
-          <FeatureScene
-            scene={currentScene}
-            sceneFrame={sceneFrame}
-            sceneProgress={sceneProgress}
-          />
-        );
-      case "demo":
-        return (
-          <DemoScene
-            scene={currentScene}
-            sceneFrame={sceneFrame}
-            sceneProgress={sceneProgress}
-          />
-        );
-      case "section":
-        return (
-          <SectionScene
-            scene={currentScene}
-            sceneFrame={sceneFrame}
-            sceneProgress={sceneProgress}
-          />
-        );
-      case "cta":
-      case "outro":
-        return (
-          <OutroScene
-            scene={currentScene}
-            sceneFrame={sceneFrame}
-            sceneProgress={sceneProgress}
-          />
-        );
+      case 'intro':
+        return <IntroScene scene={currentScene} sceneFrame={sceneFrame} />;
+      case 'content':
+        return <ContentScene scene={currentScene} sceneFrame={sceneFrame} />;
+      case 'feature':
+        return <FeatureScene scene={currentScene} sceneFrame={sceneFrame} />;
+      case 'demo':
+        return <DemoScene scene={currentScene} sceneFrame={sceneFrame} />;
+      case 'section':
+        return <ContentScene scene={currentScene} sceneFrame={sceneFrame} />;
+      case 'outro':
+        return <OutroScene scene={currentScene} sceneFrame={sceneFrame} />;
       default:
-        // Fallback for unknown scene types
-        return (
-          <ContentScene
-            scene={currentScene}
-            sceneFrame={sceneFrame}
-            sceneProgress={sceneProgress}
-          />
-        );
+        return <ContentScene scene={currentScene} sceneFrame={sceneFrame} />;
     }
   };
 
   return (
     <AbsoluteFill style={{ backgroundColor: colors.dark.bgPrimary }}>
-      {/* Background layer */}
-      <Background variant={bgVariant} />
+      {/* Background */}
+      <Background variant={bgVariant} intensity={bgIntensity} />
 
       {/* Scene content */}
       {renderScene()}
 
-      {/* Transition overlays */}
+      {/* Transition in */}
       {showTransitionIn && (
         <Transition
-          type={transitionInType}
+          type={transitionIn}
           direction="in"
           delay={0}
-          duration={fps * 0.6}
+          duration={fps * 0.5}
         />
       )}
     </AbsoluteFill>

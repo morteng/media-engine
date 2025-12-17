@@ -375,6 +375,7 @@ class HTMLBuilder:
                 "toc": {
                     "permalink": True,
                     "permalink_class": "anchor",
+                    "toc_depth": 1,  # Only H1 (chapters) in TOC
                 },
             },
         )

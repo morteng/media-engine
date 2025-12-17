@@ -89,14 +89,39 @@ def check_placeholders(
     """
     issues = []
     lines = content.split("\n")
+    in_code_block = False
 
     for line_num, line in enumerate(lines, 1):
-        # Skip code blocks
+        # Track code block state
         if line.strip().startswith("```"):
+            in_code_block = not in_code_block
             continue
 
+        # Skip content inside code blocks
+        if in_code_block:
+            continue
+
+        # Skip table rows that appear to be documenting patterns
+        # (lines starting with | that contain pattern names in a table format)
+        if line.strip().startswith("|") and re.search(r"\|\s*`?(TODO|TBD|FIXME|XXX)`?\s*\|", line):
+            continue
+
+        # Remove inline code before checking (content in backticks)
+        line_without_code = re.sub(r"`[^`]+`", "", line)
+
+        # Skip lines that are just listing/documenting placeholder types
+        # e.g., "- **Placeholder markers**: TODO, TBD, FIXME"
+        # These are descriptions, not actual placeholders
+        # Includes Norwegian terms (can appear in compound words like "Plassholdermarkører")
+        doc_pattern = r"(markers?|patterns?|detects?|checks?|found|flagged|markør|oppdager|sjekk)"
+        if re.search(doc_pattern, line_without_code, re.IGNORECASE):
+            # Check if line contains multiple placeholder words (documentation)
+            placeholder_words = re.findall(r"\b(TODO|TBD|FIXME|XXX)\b", line_without_code, re.IGNORECASE)
+            if len(placeholder_words) >= 2:
+                continue
+
         for pattern, message in PLACEHOLDER_PATTERNS:
-            matches = re.finditer(pattern, line, re.IGNORECASE)
+            matches = re.finditer(pattern, line_without_code, re.IGNORECASE)
             for match in matches:
                 issues.append(
                     QualityIssue(
@@ -251,6 +276,7 @@ def check_empty_sections(
 
     prev_header_line = None
     prev_header_text = None
+    prev_header_level = 0
     in_code_block = False
 
     for line_num, line in enumerate(lines, 1):
@@ -270,8 +296,11 @@ def check_empty_sections(
         header_match = re.match(r"^(#{1,6})\s+(.+)$", line)
 
         if header_match:
-            # If previous was a header and we're on another header, first was empty
-            if prev_header_line is not None:
+            current_level = len(header_match.group(1))
+
+            # If previous was a header and we're on another header at same or higher level,
+            # the first was empty. But sub-headers (lower level) are valid content.
+            if prev_header_line is not None and current_level <= prev_header_level:
                 issues.append(
                     QualityIssue(
                         type="empty",
@@ -285,6 +314,7 @@ def check_empty_sections(
 
             prev_header_line = line_num
             prev_header_text = line.strip()
+            prev_header_level = current_level
 
         elif line.strip() and not line.startswith("#"):
             # Non-empty, non-header content resets the check

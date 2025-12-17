@@ -9,6 +9,21 @@ Write content once in Markdown. Generate professional documents, presentations, 
 
 ---
 
+## See It In Action
+
+<p align="center">
+  <video src="https://github.com/morteng/media-engine/raw/main/docs/videos/intro.mp4" width="720" autoplay loop muted playsinline>
+    Your browser does not support the video tag.
+  </video>
+</p>
+
+<p align="center">
+  <em>50-second intro: Write once, publish everywhere</em><br>
+  <a href="https://github.com/morteng/media-engine/raw/main/docs/videos/showcase.mp4">Watch full 4-minute showcase with voiceover</a>
+</p>
+
+---
+
 ## What It Does
 
 Media Engine transforms your Markdown content into multiple output formats:
@@ -274,6 +289,12 @@ Features:
 ---
 
 ## Video Production Pipeline
+
+<p align="center">
+  <video src="https://github.com/morteng/media-engine/raw/main/docs/videos/teaser.mp4" width="480" autoplay loop muted playsinline>
+    Your browser does not support the video tag.
+  </video>
+</p>
 
 Define video scripts in YAML:
 

@@ -15,10 +15,11 @@ export { Background } from './components/Background';
 export { TitleCard } from './components/TitleCard';
 export { StatCounter, StatGrid } from './components/StatCounter';
 export { FeatureCard, FeatureList } from './components/FeatureCard';
-export { TextReveal, HighlightText, Typewriter } from './components/TextReveal';
+export { TextReveal, HighlightText, Typewriter, GradientText, CharacterReveal, AnimatedCounter } from './components/TextReveal';
 export { Transition, Scene } from './components/Transition';
+export type { TransitionType } from './components/Transition';
 export { Overlay } from './components/Overlay';
 
 // Theme and utilities
-export { colors, typography, motion, gradients, videoConfig, icons } from './lib/theme';
+export { colors, typography, motion, gradients, glows, videoConfig, icons, particles, patterns } from './lib/theme';
 export { ease, presets, animateCount, getStaggerDelay, revealText, revealWords } from './lib/animations';

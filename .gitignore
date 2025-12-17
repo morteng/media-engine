@@ -51,9 +51,12 @@ Thumbs.db
 
 # Build outputs
 output/
-*.mp4
 *.mp3
 *.woff2
+
+# Videos (exclude generated, keep docs)
+demo/output/**/*.mp4
+!docs/videos/*.mp4
 
 # Node (for Remotion)
 node_modules/
