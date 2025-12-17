@@ -77,5 +77,7 @@ def register_routes(
     return router
 
 
-# Re-export for backwards compatibility
-__all__ = ["register_routes"]
+# Re-export for backwards compatibility and testing
+from .helpers import find_source_demo, find_source_script
+
+__all__ = ["register_routes", "find_source_script", "find_source_demo"]

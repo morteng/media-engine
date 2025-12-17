@@ -74,9 +74,12 @@ def _save_config(config: dict) -> None:
         yaml.dump(config, f, default_flow_style=False, sort_keys=False)
 
 
-def get_recent_projects() -> List[RecentProject]:
+def get_recent_projects(*, include_temp: bool = False) -> List[RecentProject]:
     """
     Get list of recent projects, sorted by last accessed (most recent first).
+
+    Args:
+        include_temp: If True, include temp directory paths (for testing)
 
     Returns:
         List of RecentProject objects
@@ -86,9 +89,9 @@ def get_recent_projects() -> List[RecentProject]:
 
     for proj_data in config.get("recent_projects", []):
         try:
-            # Skip temp directory paths
+            # Skip temp directory paths unless explicitly included
             path = proj_data.get("path", "")
-            if _is_temp_path(path):
+            if not include_temp and _is_temp_path(path):
                 continue
             projects.append(RecentProject.from_dict(proj_data))
         except (KeyError, TypeError):
@@ -99,13 +102,16 @@ def get_recent_projects() -> List[RecentProject]:
     return projects
 
 
-def add_recent_project(path: str, name: Optional[str] = None) -> Optional[RecentProject]:
+def add_recent_project(
+    path: str, name: Optional[str] = None, *, allow_temp: bool = False
+) -> Optional[RecentProject]:
     """
     Add or update a project in the recent projects list.
 
     Args:
         path: Absolute path to the project root
         name: Optional project name (defaults to directory name)
+        allow_temp: If True, allow temp directory paths (for testing)
 
     Returns:
         The RecentProject that was added/updated, or None if skipped (temp path)
@@ -113,8 +119,8 @@ def add_recent_project(path: str, name: Optional[str] = None) -> Optional[Recent
     # Normalize path
     project_path = str(Path(path).resolve())
 
-    # Skip temp directories (from tests, etc.)
-    if _is_temp_path(project_path):
+    # Skip temp directories (from tests, etc.) unless explicitly allowed
+    if not allow_temp and _is_temp_path(project_path):
         return None
 
     config = _load_config()

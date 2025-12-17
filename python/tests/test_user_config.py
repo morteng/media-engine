@@ -52,7 +52,7 @@ class TestRecentProjects:
 
     def test_empty_recent_projects(self, user_config_module):
         """Test that empty list is returned when no config exists."""
-        projects = user_config_module.get_recent_projects()
+        projects = user_config_module.get_recent_projects(include_temp=True)
         assert projects == []
 
     def test_add_recent_project(self, user_config_module, temp_dir):
@@ -61,14 +61,14 @@ class TestRecentProjects:
         # Resolve to handle macOS /var -> /private/var symlink
         resolved_path = str(Path(project_path).resolve())
 
-        project = user_config_module.add_recent_project(project_path, "Test Project")
+        project = user_config_module.add_recent_project(project_path, "Test Project", allow_temp=True)
 
         assert project.path == resolved_path
         assert project.name == "Test Project"
         assert project.last_accessed is not None
 
         # Verify it's in the list
-        projects = user_config_module.get_recent_projects()
+        projects = user_config_module.get_recent_projects(include_temp=True)
         assert len(projects) == 1
         assert projects[0].path == resolved_path
 
@@ -81,9 +81,9 @@ class TestRecentProjects:
         ]
 
         for i, path in enumerate(paths):
-            user_config_module.add_recent_project(path, f"Project {i+1}")
+            user_config_module.add_recent_project(path, f"Project {i+1}", allow_temp=True)
 
-        projects = user_config_module.get_recent_projects()
+        projects = user_config_module.get_recent_projects(include_temp=True)
         assert len(projects) == 3
 
     def test_most_recent_first(self, user_config_module, temp_dir):
@@ -93,11 +93,11 @@ class TestRecentProjects:
         path1 = str(temp_dir / "project1")
         path2 = str(temp_dir / "project2")
 
-        user_config_module.add_recent_project(path1, "First Project")
+        user_config_module.add_recent_project(path1, "First Project", allow_temp=True)
         time.sleep(0.01)  # Small delay to ensure different timestamps
-        user_config_module.add_recent_project(path2, "Second Project")
+        user_config_module.add_recent_project(path2, "Second Project", allow_temp=True)
 
-        projects = user_config_module.get_recent_projects()
+        projects = user_config_module.get_recent_projects(include_temp=True)
         assert projects[0].name == "Second Project"
         assert projects[1].name == "First Project"
 
@@ -107,11 +107,11 @@ class TestRecentProjects:
 
         path = str(temp_dir / "project")
 
-        user_config_module.add_recent_project(path, "Original Name")
+        user_config_module.add_recent_project(path, "Original Name", allow_temp=True)
         time.sleep(0.01)
-        user_config_module.add_recent_project(path, "Updated Name")
+        user_config_module.add_recent_project(path, "Updated Name", allow_temp=True)
 
-        projects = user_config_module.get_recent_projects()
+        projects = user_config_module.get_recent_projects(include_temp=True)
         # Should only have one entry
         assert len(projects) == 1
         assert projects[0].name == "Updated Name"
@@ -123,14 +123,14 @@ class TestRecentProjects:
         # Resolve to handle macOS /var -> /private/var symlink
         resolved_path2 = str(Path(path2).resolve())
 
-        user_config_module.add_recent_project(path1, "Project 1")
-        user_config_module.add_recent_project(path2, "Project 2")
+        user_config_module.add_recent_project(path1, "Project 1", allow_temp=True)
+        user_config_module.add_recent_project(path2, "Project 2", allow_temp=True)
 
         # Remove first project
         result = user_config_module.remove_recent_project(path1)
         assert result is True
 
-        projects = user_config_module.get_recent_projects()
+        projects = user_config_module.get_recent_projects(include_temp=True)
         assert len(projects) == 1
         assert projects[0].path == resolved_path2
 
@@ -144,9 +144,9 @@ class TestRecentProjects:
         # Add 15 projects (more than default max of 10)
         for i in range(15):
             path = str(temp_dir / f"project{i}")
-            user_config_module.add_recent_project(path, f"Project {i}")
+            user_config_module.add_recent_project(path, f"Project {i}", allow_temp=True)
 
-        projects = user_config_module.get_recent_projects()
+        projects = user_config_module.get_recent_projects(include_temp=True)
         assert len(projects) <= 10
 
     def test_project_exists(self, user_config_module, temp_dir):
@@ -170,9 +170,9 @@ class TestRecentProjects:
         """Test that paths are normalized."""
         # Add with relative path notation
         path = str(temp_dir / "project" / ".." / "project")
-        user_config_module.add_recent_project(path, "Test")
+        user_config_module.add_recent_project(path, "Test", allow_temp=True)
 
-        projects = user_config_module.get_recent_projects()
+        projects = user_config_module.get_recent_projects(include_temp=True)
         assert len(projects) == 1
         # Path should be normalized (no ..)
         assert ".." not in projects[0].path

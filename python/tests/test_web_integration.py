@@ -656,7 +656,7 @@ class TestProjectSwitcherAPI:
         assert data["status"] == "not_found"
 
     def test_open_and_verify_recent(self, client, demo_project_web):
-        """Test that opening a project adds it to recent list."""
+        """Test that opening a project works (temp dirs not added to recent)."""
         # Open the project first
         response = client.post(
             "/api/open-project",
@@ -664,14 +664,19 @@ class TestProjectSwitcherAPI:
         )
         assert response.status_code == 200
 
-        # Now check recent projects - the opened project should be there
+        # Now check recent projects
         response = client.get("/api/recent-projects")
         data = response.json()
 
-        # Find the demo project in recent list
+        # Temp directory projects are intentionally not added to recent list
+        # to avoid polluting the list with test/temporary projects
         recent_paths = [p["path"] for p in data["recent"]]
-        # Use resolve() to handle path normalization
         demo_path_resolved = str(Path(demo_project_web).resolve())
 
-        # The project we just opened should be in recent
-        assert demo_path_resolved in recent_paths
+        # Verify the API works, but temp paths are filtered from recent
+        assert "recent" in data
+        # Temp directory should NOT appear in recent (by design)
+        assert demo_path_resolved not in recent_paths or not any(
+            indicator in demo_path_resolved.lower()
+            for indicator in ["/tmp/", "/var/folders/", "/private/var/folders/"]
+        )

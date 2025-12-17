@@ -9,14 +9,14 @@ from media_engine.core.config import Config
 from media_engine.core.project import LanguageConfig, Project
 from media_engine.core.theme import Theme
 from media_engine.web.routes import (
-    _find_source_demo,
-    _find_source_script,
+    find_source_demo,
+    find_source_script,
     register_routes,
 )
 
 
 class TestFindSourceScript:
-    """Tests for _find_source_script helper function."""
+    """Tests for find_source_script helper function."""
 
     def test_find_script_basic_structure(self, temp_dir):
         """Test finding script with basic path structure."""
@@ -33,7 +33,7 @@ class TestFindSourceScript:
 
         # Test with media file in output
         media_file = temp_dir / "output" / "en" / "intro.mp3"
-        result = _find_source_script(project, media_file)
+        result = find_source_script(project, media_file)
 
         assert result is not None
         assert result["name"] == "intro"
@@ -57,7 +57,7 @@ class TestFindSourceScript:
         # Test with media file in scripts subfolder
         # Note: The function needs to find "en" in the path to determine language
         media_file = temp_dir / "output" / "en" / "scripts" / "showcase" / "scene1.mp3"
-        result = _find_source_script(project, media_file)
+        result = find_source_script(project, media_file)
 
         assert result is not None
         assert result["name"] == "showcase"
@@ -69,7 +69,7 @@ class TestFindSourceScript:
 
         # Media file with no language in path
         media_file = temp_dir / "output" / "unknown" / "video.mp4"
-        result = _find_source_script(project, media_file)
+        result = find_source_script(project, media_file)
 
         assert result is None
 
@@ -79,7 +79,7 @@ class TestFindSourceScript:
 
         # Media file exists but script doesn't
         media_file = temp_dir / "output" / "en" / "nonexistent.mp3"
-        result = _find_source_script(project, media_file)
+        result = find_source_script(project, media_file)
 
         assert result is None
 
@@ -98,12 +98,12 @@ class TestFindSourceScript:
 
         # Test finding English script
         media_file = temp_dir / "output" / "en" / "demo.mp3"
-        result = _find_source_script(project, media_file)
+        result = find_source_script(project, media_file)
         assert result["language"] == "en"
 
         # Test finding Norwegian script
         media_file = temp_dir / "output" / "no" / "demo.mp3"
-        result = _find_source_script(project, media_file)
+        result = find_source_script(project, media_file)
         assert result["language"] == "no"
 
     def _create_mock_project(self, root_dir, languages=None):
@@ -132,7 +132,7 @@ class TestFindSourceScript:
 
 
 class TestFindSourceDemo:
-    """Tests for _find_source_demo helper function."""
+    """Tests for find_source_demo helper function."""
 
     def test_find_demo_basic(self, temp_dir):
         """Test finding demo with basic structure."""
@@ -149,7 +149,7 @@ class TestFindSourceDemo:
 
         # Test with demo HTML file
         demo_html = temp_dir / "output" / "demos" / "en" / "calculator.html"
-        result = _find_source_demo(project, demo_html)
+        result = find_source_demo(project, demo_html)
 
         assert result is not None
         assert result["name"] == "calculator"
@@ -163,7 +163,7 @@ class TestFindSourceDemo:
 
         # Demo file with no language in path
         demo_html = temp_dir / "output" / "unknown" / "demo.html"
-        result = _find_source_demo(project, demo_html)
+        result = find_source_demo(project, demo_html)
 
         assert result is None
 
@@ -173,7 +173,7 @@ class TestFindSourceDemo:
 
         # Demo HTML exists but source doesn't
         demo_html = temp_dir / "output" / "demos" / "en" / "missing.html"
-        result = _find_source_demo(project, demo_html)
+        result = find_source_demo(project, demo_html)
 
         assert result is None
 
@@ -192,12 +192,12 @@ class TestFindSourceDemo:
 
         # Test finding English demo
         demo_html = temp_dir / "output" / "demos" / "en" / "pricing.html"
-        result = _find_source_demo(project, demo_html)
+        result = find_source_demo(project, demo_html)
         assert result["language"] == "en"
 
         # Test finding Norwegian demo
         demo_html = temp_dir / "output" / "demos" / "no" / "pricing.html"
-        result = _find_source_demo(project, demo_html)
+        result = find_source_demo(project, demo_html)
         assert result["language"] == "no"
 
     def _create_mock_project(self, root_dir, languages=None):
@@ -590,8 +590,9 @@ class TestRegisterRoutes:
                 assert expected in routes, f"Missing route: {expected}"
 
     def test_register_routes_with_mock_app(self, temp_dir):
-        """Test route registration with mocked FastAPI app."""
+        """Test route registration registers different HTTP methods."""
         from fastapi import FastAPI
+        from fastapi.routing import APIRoute, APIWebSocketRoute
         from media_engine.web.websocket import ConnectionManager
 
         app = FastAPI()
@@ -603,45 +604,31 @@ class TestRegisterRoutes:
         static_dir = temp_dir / "static"
         static_dir.mkdir()
 
-        # Track decorated functions
-        original_get = app.get
-        original_post = app.post
-        original_delete = app.delete
-        original_websocket = app.websocket
-
-        get_calls = []
-        post_calls = []
-        delete_calls = []
-        ws_calls = []
-
-        def track_get(path, **kwargs):
-            get_calls.append(path)
-            return original_get(path, **kwargs)
-
-        def track_post(path, **kwargs):
-            post_calls.append(path)
-            return original_post(path, **kwargs)
-
-        def track_delete(path, **kwargs):
-            delete_calls.append(path)
-            return original_delete(path, **kwargs)
-
-        def track_websocket(path, **kwargs):
-            ws_calls.append(path)
-            return original_websocket(path, **kwargs)
-
-        app.get = track_get
-        app.post = track_post
-        app.delete = track_delete
-        app.websocket = track_websocket
-
         register_routes(app, get_project, manager, static_dir)
 
+        # Collect routes by method
+        get_routes = []
+        post_routes = []
+        delete_routes = []
+        ws_routes = []
+
+        for route in app.routes:
+            if isinstance(route, APIWebSocketRoute):
+                ws_routes.append(route.path)
+            elif isinstance(route, APIRoute):
+                for method in route.methods:
+                    if method == "GET":
+                        get_routes.append(route.path)
+                    elif method == "POST":
+                        post_routes.append(route.path)
+                    elif method == "DELETE":
+                        delete_routes.append(route.path)
+
         # Verify different HTTP methods are used
-        assert len(get_calls) > 0, "No GET routes registered"
-        assert len(post_calls) > 0, "No POST routes registered"
-        assert len(delete_calls) > 0, "No DELETE routes registered"
-        assert len(ws_calls) > 0, "No WebSocket routes registered"
+        assert len(get_routes) > 0, "No GET routes registered"
+        assert len(post_routes) > 0, "No POST routes registered"
+        assert len(delete_routes) > 0, "No DELETE routes registered"
+        assert len(ws_routes) > 0, "No WebSocket routes registered"
 
     def test_register_routes_get_project_callable(self, temp_dir):
         """Test that get_project parameter is used correctly."""
