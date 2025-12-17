@@ -52,11 +52,11 @@ def client(demo_project_web):
 @pytest.fixture
 def sample_script_path(demo_project_web):
     """Return path to a sample script for testing scene notes."""
-    # Use the intro_showcase script from demo
-    script_path = demo_project_web / "content" / "en" / "scripts" / "intro_showcase.yaml"
+    # Use the showcase script from demo
+    script_path = demo_project_web / "content" / "en" / "scripts" / "showcase.yaml"
     if not script_path.exists():
         pytest.skip("Sample script not found")
-    return "content/en/scripts/intro_showcase.yaml"
+    return "content/en/scripts/showcase.yaml"
 
 
 class TestProjectAPI:
