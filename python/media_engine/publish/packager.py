@@ -115,12 +115,19 @@ def collect_deliverables(
         "pilot_proposal.pdf": "Pilot Proposal",
         "pilot_deck.pdf": "Pilot Presentation",
         "roi_calculator.xlsx": "ROI Calculator",
-        # Videos
+        # Videos - English
         "01-overview.mp4": "Overview",
         "02-teaser.mp4": "Teaser",
         "03-training.mp4": "Training",
         "03-platform-overview.mp4": "Platform Overview",
         "mvp-full-demo.mp4": "Full Demo",
+        "mvp-full-demo-en.mp4": "Full Demo",
+        "mvp-tight.mp4": "MVP Demo",
+        "highlight-en.mp4": "Highlight",
+        # Videos - Norwegian
+        "highlight-no.mp4": "Høydepunkt",
+        "teaser-no.mp4": "Teaser",
+        "full-demo-no.mp4": "Full Demo",
     }
 
     # Pack membership - which files belong to which pack

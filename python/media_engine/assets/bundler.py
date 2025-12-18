@@ -97,13 +97,10 @@ def bundle_project_assets(
                         shutil.copy2(diagram, diagrams_dest / diagram.name)
                         result.files_copied += 1
 
-    # Copy videos (only final MP4 deliverables)
+    # Copy videos (all MP4 deliverables)
     if include_videos:
         if console_output:
             console.print("  [bold]Copying video deliverables...[/bold]")
-
-        # Only copy specific named deliverable videos
-        deliverable_videos = ["01-overview.mp4", "02-teaser.mp4", "03-training.mp4"]
 
         for lang in project.languages:
             assets_videos = project.assets_dir / "videos" / lang
@@ -111,10 +108,11 @@ def bundle_project_assets(
                 videos_dest = output_dir / lang / "videos"
                 videos_dest.mkdir(parents=True, exist_ok=True)
 
-                for video_name in deliverable_videos:
-                    video_file = assets_videos / video_name
-                    if video_file.exists():
-                        shutil.copy2(video_file, videos_dest / video_name)
+                # Copy all MP4 files from the assets/videos/{lang} folder
+                # Skip temp files and files with .temp in the name
+                for video_file in assets_videos.glob("*.mp4"):
+                    if video_file.is_file() and ".temp" not in video_file.name:
+                        shutil.copy2(video_file, videos_dest / video_file.name)
                         result.files_copied += 1
 
     # Copy project logo if exists
