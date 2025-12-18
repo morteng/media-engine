@@ -124,6 +124,8 @@ def collect_deliverables(
         "mvp-full-demo-en.mp4": "Full Demo",
         "mvp-tight.mp4": "MVP Demo",
         "highlight-en.mp4": "Highlight",
+        "teaser.mp4": "Teaser (Short)",
+        "highlight.webm": "Highlight (WebM)",
         # Videos - Norwegian
         "highlight-no.mp4": "Høydepunkt",
         "teaser-no.mp4": "Teaser",
