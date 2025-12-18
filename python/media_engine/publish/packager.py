@@ -553,23 +553,27 @@ def copy_documents(
                     shutil.copy2(f, demos_dest / f.name)
                     count += 1
 
-    # Copy shared demo assets if they exist
-    shared_demo_dir = project.root / "docs" / "deliverables" / "demo" / "shared"
-    if shared_demo_dir.exists():
-        shared_dest = output_dir / "shared" / "demos"
-        shared_dest.mkdir(parents=True, exist_ok=True)
-        for f in shared_demo_dir.glob("*"):
-            if f.is_file():
-                shutil.copy2(f, shared_dest / f.name)
-                count += 1
+            # Copy shared demo files to lang/shared/ so relative paths work
+            shared_demo_dir = project.root / "docs" / "deliverables" / "demo" / "shared"
+            if shared_demo_dir.exists():
+                lang_shared = dest_dir / "shared"
+                lang_shared.mkdir(exist_ok=True)
+                for f in shared_demo_dir.glob("*"):
+                    if f.is_file():
+                        shutil.copy2(f, lang_shared / f.name)
+                        count += 1
+                # Also copy fonts subdirectory if it exists
+                fonts_dir = shared_demo_dir / "fonts"
+                if fonts_dir.exists():
+                    shutil.copytree(fonts_dir, lang_shared / "fonts", dirs_exist_ok=True)
 
-    # Copy demo assets if they exist
-    demo_assets_dir = project.root / "docs" / "deliverables" / "assets"
-    if demo_assets_dir.exists():
-        assets_dest = output_dir / "shared" / "demo-assets"
-        if not assets_dest.exists():
-            shutil.copytree(demo_assets_dir, assets_dest, dirs_exist_ok=True)
-            count += sum(1 for _ in assets_dest.rglob("*") if _.is_file())
+            # Copy demo assets to lang/assets/ so relative paths work
+            demo_assets_dir = project.root / "docs" / "deliverables" / "assets"
+            if demo_assets_dir.exists():
+                lang_assets = dest_dir / "assets"
+                if not lang_assets.exists():
+                    shutil.copytree(demo_assets_dir, lang_assets, dirs_exist_ok=True)
+                    count += sum(1 for _ in lang_assets.rglob("*") if _.is_file())
 
     if console_output:
         console.print(f"  [green]✓[/green] Copied {count} documents")
