@@ -1059,7 +1059,7 @@ const OutroScene: React.FC<{
         }}
       >
         <div style={{ transform: `scale(${logoScale})` }}>
-          <GradientText text="ME" size="display" delay={0} />
+          <GradientText text="Pikkolo" size="display" delay={0} />
         </div>
       </AbsoluteFill>
     );

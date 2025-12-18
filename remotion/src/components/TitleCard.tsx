@@ -1,8 +1,8 @@
 /**
  * TitleCard Component
  *
- * Animated title card with the ROP logo and tagline.
- * Features elegant fade-in, text reveal, and copper accent animations.
+ * Animated title card with the Pikkolo logo and tagline.
+ * Features elegant fade-in, text reveal, and accent animations.
  */
 
 import React from 'react';
@@ -16,8 +16,8 @@ interface TitleCardProps {
 }
 
 export const TitleCard: React.FC<TitleCardProps> = ({
-  title = 'ROP',
-  tagline = 'AI-First Restaurant Operations',
+  title = 'Pikkolo',
+  tagline = 'Restaurant Operations Platform',
   variant = 'intro',
 }) => {
   const frame = useCurrentFrame();
