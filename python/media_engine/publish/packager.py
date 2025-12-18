@@ -67,6 +67,13 @@ def collect_deliverables(
     """
     Collect all deliverables for a language into categories.
 
+    Organizes deliverables by registered pack categories:
+    - Proposal: Main documentation
+    - Investor Pack: Pitch materials
+    - Pilot Pack: Customer engagement
+    - Videos: Video content
+    - Data: Spreadsheets and data files
+
     Args:
         project: Project to collect from
         language: Language code
@@ -79,27 +86,80 @@ def collect_deliverables(
     base_dir = output_dir if output_dir else project.output_dir
     lang_output = base_dir / language
 
-    # Proposal/Document
+    # File type icons
+    ICONS = {
+        "html": "📄",
+        "pdf": "📕",
+        "pptx": "📊",
+        "xlsx": "📈",
+        "mp4": "🎬",
+        "png": "🖼️",
+        "svg": "🎨",
+    }
+
+    # Deliverable name registry - maps filename patterns to display names
+    # These match the registered pack item names
+    DELIVERABLE_NAMES = {
+        # Proposal
+        "proposal.html": "Full Proposal",
+        "proposal.pdf": "Full Proposal (PDF)",
+        # Investor Pack
+        "ROP_Executive_Summary.pdf": "Executive Summary",
+        "ROP_Pitch_Deck.pdf": "Pitch Deck",
+        "ROP_Data_Sheet.pdf": "Data Sheet",
+        "ROP_One_Pager.pdf": "One Pager",
+        "pitch_deck.pptx": "Pitch Deck (PowerPoint)",
+        # Pilot Pack
+        "pilot_proposal.pdf": "Pilot Proposal",
+        "pilot_deck.pdf": "Pilot Presentation",
+        "roi_calculator.xlsx": "ROI Calculator",
+        # Videos
+        "01-overview.mp4": "Overview",
+        "02-teaser.mp4": "Teaser",
+        "03-training.mp4": "Training",
+        "mvp-full-demo.mp4": "Full Demo",
+    }
+
+    # Pack membership - which files belong to which pack
+    INVESTOR_PACK_FILES = {
+        "ROP_Executive_Summary.pdf",
+        "ROP_Pitch_Deck.pdf",
+        "ROP_Data_Sheet.pdf",
+        "ROP_One_Pager.pdf",
+        "pitch_deck.pptx",
+    }
+
+    PILOT_PACK_FILES = {
+        "pilot_proposal.pdf",
+        "pilot_deck.pdf",
+        "roi_calculator.xlsx",
+    }
+
+    # =========================================
+    # PROPOSAL - Main documentation
+    # =========================================
     proposal_items = []
-    proposal_path = lang_output / "proposal.html"
-    if proposal_path.exists():
+
+    proposal_html = lang_output / "proposal.html"
+    if proposal_html.exists():
         proposal_items.append(
             DeliverableItem(
-                name="Full Proposal",
+                name=DELIVERABLE_NAMES.get("proposal.html", "Full Proposal"),
                 path="proposal.html",
-                description="Complete proposal document",
+                description="Complete documentation",
+                icon=ICONS["html"],
                 file_type="html",
             )
         )
 
-    # Check for PDF version
-    pdf_path = lang_output / "proposal.pdf"
-    if pdf_path.exists():
+    proposal_pdf = lang_output / "proposal.pdf"
+    if proposal_pdf.exists():
         proposal_items.append(
             DeliverableItem(
-                name="Full Proposal (PDF)",
+                name=DELIVERABLE_NAMES.get("proposal.pdf", "Full Proposal (PDF)"),
                 path="proposal.pdf",
-                description="Printable PDF version",
+                description="Printable version",
+                icon=ICONS["pdf"],
                 file_type="pdf",
             )
         )
@@ -107,51 +167,101 @@ def collect_deliverables(
     if proposal_items:
         categories.append(
             DeliverableCategory(
-                name="Documentation",
-                icon="document",
+                name="Proposal",
+                icon="📖",
                 items=proposal_items,
             )
         )
 
-    # Presentations
-    presentation_items = []
-    presentations_dir = lang_output / "presentations"
-    if presentations_dir.exists():
-        for pres in presentations_dir.glob("*.html"):
-            presentation_items.append(
+    # =========================================
+    # INVESTOR PACK - Pitch materials
+    # =========================================
+    investor_items = []
+
+    for pdf_file in sorted(lang_output.glob("*.pdf")):
+        if pdf_file.name in INVESTOR_PACK_FILES:
+            investor_items.append(
                 DeliverableItem(
-                    name=pres.stem.replace("_", " ").title(),
-                    path=f"presentations/{pres.name}",
-                    file_type="html",
-                )
-            )
-        for pres in presentations_dir.glob("*.pptx"):
-            presentation_items.append(
-                DeliverableItem(
-                    name=f"{pres.stem.replace('_', ' ').title()} (PowerPoint)",
-                    path=f"presentations/{pres.name}",
-                    file_type="pptx",
+                    name=DELIVERABLE_NAMES.get(pdf_file.name, pdf_file.stem),
+                    path=pdf_file.name,
+                    icon=ICONS["pdf"],
+                    file_type="pdf",
                 )
             )
 
-    if presentation_items:
+    # Check for PowerPoint in presentations
+    presentations_dir = lang_output / "presentations"
+    if presentations_dir.exists():
+        for pptx_file in sorted(presentations_dir.glob("*.pptx")):
+            if pptx_file.name in INVESTOR_PACK_FILES or "pitch" in pptx_file.name.lower():
+                investor_items.append(
+                    DeliverableItem(
+                        name=DELIVERABLE_NAMES.get(pptx_file.name, pptx_file.stem),
+                        path=f"presentations/{pptx_file.name}",
+                        icon=ICONS["pptx"],
+                        file_type="pptx",
+                    )
+                )
+
+    if investor_items:
         categories.append(
             DeliverableCategory(
-                name="Presentations",
-                icon="presentation",
-                items=presentation_items,
+                name="Investor Pack",
+                icon="💼",
+                items=investor_items,
             )
         )
 
-    # Videos
+    # =========================================
+    # PILOT PACK - Customer engagement
+    # =========================================
+    pilot_items = []
+
+    for pdf_file in sorted(lang_output.glob("*.pdf")):
+        if pdf_file.name in PILOT_PACK_FILES:
+            pilot_items.append(
+                DeliverableItem(
+                    name=DELIVERABLE_NAMES.get(pdf_file.name, pdf_file.stem),
+                    path=pdf_file.name,
+                    icon=ICONS["pdf"],
+                    file_type="pdf",
+                )
+            )
+
+    # Check for spreadsheets
+    spreadsheets_dir = lang_output / "spreadsheets"
+    if spreadsheets_dir.exists():
+        for xlsx_file in sorted(spreadsheets_dir.glob("*.xlsx")):
+            pilot_items.append(
+                DeliverableItem(
+                    name=DELIVERABLE_NAMES.get(xlsx_file.name, xlsx_file.stem),
+                    path=f"spreadsheets/{xlsx_file.name}",
+                    icon=ICONS["xlsx"],
+                    file_type="xlsx",
+                )
+            )
+
+    if pilot_items:
+        categories.append(
+            DeliverableCategory(
+                name="Pilot Pack",
+                icon="🚀",
+                items=pilot_items,
+            )
+        )
+
+    # =========================================
+    # VIDEOS - Video content
+    # =========================================
     video_items = []
     videos_dir = lang_output / "videos"
     if videos_dir.exists():
-        for video in videos_dir.glob("*.mp4"):
+        for video in sorted(videos_dir.glob("*.mp4")):
             video_items.append(
                 DeliverableItem(
-                    name=video.stem.replace("-", " ").replace("_", " ").title(),
+                    name=DELIVERABLE_NAMES.get(video.name, video.stem),
                     path=f"videos/{video.name}",
+                    icon=ICONS["mp4"],
                     file_type="mp4",
                 )
             )
@@ -160,43 +270,33 @@ def collect_deliverables(
         categories.append(
             DeliverableCategory(
                 name="Videos",
-                icon="video",
+                icon="🎬",
                 items=video_items,
             )
         )
 
-    # Spreadsheets
-    spreadsheet_items = []
-    spreadsheets_dir = lang_output / "spreadsheets"
-    if spreadsheets_dir.exists():
-        for ss in spreadsheets_dir.glob("*.xlsx"):
-            spreadsheet_items.append(
-                DeliverableItem(
-                    name=ss.stem.replace("_", " ").title(),
-                    path=f"spreadsheets/{ss.name}",
-                    file_type="xlsx",
-                )
-            )
-
-    if spreadsheet_items:
-        categories.append(
-            DeliverableCategory(
-                name="Spreadsheets",
-                icon="spreadsheet",
-                items=spreadsheet_items,
-            )
-        )
-
-    # Diagrams
+    # =========================================
+    # DIAGRAMS - Visual assets
+    # =========================================
     diagram_items = []
     diagrams_dir = lang_output / "diagrams"
     if diagrams_dir.exists():
-        for diagram in diagrams_dir.glob("*.png"):
+        for diagram in sorted(diagrams_dir.glob("*.png")):
             diagram_items.append(
                 DeliverableItem(
-                    name=diagram.stem.replace("_", " ").title(),
+                    name=DELIVERABLE_NAMES.get(diagram.name, diagram.stem),
                     path=f"diagrams/{diagram.name}",
+                    icon=ICONS["png"],
                     file_type="png",
+                )
+            )
+        for diagram in sorted(diagrams_dir.glob("*.svg")):
+            diagram_items.append(
+                DeliverableItem(
+                    name=DELIVERABLE_NAMES.get(diagram.name, diagram.stem),
+                    path=f"diagrams/{diagram.name}",
+                    icon=ICONS["svg"],
+                    file_type="svg",
                 )
             )
 
@@ -204,7 +304,7 @@ def collect_deliverables(
         categories.append(
             DeliverableCategory(
                 name="Diagrams",
-                icon="diagram",
+                icon="🖼️",
                 items=diagram_items,
             )
         )
@@ -253,15 +353,20 @@ def generate_navigation_indexes(
         # Get theme for rendering
         theme = project.theme if hasattr(project, "theme") else None
 
+        # Check for logo (svg or png)
+        logo_path = None
+        if (output_dir / "shared" / "logo.svg").exists():
+            logo_path = "../shared/logo.svg"
+        elif (output_dir / "shared" / "logo.png").exists():
+            logo_path = "../shared/logo.png"
+
         index_html = render_language_index(
             project_name=project.name,
             lang_code=lang_info.code,
             lang_name=lang_info.name,
             categories=categories,
             theme=theme,
-            logo_path="../shared/logo.svg"
-            if (output_dir / "shared" / "logo.svg").exists()
-            else None,
+            logo_path=logo_path,
         )
 
         index_path = lang_dir / "index.html"
@@ -274,12 +379,19 @@ def generate_navigation_indexes(
     # Generate root index
     theme = project.theme if hasattr(project, "theme") else None
 
+    # Check for logo (svg or png)
+    root_logo_path = None
+    if (output_dir / "shared" / "logo.svg").exists():
+        root_logo_path = "shared/logo.svg"
+    elif (output_dir / "shared" / "logo.png").exists():
+        root_logo_path = "shared/logo.png"
+
     root_html = render_project_index(
         project_name=project.name,
         languages=languages,
         theme=theme,
         tagline=getattr(project, "tagline", ""),
-        logo_path="shared/logo.svg" if (output_dir / "shared" / "logo.svg").exists() else None,
+        logo_path=root_logo_path,
     )
 
     root_index = output_dir / "index.html"

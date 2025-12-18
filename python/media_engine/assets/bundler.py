@@ -118,19 +118,59 @@ def bundle_project_assets(
                         result.files_copied += 1
 
     # Copy project logo if exists
-    logo_candidates = [
-        project.root / "assets" / "logo.png",
-        project.root / "assets" / "logo.svg",
-        project.root / "logo.png",
-        project.root / "logo.svg",
+    # Search in priority order, looking for common patterns
+    logo_search_dirs = [
+        # Brand folder (preferred for projects with brand guidelines)
+        project.root / "docs" / "brand" / "logo",
+        # Standard asset locations
+        project.root / "assets",
+        project.root,
     ]
 
-    for logo_path in logo_candidates:
-        if logo_path.exists():
-            shutil.copy2(logo_path, shared_dir / logo_path.name)
-            result.files_copied += 1
-            if console_output:
-                console.print(f"  [green]✓[/green] Copied logo: {logo_path.name}")
+    logo_found = False
+    for search_dir in logo_search_dirs:
+        if not search_dir.exists():
+            continue
+
+        # Look for logos with common naming patterns (dark mode version first)
+        logo_patterns = [
+            "*-full.svg",      # e.g., pikkolo-hub-full.svg (dark bg/light text)
+            "*-icon.svg",      # e.g., pikkolo-hub-icon.svg
+            "logo.svg",
+            "logo.png",
+            "*logo*.svg",      # Any file with 'logo' in name
+            "*logo*.png",
+        ]
+
+        for pattern in logo_patterns:
+            matches = list(search_dir.glob(pattern))
+            if matches:
+                # Prefer 'full' variant for main logo (but not the -light variant)
+                logo_path = matches[0]
+                for m in matches:
+                    if "full" in m.name.lower() and "-light" not in m.name.lower():
+                        logo_path = m
+                        break
+
+                ext = logo_path.suffix
+                dest_name = f"logo{ext}"
+                shutil.copy2(logo_path, shared_dir / dest_name)
+                result.files_copied += 1
+                if console_output:
+                    console.print(f"  [green]✓[/green] Copied logo: {logo_path.name} → {dest_name}")
+
+                # Also copy light variant if it exists
+                light_variant = logo_path.parent / logo_path.name.replace("-full.", "-full-light.")
+                if light_variant.exists():
+                    shutil.copy2(light_variant, shared_dir / f"logo-light{ext}")
+                    result.files_copied += 1
+                    if console_output:
+                        console.print(f"  [green]✓[/green] Copied logo: {light_variant.name} → logo-light{ext}")
+
+                logo_found = True
+                break
+
+        if logo_found:
             break
 
     if console_output:

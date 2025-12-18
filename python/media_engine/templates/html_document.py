@@ -55,6 +55,8 @@ class DocumentConfig:
     default_theme: str = "dark"  # "light" or "dark"
     lang: str = "en"
     embed_fonts: bool = False
+    use_local_fonts: bool = True  # Link to local fonts.css instead of Google CDN
+    fonts_css_path: str = "../shared/fonts.css"
     fonts_path: str = "../shared/fonts"
 
 
@@ -67,6 +69,8 @@ DOCUMENT_TEMPLATE = """<!DOCTYPE html>
     <title>{{ title }}</title>
     {% if embed_fonts %}
     <style>{{ font_faces }}</style>
+    {% elif use_local_fonts %}
+    <link rel="stylesheet" href="{{ fonts_css_path }}">
     {% else %}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family={{ theme.typography.heading | urlencode }}:wght@300;400;600;700&family={{ theme.typography.body | urlencode }}:wght@300;400;500;600;700&family={{ theme.typography.code | urlencode }}:wght@400;500;600&display=swap" rel="stylesheet">
@@ -813,6 +817,8 @@ class DocumentTemplate:
             default_theme=config.default_theme,
             lang=config.lang,
             embed_fonts=config.embed_fonts,
+            use_local_fonts=config.use_local_fonts,
+            fonts_css_path=config.fonts_css_path,
             fonts_path=config.fonts_path,
             version=cover.version if cover else "",
             logo_path=cover.logo_path if cover else None,

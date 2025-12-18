@@ -150,6 +150,15 @@ def generate_font_faces(
     # Build config lookup
     font_configs = {fc.name: fc for fc in (fonts or [])}
 
+    # Map of directory names to proper font family names
+    font_name_map = {
+        "inter": "Inter",
+        "jetbrains-mono": "JetBrains Mono",
+        "source-sans-3": "Source Sans 3",
+        "fraunces": "Fraunces",
+        "roboto": "Roboto",
+    }
+
     for font_subdir in fonts_dir.iterdir():
         if not font_subdir.is_dir():
             continue
@@ -158,9 +167,13 @@ def generate_font_faces(
         if not font_files:
             continue
 
-        # Determine font family name from directory
-        font_name_parts = font_subdir.name.replace("-", " ").title().split()
-        font_family = " ".join(font_name_parts)
+        # Determine font family name from directory (use map or title case)
+        dir_name = font_subdir.name.lower()
+        if dir_name in font_name_map:
+            font_family = font_name_map[dir_name]
+        else:
+            # Fallback: title case with spaces
+            font_family = " ".join(font_subdir.name.replace("-", " ").title().split())
 
         # Get weight config if available
         config = font_configs.get(font_family)

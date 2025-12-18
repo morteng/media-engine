@@ -19,6 +19,7 @@ class ColorPalette:
     secondary: str = "#333333"
     accent: str = "#0066cc"
     background: str = "#ffffff"
+    surface: str = "#f8fafc"  # Secondary background for cards/panels
     text: str = "#000000"
     muted: str = "#666666"
     border: str = "#e0e0e0"
@@ -29,6 +30,7 @@ class DarkColors:
     """Dark mode color overrides."""
 
     background: str = "#1a1a1a"
+    surface: str = "#242424"  # Secondary background for cards/panels
     text: str = "#f0f0f0"
     accent: str = "#3399ff"
     muted: str = "#999999"
@@ -70,12 +72,14 @@ class Theme:
                 secondary=colors.get("secondary", "#333333"),
                 accent=colors.get("accent", "#0066cc"),
                 background=colors.get("background", "#ffffff"),
+                surface=colors.get("surface", colors.get("background", "#f8fafc")),
                 text=colors.get("text", colors.get("primary", "#000000")),
                 muted=colors.get("muted", "#666666"),
                 border=colors.get("border", "#e0e0e0"),
             ),
             dark=DarkColors(
                 background=dark.get("background", "#1a1a1a"),
+                surface=dark.get("surface", "#242424"),
                 text=dark.get("text", "#f0f0f0"),
                 accent=dark.get("accent", colors.get("accent", "#3399ff")),
                 muted=dark.get("muted", "#999999"),
@@ -128,12 +132,14 @@ COPPER_AND_CREAM = Theme(
         secondary="#4a4340",
         accent="#c45c3c",
         background="#fdfbf9",
+        surface="#f7f4f1",
         text="#2c2522",
         muted="#6b6461",
         border="#e8e4e0",
     ),
     dark=DarkColors(
         background="#1a1816",
+        surface="#242120",
         text="#f5f2ef",
         accent="#d4775a",
         muted="#9a9592",

@@ -54,24 +54,23 @@ PROJECT_INDEX_TEMPLATE = """<!DOCTYPE html>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ project_name }} - Deliverables</title>
+    <link rel="stylesheet" href="shared/fonts.css">
     <style>
         :root {
             --bg-primary: {{ theme.dark.background }};
-            --bg-secondary: #242120;
+            --bg-secondary: {{ theme.dark.surface }};
             --text-primary: {{ theme.dark.text }};
-            --text-secondary: #b8b2ac;
             --text-muted: {{ theme.dark.muted }};
             --accent-color: {{ theme.dark.accent }};
             --border-color: {{ theme.dark.border }};
-            --font-heading: '{{ theme.typography.heading }}', Georgia, serif;
+            --font-heading: '{{ theme.typography.heading }}', -apple-system, sans-serif;
             --font-body: '{{ theme.typography.body }}', -apple-system, sans-serif;
         }
 
         [data-theme="light"] {
             --bg-primary: {{ theme.colors.background }};
-            --bg-secondary: #f7f4f1;
+            --bg-secondary: {{ theme.colors.surface }};
             --text-primary: {{ theme.colors.text }};
-            --text-secondary: {{ theme.colors.secondary }};
             --text-muted: {{ theme.colors.muted }};
             --accent-color: {{ theme.colors.accent }};
             --border-color: {{ theme.colors.border }};
@@ -95,15 +94,35 @@ PROJECT_INDEX_TEMPLATE = """<!DOCTYPE html>
             width: 100%;
         }
 
-        header {
-            text-align: center;
-            margin-bottom: 60px;
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 100;
         }
 
         .logo {
-            max-width: 150px;
-            height: auto;
-            margin-bottom: 24px;
+            height: 48px;
+            width: auto;
+        }
+
+        .logo-dark { display: block; }
+        .logo-light { display: none; }
+
+        [data-theme="light"] .logo-dark { display: none; }
+        [data-theme="light"] .logo-light { display: block; }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding-top: 40px;
         }
 
         h1 {
@@ -159,20 +178,17 @@ PROJECT_INDEX_TEMPLATE = """<!DOCTYPE html>
         }
 
         .theme-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 10px 16px;
+            padding: 8px 14px;
             border: 1px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: 6px;
             background: var(--bg-secondary);
-            color: var(--text-secondary);
+            color: var(--text-muted);
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .theme-toggle:hover {
-            background: var(--bg-primary);
+            background: var(--bg-secondary);
             color: var(--text-primary);
         }
 
@@ -186,13 +202,20 @@ PROJECT_INDEX_TEMPLATE = """<!DOCTYPE html>
     </style>
 </head>
 <body>
-    <button class="theme-toggle" id="theme-toggle">☀️ Light Mode</button>
+    <div class="top-bar">
+        {% if logo_path %}
+        <div>
+            <img src="{{ logo_path }}" alt="{{ project_name }}" class="logo logo-dark">
+            <img src="{{ logo_path.replace('logo.', 'logo-light.') }}" alt="{{ project_name }}" class="logo logo-light">
+        </div>
+        {% else %}
+        <span></span>
+        {% endif %}
+        <button class="theme-toggle" id="theme-toggle">☀️ Light Mode</button>
+    </div>
 
     <div class="container">
         <header>
-            {% if logo_path %}
-            <img src="{{ logo_path }}" alt="{{ project_name }}" class="logo">
-            {% endif %}
             <h1>{{ project_name }}</h1>
             {% if tagline %}
             <p class="tagline">{{ tagline }}</p>
@@ -239,26 +262,25 @@ LANGUAGE_INDEX_TEMPLATE = """<!DOCTYPE html>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ lang_name }} - {{ project_name }}</title>
+    <link rel="stylesheet" href="../shared/fonts.css">
     <style>
         :root {
             --bg-primary: {{ theme.dark.background }};
-            --bg-secondary: #242120;
-            --bg-tertiary: #2e2a28;
+            --bg-secondary: {{ theme.dark.surface }};
+            --bg-tertiary: {{ theme.dark.border }};
             --text-primary: {{ theme.dark.text }};
-            --text-secondary: #b8b2ac;
             --text-muted: {{ theme.dark.muted }};
             --accent-color: {{ theme.dark.accent }};
             --border-color: {{ theme.dark.border }};
-            --font-heading: '{{ theme.typography.heading }}', Georgia, serif;
+            --font-heading: '{{ theme.typography.heading }}', -apple-system, sans-serif;
             --font-body: '{{ theme.typography.body }}', -apple-system, sans-serif;
         }
 
         [data-theme="light"] {
             --bg-primary: {{ theme.colors.background }};
-            --bg-secondary: #f7f4f1;
-            --bg-tertiary: #efe9e4;
+            --bg-secondary: {{ theme.colors.surface }};
+            --bg-tertiary: {{ theme.colors.border }};
             --text-primary: {{ theme.colors.text }};
-            --text-secondary: {{ theme.colors.secondary }};
             --text-muted: {{ theme.colors.muted }};
             --accent-color: {{ theme.colors.accent }};
             --border-color: {{ theme.colors.border }};
@@ -271,28 +293,39 @@ LANGUAGE_INDEX_TEMPLATE = """<!DOCTYPE html>
             background: var(--bg-primary);
             color: var(--text-primary);
             min-height: 100vh;
-            padding: 40px;
+            padding: 100px 40px 40px 40px;
         }
 
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        header {
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 48px;
-            padding-bottom: 24px;
+            padding: 16px 24px;
+            background: var(--bg-primary);
             border-bottom: 1px solid var(--border-color);
+            z-index: 100;
         }
 
-        .header-left {
+        .top-bar-left {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 16px;
         }
+
+        .logo {
+            height: 48px;
+            width: auto;
+        }
+
+        .logo-dark { display: block; }
+        .logo-light { display: none; }
+
+        [data-theme="light"] .logo-dark { display: none; }
+        [data-theme="light"] .logo-light { display: block; }
 
         .back-link {
             color: var(--text-muted);
@@ -304,15 +337,16 @@ LANGUAGE_INDEX_TEMPLATE = """<!DOCTYPE html>
             color: var(--accent-color);
         }
 
-        .logo {
-            max-width: 100px;
-            height: auto;
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
         }
 
-        h1 {
+        .page-title {
             font-family: var(--font-heading);
             font-size: 1.75rem;
             font-weight: 600;
+            margin-bottom: 40px;
         }
 
         .theme-toggle {
@@ -320,7 +354,7 @@ LANGUAGE_INDEX_TEMPLATE = """<!DOCTYPE html>
             border: 1px solid var(--border-color);
             border-radius: 6px;
             background: var(--bg-secondary);
-            color: var(--text-secondary);
+            color: var(--text-muted);
             cursor: pointer;
             font-size: 13px;
         }
@@ -359,11 +393,21 @@ LANGUAGE_INDEX_TEMPLATE = """<!DOCTYPE html>
             border-radius: 10px;
             text-decoration: none;
             transition: all 0.15s ease;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: inherit;
+            text-align: left;
+            width: 100%;
         }
 
         .item:hover {
             border-color: var(--accent-color);
             background: var(--bg-tertiary);
+        }
+
+        button.item {
+            -webkit-appearance: none;
+            appearance: none;
         }
 
         .item-icon {
@@ -400,6 +444,70 @@ LANGUAGE_INDEX_TEMPLATE = """<!DOCTYPE html>
             letter-spacing: 0.5px;
         }
 
+        /* Video Player Modal */
+        .video-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-modal.active {
+            display: flex;
+        }
+
+        .video-modal-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        .video-modal video {
+            max-width: 100%;
+            max-height: 80vh;
+            border-radius: 8px;
+        }
+
+        .video-modal-close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .video-modal-title {
+            color: white;
+            text-align: center;
+            margin-top: 16px;
+            font-size: 1.1rem;
+        }
+
+        .video-modal-download {
+            display: block;
+            text-align: center;
+            margin-top: 12px;
+            color: var(--accent-color);
+            font-size: 0.9rem;
+        }
+
+        /* Video item play indicator */
+        .item[data-video] .item-icon::after {
+            content: "▶";
+            font-size: 0.6rem;
+            margin-left: 4px;
+        }
+
         footer {
             margin-top: 60px;
             padding-top: 24px;
@@ -411,17 +519,21 @@ LANGUAGE_INDEX_TEMPLATE = """<!DOCTYPE html>
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="header-left">
-                <a href="../index.html" class="back-link">← All Languages</a>
-                {% if logo_path %}
-                <img src="{{ logo_path }}" alt="{{ project_name }}" class="logo">
-                {% endif %}
-                <h1>{{ lang_name }} Deliverables</h1>
+    <div class="top-bar">
+        <div class="top-bar-left">
+            {% if logo_path %}
+            <div>
+                <img src="{{ logo_path }}" alt="{{ project_name }}" class="logo logo-dark">
+                <img src="{{ logo_path.replace('logo.', 'logo-light.') }}" alt="{{ project_name }}" class="logo logo-light">
             </div>
-            <button class="theme-toggle" id="theme-toggle">☀️ Light</button>
-        </header>
+            {% endif %}
+            <a href="../index.html" class="back-link">← All Languages</a>
+        </div>
+        <button class="theme-toggle" id="theme-toggle">☀️ Light</button>
+    </div>
+
+    <div class="container">
+        <h1 class="page-title">{{ lang_name }} Deliverables</h1>
 
         {% for category in categories %}
         <section class="category">
@@ -431,7 +543,19 @@ LANGUAGE_INDEX_TEMPLATE = """<!DOCTYPE html>
             </h2>
             <div class="items">
                 {% for item in category.items %}
-                <a href="{{ item.path }}" class="item">
+                {% if item.file_type == 'mp4' %}
+                <button class="item" data-video="{{ item.path }}" data-title="{{ item.name }}">
+                    <span class="item-icon">{{ item.icon }}</span>
+                    <div class="item-info">
+                        <div class="item-name">{{ item.name }}</div>
+                        {% if item.description %}
+                        <div class="item-desc">{{ item.description }}</div>
+                        {% endif %}
+                    </div>
+                    <span class="item-type">▶ play</span>
+                </button>
+                {% else %}
+                <a href="{{ item.path }}" class="item" {% if item.file_type in ['pdf', 'pptx', 'xlsx'] %}target="_blank"{% endif %}>
                     <span class="item-icon">{{ item.icon }}</span>
                     <div class="item-info">
                         <div class="item-name">{{ item.name }}</div>
@@ -441,10 +565,24 @@ LANGUAGE_INDEX_TEMPLATE = """<!DOCTYPE html>
                     </div>
                     <span class="item-type">{{ item.file_type }}</span>
                 </a>
+                {% endif %}
                 {% endfor %}
             </div>
         </section>
         {% endfor %}
+    </div>
+
+    <!-- Video Player Modal -->
+    <div class="video-modal" id="video-modal">
+        <div class="video-modal-content">
+            <button class="video-modal-close" id="video-close">✕</button>
+            <video id="video-player" controls>
+                <source src="" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <div class="video-modal-title" id="video-title"></div>
+            <a class="video-modal-download" id="video-download" href="" download>⬇ Download video</a>
+        </div>
     </div>
 
     <footer>
@@ -452,6 +590,7 @@ LANGUAGE_INDEX_TEMPLATE = """<!DOCTYPE html>
     </footer>
 
     <script>
+        // Theme toggle
         const toggle = document.getElementById('theme-toggle');
         function setTheme(theme) {
             document.documentElement.setAttribute('data-theme', theme);
@@ -463,6 +602,44 @@ LANGUAGE_INDEX_TEMPLATE = """<!DOCTYPE html>
         toggle.addEventListener('click', () => {
             const current = document.documentElement.getAttribute('data-theme');
             setTheme(current === 'light' ? 'dark' : 'light');
+        });
+
+        // Video player modal
+        const videoModal = document.getElementById('video-modal');
+        const videoPlayer = document.getElementById('video-player');
+        const videoTitle = document.getElementById('video-title');
+        const videoDownload = document.getElementById('video-download');
+        const videoClose = document.getElementById('video-close');
+
+        // Open video modal
+        document.querySelectorAll('[data-video]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const videoPath = btn.dataset.video;
+                const title = btn.dataset.title;
+                videoPlayer.querySelector('source').src = videoPath;
+                videoPlayer.load();
+                videoTitle.textContent = title;
+                videoDownload.href = videoPath;
+                videoModal.classList.add('active');
+                videoPlayer.play();
+            });
+        });
+
+        // Close video modal
+        function closeVideoModal() {
+            videoModal.classList.remove('active');
+            videoPlayer.pause();
+            videoPlayer.currentTime = 0;
+        }
+
+        videoClose.addEventListener('click', closeVideoModal);
+        videoModal.addEventListener('click', (e) => {
+            if (e.target === videoModal) closeVideoModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && videoModal.classList.contains('active')) {
+                closeVideoModal();
+            }
         });
     </script>
 </body>

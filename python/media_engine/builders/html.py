@@ -31,6 +31,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
+    {% if use_local_fonts %}
+    <link rel="stylesheet" href="{{ fonts_css_path }}">
+    {% endif %}
     <style>
         /* CSS Variables from Theme */
         :root {
@@ -340,6 +343,8 @@ class HTMLConfig:
     include_toc: bool = False
     footer: str = ""
     lang: str = "en"
+    use_local_fonts: bool = True  # Link to local fonts.css instead of relying on system fonts
+    fonts_css_path: str = "../shared/fonts.css"
 
 
 class HTMLBuilder:
@@ -418,6 +423,8 @@ class HTMLBuilder:
             toc=toc_html if config.include_toc else None,
             footer=config.footer,
             lang=config.lang,
+            use_local_fonts=config.use_local_fonts,
+            fonts_css_path=config.fonts_css_path,
         )
 
         return html
