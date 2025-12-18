@@ -345,11 +345,23 @@ def collect_deliverables(
     # =========================================
     demo_items = []
     demos_dir = lang_output / "demos"
+
+    # Demo name mapping for clean display
+    DEMO_NAMES = {
+        "interactive-demo.html": "Interactive Platform Demo",
+        "guest-form.html": "Guest Form Demo",
+        "gjesteskjema.html": "Gjesteskjema Demo",
+        "index.html": "Demo Overview",
+    }
+
     if demos_dir.exists():
         for demo in sorted(demos_dir.glob("*.html")):
+            # Skip index.html as it's a navigation page
+            if demo.name == "index.html":
+                continue
             demo_items.append(
                 DeliverableItem(
-                    name=DELIVERABLE_NAMES.get(demo.name, demo.stem.replace("-", " ").replace("_", " ").title()),
+                    name=DEMO_NAMES.get(demo.name, demo.stem.replace("-", " ").replace("_", " ").title()),
                     path=f"demos/{demo.name}",
                     description="Interactive demo",
                     icon="🎮",
@@ -530,6 +542,34 @@ def copy_documents(
                         if f.is_file():
                             shutil.copy2(f, dest_subdir / f.name)
                             count += 1
+
+        # Also check for legacy demos in docs/deliverables/demo/{lang}/
+        legacy_demo_dir = project.root / "docs" / "deliverables" / "demo" / lang
+        if legacy_demo_dir.exists():
+            demos_dest = dest_dir / "demos"
+            demos_dest.mkdir(exist_ok=True)
+            for f in legacy_demo_dir.glob("*.html"):
+                if f.is_file() and not f.is_symlink():
+                    shutil.copy2(f, demos_dest / f.name)
+                    count += 1
+
+    # Copy shared demo assets if they exist
+    shared_demo_dir = project.root / "docs" / "deliverables" / "demo" / "shared"
+    if shared_demo_dir.exists():
+        shared_dest = output_dir / "shared" / "demos"
+        shared_dest.mkdir(parents=True, exist_ok=True)
+        for f in shared_demo_dir.glob("*"):
+            if f.is_file():
+                shutil.copy2(f, shared_dest / f.name)
+                count += 1
+
+    # Copy demo assets if they exist
+    demo_assets_dir = project.root / "docs" / "deliverables" / "assets"
+    if demo_assets_dir.exists():
+        assets_dest = output_dir / "shared" / "demo-assets"
+        if not assets_dest.exists():
+            shutil.copytree(demo_assets_dir, assets_dest, dirs_exist_ok=True)
+            count += sum(1 for _ in assets_dest.rglob("*") if _.is_file())
 
     if console_output:
         console.print(f"  [green]✓[/green] Copied {count} documents")
