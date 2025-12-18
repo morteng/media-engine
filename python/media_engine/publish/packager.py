@@ -21,6 +21,7 @@ from ..assets.fonts import generate_font_faces
 from ..templates.html_index import (
     DeliverableCategory,
     DeliverableItem,
+    FormatLink,
     LanguageInfo,
     render_language_index,
     render_project_index,
@@ -105,10 +106,11 @@ def collect_deliverables(
         "proposal.pdf": "Full Proposal (PDF)",
         # Investor Pack
         "ROP_Executive_Summary.pdf": "Executive Summary",
-        "ROP_Pitch_Deck.pdf": "Pitch Deck",
+        "ROP_Pitch_Deck.pdf": "Pitch Deck (PDF)",
         "ROP_Data_Sheet.pdf": "Data Sheet",
         "ROP_One_Pager.pdf": "One Pager",
-        "pitch_deck.pptx": "Pitch Deck (PowerPoint)",
+        "pitch_deck.pptx": "Pitch Deck",
+        "pitch_deck.pdf": "Pitch Deck (PDF)",
         # Pilot Pack
         "pilot_proposal.pdf": "Pilot Proposal",
         "pilot_deck.pdf": "Pilot Presentation",
@@ -117,6 +119,7 @@ def collect_deliverables(
         "01-overview.mp4": "Overview",
         "02-teaser.mp4": "Teaser",
         "03-training.mp4": "Training",
+        "03-platform-overview.mp4": "Platform Overview",
         "mvp-full-demo.mp4": "Full Demo",
     }
 
@@ -127,6 +130,7 @@ def collect_deliverables(
         "ROP_Data_Sheet.pdf",
         "ROP_One_Pager.pdf",
         "pitch_deck.pptx",
+        "pitch_deck.pdf",
     }
 
     PILOT_PACK_FILES = {
@@ -140,27 +144,28 @@ def collect_deliverables(
     # =========================================
     proposal_items = []
 
+    # Group proposal formats (HTML + PDF)
+    proposal_formats = []
     proposal_html = lang_output / "proposal.html"
+    proposal_pdf = lang_output / "proposal.pdf"
+
     if proposal_html.exists():
-        proposal_items.append(
-            DeliverableItem(
-                name=DELIVERABLE_NAMES.get("proposal.html", "Full Proposal"),
-                path="proposal.html",
-                description="Complete documentation",
-                icon=ICONS["html"],
-                file_type="html",
-            )
+        proposal_formats.append(
+            FormatLink(file_type="html", path="proposal.html", label="View")
+        )
+    if proposal_pdf.exists():
+        proposal_formats.append(
+            FormatLink(file_type="pdf", path="proposal.pdf", label="PDF")
         )
 
-    proposal_pdf = lang_output / "proposal.pdf"
-    if proposal_pdf.exists():
+    if proposal_formats:
         proposal_items.append(
             DeliverableItem(
-                name=DELIVERABLE_NAMES.get("proposal.pdf", "Full Proposal (PDF)"),
-                path="proposal.pdf",
-                description="Printable version",
-                icon=ICONS["pdf"],
-                file_type="pdf",
+                name="Full Proposal",
+                path="",
+                description="Complete documentation",
+                icon="📖",
+                formats=proposal_formats,
             )
         )
 
@@ -178,8 +183,48 @@ def collect_deliverables(
     # =========================================
     investor_items = []
 
+    # Group Pitch Deck formats together (HTML, PDF, PPTX)
+    pitch_deck_formats = []
+    presentations_dir = lang_output / "presentations"
+
+    # Check for HTML presentation
+    html_presentation = presentations_dir / "pitch_deck.html" if presentations_dir.exists() else None
+    if html_presentation and html_presentation.exists():
+        pitch_deck_formats.append(
+            FormatLink(file_type="html", path="presentations/pitch_deck.html", label="View")
+        )
+
+    # Check for PDF
+    if (lang_output / "pitch_deck.pdf").exists():
+        pitch_deck_formats.append(
+            FormatLink(file_type="pdf", path="pitch_deck.pdf", label="PDF")
+        )
+    elif (lang_output / "ROP_Pitch_Deck.pdf").exists():
+        pitch_deck_formats.append(
+            FormatLink(file_type="pdf", path="ROP_Pitch_Deck.pdf", label="PDF")
+        )
+
+    # Check for PPTX
+    pptx_path = presentations_dir / "pitch_deck.pptx" if presentations_dir.exists() else None
+    if pptx_path and pptx_path.exists():
+        pitch_deck_formats.append(
+            FormatLink(file_type="pptx", path="presentations/pitch_deck.pptx", label="PPTX")
+        )
+
+    if pitch_deck_formats:
+        investor_items.append(
+            DeliverableItem(
+                name="Pitch Deck",
+                path="",
+                description="Investor presentation",
+                icon="📊",
+                formats=pitch_deck_formats,
+            )
+        )
+
+    # Add other investor pack PDFs (non-pitch deck)
     for pdf_file in sorted(lang_output.glob("*.pdf")):
-        if pdf_file.name in INVESTOR_PACK_FILES:
+        if pdf_file.name in INVESTOR_PACK_FILES and "pitch" not in pdf_file.name.lower():
             investor_items.append(
                 DeliverableItem(
                     name=DELIVERABLE_NAMES.get(pdf_file.name, pdf_file.stem),
@@ -188,20 +233,6 @@ def collect_deliverables(
                     file_type="pdf",
                 )
             )
-
-    # Check for PowerPoint in presentations
-    presentations_dir = lang_output / "presentations"
-    if presentations_dir.exists():
-        for pptx_file in sorted(presentations_dir.glob("*.pptx")):
-            if pptx_file.name in INVESTOR_PACK_FILES or "pitch" in pptx_file.name.lower():
-                investor_items.append(
-                    DeliverableItem(
-                        name=DELIVERABLE_NAMES.get(pptx_file.name, pptx_file.stem),
-                        path=f"presentations/{pptx_file.name}",
-                        icon=ICONS["pptx"],
-                        file_type="pptx",
-                    )
-                )
 
     if investor_items:
         categories.append(
@@ -306,6 +337,32 @@ def collect_deliverables(
                 name="Diagrams",
                 icon="🖼️",
                 items=diagram_items,
+            )
+        )
+
+    # =========================================
+    # DEMOS - Interactive HTML demos
+    # =========================================
+    demo_items = []
+    demos_dir = lang_output / "demos"
+    if demos_dir.exists():
+        for demo in sorted(demos_dir.glob("*.html")):
+            demo_items.append(
+                DeliverableItem(
+                    name=DELIVERABLE_NAMES.get(demo.name, demo.stem.replace("-", " ").replace("_", " ").title()),
+                    path=f"demos/{demo.name}",
+                    description="Interactive demo",
+                    icon="🎮",
+                    file_type="html",
+                )
+            )
+
+    if demo_items:
+        categories.append(
+            DeliverableCategory(
+                name="Interactive Demos",
+                icon="🎮",
+                items=demo_items,
             )
         )
 
@@ -441,8 +498,23 @@ def copy_documents(
             shutil.copy2(pdf_file, dest_dir / pdf_file.name)
             count += 1
 
+        # Copy PPTX files (presentations)
+        for pptx_file in src_dir.glob("*.pptx"):
+            # Copy to presentations subfolder
+            presentations_dir = dest_dir / "presentations"
+            presentations_dir.mkdir(exist_ok=True)
+            shutil.copy2(pptx_file, presentations_dir / pptx_file.name)
+            count += 1
+
+        # Copy XLSX files (spreadsheets)
+        for xlsx_file in src_dir.glob("*.xlsx"):
+            spreadsheets_dir = dest_dir / "spreadsheets"
+            spreadsheets_dir.mkdir(exist_ok=True)
+            shutil.copy2(xlsx_file, spreadsheets_dir / xlsx_file.name)
+            count += 1
+
         # Copy subdirectories
-        for subdir in ["presentations", "spreadsheets", "deliverables"]:
+        for subdir in ["presentations", "spreadsheets", "demos", "deliverables"]:
             src_subdir = src_dir / subdir
             if src_subdir.exists():
                 # For deliverables, copy to root of lang dir, not subdir

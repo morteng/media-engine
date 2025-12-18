@@ -22,9 +22,19 @@ from .html_document import (
     render_document,
 )
 from .html_index import (
+    DeliverableCategory,
+    DeliverableItem,
+    FormatLink,
     IndexTemplate,
+    LanguageInfo,
     render_language_index,
     render_project_index,
+)
+from .html_presentation import (
+    PresentationTemplate,
+    Slide,
+    build_presentation_from_yaml,
+    render_presentation,
 )
 
 __all__ = [
@@ -35,6 +45,14 @@ __all__ = [
     "IndexTemplate",
     "render_language_index",
     "render_project_index",
+    "DeliverableCategory",
+    "DeliverableItem",
+    "FormatLink",
+    "LanguageInfo",
+    "PresentationTemplate",
+    "Slide",
+    "build_presentation_from_yaml",
+    "render_presentation",
     "ThemeToggle",
     "ReadingProgress",
     "BackToTop",

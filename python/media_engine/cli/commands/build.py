@@ -85,12 +85,16 @@ def _build_format(project: Project, lang: str, fmt: str, deps: list[Path]) -> Pa
         return _build_pdf(project, lang, deps, output_dir)
     elif fmt == "pptx":
         return _build_pptx(project, lang, output_dir)
+    elif fmt == "presentation":
+        return _build_presentation_html(project, lang, output_dir)
     elif fmt == "xlsx":
         return _build_xlsx(project, lang, output_dir)
     elif fmt == "diagrams":
         return _build_diagrams(project, lang, output_dir)
     elif fmt == "video":
         return _build_video(project, lang, output_dir)
+    elif fmt == "demos":
+        return _build_demos(project, lang, output_dir)
 
     return None
 
@@ -158,7 +162,21 @@ def _build_pptx(project: Project, lang: str, output_dir: Path) -> Path | None:
     slides_yaml = project.get_content_path(lang, "slides", "pitch_deck.yaml")
     slides_md = project.get_content_path(lang, "slides", "pitch_deck.md")
 
-    builder = PPTXBuilder(theme=project.theme)
+    # Look for logo (check brand folder first, then assets)
+    logo_path = None
+    brand_logo_paths = [
+        project.root / "docs" / "brand" / "logo" / "pikkolo-hub-full-light.svg",
+        project.root / "docs" / "brand" / "logo" / "logo.svg",
+        project.root / "docs" / "brand" / "logo" / "logo.png",
+        project.root / "assets" / "logo.svg",
+        project.root / "assets" / "logo.png",
+    ]
+    for path in brand_logo_paths:
+        if path.exists():
+            logo_path = path
+            break
+
+    builder = PPTXBuilder(theme=project.theme, logo_path=logo_path)
 
     if slides_yaml.exists():
         builder.build_from_yaml(slides_yaml)
@@ -170,6 +188,88 @@ def _build_pptx(project: Project, lang: str, output_dir: Path) -> Path | None:
 
     output_path = output_dir / "pitch_deck.pptx"
     return builder.save(output_path)
+
+
+def _build_presentation_html(project: Project, lang: str, output_dir: Path) -> Path | None:
+    """Build HTML presentation from slides definition."""
+    from ...templates.html_presentation import (
+        PresentationTemplate,
+        build_presentation_from_yaml,
+    )
+
+    # Look for slides definition
+    slides_yaml = project.get_content_path(lang, "slides", "pitch_deck.yaml")
+
+    if not slides_yaml.exists():
+        return None
+
+    # Parse slides from YAML
+    title, slides = build_presentation_from_yaml(slides_yaml, project.theme)
+
+    # Find logo paths
+    logo_path = None
+    logo_path_light = None
+    shared_dir = project.output_dir.parent / "shared" if project.output_dir.parent.exists() else None
+
+    # Check for logo in shared directory (relative path for HTML)
+    if shared_dir and (shared_dir / "logo.svg").exists():
+        logo_path = "../../shared/logo.svg"
+        logo_path_light = "../../shared/logo-light.svg"
+    elif shared_dir and (shared_dir / "logo.png").exists():
+        logo_path = "../../shared/logo.png"
+        logo_path_light = "../../shared/logo-light.png"
+
+    # Render HTML presentation
+    template = PresentationTemplate(theme=project.theme)
+    html = template.render(
+        title=title,
+        slides=slides,
+        logo_path=logo_path,
+        logo_path_light=logo_path_light,
+        fonts_css_path="../../shared/fonts.css",
+        lang=lang,
+    )
+
+    # Save to presentations subdirectory
+    presentations_dir = output_dir / "presentations"
+    presentations_dir.mkdir(parents=True, exist_ok=True)
+    output_path = presentations_dir / "pitch_deck.html"
+    output_path.write_text(html)
+
+    console.print(f"    [dim]Generated {output_path.name}[/dim]")
+    return output_path
+
+
+def _build_demos(project: Project, lang: str, output_dir: Path) -> Path | None:
+    """Build interactive demos from YAML definitions."""
+    from ...demos import DemoBuilder
+
+    demos_dir = project.get_content_path(lang, "demos")
+    if not demos_dir.exists():
+        return None
+
+    demo_files = list(demos_dir.glob("*.yaml"))
+    if not demo_files:
+        return None
+
+    demos_output = output_dir / "demos"
+    demos_output.mkdir(parents=True, exist_ok=True)
+
+    generated = []
+    for demo_file in demo_files:
+        try:
+            builder = DemoBuilder(theme=project.theme)
+            html = builder.build_from_yaml(demo_file)
+
+            output_path = demos_output / f"{demo_file.stem}.html"
+            output_path.write_text(html)
+            generated.append(output_path)
+            console.print(f"    [dim]Generated {demo_file.stem}.html[/dim]")
+
+        except Exception as e:
+            console.print(f"    [red]{demo_file.stem}: {e}[/red]")
+
+    return demos_output if generated else None
 
 
 def _build_xlsx(project: Project, lang: str, output_dir: Path) -> Path | None:

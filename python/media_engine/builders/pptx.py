@@ -57,16 +57,18 @@ class SlideContent:
 class PPTXBuilder:
     """Builds PowerPoint presentations with theme styling."""
 
-    def __init__(self, theme: "Theme" = None):
+    def __init__(self, theme: "Theme" = None, logo_path: Optional[Path] = None):
         """
         Initialize PPTX builder.
 
         Args:
             theme: Theme for styling (uses defaults if not provided)
+            logo_path: Optional path to logo image for branding
         """
         from ..core.theme import COPPER_AND_CREAM
 
         self.theme = theme or COPPER_AND_CREAM
+        self.logo_path = logo_path
 
         # Colors from theme
         self.color_primary = hex_to_rgb(self.theme.colors.primary)
@@ -87,6 +89,58 @@ class PPTXBuilder:
         self.prs = Presentation()
         self.prs.slide_width = self.slide_width
         self.prs.slide_height = self.slide_height
+
+    def _get_logo_for_pptx(self) -> Optional[Path]:
+        """Get logo in a format suitable for PPTX (PNG/JPG, not SVG)."""
+        if not self.logo_path or not self.logo_path.exists():
+            return None
+
+        # If it's already PNG or JPG, use directly
+        if self.logo_path.suffix.lower() in [".png", ".jpg", ".jpeg"]:
+            return self.logo_path
+
+        # For SVG, try to convert to PNG
+        if self.logo_path.suffix.lower() == ".svg":
+            try:
+                import cairosvg
+                import tempfile
+
+                # Create temp PNG file
+                png_path = Path(tempfile.gettempdir()) / f"{self.logo_path.stem}_logo.png"
+                if not png_path.exists():
+                    cairosvg.svg2png(
+                        url=str(self.logo_path),
+                        write_to=str(png_path),
+                        output_height=200,  # High resolution for quality
+                    )
+                return png_path
+            except ImportError:
+                return None  # cairosvg not available
+            except Exception:
+                return None
+
+        return None
+
+    def _add_logo(self, slide, position: str = "top-left"):
+        """Add logo to slide if logo_path is set."""
+        logo_file = self._get_logo_for_pptx()
+        if not logo_file:
+            return
+
+        # Logo positioning
+        if position == "top-left":
+            left, top = Inches(0.5), Inches(0.3)
+        elif position == "top-right":
+            left, top = Inches(11.5), Inches(0.3)
+        elif position == "bottom-right":
+            left, top = Inches(11.5), Inches(6.8)
+        else:
+            left, top = Inches(0.5), Inches(0.3)
+
+        try:
+            slide.shapes.add_picture(str(logo_file), left, top, height=Inches(0.6))
+        except Exception:
+            pass  # Skip logo if there's an issue
 
     def _get_system_font(self, font_name: str) -> str:
         """Map theme font to system font for compatibility."""
@@ -171,12 +225,23 @@ class PPTXBuilder:
         slide = self.prs.slides.add_slide(blank_layout)
         self._set_background(slide, self.color_bg)
 
-        # Title
+        # Logo at top center for title slides
+        logo_file = self._get_logo_for_pptx()
+        if logo_file:
+            try:
+                slide.shapes.add_picture(
+                    str(logo_file), Inches(5.5), Inches(1.0), height=Inches(1.2)
+                )
+            except Exception:
+                pass
+
+        # Title (positioned lower if logo exists)
+        title_top = 2.8 if self.logo_path else 2.5
         self._add_text_box(
             slide,
             title,
             left=0.8,
-            top=2.5,
+            top=title_top,
             width=11.7,
             height=1.5,
             font_name=self.font_heading,
@@ -192,7 +257,7 @@ class PPTXBuilder:
                 slide,
                 subtitle,
                 left=0.8,
-                top=4.2,
+                top=title_top + 1.5,
                 width=11.7,
                 height=0.8,
                 font_name=self.font_body,
@@ -203,7 +268,7 @@ class PPTXBuilder:
 
         # Accent bar
         shape = slide.shapes.add_shape(
-            MSO_SHAPE.RECTANGLE, Inches(5.5), Inches(4.0), Inches(2.3), Inches(0.05)
+            MSO_SHAPE.RECTANGLE, Inches(5.5), Inches(title_top + 1.3), Inches(2.3), Inches(0.05)
         )
         shape.fill.solid()
         shape.fill.fore_color.rgb = self.color_accent
@@ -258,6 +323,9 @@ class PPTXBuilder:
                 height=5.5,
                 font_size=20,
             )
+
+        # Small logo at bottom right
+        self._add_logo(slide, "bottom-right")
 
         if notes:
             slide.notes_slide.notes_text_frame.text = notes

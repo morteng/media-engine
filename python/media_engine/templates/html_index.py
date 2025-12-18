@@ -19,6 +19,15 @@ if TYPE_CHECKING:
 
 
 @dataclass
+class FormatLink:
+    """A single format link (HTML, PDF, PPTX, etc.)."""
+
+    file_type: str  # html, pdf, pptx, xlsx, mp4
+    path: str
+    label: str = ""  # Optional custom label
+
+
+@dataclass
 class DeliverableItem:
     """A deliverable item for the index."""
 
@@ -27,6 +36,7 @@ class DeliverableItem:
     description: str = ""
     icon: str = ""
     file_type: str = ""  # html, pdf, pptx, xlsx, mp4
+    formats: List[FormatLink] = field(default_factory=list)  # Multiple format links
 
 
 @dataclass
@@ -444,6 +454,55 @@ LANGUAGE_INDEX_TEMPLATE = """<!DOCTYPE html>
             letter-spacing: 0.5px;
         }
 
+        /* Format badges for grouped items */
+        .format-links {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .format-badge {
+            font-size: 0.7rem;
+            padding: 4px 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-decoration: none;
+            transition: all 0.15s ease;
+        }
+
+        .format-badge:hover {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+            color: white;
+        }
+
+        .format-badge.primary {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+            color: white;
+        }
+
+        .format-badge.primary:hover {
+            background: var(--text-primary);
+            border-color: var(--text-primary);
+        }
+
+        /* Card without link (container for format badges) */
+        .item-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 20px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            width: 100%;
+        }
+
         /* Video Player Modal */
         .video-modal {
             display: none;
@@ -543,7 +602,23 @@ LANGUAGE_INDEX_TEMPLATE = """<!DOCTYPE html>
             </h2>
             <div class="items">
                 {% for item in category.items %}
-                {% if item.file_type == 'mp4' %}
+                {% if item.formats %}
+                {# Grouped item with multiple formats #}
+                <div class="item-card">
+                    <span class="item-icon">{{ item.icon }}</span>
+                    <div class="item-info">
+                        <div class="item-name">{{ item.name }}</div>
+                        {% if item.description %}
+                        <div class="item-desc">{{ item.description }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="format-links">
+                        {% for fmt in item.formats %}
+                        <a href="{{ fmt.path }}" class="format-badge{% if loop.first %} primary{% endif %}" {% if fmt.file_type in ['pdf', 'pptx', 'xlsx'] %}target="_blank"{% endif %}>{{ fmt.label or fmt.file_type }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% elif item.file_type == 'mp4' %}
                 <button class="item" data-video="{{ item.path }}" data-title="{{ item.name }}">
                     <span class="item-icon">{{ item.icon }}</span>
                     <div class="item-info">
