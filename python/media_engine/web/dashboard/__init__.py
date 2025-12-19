@@ -4,27 +4,27 @@ Media Engine Dashboard HTML Generator
 This module assembles the complete dashboard HTML from modular components.
 """
 
-from .styles import get_styles
-from .layout import get_body_start, get_body_end
-from .tabs import (
-    get_overview_tab,
-    get_insights_tab,
-    get_insights_styles,
-    get_insights_scripts,
-    get_documents_tab,
-    get_media_tab,
-    get_packs_tab,
-    get_assets_tab,
-    get_translations_tab,
-    get_quality_tab,
-    get_freshness_tab,
-    get_provenance_tab,
-    get_build_tab,
-    get_search_tab,
-    get_dependencies_tab,
-    get_activity_tab,
-)
+from .layout import get_body_end, get_body_start
 from .scripts import get_javascript
+from .styles import get_styles
+from .tabs import (
+    get_activity_tab,
+    get_assets_tab,
+    get_build_tab,
+    get_dependencies_tab,
+    get_documents_tab,
+    get_freshness_tab,
+    get_insights_scripts,
+    get_insights_styles,
+    get_insights_tab,
+    get_media_tab,
+    get_overview_tab,
+    get_packs_tab,
+    get_provenance_tab,
+    get_quality_tab,
+    get_search_tab,
+    get_translations_tab,
+)
 
 
 def generate_dashboard_html() -> str:

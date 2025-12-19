@@ -90,7 +90,7 @@ class ReferenceValidator:
 
         for line_num, line in enumerate(lines, 1):
             for match in link_pattern.finditer(line):
-                link_text = match.group(1)
+                match.group(1)
                 link_url = match.group(2)
 
                 # Skip external URLs

@@ -29,7 +29,7 @@ last_modified: "2025-12-16"
 
 # Heading
 
-Content goes here...
+Your content is written here in standard Markdown format.
 ```
 
 ## Frontmatter Fields

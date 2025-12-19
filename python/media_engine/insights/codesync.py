@@ -13,7 +13,6 @@ Reference types:
 """
 
 import re
-import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path

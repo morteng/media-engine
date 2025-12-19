@@ -21,7 +21,7 @@ Score Ranges:
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -549,16 +549,16 @@ class HealthScorer:
         score = 100.0
 
         # Check required fields
-        for field in REQUIRED_METADATA:
-            if field not in frontmatter:
+        for field_name in REQUIRED_METADATA:
+            if field_name not in frontmatter:
                 issues.append(
                     HealthIssue(
                         category="metadata",
                         severity="warning",
-                        message=f"Missing required field: {field}",
+                        message=f"Missing required field: {field_name}",
                         impact=15,
                         document=doc_path,
-                        recommendation=f"Add '{field}' to frontmatter",
+                        recommendation=f"Add '{field_name}' to frontmatter",
                     )
                 )
                 score -= 15

@@ -411,7 +411,7 @@ def _export_video_props_only(script, output_path: Path, project: Project, config
     """Export Remotion props without generating voiceover."""
     import json
 
-    from ...video import VideoConfig, VideoQuality
+    from ...video import VideoConfig
 
     # Use provided config or create default
     if config is None:

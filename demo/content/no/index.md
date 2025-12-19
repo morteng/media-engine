@@ -87,7 +87,7 @@ media-engine dashboard
 
 | Skript | Varighet | Beskrivelse |
 |--------|----------|-------------|
-| [Demovideo](scripts/demo-video.yaml) | 1 min | Produktoversikt |
+| [Gjennomgang](scripts/walkthrough.yaml) | 90 sek | Komplett funksjonsgjennomgang med scener |
 
 ### Presentasjoner
 

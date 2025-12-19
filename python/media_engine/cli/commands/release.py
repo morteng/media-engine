@@ -6,7 +6,6 @@ Only copies production-quality videos (not preview videos).
 
 import json
 import shutil
-from pathlib import Path
 
 from ...core.project import find_project
 from ...video.quality import is_preview_video
@@ -36,7 +35,7 @@ def add_parser(subparsers):
         "-l",
         help="Only release videos for specific language",
     )
-    parser.set_defaults(func=run)
+    parser.set_defaults(func=cmd_release)
 
 
 def cmd_release(args):

@@ -227,6 +227,240 @@ Creates:
 - `content/en/chapters/` - Content directory
 - Sample chapter
 
+### release
+
+Copy production videos to deliverables folder.
+
+```bash
+media-engine release [--json]
+```
+
+### dashboard
+
+Launch web dashboard for project management.
+
+```bash
+media-engine dashboard [--port PORT]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--port` | Port number (default: 8080) |
+
+### translation
+
+Translation tracking and management.
+
+```bash
+media-engine translation <subcommand> [--json]
+```
+
+Subcommands:
+- `status`: Show all translation pairs
+- `outdated`: Show outdated translations
+- `missing`: Show missing translations
+- `sync`: Mark translation as synced
+
+### provenance
+
+Provenance and approval workflow tracking.
+
+```bash
+media-engine provenance <subcommand> [--json]
+```
+
+Subcommands:
+- `report`: Full provenance report
+- `claims`: Claims needing verification
+- `queue`: Documents awaiting review
+
+### integrity
+
+Asset and terminology integrity checking.
+
+```bash
+media-engine integrity <subcommand> [--json]
+```
+
+Subcommands:
+- `record`: Record asset checksums
+- `verify`: Verify no unauthorized changes
+
+### freshness
+
+Content freshness tracking.
+
+```bash
+media-engine freshness [--json]
+```
+
+Shows content freshness status and identifies stale documents.
+
+### health
+
+Show project health score.
+
+```bash
+media-engine health [--json]
+```
+
+Returns 0-100 health score with component breakdown.
+
+### stats
+
+Show project statistics.
+
+```bash
+media-engine stats [--json]
+```
+
+### incomplete
+
+Find incomplete content markers.
+
+```bash
+media-engine incomplete [--json]
+```
+
+Detects TODO, TBD, FIXME, and other incomplete markers.
+
+### consistency
+
+Check status consistency across documents.
+
+```bash
+media-engine consistency [--json]
+```
+
+### parity
+
+Translation parity matrix.
+
+```bash
+media-engine parity [--json]
+```
+
+Shows translation coverage across all language pairs.
+
+### terms
+
+Check terminology consistency.
+
+```bash
+media-engine terms [--json]
+```
+
+Validates consistent use of defined terminology.
+
+### duplicates
+
+Find duplicate content.
+
+```bash
+media-engine duplicates [--json]
+```
+
+### velocity
+
+Content velocity metrics.
+
+```bash
+media-engine velocity [--json]
+```
+
+Shows production rate and trend analysis.
+
+### graph
+
+Knowledge graph and dependency visualization.
+
+```bash
+media-engine graph [--json]
+```
+
+### path
+
+Reading paths through content.
+
+```bash
+media-engine path [--json]
+```
+
+### readability
+
+Readability analysis.
+
+```bash
+media-engine readability [--target LEVEL] [--json]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--target` | Target level: simple, standard, college, technical |
+
+### gaps
+
+Content gap analysis.
+
+```bash
+media-engine gaps [--topics TOPICS] [--json]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--topics` | Expected topics (comma-separated) |
+
+### links
+
+Link validation.
+
+```bash
+media-engine links [--internal-only] [--json]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--internal-only` | Skip external URL checking |
+
+### security
+
+Security scan for sensitive content.
+
+```bash
+media-engine security [--include-assets] [--json]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--include-assets` | Also scan YAML/JSON files |
+
+Detects: API keys, PII, internal URLs, credentials.
+
+### changelog
+
+Generate changelog from git history.
+
+```bash
+media-engine changelog [--days N] [-o FILE] [--json]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--days` | Limit to last N days |
+| `-o` | Write to file |
+
+### demos
+
+Interactive HTML demos.
+
+```bash
+media-engine demos <subcommand>
+```
+
+Subcommands:
+- `list`: List available demos
+- `build`: Build demos to HTML
+
 ## Exit Codes
 
 | Code | Meaning |

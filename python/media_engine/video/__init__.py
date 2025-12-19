@@ -24,6 +24,15 @@ from .demo_registry import (
     DemoRegistry,
     DemoState,
 )
+from .quality import (
+    PREVIEW_PRESET,
+    PRODUCTION_PRESET,
+    QualityPreset,
+    VideoQuality,
+    get_filename_suffix,
+    get_preset,
+    is_preview_video,
+)
 from .scene_capture import (
     SceneCaptureConfig,
     SceneCaptureEngine,
@@ -36,15 +45,6 @@ from .timeline import (
     TrackType,
     TransitionType,
     VideoTimeline,
-)
-from .quality import (
-    PREVIEW_PRESET,
-    PRODUCTION_PRESET,
-    QualityPreset,
-    VideoQuality,
-    get_filename_suffix,
-    get_preset,
-    is_preview_video,
 )
 from .voiceover import (
     AudioSegment,

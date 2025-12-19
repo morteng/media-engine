@@ -14,7 +14,6 @@ Export formats:
 - Cytoscape JSON
 """
 
-import json
 import re
 from collections import defaultdict
 from dataclasses import dataclass, field

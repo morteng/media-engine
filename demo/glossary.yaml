@@ -1,0 +1,120 @@
+# Terminology Glossary
+# Defines preferred terms and their alternatives
+# Used by: media-engine terms
+
+terms:
+  # Core Concepts
+  - term: "frontmatter"
+    definition: "YAML metadata block at the start of a Markdown document"
+    alternatives:
+      - "front matter"
+      - "front-matter"
+      - "yaml header"
+    category: content
+
+  - term: "builder"
+    definition: "Component that generates output in a specific format (HTML, PDF, etc.)"
+    alternatives:
+      - "generator"
+      - "renderer"
+      - "exporter"
+    category: architecture
+
+  - term: "MCP"
+    definition: "Model Context Protocol - standard for AI agent integration"
+    alternatives:
+      - "Model Context Protocol"
+    category: integration
+
+  - term: "voiceover"
+    definition: "AI-generated audio narration for video content"
+    alternatives:
+      - "voice over"
+      - "voice-over"
+      - "narration"
+      - "VO"
+    category: video
+
+  - term: "freshness"
+    definition: "How recently content has been reviewed or updated"
+    alternatives:
+      - "staleness"
+      - "age"
+    category: quality
+
+  # Status Terms
+  - term: "draft"
+    definition: "Content in development, not ready for review"
+    alternatives: []
+    category: workflow
+
+  - term: "in_review"
+    definition: "Content submitted for review and approval"
+    alternatives:
+      - "in review"
+      - "under review"
+      - "pending review"
+    category: workflow
+
+  - term: "final"
+    definition: "Content approved and ready for publication"
+    alternatives:
+      - "approved"
+      - "complete"
+      - "done"
+    category: workflow
+
+  # Technical Terms
+  - term: "CLI"
+    definition: "Command Line Interface"
+    alternatives:
+      - "command line"
+      - "terminal"
+      - "shell"
+    category: technical
+
+  - term: "dashboard"
+    definition: "Web-based user interface for project management"
+    alternatives:
+      - "web UI"
+      - "web interface"
+      - "admin panel"
+    category: technical
+
+  - term: "caption"
+    definition: "Text transcription of video audio, typically in VTT format"
+    alternatives:
+      - "subtitle"
+      - "subtitles"
+      - "captions"
+    category: video
+
+# Categories for grouping
+categories:
+  - id: content
+    name: "Content Management"
+    description: "Terms related to document structure and organization"
+
+  - id: architecture
+    name: "System Architecture"
+    description: "Terms describing system components"
+
+  - id: integration
+    name: "Integration"
+    description: "Terms related to external integrations"
+
+  - id: video
+    name: "Video Production"
+    description: "Terms related to video and audio"
+
+  - id: quality
+    name: "Quality Assurance"
+    description: "Terms related to content quality"
+
+  - id: workflow
+    name: "Workflow"
+    description: "Document status and approval terms"
+
+  - id: technical
+    name: "Technical"
+    description: "General technical terminology"

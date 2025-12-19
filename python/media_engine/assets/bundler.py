@@ -163,7 +163,9 @@ def bundle_project_assets(
                     shutil.copy2(light_variant, shared_dir / f"logo-light{ext}")
                     result.files_copied += 1
                     if console_output:
-                        console.print(f"  [green]✓[/green] Copied logo: {light_variant.name} → logo-light{ext}")
+                        console.print(
+                            f"  [green]✓[/green] Copied logo: {light_variant.name} → logo-light{ext}"
+                        )
 
                 logo_found = True
                 break

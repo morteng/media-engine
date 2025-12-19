@@ -143,7 +143,7 @@ def register_dependencies_routes(
 def build_dependency_tree(items):
     """Build a tree structure from flat dependency list."""
     # Find root items (no dependencies)
-    roots = [i for i in items if not i["depends_on"]]
+    [i for i in items if not i["depends_on"]]
 
     # Group items by type for better organization
     by_type = {}

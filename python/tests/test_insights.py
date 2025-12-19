@@ -1,6 +1,5 @@
 """Tests for the insights module."""
 
-import tempfile
 from pathlib import Path
 
 import pytest

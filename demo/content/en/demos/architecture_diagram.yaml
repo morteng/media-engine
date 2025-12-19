@@ -1,0 +1,111 @@
+# Interactive Architecture Diagram
+# Clickable diagram showing system components
+
+id: architecture-diagram
+type: interactive_diagram
+title: System Architecture
+description: Interactive diagram of Media Engine components. Click on components to learn more.
+
+data:
+  layout: horizontal
+
+  nodes:
+    - id: input
+      label: Input Layer
+      x: 50
+      y: 200
+      width: 120
+      height: 80
+      style: group
+      children:
+        - id: markdown
+          label: Markdown
+          description: "Content written in Markdown with YAML frontmatter for metadata."
+          link: "chapters/02_content_management.md"
+        - id: yaml
+          label: YAML Config
+          description: "Project configuration, themes, and schema definitions."
+          link: "chapters/08_validation.md"
+        - id: scripts
+          label: Video Scripts
+          description: "YAML-based video production scripts with scene definitions."
+          link: "chapters/03_video_production.md"
+
+    - id: processing
+      label: Processing
+      x: 250
+      y: 200
+      width: 200
+      height: 120
+      style: group
+      children:
+        - id: cms
+          label: CMS
+          description: "Document management, parsing, and translation tracking."
+          link: "chapters/02_content_management.md"
+        - id: builders
+          label: Builders
+          description: "HTML, PDF, PPTX, XLSX generation with theme support."
+          link: "chapters/05_builders.md"
+        - id: video
+          label: Video Pipeline
+          description: "Voiceover, captions, motion graphics rendering."
+          link: "chapters/03_video_production.md"
+        - id: quality
+          label: Quality
+          description: "Validation, security scanning, readability analysis."
+          link: "chapters/04_quality_checks.md"
+
+    - id: output
+      label: Output Layer
+      x: 530
+      y: 200
+      width: 120
+      height: 80
+      style: group
+      children:
+        - id: html
+          label: HTML
+          description: "Web-ready documentation with navigation and search."
+        - id: pdf
+          label: PDF
+          description: "Print-ready reports and documentation."
+        - id: pptx
+          label: PPTX
+          description: "Presentation slides with theme integration."
+        - id: video_out
+          label: Video
+          description: "MP4 videos with voiceover and captions."
+
+  edges:
+    - from: markdown
+      to: cms
+      label: parse
+    - from: yaml
+      to: cms
+      label: config
+    - from: scripts
+      to: video
+      label: render
+    - from: cms
+      to: builders
+    - from: builders
+      to: html
+    - from: builders
+      to: pdf
+    - from: builders
+      to: pptx
+    - from: video
+      to: video_out
+    - from: quality
+      to: builders
+      style: dashed
+
+  colors:
+    input: "#3b82f6"
+    processing: "#10b981"
+    output: "#8b5cf6"
+
+width: "100%"
+height: "450px"
+theme: light

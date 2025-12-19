@@ -1,0 +1,70 @@
+# Project Timeline Demo
+# Interactive timeline showing project milestones
+
+id: project-timeline
+type: timeline
+title: Media Engine Development Timeline
+description: Key milestones in the development of Media Engine.
+
+data:
+  events:
+    - date: "2024-01-15"
+      title: "Project Inception"
+      description: "Initial concept and architecture design for agent-based media production."
+      category: milestone
+
+    - date: "2024-03-01"
+      title: "Core CMS Module"
+      description: "Document management, frontmatter parsing, and translation tracking."
+      category: development
+
+    - date: "2024-05-15"
+      title: "Builder System"
+      description: "HTML, PDF, PPTX, and XLSX builders with theme support."
+      category: development
+
+    - date: "2024-07-01"
+      title: "Video Pipeline"
+      description: "Timeline rendering, voiceover generation, and caption support."
+      category: development
+
+    - date: "2024-09-15"
+      title: "MCP Integration"
+      description: "Model Context Protocol server with 16 tool modules for AI agents."
+      category: integration
+
+    - date: "2024-11-01"
+      title: "Web Dashboard"
+      description: "FastAPI dashboard with 16 tabs and real-time collaboration."
+      category: feature
+
+    - date: "2024-12-01"
+      title: "Insights Module"
+      description: "Comprehensive analytics with health scoring and velocity tracking."
+      category: feature
+
+    - date: "2025-01-15"
+      title: "v1.0 Release"
+      description: "Production-ready release with full documentation."
+      category: release
+
+  categories:
+    - id: milestone
+      name: Milestone
+      color: "#3b82f6"
+    - id: development
+      name: Development
+      color: "#10b981"
+    - id: feature
+      name: Feature
+      color: "#8b5cf6"
+    - id: integration
+      name: Integration
+      color: "#f59e0b"
+    - id: release
+      name: Release
+      color: "#ef4444"
+
+width: "100%"
+height: "500px"
+theme: light

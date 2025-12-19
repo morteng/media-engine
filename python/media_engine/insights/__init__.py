@@ -31,17 +31,17 @@ Usage:
     print(f"Found {len(items)} incomplete items")
 """
 
-from .incomplete import IncompleteItem, IncompleteTracker
+from .codesync import CodeReference, CodeSyncChecker, SyncStatus
 from .consistency import ConsistencyChecker, ConsistencyIssue
-from .statistics import ProjectStatistics, StatisticsCollector
-from .health import HealthScore, HealthScorer, HealthIssue
-from .parity import ParityAnalyzer, ParityReport
-from .terminology import TerminologyChecker, TermInconsistency
 from .duplicates import DuplicateDetector, DuplicateMatch
+from .graph import GraphEdge, GraphNode, KnowledgeGraph
+from .health import HealthIssue, HealthScore, HealthScorer
+from .incomplete import IncompleteItem, IncompleteTracker
+from .parity import ParityAnalyzer, ParityReport
+from .paths import PathGenerator, PathNode, ReadingPath
+from .statistics import ProjectStatistics, StatisticsCollector
+from .terminology import TermInconsistency, TerminologyChecker
 from .velocity import VelocityMetrics, VelocityTracker
-from .codesync import CodeSyncChecker, CodeReference, SyncStatus
-from .graph import KnowledgeGraph, GraphNode, GraphEdge
-from .paths import PathGenerator, ReadingPath, PathNode
 
 __all__ = [
     # Incomplete content

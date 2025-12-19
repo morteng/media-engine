@@ -1,8 +1,6 @@
 """Tests for enhanced MCP tools."""
 
-import json
 import pytest
-from pathlib import Path
 
 
 @pytest.fixture
@@ -233,8 +231,8 @@ class TestBatchTools:
 
     def test_filter_by_selector(self, sample_project):
         """Test filtering documents by selector."""
-        from media_engine.core.project import Project
         from media_engine.cms.document_manager import DocumentManager
+        from media_engine.core.project import Project
         from media_engine.mcp.tools.batch import _filter_by_selector
 
         project = Project.load(sample_project)

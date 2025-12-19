@@ -279,7 +279,7 @@ def generate_pack(
     result = PackResult(name=config.name, output_path=pack_dir)
 
     # Determine languages to include
-    languages = config.languages or list(project.languages.keys())
+    config.languages or list(project.languages.keys())
 
     # Process each item
     items_included = []

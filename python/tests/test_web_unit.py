@@ -4,11 +4,9 @@ Unit tests for media_engine.web module.
 Tests websocket connection management and dashboard HTML generation.
 """
 
-from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from media_engine.web.dashboard_html import generate_dashboard_html
 from media_engine.web.websocket import ConnectionManager
 

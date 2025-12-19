@@ -5,7 +5,6 @@ to help AI agents understand and work with media-engine projects effectively.
 """
 
 import json
-from datetime import datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -412,7 +411,7 @@ def _analyze_impact(project, target: str, change_type: str, description: str) ->
     """Analyze the impact of a proposed change."""
     from ...cms.document_manager import DocumentManager
 
-    manager = DocumentManager(project)
+    DocumentManager(project)
 
     impact = {
         "target": target,

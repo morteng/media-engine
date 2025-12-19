@@ -12,7 +12,7 @@ from typing import Any, Dict, Optional
 import yaml
 
 # Import centralized settings
-from ..settings import VIDEO, VOICEOVER, QUALITY, DIRS
+from ..settings import DIRS, QUALITY, VIDEO, VOICEOVER
 
 
 @dataclass

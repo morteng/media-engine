@@ -122,7 +122,7 @@ def main():
     cache_parser = subparsers.add_parser("cache", help="Cache management")
     cache_subparsers = cache_parser.add_subparsers(dest="cache_command")
 
-    cache_status = cache_subparsers.add_parser("status", help="Show cache status")
+    cache_subparsers.add_parser("status", help="Show cache status")
     cache_clear = cache_subparsers.add_parser("clear", help="Clear cache")
     cache_clear.add_argument("--voiceover", action="store_true", help="Clear voiceover cache only")
     cache_clear.add_argument("--builds", action="store_true", help="Clear builds cache only")
@@ -191,7 +191,9 @@ def main():
     prov_scan = prov_subparsers.add_parser("scan", help="Scan documents for potential claims")
     prov_scan.add_argument("--json", action="store_true", help="Output as JSON")
 
-    prov_validate = prov_subparsers.add_parser("validate-urls", help="Validate external URLs in claims")
+    prov_validate = prov_subparsers.add_parser(
+        "validate-urls", help="Validate external URLs in claims"
+    )
     prov_validate.add_argument("--json", action="store_true", help="Output as JSON")
 
     prov_add = prov_subparsers.add_parser("add", help="Add a new claim")
@@ -199,7 +201,9 @@ def main():
     prov_add.add_argument("--claim", "-c", required=True, help="Claim text")
     prov_add.add_argument("--source", "-s", required=True, help="Source attribution")
     prov_add.add_argument("--url", "-u", help="Source URL (optional)")
-    prov_add.add_argument("--type", "-t", default="internal", help="Source type: internal, external, research, data")
+    prov_add.add_argument(
+        "--type", "-t", default="internal", help="Source type: internal, external, research, data"
+    )
 
     prov_verify = prov_subparsers.add_parser("verify", help="Verify a claim")
     prov_verify.add_argument("--document", "-d", required=True, help="Document path")
@@ -214,7 +218,7 @@ def main():
     integ_verify = integ_subparsers.add_parser("verify", help="Verify asset checksums")
     integ_verify.add_argument("--json", action="store_true", help="Output as JSON")
 
-    integ_record = integ_subparsers.add_parser("record", help="Record asset checksums")
+    integ_subparsers.add_parser("record", help="Record asset checksums")
 
     integ_terms = integ_subparsers.add_parser("terms", help="Check terminology consistency")
     integ_terms.add_argument("--json", action="store_true", help="Output as JSON")
@@ -292,7 +296,9 @@ def main():
     stats_parser.add_argument("--json", action="store_true", help="Output as JSON")
 
     # incomplete
-    incomplete_parser = subparsers.add_parser("incomplete", help="Find incomplete content (TODO/TBD)")
+    incomplete_parser = subparsers.add_parser(
+        "incomplete", help="Find incomplete content (TODO/TBD)"
+    )
     incomplete_parser.add_argument("--high", action="store_true", help="Only high priority items")
     incomplete_parser.add_argument("--summary", action="store_true", help="Show summary only")
     incomplete_parser.add_argument("--json", action="store_true", help="Output as JSON")
@@ -323,7 +329,9 @@ def main():
 
     # graph
     graph_parser = subparsers.add_parser("graph", help="Knowledge graph")
-    graph_parser.add_argument("--format", choices=["json", "dot", "cytoscape"], help="Export format")
+    graph_parser.add_argument(
+        "--format", choices=["json", "dot", "cytoscape"], help="Export format"
+    )
     graph_parser.add_argument("--json", action="store_true", help="Output as JSON")
 
     # path

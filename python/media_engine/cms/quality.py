@@ -327,7 +327,7 @@ class QualityChecker:
         references = doc.references
 
         ref_ids = {r.get("id") for r in references if "id" in r}
-        max_ref_id = max(ref_ids) if ref_ids else 0
+        max(ref_ids) if ref_ids else 0
 
         # Check for citations without references
         for cite_num in citations:

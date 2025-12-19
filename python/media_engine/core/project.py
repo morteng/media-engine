@@ -15,9 +15,9 @@ from typing import Any, Optional
 
 import yaml
 
+from ..settings import CACHE, CLI, DIRS, ENV
 from .config import Config
 from .theme import Theme, load_theme
-from ..settings import DIRS, FILES, ENV, CACHE, CLI
 
 
 @dataclass

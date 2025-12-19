@@ -5,8 +5,6 @@ Claude Code and similar AI development assistants.
 """
 
 import json
-from datetime import datetime
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -147,11 +145,11 @@ def _generate_claude_md(project) -> str:
     lines.append("")
     lines.append("```")
     lines.append(f"{project.config.name}/")
-    lines.append(f"  content/           # Documentation content")
+    lines.append("  content/           # Documentation content")
     for lang in project.languages:
         lines.append(f"    {lang}/            # {project.languages[lang].name} content")
-    lines.append(f"  assets/            # Images, diagrams, media")
-    lines.append(f"  dist/              # Built outputs")
+    lines.append("  assets/            # Images, diagrams, media")
+    lines.append("  dist/              # Built outputs")
     lines.append("```")
     lines.append("")
 
@@ -226,7 +224,7 @@ def _generate_claude_md(project) -> str:
     lines.append("## Current Priorities")
     lines.append("")
     try:
-        from ...insights import IncompleteTracker, ConsistencyChecker
+        from ...insights import ConsistencyChecker, IncompleteTracker
 
         # High priority items
         tracker = IncompleteTracker(project)

@@ -21,33 +21,42 @@ uv run pytest python/tests/test_core.py
 uv run ruff check python/
 
 # CLI (after install)
-media-engine status
-media-engine build
-media-engine quality
-media-engine dashboard       # Launch web UI
-media-engine translation status
-media-engine provenance report
-media-engine integrity verify
+media-engine status              # Project status overview
+media-engine build               # Build outputs
+media-engine quality             # Quality checks
+media-engine dashboard           # Launch web UI
+media-engine translation status  # Translation tracking
+media-engine insights            # Analytics insights
+media-engine freshness           # Content freshness
+media-engine health              # Project health score
+media-engine provenance report   # Approval workflow
+media-engine integrity verify    # Asset integrity
+media-engine release             # Release management
 ```
 
 ## Project Structure
 
 ```
-python/media_engine/     # Main Python package
+python/media_engine/     # Main Python package (38 modules, 172 files)
   core/                  # Config, Project, Theme (entry points)
-  cms/                   # Document management, frontmatter parsing
-  video/                 # Timeline, capture, voiceover, captions
+  settings/              # Centralized configuration (env, paths, defaults)
+  config/                # User-level configuration
+  cms/                   # Document management (9 files)
+  video/                 # Timeline, capture, voiceover, captions (8 files)
   builders/              # HTML, PPTX, XLSX, PDF generation
-  templates/             # Jinja2 HTML templates
+  templates/             # Jinja2 HTML templates and components
+  slides/                # Slide generation
+  diagrams/              # Matplotlib-based diagram generation
   assets/                # Font downloading, bundling
   quality/               # Content quality checks
   search/                # Full-text search indexing
   validation/            # Schema and reference validation
   packs/                 # Audience pack generators (investor, pilot)
   publish/               # Deliverable packaging
-  status/                # Dashboard views
-  mcp/                   # MCP server for AI agent integration
-  web/                   # FastAPI web dashboard
+  insights/              # Comprehensive analytics (11 files)
+  freshness/             # Content freshness tracking (3 files)
+  mcp/                   # MCP server with 16 tool modules
+  web/                   # FastAPI dashboard (16 tabs, 17 API routes)
   gui/                   # Easy GUI launcher
   audit/                 # Audit logging system
   provenance/            # Claim tracking and approval workflows
@@ -60,10 +69,10 @@ python/media_engine/     # Main Python package
   readability/           # Readability scoring (Flesch, Fog, etc.)
   gaps/                  # Content gap analysis
   demos/                 # Interactive HTML demo generation
-  cli.py                 # argparse-based CLI
+  cli/                   # CLI with 20+ command modules
 
-python/tests/            # Pytest test suite
-remotion/src/            # TypeScript/React motion graphics components
+python/tests/            # Pytest test suite (19 test files)
+remotion/src/            # TypeScript/React motion graphics (13 components)
 ```
 
 ## Code Conventions
@@ -82,6 +91,14 @@ Tests use pytest with fixtures defined in `conftest.py`:
 - `sample_markdown` - markdown with frontmatter
 - `sample_config`, `sample_theme` - YAML config fixtures
 
+Test files (19 total):
+- `test_core.py`, `test_cms.py`, `test_video.py`, `test_builders.py`
+- `test_web_unit.py`, `test_web_routes.py`, `test_web_integration.py`
+- `test_mcp_tools.py`, `test_translation.py`, `test_security.py`
+- `test_links.py`, `test_readability.py`, `test_gaps.py`
+- `test_variables.py`, `test_diagrams.py`, `test_insights.py`
+- `test_integration.py`, `test_user_config.py`
+
 Test classes follow `Test{ClassName}` naming with `test_{method}` methods.
 
 ## Key Patterns
@@ -98,6 +115,126 @@ project = find_project()  # searches up directory tree for project.yaml
 - `schema.yaml` - frontmatter validation schema
 
 **Module exports**: Public API defined in each module's `__init__.py` and re-exported from top-level `__init__.py`.
+
+## CLI Commands
+
+The CLI is organized into 20+ command modules in `cli/commands/`:
+
+**Project Management:**
+```bash
+media-engine status              # Project status overview
+media-engine init                # Initialize new project
+media-engine dashboard           # Launch web UI
+media-engine release             # Release management workflow
+```
+
+**Content Analysis:**
+```bash
+media-engine insights            # Analytics insights dashboard
+media-engine freshness           # Content freshness status
+media-engine health              # Project health score
+media-engine stats               # Project statistics
+media-engine velocity            # Production velocity metrics
+media-engine parity              # Language parity analysis
+media-engine consistency         # Content consistency checks
+media-engine duplicates          # Duplicate content detection
+media-engine incomplete          # Find incomplete content
+media-engine gaps                # Content gap analysis
+media-engine codesync            # Code synchronization checks
+media-engine terms               # Terminology consistency
+media-engine path                # Content path analysis
+media-engine stale               # Find stale content
+```
+
+**Quality & Validation:**
+```bash
+media-engine quality             # Quality checks
+media-engine validate            # Schema validation
+media-engine security            # Security scanning (secrets, PII)
+media-engine links               # Link validation
+media-engine readability         # Readability analysis
+media-engine integrity verify    # Asset integrity verification
+```
+
+**Translation:**
+```bash
+media-engine translation status    # All translation pairs
+media-engine translation outdated  # Outdated translations
+media-engine translation missing   # Missing translations
+media-engine translation sync      # Sync translation status
+```
+
+**Building & Publishing:**
+```bash
+media-engine build               # Build outputs
+media-engine publish             # Package deliverables
+media-engine pack                # Generate audience packs
+media-engine demos list          # List available demos
+media-engine demos build         # Build interactive demos
+```
+
+**Workflow & Maintenance:**
+```bash
+media-engine provenance report   # Approval workflow status
+media-engine provenance claims   # Claims needing verification
+media-engine provenance queue    # Documents awaiting review
+media-engine graph               # Dependency visualization
+media-engine search              # Content search
+media-engine cache               # Cache management
+media-engine changelog           # Generate changelog
+```
+
+## Insights Module
+
+Comprehensive analytics with 11 specialized analyzers in `insights/`:
+
+```bash
+media-engine insights            # Full insights dashboard
+media-engine health              # Overall project health score
+media-engine consistency         # Content consistency analysis
+media-engine duplicates          # Duplicate content detection
+media-engine terms               # Terminology consistency
+media-engine parity              # Language parity across translations
+media-engine stats               # Project statistics
+media-engine incomplete          # Incomplete content detection
+media-engine velocity            # Production velocity metrics
+media-engine codesync            # Code synchronization status
+media-engine graph               # Dependency graph visualization
+```
+
+```python
+from media_engine.insights import (
+    HealthAnalyzer,
+    ConsistencyChecker,
+    DuplicateDetector,
+    TerminologyAnalyzer,
+    ParityChecker,
+    StatisticsCollector,
+    IncompleteDetector,
+    VelocityTracker,
+    CodeSyncChecker,
+)
+
+health = HealthAnalyzer(project)
+score = health.calculate_score()  # 0-100 health score
+```
+
+## Freshness Tracking
+
+Track content freshness with persistent registry in `freshness/`:
+
+```bash
+media-engine freshness           # Content freshness status
+media-engine stale               # Find stale content
+```
+
+```python
+from media_engine.freshness import FreshnessRegistry, FreshnessScanner
+
+registry = FreshnessRegistry(project)
+scanner = FreshnessScanner(project)
+stale_docs = scanner.find_stale(days=30)
+```
 
 ## Translation Tracking
 
@@ -126,7 +263,7 @@ The `demo/` directory is a fully-functional reference project that documents med
 
 ## MCP Server (Agent Integration)
 
-Media Engine provides a comprehensive MCP server for agent-agnostic integration:
+Media Engine provides a comprehensive MCP server with 16 specialized tool modules:
 
 ```bash
 # Install MCP support
@@ -136,15 +273,25 @@ pip install media-engine[mcp]
 media-engine-mcp --project /path/to/project
 ```
 
-**20+ Tools exposed via MCP:**
-- Project: `project_status`, `project_config`, `refresh_project`
-- Content: `list_chapters`, `read_document`, `update_document_metadata`, `increment_document_version`
-- Translation: `translation_status`, `outdated_translations`, `missing_translations`, `mark_translation_synced`
-- Quality: `quality_check`, `validate_project`
-- Search: `search_content`
-- Build: `build_html`, `build_pptx`, `build_xlsx`
-- Cache: `cache_status`, `clear_cache`
-- Audit: `log_action`, `get_audit_log`
+**Tool Modules in `mcp/tools/`:**
+
+| Module | Purpose |
+|--------|---------|
+| `project.py` | Project status, config, refresh |
+| `documents.py` | List, read, update documents |
+| `translation.py` | Translation status, sync, outdated |
+| `quality.py` | Quality checks, validation |
+| `search.py` | Content search |
+| `build.py` | HTML, PPTX, XLSX generation |
+| `cache.py` | Cache status, clearing |
+| `audit.py` | Audit logging |
+| `provenance.py` | Approval workflows |
+| `batch.py` | Batch operations |
+| `session.py` | Session management |
+| `suggestions.py` | AI-powered suggestions |
+| `claude.py` | Claude-specific integration |
+| `context.py` | Context management |
+| `webhooks.py` | Webhook integrations |
 
 **Claude Desktop config** (`~/.claude/claude_desktop_config.json`):
 ```json
@@ -157,6 +304,8 @@ media-engine-mcp --project /path/to/project
   }
 }
 ```
+
+See `mcp/AGENT_DEVELOPER_GUIDE.md` and `mcp/CLAUDE_CODE_EXAMPLES.md` for integration guides.
 
 ## Web Dashboard
 
@@ -171,11 +320,68 @@ media-engine dashboard
 # Opens http://localhost:8080
 ```
 
-Features:
-- Translation matrix view
-- Quality issue tracking
-- Build controls
+**16 Dashboard Tabs** (`web/dashboard/tabs/`):
+
+| Tab | Purpose |
+|-----|---------|
+| Overview | Project status at a glance |
+| Documents | Document management |
+| Translations | Translation matrix view |
+| Freshness | Content freshness tracking |
+| Insights | Analytics and metrics |
+| Assets | Asset management |
+| Build | Build controls |
+| Quality | Quality issue tracking |
+| Provenance | Approval workflow |
+| Media | Media registry |
+| Search | Content search |
+| Activity | Activity log |
+| Packs | Pack generation |
+| Dependencies | Dependency graph |
+
+**17 API Routes** (`web/routes/`):
+- Core, Documents, Translations, Freshness, Insights
+- Assets, Build, Quality, Provenance, Media
+- Search, Registry, Dependencies, Scene Notes
+- WebSocket handlers for real-time updates
+
+**Features:**
 - Real-time collaboration via WebSocket
+- Responsive design (~195KB JavaScript, ~49KB CSS)
+- RESTful API for all operations
+
+## Remotion (Motion Graphics)
+
+TypeScript/React components for video generation in `remotion/`:
+
+**Components** (`remotion/src/components/`):
+- `TitleCard.tsx` - Title cards
+- `FeatureCard.tsx` - Feature display
+- `TextReveal.tsx` - Text animation
+- `StatCounter.tsx` - Number counter animation
+- `Background.tsx` - Background rendering
+- `Transition.tsx` - Scene transitions
+- `Overlay.tsx` - Overlay elements
+
+**Utilities** (`remotion/src/lib/`):
+- `theme.ts` - Theme utilities
+- `animations.ts` - Animation helpers
+
+**Main files:**
+- `Video.tsx` - Main video composition (~19KB)
+- `Root.tsx` - Root component
+- `remotion.config.ts` - Remotion configuration
+
+## Diagram Generation
+
+Generate diagrams with Matplotlib in `diagrams/`:
+
+```python
+from media_engine.diagrams import DiagramGenerator
+
+generator = DiagramGenerator(project)
+generator.generate("workflow", output_path)
+```
 
 ## Provenance & Approval Workflow
 
@@ -202,7 +408,7 @@ tracker.approve_document(doc_path, "reviewer@example.com")
 ```bash
 media-engine integrity record   # Record asset checksums
 media-engine integrity verify   # Verify no unauthorized changes
-media-engine integrity terms    # Check terminology consistency
+media-engine terms              # Check terminology consistency
 ```
 
 ## Audit Logging
@@ -226,6 +432,10 @@ from media_engine.dependencies import DependencyGraph
 graph = DependencyGraph(project)
 graph.refresh()  # Scan all documents
 affected = graph.get_impact(changed_doc)  # What needs review?
+```
+
+```bash
+media-engine graph               # Visualize dependencies
 ```
 
 ## Platform Independence
@@ -339,6 +549,18 @@ media-engine-gui --browse           # Open file browser
 
 # Or via CLI
 media-engine dashboard
+```
+
+## User Configuration
+
+User-level settings in `config/user_config.py`:
+
+```python
+from media_engine.config import UserConfig
+
+config = UserConfig.load()
+config.set("editor", "code")
+config.save()
 ```
 
 ## GitHub Actions CI/CD

@@ -13,7 +13,7 @@ When a document changes, dependent documents are flagged for review.
 import json
 import re
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Set
 

@@ -55,18 +55,21 @@ scenes:
   # ============================================================
   - id: dashboard-overview
     name: "Dashboard Overview"
-    type: demo
+    type: feature
     duration: 10
     voiceover: "The dashboard gives you complete visibility. See document counts, translation status, quality scores, and content freshness at a glance."
     visual:
-      background: dark
+      background: grid
       transition_in: fade
-    demo:
-      source: dashboard
-      state: overview
-      highlight:
-        - stats-grid
-        - translation-matrix
+      feature_card:
+        icon: dashboard
+        highlight: blue
+      metrics:
+        - Documents
+        - Languages
+        - Translations
+        - Quality
+        - Freshness
 
   # ============================================================
   # INSIGHTS (0:22 - 0:32)
@@ -77,17 +80,17 @@ scenes:
     duration: 10
     voiceover: "The Insights tab shows your project health score. Track freshness, translation coverage, consistency, and more. Get actionable recommendations automatically."
     visual:
-      background: dark
+      background: particles
       transition_in: slide-left
       feature_card:
         icon: chart
         highlight: cyan
-    demo:
-      source: dashboard
-      state: insights
-      highlight:
-        - health-score
-        - components
+      metrics:
+        - Health Score
+        - Freshness
+        - Translation
+        - Consistency
+        - Readability
 
   # ============================================================
   # CONTENT MANAGEMENT (0:32 - 0:42)
@@ -103,12 +106,12 @@ scenes:
       feature_card:
         icon: folder
         highlight: blue
-    demo:
-      source: dashboard
-      state: content-documents
-      highlight:
-        - document-browser
-        - preview-panel
+      pipeline:
+        - Documents
+        - Media
+        - Packs
+        - Assets
+        - Translations
 
   # ============================================================
   # QUALITY CHECKS (0:42 - 0:52)
@@ -119,37 +122,37 @@ scenes:
     duration: 10
     voiceover: "Quality checks run automatically. Catch broken links, readability issues, stale content, and security concerns before they reach production."
     visual:
-      background: dark
+      background: pulse
       transition_in: slide-left
       feature_card:
         icon: shield
         highlight: purple
-    demo:
-      source: dashboard
-      state: quality-report
-      highlight:
-        - quality-summary
-        - issues-list
+      metrics:
+        - Links Valid
+        - Readable
+        - Fresh
+        - Secure
 
   # ============================================================
   # BUILD SYSTEM (0:52 - 1:02)
   # ============================================================
   - id: build
     name: "Build System"
-    type: demo
+    type: feature
     duration: 10
     voiceover: "Ready to publish? Select your output formats. HTML, PDF, PowerPoint, Excel. Choose languages, click build, and watch your content transform."
     visual:
-      background: dark
-      transition_in: slide-left
-    demo:
-      source: dashboard
-      state: build
-      highlight:
-        - format-checkboxes
-        - build-button
-      actions:
-        - click: build-button
+      background: grid
+      transition_in: slice
+      feature_card:
+        icon: build
+        highlight: green
+      icons:
+        - HTML
+        - PDF
+        - PPTX
+        - XLSX
+        - MP4
 
   # ============================================================
   # AI INTEGRATION (1:02 - 1:12)
@@ -180,7 +183,7 @@ scenes:
     duration: 8
     voiceover: "Define video scripts in YAML. Media Engine generates voiceovers, creates captions, and renders motion graphics. This video? Built with Media Engine."
     visual:
-      background: pulse
+      background: aurora
       transition_in: zoom-burst
       feature_card:
         icon: video

@@ -10,7 +10,6 @@ Usage:
     # Returns dict mapping scene_id -> clip_path
 """
 
-import asyncio
 import shutil
 import subprocess
 from dataclasses import dataclass

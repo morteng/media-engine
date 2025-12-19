@@ -493,7 +493,7 @@ class TestEdgeCases:
         """
         # Note: The current implementation doesn't skip code blocks
         # This test documents current behavior
-        links = checker.extract_links(content)
+        checker.extract_links(content)
         # HTML patterns might match quotes
         # Just verify no crash
 
@@ -506,7 +506,7 @@ class TestEdgeCases:
     def test_nested_brackets(self, checker):
         """Test handling of nested brackets."""
         content = "[[not a link]](https://test.com)"
-        links = checker.extract_links(content)
+        checker.extract_links(content)
         # Regex may or may not match this - just verify no crash
 
     def test_special_characters_in_url(self, checker):

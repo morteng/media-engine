@@ -5,10 +5,9 @@ build events, document updates, and quality issues.
 """
 
 import json
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from pathlib import Path
 from typing import Optional
-from dataclasses import dataclass, asdict
 
 
 @dataclass

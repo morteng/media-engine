@@ -114,7 +114,7 @@ def find_manifest() -> Path:
         if path.exists():
             return path
     raise FileNotFoundError(
-        f"Video manifest not found. Searched:\n  " + "\n  ".join(str(p) for p in MANIFEST_SEARCH_PATHS)
+        "Video manifest not found. Searched:\n  " + "\n  ".join(str(p) for p in MANIFEST_SEARCH_PATHS)
     )
 
 
@@ -693,7 +693,7 @@ def main():
 
         subprocess.run(["ffmpeg", "-version"], capture_output=True, check=True)
         print("  ✓ ffmpeg installed (MP4 conversion available)")
-    except:
+    except Exception:
         print("  ⚠ ffmpeg not installed (videos will be in WebM format)")
         print("    Install: brew install ffmpeg  # macOS")
         print("             apt install ffmpeg   # Ubuntu")

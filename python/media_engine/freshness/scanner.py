@@ -5,7 +5,7 @@ Auto-discovers and registers content from standard project locations.
 """
 
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
 
 import yaml
 

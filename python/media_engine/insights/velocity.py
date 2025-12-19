@@ -142,7 +142,7 @@ class VelocityTracker:
                 ["log", "--oneline", f"--since={start_date.isoformat()}", "--", "*.md"]
             )
             if result:
-                metrics.commits = len([l for l in result.split("\n") if l.strip()])
+                metrics.commits = len([line for line in result.split("\n") if line.strip()])
 
             # Get detailed stats
             stats = self._get_detailed_stats(start_date)
@@ -154,7 +154,7 @@ class VelocityTracker:
                 ["log", "--name-only", "--format=", f"--since={start_date.isoformat()}", "--", "*.md"]
             )
             if result:
-                files = set(l.strip() for l in result.split("\n") if l.strip())
+                files = set(line.strip() for line in result.split("\n") if line.strip())
                 metrics.documents_modified = len(files)
 
             # Get contributors
@@ -203,7 +203,7 @@ class VelocityTracker:
                      "--", "*.md"]
                 )
                 if result:
-                    metrics.commits = len([l for l in result.split("\n") if l.strip()])
+                    metrics.commits = len([line for line in result.split("\n") if line.strip()])
 
             except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
                 pass

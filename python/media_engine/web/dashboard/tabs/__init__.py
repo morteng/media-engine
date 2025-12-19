@@ -1,19 +1,19 @@
 """Dashboard tab components."""
 
-from .overview import get_overview_tab
-from .documents import get_documents_tab
-from .media import get_media_tab
-from .packs import get_packs_tab
-from .assets import get_assets_tab
-from .translations import get_translations_tab
-from .quality import get_quality_tab
-from .freshness import get_freshness_tab
-from .provenance import get_provenance_tab
-from .build import get_build_tab
-from .search import get_search_tab
-from .dependencies import get_dependencies_tab
 from .activity import get_activity_tab
-from .insights import get_insights_tab, get_insights_styles, get_insights_scripts
+from .assets import get_assets_tab
+from .build import get_build_tab
+from .dependencies import get_dependencies_tab
+from .documents import get_documents_tab
+from .freshness import get_freshness_tab
+from .insights import get_insights_scripts, get_insights_styles, get_insights_tab
+from .media import get_media_tab
+from .overview import get_overview_tab
+from .packs import get_packs_tab
+from .provenance import get_provenance_tab
+from .quality import get_quality_tab
+from .search import get_search_tab
+from .translations import get_translations_tab
 
 __all__ = [
     "get_overview_tab",

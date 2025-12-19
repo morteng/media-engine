@@ -4,11 +4,10 @@ Centralized path constants and resolution for Media Engine.
 All path templates, directory names, and path resolution logic should be here.
 """
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
-import os
-
 
 # =============================================================================
 # DIRECTORY NAMES

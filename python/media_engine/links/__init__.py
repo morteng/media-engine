@@ -10,7 +10,6 @@ Validates both internal and external links in documentation:
 Caches results to avoid hammering external servers.
 """
 
-import hashlib
 import json
 import re
 import urllib.error

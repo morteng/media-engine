@@ -90,10 +90,7 @@ media-engine dashboard
 
 | Script | Duration | Description |
 |--------|----------|-------------|
-| [GitHub Showcase](scripts/github_readme_showcase.yaml) | 3 min | Full feature demonstration |
-| [30-Second Teaser](scripts/teaser_30s.yaml) | 30 sec | Quick social media hook |
-| [Demo Video](scripts/demo-video.yaml) | 1 min | Product overview |
-| [Demo Overview](scripts/demo_overview.yaml) | 45 sec | Alternative overview format |
+| [Walkthrough](scripts/walkthrough.yaml) | 90 sec | Complete feature walkthrough with scenes |
 
 ### Presentations
 
@@ -119,6 +116,13 @@ media-engine dashboard
 | [Pricing Calculator](demos/pricing_calculator.yaml) | Calculator | Project cost estimator |
 | [Feature Comparison](demos/feature_comparison.yaml) | Comparison | Plan comparison table |
 | [Code Playground](demos/code_playground.yaml) | Code Playground | Live HTML/CSS/JS editor |
+| [Dashboard Demo](demos/dashboard-demo.yaml) | Scene Capture | Dashboard UI state definitions |
+| [Project Timeline](demos/project_timeline.yaml) | Timeline | Development milestones |
+| [Feature Quiz](demos/feature_quiz.yaml) | Quiz | Knowledge check questions |
+| [Health Metrics](demos/health_metrics.yaml) | Data Viz | Project health radar chart |
+| [Project Form](demos/project_form.yaml) | Form Demo | Configuration with validation |
+| [API Explorer](demos/api_explorer.yaml) | API Explorer | Dashboard API endpoints |
+| [Architecture](demos/architecture_diagram.yaml) | Interactive Diagram | Clickable system components |
 
 ### Data Files
 

@@ -14,8 +14,6 @@ Statistics categories:
 import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Optional
 
 import yaml
 

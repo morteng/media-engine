@@ -26,13 +26,13 @@ def register_insights_routes(
             return {"error": "No project found"}
 
         from ...insights import (
-            HealthScorer,
-            StatisticsCollector,
-            IncompleteTracker,
             ConsistencyChecker,
-            ParityAnalyzer,
-            VelocityTracker,
+            HealthScorer,
+            IncompleteTracker,
             KnowledgeGraph,
+            ParityAnalyzer,
+            StatisticsCollector,
+            VelocityTracker,
         )
 
         result = {}

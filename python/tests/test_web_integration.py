@@ -5,7 +5,6 @@ Tests the FastAPI endpoints in media_engine.web.routes module,
 with a focus on the scene notes feature and core API endpoints.
 """
 
-import json
 import shutil
 from pathlib import Path
 
@@ -20,7 +19,6 @@ except ImportError:
     HAS_FASTAPI = False
 
 if HAS_FASTAPI:
-    from media_engine.core.project import Project
     from media_engine.web.app import create_app
 
 # Path to demo project
@@ -644,7 +642,7 @@ class TestProjectSwitcherAPI:
         """Test DELETE /api/recent-projects removes a project."""
         # First, get current recent projects
         response = client.get("/api/recent-projects")
-        initial_recent = response.json()["recent"]
+        response.json()["recent"]
 
         # Try to remove a nonexistent project
         response = client.delete(

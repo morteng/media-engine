@@ -30,15 +30,15 @@ from .publish import PublishConfig, publish_project
 from .quality import QualityReport, run_quality_checks
 from .search import SearchIndex, build_search_index
 from .settings import (
+    CACHE,
+    DIRS,
+    ENV,
+    FILES,
+    NETWORK,
+    QUALITY,
     VIDEO,
     VOICEOVER,
     WEB,
-    NETWORK,
-    QUALITY,
-    CACHE,
-    DIRS,
-    FILES,
-    ENV,
     get_default,
 )
 from .status import get_project_dashboard, print_dashboard

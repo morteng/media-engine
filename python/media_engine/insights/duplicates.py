@@ -13,7 +13,7 @@ Detection methods:
 import hashlib
 import re
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
@@ -260,7 +260,7 @@ class DuplicateDetector:
                     # Find sections that explain this concept
                     for section in self._extract_sections(content):
                         title = section["title"].lower()
-                        body = section["body"].lower()
+                        section["body"].lower()
 
                         # Check if section is about this concept
                         if concept.lower() in title or (

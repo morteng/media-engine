@@ -5,9 +5,8 @@ All magic numbers, default strings, and configuration values should be defined h
 This provides a single source of truth for all defaults across the codebase.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
-
 
 # =============================================================================
 # VIDEO SETTINGS

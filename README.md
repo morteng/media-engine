@@ -12,14 +12,14 @@ Write content once in Markdown. Generate professional documents, presentations, 
 ## See It In Action
 
 <p align="center">
-  <video src="https://github.com/morteng/media-engine/raw/main/docs/videos/intro.mp4" width="720" autoplay loop muted playsinline>
-    Your browser does not support the video tag.
-  </video>
+  <a href="https://github.com/morteng/media-engine/raw/main/demo/output/en/videos/walkthrough.mp4">
+    <img src="https://github.com/morteng/media-engine/raw/main/docs/images/walkthrough-preview.png" width="720" alt="Media Engine Walkthrough">
+  </a>
 </p>
 
 <p align="center">
-  <em>50-second intro: Write once, publish everywhere</em><br>
-  <a href="https://github.com/morteng/media-engine/raw/main/docs/videos/showcase.mp4">Watch full 4-minute showcase with voiceover</a>
+  <em>99-second walkthrough: Dashboard, insights, content management, quality, build system, AI integration, and video production</em><br>
+  <strong>This video was built with Media Engine</strong> - from YAML script to AI voiceover to motion graphics
 </p>
 
 ---
@@ -290,12 +290,6 @@ Features:
 
 ## Video Production Pipeline
 
-<p align="center">
-  <video src="https://github.com/morteng/media-engine/raw/main/docs/videos/teaser.mp4" width="480" autoplay loop muted playsinline>
-    Your browser does not support the video tag.
-  </video>
-</p>
-
 Define video scripts in YAML:
 
 ```yaml
@@ -327,7 +321,7 @@ Generates:
 
 ## Interactive Demos
 
-Create calculator, playground, comparison, and quiz demos:
+Create 9 types of interactive demos: `calculator`, `code_playground`, `comparison`, `timeline`, `quiz`, `data_viz`, `form_demo`, `api_explorer`, `interactive_diagram`:
 
 ```yaml
 # content/en/demos/pricing.yaml
@@ -387,6 +381,24 @@ pip install -e ".[web]"         # With dashboard
 pip install -e ".[mcp]"         # With MCP server
 pip install -e ".[pdf]"         # With PDF generation
 pip install -e ".[all]"         # Everything
+```
+
+---
+
+## Demo Project
+
+The `demo/` directory is a comprehensive, self-documenting reference project:
+
+- **16 chapters** covering all Media Engine features
+- **12 interactive demos** showcasing all 9 demo types
+- **Full translations** (English + Norwegian)
+- **Video scripts, diagrams, slides, and data files**
+- **The walkthrough video** - built entirely with Media Engine
+
+```bash
+cd demo
+media-engine dashboard    # Explore the demo project
+media-engine build        # Build all outputs
 ```
 
 ---

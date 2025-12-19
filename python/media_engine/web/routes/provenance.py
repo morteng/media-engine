@@ -25,7 +25,6 @@ def register_provenance_routes(
 
     from ...provenance import (
         ApprovalStatus,
-        ClaimStatus,
         ProvenanceTracker,
     )
 

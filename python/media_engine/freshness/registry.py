@@ -14,8 +14,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple
 
-from .types import ContentType, FreshnessReport, FreshnessStatus, TrackedItem
 from ..settings import DEFAULT_IGNORE_PATTERNS, DIRS, FILES
+from .types import ContentType, FreshnessReport, FreshnessStatus, TrackedItem
 
 if TYPE_CHECKING:
     from ..core.project import Project

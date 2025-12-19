@@ -1,0 +1,253 @@
+{
+  "title": "walkthrough",
+  "name": "walkthrough",
+  "language": "en",
+  "duration": 99.211,
+  "fps": 30,
+  "width": 1920,
+  "height": 1080,
+  "quality": "production",
+  "is_releasable": true,
+  "resolution": {
+    "width": 1920,
+    "height": 1080
+  },
+  "scenes": [
+    {
+      "id": "hook",
+      "type": "intro",
+      "title": "The Problem",
+      "text": "You write great documentation. But turning it into polished deliverables? That takes forever.",
+      "startFrame": 0,
+      "endFrame": 158,
+      "durationFrames": 158,
+      "visual": {
+        "background": "cyber",
+        "transition_in": "glitch",
+        "text_effect": "bounce"
+      }
+    },
+    {
+      "id": "intro",
+      "type": "intro",
+      "title": "Media Engine",
+      "text": "Media Engine automates your entire content pipeline. Write once in Markdown, publish everywhere.",
+      "startFrame": 158,
+      "endFrame": 357,
+      "durationFrames": 199,
+      "visual": {
+        "background": "aurora",
+        "transition_in": "aurora-sweep",
+        "show_logo": true,
+        "gradient_text": true,
+        "glow": true
+      }
+    },
+    {
+      "id": "dashboard-overview",
+      "type": "feature",
+      "title": "Dashboard Overview",
+      "text": "The dashboard gives you complete visibility. See document counts, translation status, quality scores, and content freshness at a glance.",
+      "startFrame": 357,
+      "endFrame": 650,
+      "durationFrames": 293,
+      "visual": {
+        "background": "grid",
+        "transition_in": "fade",
+        "feature_card": {
+          "icon": "dashboard",
+          "highlight": "blue"
+        },
+        "metrics": [
+          "Documents",
+          "Languages",
+          "Translations",
+          "Quality",
+          "Freshness"
+        ]
+      }
+    },
+    {
+      "id": "insights",
+      "type": "feature",
+      "title": "Project Insights",
+      "text": "The Insights tab shows your project health score. Track freshness, translation coverage, consistency, and more. Get actionable recommendations automatically.",
+      "startFrame": 650,
+      "endFrame": 1019,
+      "durationFrames": 369,
+      "visual": {
+        "background": "particles",
+        "transition_in": "slide-left",
+        "feature_card": {
+          "icon": "chart",
+          "highlight": "cyan"
+        },
+        "metrics": [
+          "Health Score",
+          "Freshness",
+          "Translation",
+          "Consistency",
+          "Readability"
+        ]
+      }
+    },
+    {
+      "id": "content",
+      "type": "feature",
+      "title": "Content Management",
+      "text": "Browse all your documents, media files, and assets in one place. Preview markdown with live rendering, view metadata, and manage translations across languages.",
+      "startFrame": 1019,
+      "endFrame": 1355,
+      "durationFrames": 336,
+      "visual": {
+        "background": "dark",
+        "transition_in": "slide-left",
+        "feature_card": {
+          "icon": "folder",
+          "highlight": "blue"
+        },
+        "pipeline": [
+          "Documents",
+          "Media",
+          "Packs",
+          "Assets",
+          "Translations"
+        ]
+      }
+    },
+    {
+      "id": "quality",
+      "type": "feature",
+      "title": "Quality Assurance",
+      "text": "Quality checks run automatically. Catch broken links, readability issues, stale content, and security concerns before they reach production.",
+      "startFrame": 1355,
+      "endFrame": 1688,
+      "durationFrames": 333,
+      "visual": {
+        "background": "pulse",
+        "transition_in": "slide-left",
+        "feature_card": {
+          "icon": "shield",
+          "highlight": "purple"
+        },
+        "metrics": [
+          "Links Valid",
+          "Readable",
+          "Fresh",
+          "Secure"
+        ]
+      }
+    },
+    {
+      "id": "build",
+      "type": "feature",
+      "title": "Build System",
+      "text": "Ready to publish? Select your output formats. HTML, PDF, PowerPoint, Excel. Choose languages, click build, and watch your content transform.",
+      "startFrame": 1688,
+      "endFrame": 1996,
+      "durationFrames": 308,
+      "visual": {
+        "background": "grid",
+        "transition_in": "slice",
+        "feature_card": {
+          "icon": "build",
+          "highlight": "green"
+        },
+        "icons": [
+          "HTML",
+          "PDF",
+          "PPTX",
+          "XLSX",
+          "MP4"
+        ]
+      }
+    },
+    {
+      "id": "ai-integration",
+      "type": "feature",
+      "title": "AI Agent Integration",
+      "text": "Connect AI agents through MCP. Twenty plus tools let you manage content, run quality checks, and trigger builds conversationally. Works with Claude Desktop out of the box.",
+      "startFrame": 1996,
+      "endFrame": 2390,
+      "durationFrames": 394,
+      "visual": {
+        "background": "particles",
+        "transition_in": "diagonal-split",
+        "feature_card": {
+          "icon": "ai",
+          "highlight": "hot"
+        },
+        "pipeline": [
+          "Claude Desktop",
+          "MCP Server",
+          "Media Engine",
+          "All Outputs"
+        ]
+      }
+    },
+    {
+      "id": "video",
+      "type": "feature",
+      "title": "Video Production",
+      "text": "Define video scripts in YAML. Media Engine generates voiceovers, creates captions, and renders motion graphics. This video? Built with Media Engine.",
+      "startFrame": 2390,
+      "endFrame": 2788,
+      "durationFrames": 398,
+      "visual": {
+        "background": "aurora",
+        "transition_in": "zoom-burst",
+        "feature_card": {
+          "icon": "video",
+          "highlight": "cyan"
+        },
+        "pipeline": [
+          "YAML Script",
+          "AI Voiceover",
+          "Auto Captions",
+          "Motion Graphics"
+        ]
+      }
+    },
+    {
+      "id": "install",
+      "type": "demo",
+      "title": "Get Started",
+      "text": "Get started in seconds.",
+      "startFrame": 2788,
+      "endFrame": 2841,
+      "durationFrames": 53,
+      "visual": {
+        "background": "grid",
+        "transition_in": "rotate-wipe",
+        "terminal": {
+          "commands": [
+            "pip install media-engine",
+            "media-engine dashboard"
+          ]
+        }
+      }
+    },
+    {
+      "id": "closing",
+      "type": "outro",
+      "title": "Media Engine",
+      "text": "Media Engine. Write content. Generate media. Ship faster.",
+      "startFrame": 2841,
+      "endFrame": 2977,
+      "durationFrames": 136,
+      "visual": {
+        "background": "waves",
+        "transition_in": "aurora-sweep",
+        "show_logo": true,
+        "gradient_text": true,
+        "logo_glow": true,
+        "pulse_animation": true,
+        "cta": {
+          "primary": "pip install media-engine",
+          "secondary": "github.com/morteng/media-engine"
+        },
+        "fade_out": true
+      }
+    }
+  ]
+}

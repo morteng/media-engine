@@ -1,0 +1,112 @@
+# API Explorer Demo
+# Interactive API endpoint tester for the web dashboard
+
+id: api-explorer
+type: api_explorer
+title: Dashboard API Explorer
+description: Explore and test the Media Engine dashboard API endpoints.
+
+data:
+  base_url: "http://localhost:8080/api"
+
+  endpoints:
+    - id: status
+      method: GET
+      path: "/status"
+      name: Project Status
+      description: Get current project status and statistics
+      response_example:
+        project_name: "Media Engine Demo"
+        document_count: 31
+        languages: ["en", "no"]
+        health_score: 94.1
+
+    - id: documents
+      method: GET
+      path: "/documents"
+      name: List Documents
+      description: Get all documents with metadata
+      parameters:
+        - name: language
+          type: query
+          required: false
+          description: Filter by language code
+        - name: status
+          type: query
+          required: false
+          description: Filter by status (draft, review, final)
+      response_example:
+        documents:
+          - path: "en/chapters/01_introduction.md"
+            title: "Introduction"
+            status: "final"
+
+    - id: document_read
+      method: GET
+      path: "/documents/{path}"
+      name: Read Document
+      description: Get document content and metadata
+      parameters:
+        - name: path
+          type: path
+          required: true
+          description: Document path (URL-encoded)
+      response_example:
+        path: "en/chapters/01_introduction.md"
+        title: "Introduction to Media Engine"
+        content: "# Introduction..."
+        metadata:
+          version: "1.0.0"
+          status: "final"
+
+    - id: translation_status
+      method: GET
+      path: "/translations"
+      name: Translation Status
+      description: Get translation pairs and their sync status
+      response_example:
+        pairs:
+          - source: "en/chapters/01_introduction.md"
+            translation: "no/chapters/01_introduksjon.md"
+            is_outdated: false
+
+    - id: health
+      method: GET
+      path: "/health"
+      name: Health Check
+      description: Get project health score and component breakdown
+      response_example:
+        overall: 94.1
+        grade: "A"
+        components:
+          freshness: 100.0
+          translation: 100.0
+          consistency: 84.2
+
+    - id: build
+      method: POST
+      path: "/build"
+      name: Trigger Build
+      description: Start a build process
+      parameters:
+        - name: formats
+          type: body
+          required: false
+          description: "Array of formats to build: html, pdf, pptx, xlsx"
+        - name: languages
+          type: body
+          required: false
+          description: "Array of language codes to build"
+      response_example:
+        job_id: "build-12345"
+        status: "started"
+        formats: ["html", "pdf"]
+
+  settings:
+    show_response_schema: true
+    allow_execute: false
+    syntax_highlight: true
+
+width: "100%"
+height: "600px"
+theme: light

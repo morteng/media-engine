@@ -346,7 +346,7 @@ def run_quality_checks(
 
     # Check all content files
     for lang in project.languages:
-        lang_config = project.languages.get(lang)
+        project.languages.get(lang)
 
         # Check chapters
         for chapter_path in project.list_chapters(lang):

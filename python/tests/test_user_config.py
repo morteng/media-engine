@@ -4,7 +4,6 @@ Unit tests for user configuration module.
 Tests the recent projects tracking functionality in ~/.media-engine/
 """
 
-import shutil
 from pathlib import Path
 
 import pytest

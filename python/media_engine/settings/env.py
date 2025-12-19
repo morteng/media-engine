@@ -7,10 +7,9 @@ Provides a clean interface for reading and validating environment variables.
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Optional, TypeVar
+from typing import Any, Optional, TypeVar
 
 from .paths import ENV
-
 
 T = TypeVar("T")
 
@@ -222,9 +221,9 @@ def generate_env_example() -> str:
     for var in ALL_ENV_VARS.values():
         lines.append(f"# {var.description}")
         if var.required:
-            lines.append(f"# REQUIRED")
+            lines.append("# REQUIRED")
         if var.sensitive:
-            lines.append(f"# SENSITIVE - do not commit to version control")
+            lines.append("# SENSITIVE - do not commit to version control")
 
         if var.default:
             lines.append(f"{var.name}={var.default}")

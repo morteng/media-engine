@@ -13,9 +13,8 @@ Usage:
     media-engine dashboard       # CLI equivalent
 """
 
-import os
+import importlib.util
 import sys
-import webbrowser
 from pathlib import Path
 from typing import Optional
 
@@ -67,19 +66,13 @@ def check_dependencies() -> tuple[bool, list[str]]:
     """Check if required dependencies are installed."""
     missing = []
 
-    try:
-        import fastapi
-    except ImportError:
+    if importlib.util.find_spec("fastapi") is None:
         missing.append("fastapi")
 
-    try:
-        import uvicorn
-    except ImportError:
+    if importlib.util.find_spec("uvicorn") is None:
         missing.append("uvicorn")
 
-    try:
-        import websockets
-    except ImportError:
+    if importlib.util.find_spec("websockets") is None:
         missing.append("websockets")
 
     return len(missing) == 0, missing

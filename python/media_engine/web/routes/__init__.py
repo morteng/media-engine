@@ -7,6 +7,8 @@ This package contains modular route handlers organized by functionality.
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable
 
+from .helpers import find_source_demo, find_source_script
+
 if TYPE_CHECKING:
     from fastapi import APIRouter, FastAPI
 
@@ -88,8 +90,5 @@ def register_routes(
 
     return router
 
-
-# Re-export for backwards compatibility and testing
-from .helpers import find_source_demo, find_source_script
 
 __all__ = ["register_routes", "find_source_script", "find_source_demo"]

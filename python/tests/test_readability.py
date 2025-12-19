@@ -306,7 +306,7 @@ class TestReadabilityChecker:
         )  # Repeat to get more data
         report = checker.check_text(text)
 
-        flesch_issues = [i for i in report.issues if i.issue_type == "flesch_score"]
+        [i for i in report.issues if i.issue_type == "flesch_score"]
         # May or may not trigger depending on exact score
         # Just verify the report was created
         assert report.metrics.flesch_reading_ease < 50
@@ -375,7 +375,7 @@ necessitates comprehensive methodological frameworks.
 
         report = checker.check_document(file_path)
         # Should fail because content is too complex for elementary
-        doc_target_issues = [i for i in report.issues if i.issue_type == "document_target"]
+        [i for i in report.issues if i.issue_type == "document_target"]
         # May have issues if grade level exceeds elementary
         assert isinstance(report, ReadabilityReport)
 

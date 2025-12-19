@@ -3,7 +3,7 @@ Build API routes.
 """
 
 import asyncio
-from typing import TYPE_CHECKING, Callable, Dict, List
+from typing import TYPE_CHECKING, Callable, Dict
 
 if TYPE_CHECKING:
     from fastapi import APIRouter
@@ -19,7 +19,6 @@ def register_build_routes(
 ):
     """Register build-related routes."""
     from datetime import datetime
-    from pathlib import Path
 
     from fastapi import BackgroundTasks
 
@@ -95,7 +94,7 @@ def register_build_routes(
 
         project = get_project()
         format_list = [f.strip() for f in formats.split(",") if f.strip()]
-        lang_list = [l.strip() for l in languages.split(",")] if languages else list(project.languages.keys())
+        lang_list = [lang.strip() for lang in languages.split(",")] if languages else list(project.languages.keys())
 
         async def run_build():
             build_state["active"] = True
@@ -166,7 +165,7 @@ def register_build_routes(
                                         log(f"  Built {output_path.name}", "success")
 
                             elif fmt == "pdf":
-                                log(f"  PDF generation requires wkhtmltopdf", "warning")
+                                log("  PDF generation requires wkhtmltopdf", "warning")
 
                         except Exception as e:
                             log(f"  Error building {fmt} for {lang}: {e}", "error")

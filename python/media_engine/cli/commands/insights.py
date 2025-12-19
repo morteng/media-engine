@@ -132,7 +132,7 @@ def cmd_incomplete(args):
         if args.json:
             print(json.dumps(summary, indent=2))
         else:
-            print(f"\nIncomplete Content Summary")
+            print("\nIncomplete Content Summary")
             print("=" * 40)
             print(f"Total items: {summary['total']}")
             print(f"Debt score: {summary['debt_score']:.1f}/100")
@@ -347,7 +347,7 @@ def cmd_graph(args):
     elif args.json:
         print(json.dumps(graph.export_json(), indent=2))
     else:
-        print(f"\nKnowledge Graph")
+        print("\nKnowledge Graph")
         print("=" * 50)
         print(f"Nodes: {len(nodes)}")
         print(f"Edges: {len(edges)}")
@@ -394,6 +394,6 @@ def cmd_path(args):
         print("=" * 50)
         print(path.description)
         print(f"\nEstimated time: {path.estimated_time} minutes")
-        print(f"\nReading Order:")
+        print("\nReading Order:")
         for node in path.documents:
             print(f"  {node.order}. {node.title} ({node.estimated_time} min)")

@@ -14,7 +14,6 @@ import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from pathlib import Path
 from typing import Optional
 
 
@@ -220,7 +219,6 @@ class DocumentVersionTracker:
                 if since and mtime < since:
                     continue
 
-                version = doc.metadata.get("version", "1.0.0")
                 status = doc.metadata.get("status", "draft")
 
                 # Create entry based on status

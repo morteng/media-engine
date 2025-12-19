@@ -1,0 +1,94 @@
+# Project Configuration Form Demo
+# Form demo showing validation and configuration options
+
+id: project-form
+type: form_demo
+title: Project Configuration
+description: Configure a new Media Engine project with validation.
+
+data:
+  fields:
+    - name: project_name
+      type: text
+      label: Project Name
+      placeholder: "my-documentation"
+      required: true
+      validation:
+        pattern: "^[a-z][a-z0-9-]*$"
+        message: "Lowercase letters, numbers, and hyphens only. Must start with a letter."
+        min_length: 3
+        max_length: 50
+
+    - name: description
+      type: textarea
+      label: Description
+      placeholder: "A brief description of your project..."
+      required: false
+      validation:
+        max_length: 200
+
+    - name: languages
+      type: multiselect
+      label: Languages
+      required: true
+      options:
+        - value: en
+          label: English
+        - value: "no"
+          label: Norwegian
+        - value: de
+          label: German
+        - value: fr
+          label: French
+        - value: es
+          label: Spanish
+      default: ["en"]
+
+    - name: outputs
+      type: checkbox_group
+      label: Output Formats
+      options:
+        - value: html
+          label: HTML Documentation
+          checked: true
+        - value: pdf
+          label: PDF Reports
+          checked: false
+        - value: pptx
+          label: PowerPoint Slides
+          checked: false
+        - value: xlsx
+          label: Excel Data
+          checked: false
+        - value: video
+          label: Video Production
+          checked: false
+
+    - name: theme
+      type: select
+      label: Theme
+      required: true
+      options:
+        - value: midnight-blue
+          label: Midnight Blue (Dark)
+        - value: ocean-breeze
+          label: Ocean Breeze (Light)
+        - value: forest-green
+          label: Forest Green
+        - value: custom
+          label: Custom Theme
+      default: midnight-blue
+
+    - name: enable_mcp
+      type: toggle
+      label: Enable MCP Server
+      description: "Allow AI agents to interact with this project"
+      default: true
+
+  submit_button: "Create Project"
+  reset_button: "Reset"
+  show_validation: true
+
+width: "100%"
+height: "auto"
+theme: light

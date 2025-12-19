@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 import yaml
 
 try:
-    from jsonschema import Draft7Validator, validate
+    from jsonschema import validate
     from jsonschema import ValidationError as JsonSchemaError
 
     HAS_JSONSCHEMA = True

@@ -278,9 +278,9 @@ class DocumentGraphBuilder:
 
         # Leaf documents (final outputs)
         leaves = [
-            l
-            for l in self.get_leaf_documents()
-            if self.graph.nodes[l].doc_type.startswith("deliverable")
+            doc_id
+            for doc_id in self.get_leaf_documents()
+            if self.graph.nodes[doc_id].doc_type.startswith("deliverable")
         ]
         if leaves:
             lines.append("## Deliverable Outputs")

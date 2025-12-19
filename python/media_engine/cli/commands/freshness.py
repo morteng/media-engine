@@ -9,7 +9,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from ...core import find_project
-from ...freshness import ContentRegistry, FreshnessStatus, scan_project
+from ...freshness import ContentRegistry, scan_project
 
 console = Console()
 

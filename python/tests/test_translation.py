@@ -217,7 +217,7 @@ class TestBidirectionalSync:
 
     def test_translation_update_preserves_source_link(self, translation_project):
         """Test that updating translation preserves source document link."""
-        tracker = TranslationTracker(translation_project)
+        TranslationTracker(translation_project)
 
         # Load and update translation
         trans_path = translation_project.content_dir / "no/chapters/01_intro.md"

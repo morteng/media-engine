@@ -18,7 +18,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import date, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 
 
 class ApprovalStatus(str, Enum):

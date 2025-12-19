@@ -279,7 +279,6 @@ class VideoTimeline:
         3. Composites layers
         4. Outputs final video
         """
-        lines = []
         inputs = []
         input_index = 0
         input_map = {}
@@ -489,7 +488,6 @@ def print_timeline_summary(timeline: VideoTimeline):
 
         for clip in track.clips:
             duration = clip.end_time - clip.start_time
-            source = clip.source_path.name if clip.source_path else "generated"
             print(
                 f"  {clip.start_time:6.1f}s - {clip.end_time:6.1f}s ({duration:.1f}s) | {clip.id}"
             )

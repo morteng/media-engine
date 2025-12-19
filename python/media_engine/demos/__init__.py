@@ -11,13 +11,11 @@ Supports embedding interactive demos in documentation:
 Demos are defined as YAML files and rendered to self-contained HTML.
 """
 
-import hashlib
 import html
 import json
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
 
 
 class DemoType(str, Enum):
@@ -238,7 +236,7 @@ class DemoRenderer:
     def _render_diagram(self, config: DemoConfig) -> str:
         """Render an interactive diagram."""
         nodes = config.data.get("nodes", [])
-        connections = config.data.get("connections", [])
+        config.data.get("connections", [])
 
         nodes_html = ""
         for node in nodes:
@@ -309,12 +307,12 @@ class DemoRenderer:
         fields = config.data.get("fields", [])
 
         fields_html = ""
-        for field in fields:
-            name = field.get("name", "")
-            label = html.escape(field.get("label", name))
-            field_type = field.get("type", "text")
-            required = "required" if field.get("required", False) else ""
-            pattern = f'pattern="{field.get("pattern", "")}"' if field.get("pattern") else ""
+        for form_field in fields:
+            name = form_field.get("name", "")
+            label = html.escape(form_field.get("label", name))
+            field_type = form_field.get("type", "text")
+            required = "required" if form_field.get("required", False) else ""
+            pattern = f'pattern="{form_field.get("pattern", "")}"' if form_field.get("pattern") else ""
 
             fields_html += f"""
             <div style="margin-bottom: 1em;">

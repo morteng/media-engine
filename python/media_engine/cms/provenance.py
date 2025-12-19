@@ -135,7 +135,6 @@ class ProvenanceTracker:
 
         prov = self.get_provenance(doc)
         old_version = doc.version
-        old_hash = prov.current_hash
 
         # Increment version
         new_version = doc.increment_version(change_type)

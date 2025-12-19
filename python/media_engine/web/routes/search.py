@@ -18,7 +18,6 @@ def register_search_routes(
 ):
     """Register search-related routes."""
     import re
-    from pathlib import Path
 
     @router.get("/api/search")
     async def search_content(

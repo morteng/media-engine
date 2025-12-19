@@ -218,6 +218,429 @@ class TestTransitionType:
         assert TransitionType.COPPER_SWEEP.value == "copper_sweep"
 
 
+class TestTimelineSaveLoad:
+    """Tests for timeline save/load functionality."""
+
+    def test_save_timeline(self, temp_dir):
+        """Test saving timeline to YAML."""
+        timeline = VideoTimeline(
+            id="test-timeline",
+            name="Test Timeline",
+            duration=60.0,
+        )
+        timeline.add_track("video", TrackType.VIDEO)
+
+        save_path = temp_dir / "timeline.yaml"
+        result_path = timeline.save(save_path)
+
+        assert result_path == save_path
+        assert save_path.exists()
+
+        content = save_path.read_text()
+        assert "test-timeline" in content
+        assert "Test Timeline" in content
+
+    def test_load_timeline(self, temp_dir):
+        """Test loading timeline from YAML."""
+        yaml_content = """
+id: loaded-timeline
+name: Loaded Timeline
+duration: 120.0
+width: 1920
+height: 1080
+fps: 30
+tracks:
+  video:
+    type: video
+    muted: false
+    locked: false
+    clips:
+      - id: clip-1
+        track: video
+        source: /path/to/video.mp4
+        start: 0
+        end: 60
+        source_in: 0
+        position: [0, 0]
+        scale: 1.0
+        opacity: 1.0
+        metadata: {}
+"""
+        yaml_path = temp_dir / "timeline.yaml"
+        yaml_path.write_text(yaml_content)
+
+        timeline = VideoTimeline.load(yaml_path)
+
+        assert timeline.id == "loaded-timeline"
+        assert timeline.name == "Loaded Timeline"
+        assert timeline.duration == 120.0
+        assert timeline.fps == 30
+        assert "video" in timeline.tracks
+        assert len(timeline.tracks["video"].clips) == 1
+        assert timeline.tracks["video"].clips[0].id == "clip-1"
+
+    def test_save_and_load_roundtrip(self, temp_dir):
+        """Test that save/load roundtrip preserves data."""
+        # Create a timeline with clips
+        timeline = VideoTimeline(
+            id="roundtrip",
+            name="Roundtrip Test",
+            duration=30.0,
+            fps=24,
+        )
+        track = timeline.add_track("main", TrackType.VIDEO)
+        clip = TimelineClip(
+            id="test-clip",
+            track=TrackType.VIDEO,
+            source_path=Path("/tmp/test.mp4"),
+            start_time=0.0,
+            end_time=30.0,
+            scale=1.5,
+            opacity=0.8,
+        )
+        track.add_clip(clip)
+
+        save_path = temp_dir / "roundtrip.yaml"
+        timeline.save(save_path)
+
+        loaded = VideoTimeline.load(save_path)
+
+        assert loaded.id == timeline.id
+        assert loaded.name == timeline.name
+        assert loaded.duration == timeline.duration
+        assert loaded.fps == timeline.fps
+        assert "main" in loaded.tracks
+        assert len(loaded.tracks["main"].clips) == 1
+        assert loaded.tracks["main"].clips[0].id == "test-clip"
+
+
+class TestVideoTimelineAdvanced:
+    """Advanced tests for VideoTimeline functionality."""
+
+    def test_add_clip_to_timeline(self):
+        """Test adding clip via timeline method."""
+        timeline = VideoTimeline(
+            id="test",
+            name="Test",
+            duration=60.0,
+        )
+        timeline.add_track("video", TrackType.VIDEO)
+
+        clip = TimelineClip(
+            id="clip-1",
+            track=TrackType.VIDEO,
+            source_path=Path("test.mp4"),
+            start_time=0.0,
+            end_time=30.0,
+        )
+
+        result = timeline.add_clip("video", clip)
+
+        assert result is clip
+        assert len(timeline.tracks["video"].clips) == 1
+
+    def test_add_clip_to_nonexistent_track(self):
+        """Test adding clip to non-existent track raises error."""
+        timeline = VideoTimeline(
+            id="test",
+            name="Test",
+            duration=60.0,
+        )
+
+        clip = TimelineClip(
+            id="clip-1",
+            track=TrackType.VIDEO,
+            source_path=Path("test.mp4"),
+            start_time=0.0,
+            end_time=30.0,
+        )
+
+        import pytest
+        with pytest.raises(ValueError) as exc_info:
+            timeline.add_clip("nonexistent", clip)
+
+        assert "Track not found" in str(exc_info.value)
+
+    def test_calculated_duration(self):
+        """Test calculated duration from track contents."""
+        timeline = VideoTimeline(
+            id="test",
+            name="Test",
+            duration=60.0,  # Nominal duration
+        )
+        track = timeline.add_track("video", TrackType.VIDEO)
+        track.add_clip(TimelineClip(
+            id="clip-1",
+            track=TrackType.VIDEO,
+            source_path=Path("test.mp4"),
+            start_time=0.0,
+            end_time=90.0,  # Longer than nominal
+        ))
+
+        assert timeline.calculated_duration == 90.0
+
+    def test_calculated_duration_empty_timeline(self):
+        """Test calculated duration with no tracks."""
+        timeline = VideoTimeline(
+            id="test",
+            name="Test",
+            duration=60.0,
+        )
+
+        # With no tracks, should return nominal duration
+        assert timeline.calculated_duration == 60.0
+
+    def test_to_dict(self):
+        """Test timeline serialization to dict."""
+        timeline = VideoTimeline(
+            id="test",
+            name="Test Timeline",
+            duration=60.0,
+            width=1920,
+            height=1080,
+            fps=30,
+            output_path=Path("/tmp/output.mp4"),
+        )
+        track = timeline.add_track("video", TrackType.VIDEO)
+        track.add_clip(TimelineClip(
+            id="clip-1",
+            track=TrackType.VIDEO,
+            source_path=Path("test.mp4"),
+            start_time=0.0,
+            end_time=30.0,
+        ))
+
+        data = timeline.to_dict()
+
+        assert data["id"] == "test"
+        assert data["name"] == "Test Timeline"
+        assert data["duration"] == 60.0
+        assert data["width"] == 1920
+        assert data["fps"] == 30
+        assert "video" in data["tracks"]
+        assert len(data["tracks"]["video"]["clips"]) == 1
+        assert data["output"]["path"] == "/tmp/output.mp4"
+
+    def test_to_ffmpeg_script(self):
+        """Test FFmpeg script generation."""
+        timeline = VideoTimeline(
+            id="test",
+            name="Test",
+            duration=60.0,
+            output_path=Path("/tmp/output.mp4"),
+        )
+        track = timeline.add_track("video", TrackType.VIDEO)
+        track.add_clip(TimelineClip(
+            id="clip-1",
+            track=TrackType.VIDEO,
+            source_path=Path("/tmp/source.mp4"),
+            start_time=0.0,
+            end_time=60.0,
+        ))
+
+        script = timeline.to_ffmpeg_script()
+
+        assert "ffmpeg" in script
+        assert "-i" in script
+        assert "/tmp/source.mp4" in script
+        assert "/tmp/output.mp4" in script
+        assert "libx264" in script  # Default video codec
+
+    def test_to_ffmpeg_script_multiple_clips(self):
+        """Test FFmpeg script with multiple video clips."""
+        timeline = VideoTimeline(
+            id="test",
+            name="Test",
+            duration=60.0,
+            output_path=Path("/tmp/output.mp4"),
+        )
+
+        video_track = timeline.add_track("video", TrackType.VIDEO)
+        video_track.add_clip(TimelineClip(
+            id="clip-1",
+            track=TrackType.VIDEO,
+            source_path=Path("/tmp/source1.mp4"),
+            start_time=0.0,
+            end_time=30.0,
+        ))
+        video_track.add_clip(TimelineClip(
+            id="clip-2",
+            track=TrackType.VIDEO,
+            source_path=Path("/tmp/source2.mp4"),
+            start_time=30.0,
+            end_time=60.0,
+        ))
+
+        script = timeline.to_ffmpeg_script()
+
+        assert "source1.mp4" in script
+        assert "source2.mp4" in script
+
+
+class TestTimelineClipAdvanced:
+    """Advanced tests for TimelineClip."""
+
+    def test_source_duration_with_out_point(self):
+        """Test source duration when source_out is set."""
+        clip = TimelineClip(
+            id="clip-1",
+            track=TrackType.VIDEO,
+            source_path=Path("test.mp4"),
+            start_time=0.0,
+            end_time=30.0,  # 30s on timeline
+            source_in=10.0,  # Start at 10s in source
+            source_out=25.0,  # End at 25s in source
+        )
+
+        # Source duration should be 15s (25-10), not 30s (timeline duration)
+        assert clip.source_duration == 15.0
+
+    def test_source_duration_without_out_point(self):
+        """Test source duration when source_out is None."""
+        clip = TimelineClip(
+            id="clip-1",
+            track=TrackType.VIDEO,
+            source_path=Path("test.mp4"),
+            start_time=0.0,
+            end_time=30.0,
+            source_in=0.0,
+            source_out=None,  # Use timeline duration
+        )
+
+        # Should default to timeline duration
+        assert clip.source_duration == 30.0
+
+    def test_clip_to_dict_with_transitions(self):
+        """Test clip serialization with transitions."""
+        clip = TimelineClip(
+            id="clip-1",
+            track=TrackType.VIDEO,
+            source_path=Path("test.mp4"),
+            start_time=0.0,
+            end_time=30.0,
+            transition_in=TransitionType.FADE_IN,
+            transition_in_duration=0.5,
+            transition_out=TransitionType.FADE_OUT,
+            transition_out_duration=1.0,
+        )
+
+        data = clip.to_dict()
+
+        assert data["transition_in"] == "fade_in"
+        assert data["transition_in_duration"] == 0.5
+        assert data["transition_out"] == "fade_out"
+        assert data["transition_out_duration"] == 1.0
+
+    def test_clip_to_dict_no_source_path(self):
+        """Test clip serialization without source path."""
+        clip = TimelineClip(
+            id="caption-1",
+            track=TrackType.CAPTION,
+            source_path=None,
+            start_time=0.0,
+            end_time=5.0,
+            metadata={"text": "Hello world"},
+        )
+
+        data = clip.to_dict()
+
+        assert data["source"] is None
+        assert data["metadata"]["text"] == "Hello world"
+
+
+class TestTimelineTrackAdvanced:
+    """Advanced tests for TimelineTrack."""
+
+    def test_clips_sorted_by_start_time(self):
+        """Test that clips are sorted by start time."""
+        track = TimelineTrack(name="main", type=TrackType.VIDEO)
+
+        # Add clips in non-chronological order
+        track.add_clip(TimelineClip(
+            id="clip-3",
+            track=TrackType.VIDEO,
+            source_path=Path("c.mp4"),
+            start_time=20.0,
+            end_time=30.0,
+        ))
+        track.add_clip(TimelineClip(
+            id="clip-1",
+            track=TrackType.VIDEO,
+            source_path=Path("a.mp4"),
+            start_time=0.0,
+            end_time=10.0,
+        ))
+        track.add_clip(TimelineClip(
+            id="clip-2",
+            track=TrackType.VIDEO,
+            source_path=Path("b.mp4"),
+            start_time=10.0,
+            end_time=20.0,
+        ))
+
+        # Should be sorted by start_time
+        assert track.clips[0].id == "clip-1"
+        assert track.clips[1].id == "clip-2"
+        assert track.clips[2].id == "clip-3"
+
+    def test_get_clip_at_boundary(self):
+        """Test get_clip_at at exact clip boundaries."""
+        track = TimelineTrack(name="main", type=TrackType.VIDEO)
+        track.add_clip(TimelineClip(
+            id="clip-1",
+            track=TrackType.VIDEO,
+            source_path=Path("a.mp4"),
+            start_time=0.0,
+            end_time=10.0,
+        ))
+
+        # At start_time, should find clip
+        assert track.get_clip_at(0.0).id == "clip-1"
+
+        # At end_time, should NOT find clip (exclusive)
+        assert track.get_clip_at(10.0) is None
+
+    def test_get_clip_at_no_clip(self):
+        """Test get_clip_at when no clip exists at time."""
+        track = TimelineTrack(name="main", type=TrackType.VIDEO)
+        track.add_clip(TimelineClip(
+            id="clip-1",
+            track=TrackType.VIDEO,
+            source_path=Path("a.mp4"),
+            start_time=10.0,
+            end_time=20.0,
+        ))
+
+        # Before any clip
+        assert track.get_clip_at(5.0) is None
+
+        # After all clips
+        assert track.get_clip_at(25.0) is None
+
+    def test_empty_track_duration(self):
+        """Test duration of empty track."""
+        track = TimelineTrack(name="empty", type=TrackType.VIDEO)
+        assert track.duration == 0
+
+    def test_track_muted_locked(self):
+        """Test track muted and locked properties."""
+        track = TimelineTrack(name="main", type=TrackType.AUDIO, muted=True, locked=True)
+        assert track.muted is True
+        assert track.locked is True
+
+
+class TestTrackType:
+    """Tests for TrackType enum."""
+
+    def test_all_track_types(self):
+        """Test all track type values exist."""
+        assert TrackType.VIDEO.value == "video"
+        assert TrackType.GRAPHICS.value == "graphics"
+        assert TrackType.AUDIO.value == "audio"
+        assert TrackType.MUSIC.value == "music"
+        assert TrackType.CAPTION.value == "caption"
+
+
 # Video Builder Tests
 from media_engine.video.builder import (
     VideoBuilder,
@@ -227,12 +650,11 @@ from media_engine.video.builder import (
     VideoScript,
 )
 from media_engine.video.quality import (
-    VideoQuality,
-    QualityPreset,
-    get_preset,
-    is_preview_video,
     PREVIEW_PRESET,
     PRODUCTION_PRESET,
+    VideoQuality,
+    get_preset,
+    is_preview_video,
 )
 
 

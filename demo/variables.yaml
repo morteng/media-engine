@@ -1,0 +1,45 @@
+# Content Variables Configuration
+# Use {{namespace.variable}} syntax in your documents
+#
+# Example: "Welcome to {{company.name}}!" becomes "Welcome to Media Engine!"
+
+# Company/Project Information
+company:
+  name: "Media Engine"
+  tagline: "Agent-Operated Media Production Framework"
+  website: "https://media-engine.dev"
+  github: "https://github.com/example/media-engine"
+
+# Product Details
+product:
+  name: "Media Engine"
+  version: "1.0.0"
+  release_date: "2025-01-15"
+  license: "MIT"
+  python_version: "3.11+"
+
+# Feature Counts (keep updated)
+stats:
+  cli_commands: 33
+  mcp_tools: 16
+  dashboard_tabs: 16
+  demo_types: 9
+  builder_formats: 7
+  supported_languages: 10
+
+# Contact Information
+contact:
+  support_email: "support@media-engine.dev"
+  docs_url: "https://docs.media-engine.dev"
+
+# Pricing (for demos)
+pricing:
+  starter: "Free"
+  professional: "$49/month"
+  enterprise: "Contact us"
+
+# Links
+links:
+  quickstart: "/chapters/01_introduction.md"
+  cli_reference: "/chapters/12_cli_reference.md"
+  api_docs: "/chapters/14_integrations.md"

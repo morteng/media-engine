@@ -102,8 +102,9 @@ class PPTXBuilder:
         # For SVG, try to convert to PNG
         if self.logo_path.suffix.lower() == ".svg":
             try:
-                import cairosvg
                 import tempfile
+
+                import cairosvg
 
                 # Create temp PNG file
                 png_path = Path(tempfile.gettempdir()) / f"{self.logo_path.stem}_logo.png"
@@ -621,7 +622,7 @@ class PPTXBuilder:
 
             # Quote (> blockquote)
             elif lines[0].startswith("> "):
-                quote_lines = [l[2:] for l in lines if l.startswith("> ")]
+                quote_lines = [line[2:] for line in lines if line.startswith("> ")]
                 quote = " ".join(quote_lines)
                 # Check for author
                 if "—" in quote or "-" in quote:

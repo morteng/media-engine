@@ -15,7 +15,7 @@ Uses centralized settings from media_engine.settings for defaults.
 
 import webbrowser
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Optional
 
 # FastAPI imports - graceful fallback
 try:

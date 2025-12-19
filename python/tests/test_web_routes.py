@@ -837,3 +837,1504 @@ version: 1.0.0
         )
 
         return project
+
+
+class TestSearchRoutes:
+    """Tests for search API routes."""
+
+    @pytest.mark.asyncio
+    async def test_search_content_empty_query(self, temp_dir):
+        """Test search with empty query returns empty results."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/search?q=")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert result["results"] == []
+        assert result["total"] == 0
+
+    @pytest.mark.asyncio
+    async def test_search_content_short_query(self, temp_dir):
+        """Test search with query too short."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/search?q=a")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert result["results"] == []
+
+    @pytest.mark.asyncio
+    async def test_search_content_with_results(self, temp_dir):
+        """Test search that finds content."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        # Create searchable content
+        chapters_dir = temp_dir / "content" / "en" / "chapters"
+        chapters_dir.mkdir(parents=True)
+
+        chapter_file = chapters_dir / "introduction.md"
+        chapter_file.write_text("""---
+title: Introduction
+---
+
+# Introduction
+
+Welcome to the project documentation. This chapter covers the basics.
+""")
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/search?q=documentation")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert result["total"] >= 1
+        assert any("documentation" in r["snippet"].lower() for r in result["results"])
+
+    @pytest.mark.asyncio
+    async def test_search_with_language_filter(self, temp_dir):
+        """Test search filtered by language."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir, languages=["en", "no"])
+
+        # Create content in both languages
+        for lang in ["en", "no"]:
+            chapters_dir = temp_dir / "content" / lang / "chapters"
+            chapters_dir.mkdir(parents=True)
+            chapter_file = chapters_dir / "guide.md"
+            chapter_file.write_text(f"# Guide for {lang}\n\nTest content here.")
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/search?q=guide&lang=en")
+
+        assert response.status_code == 200
+        result = response.json()
+        # Should only have English results
+        if result["results"]:
+            assert all(r["language"] == "en" for r in result["results"])
+
+    @pytest.mark.asyncio
+    async def test_search_with_type_filter(self, temp_dir):
+        """Test search filtered by content type."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        # Create chapters and scripts
+        chapters_dir = temp_dir / "content" / "en" / "chapters"
+        chapters_dir.mkdir(parents=True)
+        (chapters_dir / "intro.md").write_text("# Intro\n\nTest content.")
+
+        scripts_dir = temp_dir / "content" / "en" / "scripts"
+        scripts_dir.mkdir(parents=True)
+        (scripts_dir / "demo.yaml").write_text("title: Demo Script\ncontent: Test content")
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/search?q=content&type=chapter")
+
+        assert response.status_code == 200
+        result = response.json()
+        if result["results"]:
+            assert all(r["type"] == "chapter" for r in result["results"])
+
+    def _create_mock_project(self, root_dir, languages=None):
+        """Helper to create a mock project."""
+        if languages is None:
+            languages = ["en"]
+
+        config = Config()
+        config.paths.content = "content"
+        theme = Theme()
+
+        lang_configs = {
+            lang: LanguageConfig(code=lang, name=lang.upper())
+            for lang in languages
+        }
+
+        project = Project(
+            root=root_dir,
+            config=config,
+            theme=theme,
+            languages=lang_configs,
+            source_language="en",
+        )
+
+        return project
+
+
+class TestInsightsRoutes:
+    """Tests for insights API routes."""
+
+    @pytest.mark.asyncio
+    async def test_get_insights(self, temp_dir):
+        """Test comprehensive insights endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        # Create some content for insights
+        chapters_dir = temp_dir / "content" / "en" / "chapters"
+        chapters_dir.mkdir(parents=True)
+        (chapters_dir / "intro.md").write_text("---\ntitle: Introduction\n---\n# Introduction\n\nContent here.")
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/insights")
+
+        assert response.status_code == 200
+        result = response.json()
+        # Should have various insight categories
+        assert "health" in result or "error" in str(result)
+        assert "statistics" in result or "error" in str(result)
+
+    @pytest.mark.asyncio
+    async def test_get_health(self, temp_dir):
+        """Test health score endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/insights/health")
+
+        assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_get_statistics(self, temp_dir):
+        """Test statistics endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/insights/statistics")
+
+        assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_get_incomplete(self, temp_dir):
+        """Test incomplete content endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/insights/incomplete")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "total" in result
+        assert "items" in result
+
+    @pytest.mark.asyncio
+    async def test_get_consistency(self, temp_dir):
+        """Test consistency issues endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/insights/consistency")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "total" in result
+        assert "issues" in result
+
+    @pytest.mark.asyncio
+    async def test_get_parity(self, temp_dir):
+        """Test translation parity endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir, languages=["en", "no"])
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/insights/parity")
+
+        assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_get_velocity(self, temp_dir):
+        """Test velocity metrics endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/insights/velocity?days=7")
+
+        assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_get_graph(self, temp_dir):
+        """Test knowledge graph endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/insights/graph")
+
+        assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_get_terms(self, temp_dir):
+        """Test terminology issues endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/insights/terms")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "total" in result
+        assert "issues" in result
+
+    @pytest.mark.asyncio
+    async def test_get_duplicates(self, temp_dir):
+        """Test duplicate content endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/insights/duplicates")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "total" in result
+        assert "matches" in result
+
+    @pytest.mark.asyncio
+    async def test_get_codesync(self, temp_dir):
+        """Test code-documentation sync endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/insights/codesync")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "total_checked" in result
+        assert "stale_count" in result
+
+    def _create_mock_project(self, root_dir, languages=None):
+        """Helper to create a mock project."""
+        if languages is None:
+            languages = ["en"]
+
+        config = Config()
+        config.name = "Test Project"
+        config.paths.content = "content"
+        theme = Theme()
+
+        lang_configs = {
+            lang: LanguageConfig(code=lang, name=lang.upper())
+            for lang in languages
+        }
+
+        project = Project(
+            root=root_dir,
+            config=config,
+            theme=theme,
+            languages=lang_configs,
+            source_language="en",
+        )
+
+        return project
+
+
+class TestFreshnessRoutes:
+    """Tests for freshness tracking API routes."""
+
+    @pytest.mark.asyncio
+    async def test_get_freshness(self, temp_dir):
+        """Test freshness report endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        # Create .media-engine directory for registry
+        me_dir = temp_dir / ".media-engine"
+        me_dir.mkdir(parents=True)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/freshness")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "total_items" in result
+        assert "fresh_count" in result
+        assert "stale_count" in result
+
+    @pytest.mark.asyncio
+    async def test_get_freshness_with_scan(self, temp_dir):
+        """Test freshness with scan parameter."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        # Create .media-engine directory
+        me_dir = temp_dir / ".media-engine"
+        me_dir.mkdir(parents=True)
+
+        # Create some content
+        chapters_dir = temp_dir / "content" / "en" / "chapters"
+        chapters_dir.mkdir(parents=True)
+        (chapters_dir / "intro.md").write_text("# Introduction\n\nContent here.")
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/freshness?scan=true")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "total_items" in result
+
+    @pytest.mark.asyncio
+    async def test_scan_freshness(self, temp_dir):
+        """Test freshness scan endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        # Create .media-engine directory
+        me_dir = temp_dir / ".media-engine"
+        me_dir.mkdir(parents=True)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.post("/api/freshness/scan")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "registered" in result
+        assert "total_items" in result
+
+    @pytest.mark.asyncio
+    async def test_get_freshness_impact(self, temp_dir):
+        """Test freshness impact endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        # Create .media-engine directory
+        me_dir = temp_dir / ".media-engine"
+        me_dir.mkdir(parents=True)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/freshness/impact/content/en/chapters/intro.md")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "source" in result
+        assert "affected_items" in result
+
+    def _create_mock_project(self, root_dir):
+        """Helper to create a mock project."""
+        config = Config()
+        config.name = "Test Project"
+        config.paths.content = "content"
+        theme = Theme()
+
+        lang_configs = {
+            "en": LanguageConfig(code="en", name="English")
+        }
+
+        project = Project(
+            root=root_dir,
+            config=config,
+            theme=theme,
+            languages=lang_configs,
+            source_language="en",
+        )
+
+        return project
+
+
+class TestDependenciesRoutes:
+    """Tests for dependencies API routes."""
+
+    @pytest.mark.asyncio
+    async def test_get_dependencies_graph(self, temp_dir):
+        """Test dependencies graph endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/dependencies")
+
+        assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_get_dependencies_files(self, temp_dir):
+        """Test dependencies files endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        # Create some trackable files
+        content_dir = temp_dir / "content" / "en" / "chapters"
+        content_dir.mkdir(parents=True)
+        (content_dir / "intro.md").write_text("# Introduction")
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/dependencies/files")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "files" in result
+
+    def _create_mock_project(self, root_dir):
+        """Helper to create a mock project."""
+        config = Config()
+        config.name = "Test Project"
+        config.paths.content = "content"
+        theme = Theme()
+
+        lang_configs = {
+            "en": LanguageConfig(code="en", name="English")
+        }
+
+        project = Project(
+            root=root_dir,
+            config=config,
+            theme=theme,
+            languages=lang_configs,
+            source_language="en",
+        )
+
+        return project
+
+
+class TestBuildRoutes:
+    """Tests for build API routes."""
+
+    @pytest.mark.asyncio
+    async def test_get_build_status(self, temp_dir):
+        """Test build status endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        # Create .media-engine directory for freshness registry
+        me_dir = temp_dir / ".media-engine"
+        me_dir.mkdir(parents=True)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/build/status")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "active" in result
+        assert "progress" in result
+        assert "logs" in result
+
+    @pytest.mark.asyncio
+    async def test_get_build_status_with_outputs(self, temp_dir):
+        """Test build status shows existing output files."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        # Create .media-engine directory
+        me_dir = temp_dir / ".media-engine"
+        me_dir.mkdir(parents=True)
+
+        # Create some output files
+        output_dir = temp_dir / "output" / "en"
+        output_dir.mkdir(parents=True)
+        (output_dir / "chapter1.html").write_text("<html>Test</html>")
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/build/status")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "outputs" in result
+        assert len(result["outputs"]) >= 1
+
+    @pytest.mark.asyncio
+    async def test_start_build(self, temp_dir):
+        """Test starting a build endpoint exists and accepts parameters."""
+        from unittest.mock import patch
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        # Create content
+        chapters_dir = temp_dir / "content" / "en" / "chapters"
+        chapters_dir.mkdir(parents=True)
+        (chapters_dir / "intro.md").write_text("# Introduction\n\nContent here.")
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        # Mock background task to avoid async issues in test
+        with patch("fastapi.BackgroundTasks.add_task"):
+            client = TestClient(app)
+            response = client.post("/api/build/start?formats=html&languages=en")
+
+            assert response.status_code == 200
+            result = response.json()
+            assert result["status"] == "started"
+            assert "html" in result["formats"]
+            assert "en" in result["languages"]
+
+    @pytest.mark.asyncio
+    async def test_start_build_default_params(self, temp_dir):
+        """Test starting a build with default parameters."""
+        from unittest.mock import patch
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        # Mock background task to avoid async issues in test
+        with patch("fastapi.BackgroundTasks.add_task"):
+            client = TestClient(app)
+            response = client.post("/api/build/start")
+
+            assert response.status_code == 200
+            result = response.json()
+            assert result["status"] == "started"
+            assert "html" in result["formats"]  # Default format
+
+    @pytest.mark.asyncio
+    async def test_cancel_build_no_active(self, temp_dir):
+        """Test cancelling when no build is active."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.post("/api/build/cancel")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert result["status"] == "error"
+        assert "No active build" in result["message"]
+
+    @pytest.mark.asyncio
+    async def test_get_build_outputs_empty(self, temp_dir):
+        """Test getting outputs when none exist."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/build/outputs")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "outputs" in result
+        assert result["outputs"] == []
+
+    @pytest.mark.asyncio
+    async def test_get_build_outputs_with_files(self, temp_dir):
+        """Test getting outputs when files exist."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        # Create output files
+        output_dir = temp_dir / "output" / "en"
+        output_dir.mkdir(parents=True)
+        (output_dir / "document.html").write_text("<html>Test</html>")
+        (output_dir / "slides.pptx").write_bytes(b"PK\x03\x04")  # Minimal PPTX header
+        (output_dir / "data.xlsx").write_bytes(b"PK\x03\x04")  # Minimal XLSX header
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/build/outputs")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "outputs" in result
+        assert len(result["outputs"]) == 3
+
+        # Check output properties
+        formats = [o["format"] for o in result["outputs"]]
+        assert "HTML" in formats
+        assert "PPTX" in formats
+        assert "XLSX" in formats
+
+    @pytest.mark.asyncio
+    async def test_start_build_multiple_formats(self, temp_dir):
+        """Test starting a build with multiple formats."""
+        from unittest.mock import patch
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        with patch("fastapi.BackgroundTasks.add_task"):
+            client = TestClient(app)
+            response = client.post("/api/build/start?formats=html,pptx,xlsx")
+
+            assert response.status_code == 200
+            result = response.json()
+            assert result["status"] == "started"
+            assert len(result["formats"]) == 3
+
+    @pytest.mark.asyncio
+    async def test_start_build_with_force(self, temp_dir):
+        """Test starting a forced build."""
+        from unittest.mock import patch
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        with patch("fastapi.BackgroundTasks.add_task"):
+            client = TestClient(app)
+            response = client.post("/api/build/start?formats=html&force=true")
+
+            assert response.status_code == 200
+            result = response.json()
+            assert result["status"] == "started"
+            assert result["force"] is True
+
+    def _create_mock_project(self, root_dir):
+        """Helper to create a mock project."""
+        config = Config()
+        config.name = "Test Project"
+        config.paths.content = "content"
+        config.paths.output = "output"
+        theme = Theme()
+
+        lang_configs = {
+            "en": LanguageConfig(code="en", name="English")
+        }
+
+        project = Project(
+            root=root_dir,
+            config=config,
+            theme=theme,
+            languages=lang_configs,
+            source_language="en",
+        )
+
+        return project
+
+
+class TestProvenanceRoutes:
+    """Tests for provenance API routes."""
+
+    @pytest.mark.asyncio
+    async def test_get_provenance_report(self, temp_dir):
+        """Test provenance report endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/provenance")
+
+        assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_get_all_claims(self, temp_dir):
+        """Test all claims endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/provenance/claims")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "total" in result
+        assert "claims" in result
+
+    @pytest.mark.asyncio
+    async def test_get_unverified_claims(self, temp_dir):
+        """Test unverified claims endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/provenance/claims/unverified")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "total" in result
+        assert "claims" in result
+
+    @pytest.mark.asyncio
+    async def test_get_expired_claims(self, temp_dir):
+        """Test expired claims endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/provenance/claims/expired")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "total" in result
+        assert "claims" in result
+
+    @pytest.mark.asyncio
+    async def test_get_expiring_claims(self, temp_dir):
+        """Test expiring claims endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/provenance/claims/expiring?days=30")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "total" in result
+        assert "claims" in result
+
+    @pytest.mark.asyncio
+    async def test_get_approval_status(self, temp_dir):
+        """Test approval status endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/provenance/approvals")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "by_status" in result
+
+    @pytest.mark.asyncio
+    async def test_get_review_queue(self, temp_dir):
+        """Test review queue endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/provenance/review-queue")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "total" in result
+        assert "queue" in result
+
+    @pytest.mark.asyncio
+    async def test_get_document_provenance(self, temp_dir):
+        """Test document provenance endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        # Create a document
+        chapters_dir = temp_dir / "content" / "en" / "chapters"
+        chapters_dir.mkdir(parents=True)
+        (chapters_dir / "intro.md").write_text("---\ntitle: Introduction\n---\n# Introduction")
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/provenance/document/content/en/chapters/intro.md")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "document_path" in result
+        assert "status" in result
+        assert "claims" in result
+
+    @pytest.mark.asyncio
+    async def test_check_publish_readiness(self, temp_dir):
+        """Test publish readiness endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        # Create a document
+        chapters_dir = temp_dir / "content" / "en" / "chapters"
+        chapters_dir.mkdir(parents=True)
+        (chapters_dir / "intro.md").write_text("---\ntitle: Introduction\n---\n# Introduction")
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/provenance/publish-readiness/content/en/chapters/intro.md")
+
+        assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_get_claim_issues(self, temp_dir):
+        """Test claim issues endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.get("/api/provenance/issues")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "total" in result
+        assert "issues" in result
+
+    @pytest.mark.asyncio
+    async def test_add_claim(self, temp_dir):
+        """Test add claim endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        # Create a document
+        chapters_dir = temp_dir / "content" / "en" / "chapters"
+        chapters_dir.mkdir(parents=True)
+        doc_path = chapters_dir / "intro.md"
+        doc_path.write_text("---\ntitle: Introduction\n---\n# Introduction")
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.post(
+            "/api/provenance/claims",
+            json={
+                "document_path": "content/en/chapters/intro.md",
+                "claim_type": "fact",
+                "claim_text": "Test claim",
+                "source": "test source",
+            }
+        )
+
+        assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_request_approval(self, temp_dir):
+        """Test request approval endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        # Create a document
+        chapters_dir = temp_dir / "content" / "en" / "chapters"
+        chapters_dir.mkdir(parents=True)
+        doc_path = chapters_dir / "intro.md"
+        doc_path.write_text("---\ntitle: Introduction\n---\n# Introduction")
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.post(
+            "/api/provenance/request-approval",
+            json={
+                "document_path": "content/en/chapters/intro.md",
+                "user": "test@example.com",
+            }
+        )
+
+        assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_scan_documents_for_claims(self, temp_dir):
+        """Test scan documents for claims endpoint."""
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from media_engine.web.websocket import ConnectionManager
+
+        project = self._create_mock_project(temp_dir)
+
+        app = FastAPI()
+        manager = ConnectionManager()
+
+        def get_project():
+            return project
+
+        static_dir = temp_dir / "static"
+        static_dir.mkdir()
+
+        register_routes(app, get_project, manager, static_dir)
+
+        client = TestClient(app)
+        response = client.post("/api/provenance/scan")
+
+        assert response.status_code == 200
+        result = response.json()
+        assert "documents_scanned" in result
+        assert "total_claims_found" in result
+
+    def _create_mock_project(self, root_dir):
+        """Helper to create a mock project."""
+        config = Config()
+        config.name = "Test Project"
+        config.paths.content = "content"
+        config.paths.output = "output"
+        theme = Theme()
+
+        lang_configs = {
+            "en": LanguageConfig(code="en", name="English")
+        }
+
+        project = Project(
+            root=root_dir,
+            config=config,
+            theme=theme,
+            languages=lang_configs,
+            source_language="en",
+        )
+
+        return project
