@@ -162,9 +162,18 @@ class ProvenanceTracker:
         return record
 
     def record_review(
-        self, doc: Document, reviewer: str, approved: bool, comments: Optional[str] = None
+        self, doc: Document, reviewer: str, approved: bool, comments: Optional[str] = None,
+        project=None
     ) -> None:
-        """Record a review of a document."""
+        """Record a review of a document.
+
+        Args:
+            doc: Document being reviewed
+            reviewer: Name of reviewer
+            approved: Whether the document was approved
+            comments: Optional review comments
+            project: Optional Project instance to sync with main provenance system
+        """
         self.ensure_loaded()
 
         prov = self.get_provenance(doc)
@@ -187,6 +196,43 @@ class ProvenanceTracker:
             doc.metadata["reviewers"].append(reviewer)
 
         self.save()
+
+        # Sync with main provenance system if project is provided
+        if project is not None:
+            self._sync_with_main_provenance(doc, reviewer, approved, comments, project)
+
+    def _sync_with_main_provenance(
+        self, doc: Document, reviewer: str, approved: bool, comments: Optional[str], project
+    ) -> None:
+        """Sync review status with main provenance system."""
+        try:
+            from ..provenance import ProvenanceTracker as MainProvenanceTracker
+
+            main_tracker = MainProvenanceTracker(project)
+
+            # Get document path relative to project root
+            try:
+                doc_path = doc.path.relative_to(project.root)
+            except ValueError:
+                doc_path = doc.path
+
+            if approved:
+                main_tracker.approve_document(
+                    document_path=doc_path,
+                    approver=reviewer,
+                    comments=comments,
+                    version=doc.version,
+                )
+            else:
+                main_tracker.reject_document(
+                    document_path=doc_path,
+                    reviewer=reviewer,
+                    comments=comments or "Changes requested",
+                )
+
+        except Exception:
+            # Main provenance system not available - silently continue
+            pass
 
     def has_changed(self, doc: Document) -> bool:
         """Check if document content has changed since last tracked."""

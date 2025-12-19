@@ -282,6 +282,14 @@ class ProvenanceTracker:
         with open(self.data_path, "w") as f:
             json.dump(data, f, indent=2)
 
+    def _log_action(self, action: str, details: str = None, user: str = None):
+        """Log provenance action to audit log."""
+        try:
+            from ..audit import log_action
+            log_action(self.project, action, details=details, user=user)
+        except Exception:
+            pass  # Audit logging is optional
+
     def get(self, document_path: Path) -> DocumentProvenance:
         """Get or create provenance record for a document."""
         key = str(document_path)
@@ -318,6 +326,7 @@ class ProvenanceTracker:
         )
         prov.add_claim(claim)
         self._save()
+        self._log_action("claim_added", f"Claim '{claim_text[:50]}...' added to {document_path}")
         return claim
 
     def verify_claim(
@@ -331,6 +340,8 @@ class ProvenanceTracker:
         prov = self.get(document_path)
         result = prov.verify_claim(claim_id, verifier, expiry_days)
         self._save()
+        if result:
+            self._log_action("claim_verified", f"Claim {claim_id} verified in {document_path}", user=verifier)
         return result
 
     def get_all_unverified(self) -> list[tuple[Path, Claim]]:
@@ -385,6 +396,7 @@ class ProvenanceTracker:
         prov = self.get(document_path)
         prov.request_approval(requester, comments)
         self._save()
+        self._log_action("approval_requested", f"Approval requested for {document_path}", user=requester)
 
     def approve_document(
         self,
@@ -397,18 +409,21 @@ class ProvenanceTracker:
         prov = self.get(document_path)
         prov.approve(approver, comments, version)
         self._save()
+        self._log_action("approval_granted", f"Document {document_path} approved", user=approver)
 
     def reject_document(self, document_path: Path, reviewer: str, comments: str):
         """Request changes to a document."""
         prov = self.get(document_path)
         prov.reject(reviewer, comments)
         self._save()
+        self._log_action("approval_rejected", f"Changes requested for {document_path}: {comments}", user=reviewer)
 
     def publish_document(self, document_path: Path, publisher: str, version: str):
         """Mark a document as published."""
         prov = self.get(document_path)
         prov.publish(publisher, version)
         self._save()
+        self._log_action("document_published", f"Document {document_path} published as {version}", user=publisher)
 
     def get_documents_by_status(self, status: ApprovalStatus) -> list[Path]:
         """Get all documents with a specific approval status."""
@@ -453,6 +468,139 @@ class ProvenanceTracker:
                 "expired": [(str(p), c.text) for p, c in self.get_all_expired()[:10]],
                 "expiring_soon": [(str(p), c.text) for p, c in self.get_expiring_soon()[:10]],
             },
+        }
+
+    def scan_document_for_claims(self, document_path: Path) -> list[dict]:
+        """
+        Scan a document for potential claims and return them.
+
+        Does not automatically add claims - returns candidates for review.
+        """
+        full_path = self.project.root / document_path
+        if not full_path.exists():
+            return []
+
+        try:
+            content = full_path.read_text(encoding="utf-8")
+            return extract_claims_from_content(content)
+        except Exception:
+            return []
+
+    def scan_all_documents(self) -> dict:
+        """
+        Scan all documents in the project for potential claims.
+
+        Returns dict mapping document paths to lists of potential claims.
+        """
+        results = {}
+
+        for lang in self.project.languages:
+            # Scan chapters
+            chapters_dir = self.project.content_dir / lang / "chapters"
+            if chapters_dir.exists():
+                for md_file in chapters_dir.glob("*.md"):
+                    rel_path = md_file.relative_to(self.project.root)
+                    claims = self.scan_document_for_claims(rel_path)
+                    if claims:
+                        results[str(rel_path)] = claims
+
+        return results
+
+    def get_documents_with_claim_issues(self) -> list[tuple[Path, str, int]]:
+        """
+        Get documents that have claim issues (unverified, expired, expiring soon).
+
+        Returns list of (path, issue_type, count) tuples.
+        Useful for freshness integration.
+        """
+        issues = []
+
+        for path, prov in self._provenance.items():
+            unverified = len(prov.unverified_claims)
+            expired = len(prov.expired_claims)
+            expiring = len(prov.claims_expiring_soon)
+
+            if unverified > 0:
+                issues.append((Path(path), "unverified_claims", unverified))
+            if expired > 0:
+                issues.append((Path(path), "expired_claims", expired))
+            if expiring > 0:
+                issues.append((Path(path), "expiring_claims", expiring))
+
+        return issues
+
+    def validate_all_urls(self) -> dict:
+        """
+        Validate all external URLs in claims.
+
+        Returns dict with validation results.
+        """
+        urls_to_validate = []
+        url_to_claims = {}
+
+        for path, prov in self._provenance.items():
+            for claim in prov.claims:
+                if claim.source_url:
+                    urls_to_validate.append(claim.source_url)
+                    if claim.source_url not in url_to_claims:
+                        url_to_claims[claim.source_url] = []
+                    url_to_claims[claim.source_url].append((path, claim.claim_id))
+
+        # Deduplicate
+        unique_urls = list(set(urls_to_validate))
+
+        # Validate
+        results = validate_external_urls(unique_urls)
+
+        # Map results back to claims
+        for result in results:
+            result["claims"] = url_to_claims.get(result["url"], [])
+
+        return {
+            "total_urls": len(unique_urls),
+            "valid": len([r for r in results if r["valid"]]),
+            "invalid": len([r for r in results if not r["valid"]]),
+            "results": results,
+        }
+
+    def check_publish_readiness(self, document_path: Path) -> dict:
+        """
+        Check if a document is ready to publish.
+
+        Returns dict with readiness status and any blocking issues.
+        """
+        prov = self.get(document_path)
+
+        issues = []
+        warnings = []
+
+        # Check for unverified claims
+        unverified = prov.unverified_claims
+        if unverified:
+            issues.append(f"{len(unverified)} unverified claim(s)")
+
+        # Check for expired claims
+        expired = prov.expired_claims
+        if expired:
+            issues.append(f"{len(expired)} expired claim(s)")
+
+        # Check for claims expiring soon
+        expiring = prov.claims_expiring_soon
+        if expiring:
+            warnings.append(f"{len(expiring)} claim(s) expiring within 30 days")
+
+        # Check approval status
+        status = prov.current_status
+        if status not in [ApprovalStatus.APPROVED, ApprovalStatus.PUBLISHED]:
+            issues.append(f"Document status is '{status.value}', not approved")
+
+        return {
+            "ready": len(issues) == 0,
+            "issues": issues,
+            "warnings": warnings,
+            "status": status.value,
+            "total_claims": len(prov.claims),
+            "verified_claims": len([c for c in prov.claims if c.status == ClaimStatus.VERIFIED]),
         }
 
 

@@ -1,0 +1,513 @@
+{
+  "version": "1.0.0",
+  "project": "Media Engine Demo",
+  "last_scan": "2025-12-19T00:18:50.880361",
+  "items": {
+    "content/en/chapters/04_quality_checks.md": {
+      "path": "content/en/chapters/04_quality_checks.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T13:38:52.752017",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "f7c6ef40e18d212d",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/en/chapters/12_cli_reference.md": {
+      "path": "content/en/chapters/12_cli_reference.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T16:02:11.725642",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "b471a2dd0385ae81",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/en/chapters/15_analysis.md": {
+      "path": "content/en/chapters/15_analysis.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T16:12:29.962211",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "0684658a25ff9334",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/en/chapters/05_builders.md": {
+      "path": "content/en/chapters/05_builders.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T13:38:53.045841",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "5235605399bffe6b",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/en/chapters/08_validation.md": {
+      "path": "content/en/chapters/08_validation.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T16:02:11.723393",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "0d937baa106e29c8",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/en/chapters/01_introduction.md": {
+      "path": "content/en/chapters/01_introduction.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T13:12:09.761670",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "55d1f3a608ac390f",
+      "freshness_status": "stale",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/en/chapters/13_security.md": {
+      "path": "content/en/chapters/13_security.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T16:15:51.047773",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "492b97890ce73b4e",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/en/chapters/16_github_showcase.md": {
+      "path": "content/en/chapters/16_github_showcase.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T16:50:39.145441",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "331814e5fe0f84d6",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/en/chapters/02_content_management.md": {
+      "path": "content/en/chapters/02_content_management.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T13:12:09.761875",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "5fee9d8d44fd3a21",
+      "freshness_status": "stale",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/en/chapters/03_video_production.md": {
+      "path": "content/en/chapters/03_video_production.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T13:12:09.762708",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "52ce6940f2c3242f",
+      "freshness_status": "stale",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/en/chapters/06_diagrams.md": {
+      "path": "content/en/chapters/06_diagrams.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T16:02:11.720273",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "ea03c3506f079cb9",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/en/chapters/14_integrations.md": {
+      "path": "content/en/chapters/14_integrations.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T16:12:01.609567",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "0ba52020ef02af66",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/en/chapters/09_publishing.md": {
+      "path": "content/en/chapters/09_publishing.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T13:39:59.957716",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "0a1490dc871c7925",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/en/chapters/11_assets.md": {
+      "path": "content/en/chapters/11_assets.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T15:49:12.876682",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "f9f45805abbe5a5c",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/en/chapters/10_packs.md": {
+      "path": "content/en/chapters/10_packs.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T16:02:11.724234",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "ba016205f6fbeff1",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/en/chapters/07_search_indexing.md": {
+      "path": "content/en/chapters/07_search_indexing.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T16:02:11.721214",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "4c222538602317b3",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/en/scripts/showcase.yaml": {
+      "path": "content/en/scripts/showcase.yaml",
+      "type": "source_document",
+      "depends_on": [],
+      "last_modified": "2025-12-17T17:32:46.968768",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "7c13b48ddc67e83e",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/en/data/calculator.yaml": {
+      "path": "content/en/data/calculator.yaml",
+      "type": "source_document",
+      "depends_on": [],
+      "last_modified": "2025-12-16T13:12:09.763515",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "df9a7798ee9cccb7",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/en/data/feature_matrix.yaml": {
+      "path": "content/en/data/feature_matrix.yaml",
+      "type": "source_document",
+      "depends_on": [],
+      "last_modified": "2025-12-16T16:49:07.645527",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "fb42ef2a62a1b5a1",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/no/chapters/02_innholdsstyring.md": {
+      "path": "content/no/chapters/02_innholdsstyring.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T13:42:10.150028",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "5d94578c7fc294e9",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/no/chapters/12_cli_referanse.md": {
+      "path": "content/no/chapters/12_cli_referanse.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T16:02:11.731363",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "dd0d27eec724e12a",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/no/chapters/06_diagrammer.md": {
+      "path": "content/no/chapters/06_diagrammer.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T13:43:02.775719",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "7a5537e197efe225",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/no/chapters/05_byggere.md": {
+      "path": "content/no/chapters/05_byggere.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T13:43:02.460945",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "3c3da66289ff3357",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/no/chapters/09_publisering.md": {
+      "path": "content/no/chapters/09_publisering.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T13:43:54.494864",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "78a66c6807a09550",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/no/chapters/15_analyse.md": {
+      "path": "content/no/chapters/15_analyse.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T16:13:22.174736",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "d84bcf21783226ff",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/no/chapters/13_sikkerhet.md": {
+      "path": "content/no/chapters/13_sikkerhet.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T16:16:09.512110",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "c3d4e2480b737e0b",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/no/chapters/07_sokindeksering.md": {
+      "path": "content/no/chapters/07_sokindeksering.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T16:02:11.726843",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "eb1a2c75f3128692",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/no/chapters/11_ressurser.md": {
+      "path": "content/no/chapters/11_ressurser.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T13:43:55.412542",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "67708ec02df678f5",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/no/chapters/04_kvalitetssjekker.md": {
+      "path": "content/no/chapters/04_kvalitetssjekker.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T13:42:10.802954",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "fc051bca63d01152",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/no/chapters/10_pakker.md": {
+      "path": "content/no/chapters/10_pakker.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T16:02:11.728610",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "12d07ed971a1045a",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/no/chapters/01_introduksjon.md": {
+      "path": "content/no/chapters/01_introduksjon.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T13:41:32.116569",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "fdc65e2d24bfe408",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/no/chapters/08_validering.md": {
+      "path": "content/no/chapters/08_validering.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T16:02:11.727798",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "dbaf74f7f2f5bfd1",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/no/chapters/14_integrasjoner.md": {
+      "path": "content/no/chapters/14_integrasjoner.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T16:13:21.873265",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "3532929e7a76825a",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/no/chapters/03_videoproduksjon.md": {
+      "path": "content/no/chapters/03_videoproduksjon.md",
+      "type": "source_document",
+      "depends_on": [
+        "/Users/Morten/media-engine/demo/theme.yaml"
+      ],
+      "last_modified": "2025-12-16T13:42:10.455628",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "9b1809602c850bc0",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/no/scripts/demo-video.yaml": {
+      "path": "content/no/scripts/demo-video.yaml",
+      "type": "source_document",
+      "depends_on": [],
+      "last_modified": "2025-12-16T13:44:46.504175",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "9af86f15199831c0",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "content/no/data/calculator.yaml": {
+      "path": "content/no/data/calculator.yaml",
+      "type": "source_document",
+      "depends_on": [],
+      "last_modified": "2025-12-16T13:44:47.753053",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "fc0b1bf303b41845",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "output/en/proposal.html": {
+      "path": "output/en/proposal.html",
+      "type": "deliverable",
+      "depends_on": [
+        "theme.yaml"
+      ],
+      "last_modified": "2025-12-16T17:43:11.441918",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "aaca19f3baae79e6",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "output/no/proposal.html": {
+      "path": "output/no/proposal.html",
+      "type": "deliverable",
+      "depends_on": [
+        "theme.yaml"
+      ],
+      "last_modified": "2025-12-16T17:43:11.713020",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "cf2f4ed350b7b6cf",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "theme.yaml": {
+      "path": "theme.yaml",
+      "type": "theme",
+      "depends_on": [],
+      "last_modified": "2025-12-16T13:12:09.767283",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "8dd73987176c62ad",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    },
+    "project.yaml": {
+      "path": "project.yaml",
+      "type": "config",
+      "depends_on": [],
+      "last_modified": "2025-12-16T17:16:53.293393",
+      "last_checked": "2025-12-19T00:18:50.846453",
+      "content_hash": "30c967c289313e3c",
+      "freshness_status": "fresh",
+      "freshness_days": null,
+      "metadata": {}
+    }
+  }
+}

@@ -375,6 +375,30 @@ def get_javascript() -> str:
             }
         }
 
+        async function loadFreshnessOverview() {
+            try {
+                const data = await fetchAPI('/api/freshness');
+                const total = data.total_items;
+                const stale = data.stale_count + data.expired_count;
+
+                document.getElementById('stat-freshness').textContent = total;
+
+                const card = document.getElementById('freshness-overview-card');
+                if (stale > 0) {
+                    document.getElementById('stat-freshness-detail').textContent = stale + ' need attention';
+                    document.getElementById('stat-freshness-detail').style.color = '#eab308';
+                    card.style.borderColor = '#eab308';
+                } else {
+                    document.getElementById('stat-freshness-detail').textContent = 'all fresh';
+                    document.getElementById('stat-freshness-detail').style.color = '#22c55e';
+                    card.style.borderColor = '';
+                }
+            } catch (e) {
+                document.getElementById('stat-freshness').textContent = '-';
+                document.getElementById('stat-freshness-detail').textContent = 'not available';
+            }
+        }
+
         function showTab(name) {
             document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none');
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
@@ -392,6 +416,1298 @@ def get_javascript() -> str:
             if (name === 'assets' && !assetsLoaded) {
                 loadAssets();
             }
+            if (name === 'freshness' && !freshnessLoaded) {
+                loadFreshness();
+            }
+            if (name === 'provenance' && !provenanceLoaded) {
+                loadProvenance();
+            }
+            if (name === 'build' && !buildLoaded) {
+                loadBuildStatus();
+            }
+            if (name === 'search' && !searchLoaded) {
+                initSearch();
+            }
+            if (name === 'dependencies' && !depsLoaded) {
+                loadDependencies();
+            }
+        }
+
+        // Freshness tab state
+        let freshnessLoaded = false;
+        let freshnessData = null;
+        let currentFreshnessFilter = 'all';
+        let ignorePatternsVisible = false;
+
+        function toggleIgnorePatterns() {
+            const panel = document.getElementById('ignore-patterns-panel');
+            ignorePatternsVisible = !ignorePatternsVisible;
+            panel.style.display = ignorePatternsVisible ? 'block' : 'none';
+        }
+
+        function updateIgnorePatternsPanel() {
+            const list = document.getElementById('ignore-patterns-list');
+            if (!freshnessData || !freshnessData.ignore_patterns) {
+                list.innerHTML = '<span style="color: var(--text-muted); font-size: 0.8rem;">No ignore patterns configured</span>';
+                return;
+            }
+
+            let html = '';
+            for (const pattern of freshnessData.ignore_patterns) {
+                html += `<span style="display: inline-block; background: var(--bg-card); border: 1px solid var(--border); padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-family: monospace; color: var(--text-muted);">${escapeHtml(pattern)}</span>`;
+            }
+            list.innerHTML = html || '<span style="color: var(--text-muted); font-size: 0.8rem;">No ignore patterns configured</span>';
+        }
+
+        async function loadFreshness(showSpinner = true) {
+            const content = document.getElementById('freshness-content');
+            const btn = document.getElementById('freshness-refresh-btn');
+            const icon = document.getElementById('freshness-refresh-icon');
+            const text = document.getElementById('freshness-refresh-text');
+
+            if (showSpinner) {
+                content.innerHTML = '<div class="loading">Loading freshness data...</div>';
+                if (btn) {
+                    btn.disabled = true;
+                    icon.style.animation = 'spin 1s linear infinite';
+                    text.textContent = 'Loading...';
+                }
+            }
+
+            try {
+                const typeFilter = document.getElementById('freshness-type-filter').value;
+                const url = typeFilter ? `/api/freshness?content_type=${typeFilter}` : '/api/freshness';
+                freshnessData = await fetchAPI(url);
+                freshnessLoaded = true;
+
+                // Update summary stats
+                document.getElementById('freshness-total').textContent = freshnessData.total_items;
+                document.getElementById('freshness-fresh').textContent = freshnessData.fresh_count;
+                document.getElementById('freshness-stale').textContent = freshnessData.stale_count;
+                document.getElementById('freshness-expired').textContent = freshnessData.expired_count;
+                document.getElementById('freshness-untracked').textContent = freshnessData.untracked_count;
+                document.getElementById('freshness-ignored').textContent = freshnessData.ignored_count || 0;
+
+                // Update status
+                const issues = freshnessData.stale_count + freshnessData.expired_count;
+                document.getElementById('freshness-status').textContent =
+                    issues > 0
+                        ? `${issues} item${issues !== 1 ? 's' : ''} need attention`
+                        : 'All content is fresh';
+
+                // Update ignore patterns panel
+                updateIgnorePatternsPanel();
+
+                renderFreshnessContent();
+                updateFreshnessDetails();
+
+            } catch (e) {
+                content.innerHTML = '<div class="empty-state">Error loading freshness data</div>';
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    icon.style.animation = '';
+                    text.textContent = 'Refresh';
+                }
+            }
+        }
+
+        function renderFreshnessContent() {
+            const content = document.getElementById('freshness-content');
+            if (!freshnessData) return;
+
+            let items = freshnessData.items;
+
+            // Apply filter
+            if (currentFreshnessFilter === 'fresh') {
+                items = items.filter(i => i.status === 'fresh');
+            } else if (currentFreshnessFilter === 'stale') {
+                items = items.filter(i => i.status === 'stale');
+            } else if (currentFreshnessFilter === 'expired') {
+                items = items.filter(i => i.status === 'expired');
+            } else if (currentFreshnessFilter === 'untracked') {
+                // Show untracked files instead
+                if (!freshnessData.untracked_files || freshnessData.untracked_files.length === 0) {
+                    content.innerHTML = '<div class="empty-state">No untracked files found</div>';
+                    return;
+                }
+                let html = '<table><thead><tr><th>Untracked File</th><th>Suggestion</th></tr></thead><tbody>';
+                for (const file of freshnessData.untracked_files) {
+                    const filePath = typeof file === 'object' ? file.path : file;
+                    const suggestion = typeof file === 'object' ? file.suggestion : '';
+                    const suggestionBadge = suggestion === 'track'
+                        ? '<span style="font-size: 0.7rem; background: #22c55e20; color: #22c55e; padding: 0.15rem 0.4rem; border-radius: 0.25rem;">Track</span>'
+                        : suggestion === 'ignore'
+                        ? '<span style="font-size: 0.7rem; background: #6b728020; color: #6b7280; padding: 0.15rem 0.4rem; border-radius: 0.25rem;">Ignore</span>'
+                        : '<span style="font-size: 0.7rem; color: var(--text-muted);">-</span>';
+                    html += `<tr><td style="color: #a855f7;" title="${escapeHtml(filePath)}">${escapeHtml(filePath.split('/').pop())}</td><td>${suggestionBadge}</td></tr>`;
+                }
+                html += '</tbody></table>';
+                content.innerHTML = html;
+                return;
+            } else if (currentFreshnessFilter === 'ignored') {
+                // Show ignored files
+                if (!freshnessData.ignored_files || freshnessData.ignored_files.length === 0) {
+                    content.innerHTML = '<div class="empty-state">No ignored files found</div>';
+                    return;
+                }
+                let html = '<table><thead><tr><th>Ignored File</th></tr></thead><tbody>';
+                for (const file of freshnessData.ignored_files) {
+                    html += `<tr><td style="color: #6b7280;" title="${escapeHtml(file)}">${escapeHtml(file.split('/').pop())}</td></tr>`;
+                }
+                html += '</tbody></table>';
+                content.innerHTML = html;
+                return;
+            }
+
+            if (items.length === 0) {
+                content.innerHTML = '<div class="empty-state">No items match the current filter</div>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>Path</th><th>Type</th><th>Status</th><th>Modified</th></tr></thead><tbody>';
+            for (const item of items) {
+                const statusColor = {
+                    'fresh': '#22c55e',
+                    'stale': '#eab308',
+                    'expired': '#ef4444',
+                    'missing': '#9ca3af'
+                }[item.status] || 'var(--text)';
+
+                const typeLabel = item.content_type.replace(/_/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase());
+                const modified = item.last_modified ? new Date(item.last_modified).toLocaleDateString() : '-';
+
+                html += `<tr>
+                    <td title="${escapeHtml(item.path)}">${escapeHtml(item.path.split('/').pop())}</td>
+                    <td><span style="font-size: 0.7rem; background: var(--bg-secondary); padding: 0.2rem 0.4rem; border-radius: 0.25rem;">${typeLabel}</span></td>
+                    <td><span style="color: ${statusColor}; font-weight: 500;">${item.status}</span></td>
+                    <td style="color: var(--text-muted); font-size: 0.8rem;">${modified}</td>
+                </tr>`;
+            }
+            html += '</tbody></table>';
+            content.innerHTML = html;
+        }
+
+        function updateFreshnessDetails() {
+            // Stale items card
+            const staleCard = document.getElementById('stale-details-card');
+            const staleList = document.getElementById('stale-items-list');
+            if (freshnessData.stale_items && freshnessData.stale_items.length > 0) {
+                staleCard.style.display = 'block';
+                let html = '<table><thead><tr><th>Item</th><th>Type</th><th>Dependencies</th></tr></thead><tbody>';
+                for (const item of freshnessData.stale_items) {
+                    const deps = item.depends_on.map(d => d.split('/').pop()).join(', ');
+                    html += `<tr>
+                        <td style="color: #eab308;">${escapeHtml(item.path.split('/').pop())}</td>
+                        <td>${item.content_type.replace(/_/g, ' ')}</td>
+                        <td style="font-size: 0.75rem; color: var(--text-muted);">${deps || '-'}</td>
+                    </tr>`;
+                }
+                html += '</tbody></table>';
+                staleList.innerHTML = html;
+            } else {
+                staleCard.style.display = 'none';
+            }
+
+            // Untracked files card
+            const untrackedCard = document.getElementById('untracked-details-card');
+            const untrackedList = document.getElementById('untracked-files-list');
+            if (freshnessData.untracked_files && freshnessData.untracked_files.length > 0) {
+                untrackedCard.style.display = 'block';
+                let html = '<div style="padding: 0.5rem;">';
+                for (const file of freshnessData.untracked_files.slice(0, 50)) {
+                    const filePath = typeof file === 'object' ? file.path : file;
+                    const suggestion = typeof file === 'object' ? file.suggestion : '';
+                    const suggestionBadge = suggestion === 'track'
+                        ? ' <span style="font-size: 0.65rem; background: #22c55e20; color: #22c55e; padding: 0.1rem 0.3rem; border-radius: 0.2rem; margin-left: 0.5rem;">suggest track</span>'
+                        : suggestion === 'ignore'
+                        ? ' <span style="font-size: 0.65rem; background: #6b728020; color: #6b7280; padding: 0.1rem 0.3rem; border-radius: 0.2rem; margin-left: 0.5rem;">suggest ignore</span>'
+                        : '';
+                    html += `<div style="padding: 0.3rem 0; font-size: 0.8rem; color: #a855f7;" title="${escapeHtml(filePath)}">${escapeHtml(filePath.split('/').pop())}${suggestionBadge}</div>`;
+                }
+                if (freshnessData.untracked_files.length > 50) {
+                    html += `<div style="padding: 0.5rem 0; font-size: 0.8rem; color: var(--text-muted);">... and ${freshnessData.untracked_files.length - 50} more</div>`;
+                }
+                html += '</div>';
+                untrackedList.innerHTML = html;
+            } else {
+                untrackedCard.style.display = 'none';
+            }
+
+            // Ignored files card
+            const ignoredCard = document.getElementById('ignored-details-card');
+            const ignoredList = document.getElementById('ignored-files-list');
+            if (freshnessData.ignored_files && freshnessData.ignored_files.length > 0) {
+                ignoredCard.style.display = 'block';
+                let html = '<div style="padding: 0.5rem;">';
+                for (const file of freshnessData.ignored_files.slice(0, 30)) {
+                    html += `<div style="padding: 0.3rem 0; font-size: 0.8rem; color: #6b7280;" title="${escapeHtml(file)}">${escapeHtml(file.split('/').pop())}</div>`;
+                }
+                if (freshnessData.ignored_files.length > 30) {
+                    html += `<div style="padding: 0.5rem 0; font-size: 0.8rem; color: var(--text-muted);">... and ${freshnessData.ignored_files.length - 30} more</div>`;
+                }
+                html += '</div>';
+                ignoredList.innerHTML = html;
+            } else {
+                ignoredCard.style.display = 'none';
+            }
+        }
+
+        function filterFreshness(filter) {
+            currentFreshnessFilter = filter;
+
+            // Update filter button styles
+            document.querySelectorAll('.freshness-filter').forEach(btn => {
+                if (btn.dataset.filter === filter) {
+                    btn.style.background = 'var(--primary)';
+                    btn.style.color = 'white';
+                } else {
+                    btn.style.background = 'transparent';
+                    btn.style.color = 'var(--text-muted)';
+                }
+            });
+
+            // Update stat card highlighting
+            document.querySelectorAll('#freshness-summary .stat-card').forEach(card => {
+                if (card.dataset.stat === filter) {
+                    card.style.borderColor = 'var(--primary)';
+                    card.style.background = 'var(--bg-secondary)';
+                } else {
+                    card.style.borderColor = 'transparent';
+                    card.style.background = 'var(--bg)';
+                }
+            });
+
+            renderFreshnessContent();
+        }
+
+        function refreshFreshness() {
+            loadFreshness(true);
+        }
+
+        async function scanFreshness() {
+            const btn = document.getElementById('freshness-scan-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 0.9rem; height: 0.9rem; animation: spin 1s linear infinite;"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg><span>Scanning...</span>';
+
+            try {
+                await fetchAPI('/api/freshness/scan', { method: 'POST' });
+                await loadFreshness(true);
+            } catch (e) {
+                console.error('Scan failed:', e);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 0.9rem; height: 0.9rem;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><span>Re-scan</span>';
+            }
+        }
+
+        // ==================== PROVENANCE TAB ====================
+        let provenanceLoaded = false;
+        let provenanceData = null;
+        let provenanceFilter = 'all';
+
+        async function loadProvenance(showSpinner = true) {
+            if (showSpinner) {
+                document.getElementById('provenance-claims').innerHTML = '<div class="loading">Loading provenance data...</div>';
+            }
+
+            const refreshBtn = document.getElementById('provenance-refresh-btn');
+            const refreshIcon = document.getElementById('provenance-refresh-icon');
+            refreshBtn.disabled = true;
+            refreshIcon.style.animation = 'spin 1s linear infinite';
+
+            try {
+                const [report, claims, approvals, reviewQueue] = await Promise.all([
+                    fetchAPI('/api/provenance'),
+                    fetchAPI('/api/provenance/claims'),
+                    fetchAPI('/api/provenance/approvals'),
+                    fetchAPI('/api/provenance/review-queue'),
+                ]);
+
+                provenanceLoaded = true;
+                provenanceData = { report, claims: claims.claims, approvals: approvals.by_status, reviewQueue: reviewQueue.queue };
+
+                // Update summary
+                document.getElementById('provenance-total-docs').textContent = report.summary.total_documents;
+                document.getElementById('provenance-total-claims').textContent = report.summary.total_claims;
+                document.getElementById('provenance-verified').textContent = report.summary.verified_claims;
+                document.getElementById('provenance-unverified').textContent = report.summary.unverified_claims;
+                document.getElementById('provenance-expired').textContent = report.summary.expired_claims;
+                document.getElementById('provenance-expiring').textContent = report.summary.expiring_soon;
+
+                // Update approval status
+                for (const status of ['draft', 'in_review', 'changes_requested', 'approved', 'published']) {
+                    const count = approvals.by_status[status]?.count || 0;
+                    const elemId = 'status-' + status.replace('_', '-');
+                    const elem = document.getElementById(elemId);
+                    if (elem) elem.textContent = count;
+                }
+
+                // Update status text
+                const statusEl = document.getElementById('provenance-status');
+                statusEl.textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+
+                // Render content
+                renderProvenanceClaims();
+                renderReviewQueue();
+
+            } catch (e) {
+                console.error('Failed to load provenance:', e);
+                document.getElementById('provenance-claims').innerHTML = '<div class="empty-state">Failed to load provenance data</div>';
+            } finally {
+                refreshBtn.disabled = false;
+                refreshIcon.style.animation = '';
+            }
+        }
+
+        function renderProvenanceClaims() {
+            if (!provenanceData || !provenanceData.claims) return;
+
+            const container = document.getElementById('provenance-claims');
+            const typeFilter = document.getElementById('provenance-type-filter').value;
+
+            let filtered = provenanceData.claims;
+
+            // Apply status filter
+            if (provenanceFilter === 'unverified') {
+                filtered = filtered.filter(c => c.status === 'unverified');
+            } else if (provenanceFilter === 'expired') {
+                filtered = filtered.filter(c => c.is_expired);
+            } else if (provenanceFilter === 'expiring') {
+                filtered = filtered.filter(c => c.days_until_expiry !== null && c.days_until_expiry > 0 && c.days_until_expiry <= 30);
+            } else if (provenanceFilter === 'verified') {
+                filtered = filtered.filter(c => c.status === 'verified' && !c.is_expired);
+            }
+
+            // Apply type filter
+            if (typeFilter) {
+                filtered = filtered.filter(c => c.source_type === typeFilter);
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="empty-state">No claims match the current filter</div>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>Document</th><th>Claim</th><th>Source</th><th>Status</th><th>Expires</th><th>Actions</th></tr></thead><tbody>';
+            for (const claim of filtered) {
+                const statusClass = getClaimStatusClass(claim);
+                const statusText = getClaimStatusText(claim);
+                const expiryText = claim.expires ? formatExpiryDate(claim.expires, claim.days_until_expiry) : '-';
+
+                html += `<tr>
+                    <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(claim.document_path)}">${escapeHtml(claim.document_path.split('/').pop())}</td>
+                    <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(claim.text)}">${escapeHtml(claim.text.substring(0, 80))}${claim.text.length > 80 ? '...' : ''}</td>
+                    <td>
+                        ${claim.source_url ?
+                            `<a href="${escapeHtml(claim.source_url)}" target="_blank" style="color: var(--primary);">${escapeHtml(claim.source)}</a>` :
+                            escapeHtml(claim.source)}
+                        <span class="status-badge" style="margin-left: 0.25rem; font-size: 0.6rem;">${claim.source_type}</span>
+                    </td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td style="color: var(--text-muted); font-size: 0.8rem;">${expiryText}</td>
+                    <td>
+                        ${claim.status === 'unverified' ?
+                            `<button onclick="verifyClaim('${escapeHtml(claim.document_path)}', '${claim.claim_id}')" class="action-btn" title="Verify claim">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 0.9rem; height: 0.9rem;"><path d="M20 6L9 17l-5-5"/></svg>
+                            </button>` :
+                            claim.is_expired ?
+                                `<button onclick="renewClaim('${escapeHtml(claim.document_path)}', '${claim.claim_id}')" class="action-btn" title="Renew verification">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 0.9rem; height: 0.9rem;"><path d="M23 4v6h-6M1 20v-6h6"/></svg>
+                                </button>` : ''}
+                    </td>
+                </tr>`;
+            }
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function getClaimStatusClass(claim) {
+            if (claim.is_expired) return 'status-error';
+            if (claim.status === 'unverified') return 'status-warn';
+            if (claim.days_until_expiry !== null && claim.days_until_expiry <= 30) return 'status-warn';
+            return 'status-ok';
+        }
+
+        function getClaimStatusText(claim) {
+            if (claim.is_expired) return 'Expired';
+            if (claim.status === 'unverified') return 'Unverified';
+            if (claim.days_until_expiry !== null && claim.days_until_expiry <= 30) return 'Expiring';
+            return 'Verified';
+        }
+
+        function formatExpiryDate(expires, daysLeft) {
+            const date = new Date(expires);
+            const formatted = date.toLocaleDateString();
+            if (daysLeft !== null && daysLeft >= 0) {
+                return `${formatted} (${daysLeft}d)`;
+            }
+            return formatted;
+        }
+
+        function renderReviewQueue() {
+            const container = document.getElementById('review-queue');
+            const queue = provenanceData?.reviewQueue || [];
+
+            if (queue.length === 0) {
+                container.innerHTML = '<div class="empty-state">No documents in review</div>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>Document</th><th>Requested By</th><th>Issues</th><th>Actions</th></tr></thead><tbody>';
+            for (const doc of queue) {
+                const issues = [];
+                if (doc.unverified_claims > 0) issues.push(`${doc.unverified_claims} unverified`);
+                if (doc.expired_claims > 0) issues.push(`${doc.expired_claims} expired`);
+
+                html += `<tr>
+                    <td>${escapeHtml(doc.document_path.split('/').pop())}</td>
+                    <td>${escapeHtml(doc.requester || '-')}</td>
+                    <td>${issues.length > 0 ? `<span class="status-badge status-warn">${issues.join(', ')}</span>` : '<span class="status-badge status-ok">Ready</span>'}</td>
+                    <td style="display: flex; gap: 0.25rem;">
+                        <button onclick="approveDocument('${escapeHtml(doc.document_path)}')" class="action-btn" title="Approve" ${issues.length > 0 ? 'disabled' : ''}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" style="width: 0.9rem; height: 0.9rem;"><path d="M20 6L9 17l-5-5"/></svg>
+                        </button>
+                        <button onclick="rejectDocument('${escapeHtml(doc.document_path)}')" class="action-btn" title="Request changes">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" style="width: 0.9rem; height: 0.9rem;"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                        </button>
+                    </td>
+                </tr>`;
+            }
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function filterProvenance(filter) {
+            provenanceFilter = filter;
+
+            document.querySelectorAll('.provenance-filter').forEach(btn => {
+                if (btn.dataset.filter === filter) {
+                    btn.style.background = 'var(--primary)';
+                    btn.style.color = 'white';
+                    btn.style.border = 'none';
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                    btn.style.background = 'var(--bg-secondary)';
+                    btn.style.color = 'var(--text)';
+                    btn.style.border = '1px solid var(--border)';
+                }
+            });
+
+            renderProvenanceClaims();
+        }
+
+        function filterApprovalStatus(status) {
+            // Show documents with this approval status
+            const docs = provenanceData?.approvals[status]?.documents || [];
+            if (docs.length === 0) {
+                showToast(`No documents with status: ${status}`, 'info');
+                return;
+            }
+            showToast(`${docs.length} document(s) with status: ${status}`, 'info');
+        }
+
+        function refreshProvenance() {
+            loadProvenance(true);
+        }
+
+        async function verifyClaim(documentPath, claimId) {
+            const verifier = prompt('Enter your name to verify this claim:');
+            if (!verifier) return;
+
+            try {
+                const res = await fetch('/api/provenance/claims/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        document_path: documentPath,
+                        claim_id: claimId,
+                        verifier: verifier,
+                        expiry_days: 365
+                    })
+                });
+                if (res.ok) {
+                    showToast('Claim verified successfully', 'success');
+                    loadProvenance();
+                } else {
+                    showToast('Failed to verify claim', 'error');
+                }
+            } catch (e) {
+                showToast('Error: ' + e.message, 'error');
+            }
+        }
+
+        async function renewClaim(documentPath, claimId) {
+            const verifier = prompt('Enter your name to renew this claim verification:');
+            if (!verifier) return;
+
+            try {
+                const res = await fetch('/api/provenance/claims/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        document_path: documentPath,
+                        claim_id: claimId,
+                        verifier: verifier,
+                        expiry_days: 365
+                    })
+                });
+                if (res.ok) {
+                    showToast('Claim renewed successfully', 'success');
+                    loadProvenance();
+                } else {
+                    showToast('Failed to renew claim', 'error');
+                }
+            } catch (e) {
+                showToast('Error: ' + e.message, 'error');
+            }
+        }
+
+        async function approveDocument(documentPath) {
+            const approver = prompt('Enter your name to approve this document:');
+            if (!approver) return;
+
+            try {
+                const res = await fetch('/api/provenance/approve', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        document_path: documentPath,
+                        user: approver
+                    })
+                });
+                if (res.ok) {
+                    showToast('Document approved', 'success');
+                    loadProvenance();
+                } else {
+                    showToast('Failed to approve document', 'error');
+                }
+            } catch (e) {
+                showToast('Error: ' + e.message, 'error');
+            }
+        }
+
+        async function rejectDocument(documentPath) {
+            const reviewer = prompt('Enter your name:');
+            if (!reviewer) return;
+            const comments = prompt('Enter reason for requesting changes:');
+            if (!comments) return;
+
+            try {
+                const res = await fetch('/api/provenance/reject', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        document_path: documentPath,
+                        user: reviewer,
+                        comments: comments
+                    })
+                });
+                if (res.ok) {
+                    showToast('Changes requested', 'success');
+                    loadProvenance();
+                } else {
+                    showToast('Failed to request changes', 'error');
+                }
+            } catch (e) {
+                showToast('Error: ' + e.message, 'error');
+            }
+        }
+
+        async function scanDocumentsForClaims() {
+            showToast('Scanning documents for claims...', 'info');
+            try {
+                const res = await fetch('/api/provenance/scan', { method: 'POST' });
+                const data = await res.json();
+
+                const card = document.getElementById('claim-scan-card');
+                const results = document.getElementById('claim-scan-results');
+
+                if (data.total_claims_found === 0) {
+                    showToast('No potential claims found', 'info');
+                    card.style.display = 'none';
+                    return;
+                }
+
+                let html = `<div style="padding: 0.75rem; background: var(--bg-secondary); border-radius: 0.25rem; margin-bottom: 0.5rem;">
+                    Found <strong>${data.total_claims_found}</strong> potential claims in <strong>${data.documents_scanned}</strong> documents
+                </div>`;
+
+                for (const [docPath, claims] of Object.entries(data.results)) {
+                    html += `<div style="border-bottom: 1px solid var(--border); padding: 0.5rem 0;">
+                        <div style="font-weight: 500; margin-bottom: 0.25rem;">${escapeHtml(docPath)}</div>`;
+                    for (const claim of claims) {
+                        html += `<div style="font-size: 0.8rem; color: var(--text-muted); margin-left: 1rem; margin-bottom: 0.25rem;">
+                            <span class="status-badge">${claim.type}</span>
+                            "${escapeHtml(claim.match)}"
+                        </div>`;
+                    }
+                    html += '</div>';
+                }
+
+                results.innerHTML = html;
+                card.style.display = 'block';
+                showToast(`Found ${data.total_claims_found} potential claims`, 'success');
+            } catch (e) {
+                showToast('Scan failed: ' + e.message, 'error');
+            }
+        }
+
+        async function validateAllUrls() {
+            showToast('Validating source URLs...', 'info');
+            try {
+                const res = await fetch('/api/provenance/validate-urls', { method: 'POST' });
+                const data = await res.json();
+
+                const card = document.getElementById('url-validation-card');
+                const results = document.getElementById('url-validation-results');
+
+                if (data.total_urls === 0) {
+                    showToast('No URLs to validate', 'info');
+                    card.style.display = 'none';
+                    return;
+                }
+
+                let html = `<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1rem;">
+                    <div style="text-align: center; padding: 0.5rem; background: var(--bg-secondary); border-radius: 0.25rem;">
+                        <div style="font-size: 1.25rem; font-weight: 600;">${data.total_urls}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">Total URLs</div>
+                    </div>
+                    <div style="text-align: center; padding: 0.5rem; background: var(--bg-secondary); border-radius: 0.25rem;">
+                        <div style="font-size: 1.25rem; font-weight: 600; color: #22c55e;">${data.valid}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">Valid</div>
+                    </div>
+                    <div style="text-align: center; padding: 0.5rem; background: var(--bg-secondary); border-radius: 0.25rem;">
+                        <div style="font-size: 1.25rem; font-weight: 600; color: #ef4444;">${data.invalid}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">Invalid</div>
+                    </div>
+                </div>`;
+
+                if (data.results.length > 0) {
+                    html += '<table><thead><tr><th>URL</th><th>Status</th><th>Claims</th></tr></thead><tbody>';
+                    for (const result of data.results) {
+                        const statusClass = result.valid ? 'status-ok' : 'status-error';
+                        const statusText = result.valid ? `OK (${result.status})` : `Error: ${result.error || 'Unknown'}`;
+                        html += `<tr>
+                            <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">
+                                <a href="${escapeHtml(result.url)}" target="_blank" style="color: var(--primary);">${escapeHtml(result.url)}</a>
+                            </td>
+                            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                            <td>${result.claims?.length || 0} claim(s)</td>
+                        </tr>`;
+                    }
+                    html += '</tbody></table>';
+                }
+
+                results.innerHTML = html;
+                card.style.display = 'block';
+                showToast(`Validation complete: ${data.valid} valid, ${data.invalid} invalid`, data.invalid > 0 ? 'warning' : 'success');
+            } catch (e) {
+                showToast('Validation failed: ' + e.message, 'error');
+            }
+        }
+
+        // ==================== BUILD TAB ====================
+        let buildLoaded = false;
+
+        async function loadBuildStatus() {
+            try {
+                const data = await fetchAPI('/api/build/status');
+                buildLoaded = true;
+
+                // Update freshness warning
+                const warningBanner = document.getElementById('build-freshness-warning');
+                if (data.freshness_warning) {
+                    warningBanner.style.display = 'block';
+                    document.getElementById('build-freshness-message').textContent = data.freshness_warning.message;
+                } else {
+                    warningBanner.style.display = 'none';
+                }
+
+                // Update status badge
+                const badge = document.getElementById('build-status-badge');
+                badge.style.display = 'inline-block';
+                if (data.active) {
+                    badge.textContent = 'Building...';
+                    badge.className = 'status-badge status-warn';
+                } else {
+                    badge.textContent = 'Ready';
+                    badge.className = 'status-badge status-ok';
+                }
+
+                // Update status content
+                const statusContent = document.getElementById('build-status-content');
+                if (data.last_build) {
+                    statusContent.innerHTML = `
+                        <div style="font-size: 0.85rem; color: var(--text-muted);">
+                            Last build: ${new Date(data.last_build).toLocaleString()}
+                        </div>
+                    `;
+                }
+
+                // Update outputs
+                renderBuildOutputs(data.outputs);
+
+                // Populate language checkboxes
+                const langContainer = document.getElementById('build-languages');
+                const projectData = await fetchAPI('/api/project');
+                langContainer.innerHTML = '';
+                for (const lang of Object.keys(projectData.languages)) {
+                    langContainer.innerHTML += `
+                        <label class="build-format-checkbox">
+                            <input type="checkbox" id="build-lang-${lang}" checked> ${lang.toUpperCase()}
+                        </label>
+                    `;
+                }
+
+            } catch (e) {
+                console.error('Failed to load build status:', e);
+            }
+        }
+
+        function renderBuildOutputs(outputs) {
+            const container = document.getElementById('build-outputs');
+            if (!outputs || outputs.length === 0) {
+                container.innerHTML = '<div class="empty-state">No output files yet</div>';
+                return;
+            }
+
+            let html = '<table><thead><tr><th>File</th><th>Format</th><th>Language</th><th>Size</th><th>Modified</th></tr></thead><tbody>';
+            for (const out of outputs) {
+                html += `<tr>
+                    <td>${escapeHtml(out.name)}</td>
+                    <td><span class="status-badge">${out.format}</span></td>
+                    <td>${out.language.toUpperCase()}</td>
+                    <td>${formatSize(out.size)}</td>
+                    <td style="color: var(--text-muted);">${new Date(out.modified).toLocaleDateString()}</td>
+                </tr>`;
+            }
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        async function startBuild() {
+            const btn = document.getElementById('build-start-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 1.1rem; height: 1.1rem; animation: spin 1s linear infinite;"><path d="M23 4v6h-6M1 20v-6h6"/></svg> Building...';
+
+            // Gather selected formats
+            const formats = [];
+            if (document.getElementById('build-html').checked) formats.push('html');
+            if (document.getElementById('build-pdf').checked) formats.push('pdf');
+            if (document.getElementById('build-pptx').checked) formats.push('pptx');
+            if (document.getElementById('build-xlsx').checked) formats.push('xlsx');
+
+            // Gather selected languages
+            const languages = [];
+            document.querySelectorAll('[id^="build-lang-"]').forEach(cb => {
+                if (cb.checked) languages.push(cb.id.replace('build-lang-', ''));
+            });
+
+            const force = document.getElementById('build-force').checked;
+
+            try {
+                const params = new URLSearchParams({
+                    formats: formats.join(','),
+                    languages: languages.join(','),
+                    force: force,
+                });
+                await fetchAPI('/api/build/start?' + params, { method: 'POST' });
+                showToast('Build started', 'success');
+
+                // Clear log and start polling
+                document.getElementById('build-log').innerHTML = '<div style="color: var(--text-muted);">Build starting...</div>';
+                pollBuildStatus();
+            } catch (e) {
+                showToast('Failed to start build: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 1.1rem; height: 1.1rem;"><polygon points="5 3 19 12 5 21 5 3"/></svg> Start Build';
+            }
+        }
+
+        async function pollBuildStatus() {
+            const data = await fetchAPI('/api/build/status');
+            updateBuildLog(data.logs);
+            if (data.active) {
+                setTimeout(pollBuildStatus, 1000);
+            } else {
+                loadBuildStatus();
+            }
+        }
+
+        function updateBuildLog(logs) {
+            const container = document.getElementById('build-log');
+            let html = '';
+            for (const entry of logs) {
+                const levelClass = 'build-log-' + entry.level;
+                html += `<div class="build-log-entry ${levelClass}">[${new Date(entry.timestamp).toLocaleTimeString()}] ${escapeHtml(entry.message)}</div>`;
+            }
+            container.innerHTML = html || '<div style="color: var(--text-muted);">No log entries</div>';
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function clearBuildLog() {
+            document.getElementById('build-log').innerHTML = '<div style="color: var(--text-muted);">Build output will appear here...</div>';
+        }
+
+        function refreshBuildStatus() {
+            loadBuildStatus();
+        }
+
+        // ==================== SEARCH TAB ====================
+        let searchLoaded = false;
+        let recentSearches = JSON.parse(localStorage.getItem('recentSearches') || '[]');
+
+        async function initSearch() {
+            searchLoaded = true;
+
+            // Populate language filter
+            const langSelect = document.getElementById('search-lang-filter');
+            const projectData = await fetchAPI('/api/project');
+            for (const lang of Object.keys(projectData.languages)) {
+                langSelect.innerHTML += `<option value="${lang}">${lang.toUpperCase()} - ${projectData.languages[lang].name}</option>`;
+            }
+
+            // Load recent searches
+            renderRecentSearches();
+        }
+
+        function renderRecentSearches() {
+            const container = document.getElementById('recent-searches');
+            if (recentSearches.length === 0) {
+                container.innerHTML = '<span style="color: var(--text-muted); font-size: 0.85rem;">No recent searches</span>';
+                return;
+            }
+
+            container.innerHTML = recentSearches.map(q =>
+                `<span class="search-tag" onclick="quickSearch('${escapeHtml(q)}')">${escapeHtml(q)}</span>`
+            ).join('');
+        }
+
+        function quickSearch(query) {
+            document.getElementById('search-input').value = query;
+            performSearch();
+        }
+
+        async function performSearch() {
+            const query = document.getElementById('search-input').value.trim();
+            if (!query) return;
+
+            // Add to recent searches
+            recentSearches = [query, ...recentSearches.filter(q => q !== query)].slice(0, 10);
+            localStorage.setItem('recentSearches', JSON.stringify(recentSearches));
+            renderRecentSearches();
+
+            const resultsContainer = document.getElementById('search-results');
+            resultsContainer.innerHTML = '<div class="loading">Searching...</div>';
+
+            try {
+                const lang = document.getElementById('search-lang-filter').value;
+                const type = document.getElementById('search-type-filter').value;
+                const params = new URLSearchParams({ q: query });
+                if (lang) params.set('lang', lang);
+                if (type) params.set('type', type);
+
+                const data = await fetchAPI('/api/search?' + params);
+
+                document.getElementById('search-result-count').textContent = `${data.total} results`;
+
+                if (data.results.length === 0) {
+                    resultsContainer.innerHTML = '<div class="empty-state">No results found for "' + escapeHtml(query) + '"</div>';
+                    return;
+                }
+
+                let html = '';
+                for (const result of data.results) {
+                    html += `
+                        <div class="search-result-item" onclick="openSearchResult('${escapeHtml(result.path)}')">
+                            <div class="search-result-title">${escapeHtml(result.title)}</div>
+                            <div class="search-result-path">${escapeHtml(result.path)} - ${result.language.toUpperCase()} - ${result.type}</div>
+                            <div class="search-result-snippet">${result.snippet || ''}</div>
+                        </div>
+                    `;
+                }
+                resultsContainer.innerHTML = html;
+
+            } catch (e) {
+                resultsContainer.innerHTML = '<div class="empty-state">Search failed: ' + e.message + '</div>';
+            }
+        }
+
+        function openSearchResult(path) {
+            // Switch to documents tab and open the file
+            showTab('documents');
+            // Try to load the document
+            setTimeout(() => {
+                if (typeof loadDocumentDirect === 'function') {
+                    loadDocumentDirect(path, 'chapter');
+                }
+            }, 100);
+        }
+
+        function clearRecentSearches() {
+            recentSearches = [];
+            localStorage.removeItem('recentSearches');
+            renderRecentSearches();
+        }
+
+        // ==================== DEPENDENCIES TAB ====================
+        let depsLoaded = false;
+        let depsData = null;
+
+        async function loadDependencies() {
+            depsLoaded = true;
+            const content = document.getElementById('deps-content');
+            content.innerHTML = '<div class="loading">Loading dependencies...</div>';
+
+            try {
+                depsData = await fetchAPI('/api/dependencies');
+                updateDepsView();
+
+                // Populate impact analysis file selector
+                const filesData = await fetchAPI('/api/dependencies/files');
+                const select = document.getElementById('impact-file-select');
+                select.innerHTML = '<option value="">Select a file...</option>';
+                for (const file of filesData.files) {
+                    select.innerHTML += `<option value="${escapeHtml(file.path)}">${escapeHtml(file.path)}</option>`;
+                }
+            } catch (e) {
+                content.innerHTML = '<div class="empty-state">Failed to load dependencies: ' + e.message + '</div>';
+            }
+        }
+
+        function updateDepsView() {
+            const mode = document.getElementById('deps-view-mode').value;
+            const content = document.getElementById('deps-content');
+            const impactCard = document.getElementById('impact-analysis-card');
+
+            impactCard.style.display = mode === 'impact' ? 'block' : 'none';
+
+            if (!depsData) return;
+
+            if (mode === 'tree') {
+                renderDepsTree(content);
+            } else if (mode === 'list') {
+                renderDepsList(content);
+            } else if (mode === 'impact') {
+                renderDepsTree(content);
+            }
+        }
+
+        function renderDepsTree(container) {
+            if (!depsData.tree || depsData.tree.length === 0) {
+                container.innerHTML = '<div class="empty-state">No dependencies tracked yet. Run freshness scan first.</div>';
+                return;
+            }
+
+            let html = '';
+            for (const group of depsData.tree) {
+                html += `
+                    <div class="dep-tree-node">
+                        <div style="font-weight: 600; padding: 0.5rem; background: var(--bg-secondary); border-radius: 0.25rem; margin-bottom: 0.5rem;">
+                            ${escapeHtml(group.name)} <span style="color: var(--text-muted); font-weight: normal;">(${group.count})</span>
+                        </div>
+                        <div class="dep-tree-children">
+                `;
+                for (const item of group.children.slice(0, 20)) {
+                    const staleClass = item.status === 'stale' ? 'stale' : '';
+                    html += `
+                        <div class="dep-tree-item ${staleClass}">
+                            <span class="dep-type-badge dep-type-${item.item_type}">${item.item_type.replace(/_/g, ' ')}</span>
+                            <span style="flex: 1;">${escapeHtml(item.path.split('/').pop())}</span>
+                            ${item.deps_count > 0 ? `<span style="font-size: 0.75rem; color: var(--text-muted);">${item.deps_count} deps</span>` : ''}
+                        </div>
+                    `;
+                }
+                if (group.children.length > 20) {
+                    html += `<div style="padding: 0.5rem; color: var(--text-muted); font-size: 0.85rem;">... and ${group.children.length - 20} more</div>`;
+                }
+                html += '</div></div>';
+            }
+            container.innerHTML = html;
+        }
+
+        function renderDepsList(container) {
+            if (!depsData.items || depsData.items.length === 0) {
+                container.innerHTML = '<div class="empty-state">No dependencies tracked</div>';
+                return;
+            }
+
+            // Show items with dependencies
+            const withDeps = depsData.items.filter(i => i.depends_on.length > 0);
+
+            let html = '<div style="margin-bottom: 1rem; color: var(--text-muted); font-size: 0.85rem;">Showing items with dependencies</div>';
+            for (const item of withDeps.slice(0, 30)) {
+                html += `
+                    <div class="dep-list-item">
+                        <div>
+                            <div style="font-weight: 500;">${escapeHtml(item.path.split('/').pop())}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">${item.type.replace(/_/g, ' ')}</div>
+                        </div>
+                        <div class="dep-arrow">→</div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 0.85rem;">${item.depends_on.length} dependencies</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">${item.dependents.length} dependents</div>
+                        </div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        async function analyzeImpact() {
+            const path = document.getElementById('impact-file-select').value;
+            if (!path) {
+                showToast('Please select a file', 'warning');
+                return;
+            }
+
+            const resultsDiv = document.getElementById('impact-results');
+            const listDiv = document.getElementById('impact-items-list');
+            resultsDiv.style.display = 'block';
+            listDiv.innerHTML = '<div class="loading">Analyzing...</div>';
+
+            try {
+                const data = await fetchAPI('/api/dependencies/impact/' + encodeURIComponent(path));
+
+                if (data.affected.length === 0) {
+                    listDiv.innerHTML = '<div style="color: var(--text-muted);">No items depend on this file</div>';
+                } else {
+                    let html = '';
+                    for (const item of data.affected) {
+                        html += `
+                            <div style="padding: 0.5rem; border: 1px solid var(--border); border-radius: 0.25rem; margin-bottom: 0.5rem;">
+                                <span class="dep-type-badge dep-type-${item.type}">${item.type.replace(/_/g, ' ')}</span>
+                                <span style="margin-left: 0.5rem;">${escapeHtml(item.path)}</span>
+                            </div>
+                        `;
+                    }
+                    listDiv.innerHTML = html;
+                }
+            } catch (e) {
+                listDiv.innerHTML = '<div style="color: #ef4444;">Failed: ' + e.message + '</div>';
+            }
+        }
+
+        function refreshDependencies() {
+            loadDependencies();
+        }
+
+        // ==================== TOAST NOTIFICATIONS ====================
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container') || createToastContainer();
+
+            const toast = document.createElement('div');
+            toast.className = 'toast toast-' + type;
+            toast.innerHTML = `
+                <span>${escapeHtml(message)}</span>
+                <button onclick="this.parentElement.remove()" style="background: none; border: none; color: inherit; cursor: pointer; padding: 0; margin-left: 0.5rem;">&times;</button>
+            `;
+
+            container.appendChild(toast);
+
+            // Auto-remove after 4 seconds
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        function createToastContainer() {
+            const container = document.createElement('div');
+            container.id = 'toast-container';
+            container.style.cssText = 'position: fixed; bottom: 1rem; right: 1rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem;';
+            document.body.appendChild(container);
+
+            // Add toast styles
+            const style = document.createElement('style');
+            style.textContent = `
+                .toast {
+                    padding: 0.75rem 1rem;
+                    border-radius: 0.5rem;
+                    display: flex;
+                    align-items: center;
+                    animation: slideIn 0.3s ease;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                }
+                .toast-info { background: #3b82f6; color: white; }
+                .toast-success { background: #22c55e; color: white; }
+                .toast-warning { background: #f59e0b; color: white; }
+                .toast-error { background: #ef4444; color: white; }
+                @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+                @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+            `;
+            document.head.appendChild(style);
+
+            return container;
+        }
+
+        // ==================== KEYBOARD SHORTCUTS ====================
+        document.addEventListener('keydown', function(e) {
+            // Ignore if typing in input
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            // Ctrl/Cmd + number for tabs
+            if ((e.ctrlKey || e.metaKey) && e.key >= '1' && e.key <= '9') {
+                e.preventDefault();
+                const tabs = ['overview', 'documents', 'media', 'packs', 'assets', 'translations', 'quality', 'freshness', 'build', 'search', 'dependencies', 'activity'];
+                const idx = parseInt(e.key) - 1;
+                if (idx < tabs.length) {
+                    showTab(tabs[idx]);
+                    document.querySelectorAll('.tab')[idx].classList.add('active');
+                }
+            }
+
+            // Ctrl/Cmd + K for search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                showTab('search');
+                document.getElementById('search-input').focus();
+            }
+
+            // Ctrl/Cmd + B for build
+            if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+                e.preventDefault();
+                showTab('build');
+            }
+
+            // ? for keyboard shortcuts help
+            if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
+                showKeyboardShortcuts();
+            }
+        });
+
+        function showKeyboardShortcuts() {
+            const shortcuts = [
+                ['Ctrl/Cmd + 1-9', 'Switch tabs'],
+                ['Ctrl/Cmd + K', 'Open search'],
+                ['Ctrl/Cmd + B', 'Open build'],
+                ['?', 'Show this help'],
+            ];
+
+            let html = '<div style="padding: 1rem;"><h3 style="margin-bottom: 1rem;">Keyboard Shortcuts</h3><table>';
+            for (const [key, desc] of shortcuts) {
+                html += `<tr><td style="padding: 0.25rem 1rem 0.25rem 0; font-family: monospace; background: var(--bg-secondary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">${key}</td><td>${desc}</td></tr>`;
+            }
+            html += '</table></div>';
+
+            showModal('Keyboard Shortcuts', html);
+        }
+
+        function showModal(title, content) {
+            const existing = document.getElementById('modal-overlay');
+            if (existing) existing.remove();
+
+            const modal = document.createElement('div');
+            modal.id = 'modal-overlay';
+            modal.style.cssText = 'position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;';
+            modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+
+            modal.innerHTML = `
+                <div style="background: var(--bg-card); border-radius: 0.5rem; max-width: 500px; max-height: 80vh; overflow: auto; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
+                    <div style="padding: 1rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                        <strong>${escapeHtml(title)}</strong>
+                        <button onclick="this.closest('#modal-overlay').remove()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+                    </div>
+                    ${content}
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+        }
+
+        // ==================== EXPORT REPORTS ====================
+        async function exportReport(type) {
+            showToast('Generating ' + type + ' report...', 'info');
+
+            try {
+                let data, filename, content;
+
+                if (type === 'freshness') {
+                    data = await fetchAPI('/api/freshness');
+                    filename = 'freshness-report.json';
+                    content = JSON.stringify(data, null, 2);
+                } else if (type === 'quality') {
+                    data = await fetchAPI('/api/quality');
+                    filename = 'quality-report.json';
+                    content = JSON.stringify(data, null, 2);
+                } else if (type === 'dependencies') {
+                    data = await fetchAPI('/api/dependencies');
+                    filename = 'dependencies-report.json';
+                    content = JSON.stringify(data, null, 2);
+                }
+
+                downloadFile(content, filename, 'application/json');
+                showToast('Report downloaded!', 'success');
+            } catch (e) {
+                showToast('Export failed: ' + e.message, 'error');
+            }
+        }
+
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // ==================== BATCH ACTIONS ====================
+        let selectedStaleItems = new Set();
+
+        function toggleStaleItemSelection(path) {
+            if (selectedStaleItems.has(path)) {
+                selectedStaleItems.delete(path);
+            } else {
+                selectedStaleItems.add(path);
+            }
+            updateBatchActionButton();
+        }
+
+        function selectAllStaleItems() {
+            if (freshnessData && freshnessData.stale_items) {
+                for (const item of freshnessData.stale_items) {
+                    selectedStaleItems.add(item.path);
+                }
+            }
+            updateBatchActionButton();
+            renderFreshnessContent();
+        }
+
+        function clearStaleItemSelection() {
+            selectedStaleItems.clear();
+            updateBatchActionButton();
+            renderFreshnessContent();
+        }
+
+        function updateBatchActionButton() {
+            const btn = document.getElementById('batch-rebuild-btn');
+            if (btn) {
+                btn.textContent = selectedStaleItems.size > 0
+                    ? `Rebuild Selected (${selectedStaleItems.size})`
+                    : 'Select items to rebuild';
+                btn.disabled = selectedStaleItems.size === 0;
+            }
+        }
+
+        async function rebuildSelectedItems() {
+            if (selectedStaleItems.size === 0) return;
+
+            showToast(`Rebuilding ${selectedStaleItems.size} items...`, 'info');
+
+            // For now, trigger a full build - in future could be selective
+            showTab('build');
+            setTimeout(() => startBuild(), 500);
         }
 
         // Media tab state
@@ -898,7 +2214,7 @@ def get_javascript() -> str:
             try {
                 if (type === 'chapter' || type === 'deliverable') {
                     const data = await fetchAPI('/api/document?path=' + encodeURIComponent(path));
-                    currentDocData = data;
+                    currentDocData = { ...data, docType: type };
                     document.getElementById('preview-title').textContent = data.title;
                     document.getElementById('preview-path').textContent = data.path;
                     renderDocPreview();
@@ -909,6 +2225,7 @@ def get_javascript() -> str:
                         content: data.content,
                         metadata: data.parsed || {},
                         isScript: true,
+                        docType: 'script',
                         video: data.video || null
                     };
                     currentScriptPath = path;
@@ -917,6 +2234,20 @@ def get_javascript() -> str:
                     // Load scene notes for this script
                     await loadSceneNotes(path);
                     renderDocPreview();
+                } else if (type === 'slides') {
+                    const data = await fetchAPI('/api/file?path=' + encodeURIComponent(path));
+                    const parsed = data.parsed || {};
+                    const slideCount = (parsed.slides || []).length;
+                    currentDocData = {
+                        title: parsed.title || data.filename,
+                        content: data.content,
+                        metadata: parsed,
+                        isSlides: true,
+                        docType: 'slides'
+                    };
+                    document.getElementById('preview-title').textContent = (parsed.title || data.filename) + ' (' + slideCount + ' slides)';
+                    document.getElementById('preview-path').textContent = data.path;
+                    renderDocPreview();
                 } else {
                     const data = await fetchAPI('/api/file?path=' + encodeURIComponent(path));
                     currentDocData = {
@@ -924,7 +2255,8 @@ def get_javascript() -> str:
                         content: data.content,
                         html: '<pre class="yaml-viewer">' + escapeHtml(data.content) + '</pre>',
                         metadata: data.parsed || {},
-                        isYaml: true
+                        isYaml: true,
+                        docType: type
                     };
                     document.getElementById('preview-title').textContent = data.filename;
                     document.getElementById('preview-path').textContent = data.path;
@@ -1018,6 +2350,16 @@ def get_javascript() -> str:
                 return;
             }
 
+            // Special handling for slide decks
+            if (currentDocData.isSlides && previewMode === 'preview') {
+                previewContent.className = 'doc-preview-content';
+                previewContent.style.padding = '0';
+                previewContent.innerHTML = renderSlideViewer(currentDocData.metadata);
+                return;
+            } else {
+                previewContent.style.padding = '';
+            }
+
             if (previewMode === 'preview') {
                 previewContent.className = 'doc-preview-content preview-mode';
                 previewContent.innerHTML = currentDocData.html || '<pre class="yaml-viewer">' + escapeHtml(currentDocData.content) + '</pre>';
@@ -1026,16 +2368,7 @@ def get_javascript() -> str:
                 previewContent.textContent = currentDocData.content;
             } else if (previewMode === 'metadata') {
                 previewContent.className = 'doc-preview-content';
-                let html = '<div class="doc-metadata"><dl>';
-                for (const [key, value] of Object.entries(currentDocData.metadata || {})) {
-                    html += '<dt>' + escapeHtml(key) + '</dt>';
-                    html += '<dd>' + escapeHtml(typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)) + '</dd>';
-                }
-                html += '</dl></div>';
-                if (Object.keys(currentDocData.metadata || {}).length === 0) {
-                    html = '<div class="empty-state">No metadata available</div>';
-                }
-                previewContent.innerHTML = html;
+                previewContent.innerHTML = renderMetadataViewer(currentDocData.metadata, currentDocData.docType || 'document');
             }
         }
 
@@ -1703,6 +3036,396 @@ def get_javascript() -> str:
             renderDocPreview();
         }
 
+        // ==================== SLIDE DECK VIEWER ====================
+        let currentSlideIndex = 0;
+        let slidesData = null;
+
+        function renderSlideViewer(data) {
+            slidesData = data;
+            currentSlideIndex = 0;
+
+            const slides = data.slides || [];
+            const deckTitle = data.title || 'Untitled Presentation';
+            const deckSubtitle = data.subtitle || '';
+
+            let html = '<div class="slide-viewer">';
+            html += '<div class="slide-viewer-main">';
+
+            // Sidebar with thumbnails
+            html += '<div class="slide-viewer-sidebar">';
+            slides.forEach((slide, idx) => {
+                const isActive = idx === 0 ? 'active' : '';
+                const thumbTitle = slide.title || slide.quote?.substring(0, 30) || 'Slide ' + (idx + 1);
+                html += '<div class="slide-thumb ' + isActive + '" onclick="goToSlide(' + idx + ')" data-slide="' + idx + '">';
+                html += renderSlideThumb(slide, idx);
+                html += '<span class="slide-thumb-number">' + (idx + 1) + '</span>';
+                html += '</div>';
+            });
+            html += '</div>';
+
+            // Main content area
+            html += '<div class="slide-viewer-content">';
+            html += '<div class="slide-canvas" id="slide-canvas">';
+            html += renderSlide(slides[0], 0);
+            html += '</div>';
+
+            // Speaker notes
+            const firstNotes = slides[0]?.notes || '';
+            html += '<div class="slide-notes" id="slide-notes" style="display:' + (firstNotes ? 'block' : 'none') + '">';
+            html += '<div class="slide-notes-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Speaker Notes</div>';
+            html += '<div id="slide-notes-content">' + escapeHtml(firstNotes) + '</div>';
+            html += '</div>';
+
+            html += '</div></div>';
+
+            // Navigation controls
+            html += '<div class="slide-controls">';
+            html += '<button class="slide-nav-btn" onclick="prevSlide()" id="prev-slide-btn" disabled>';
+            html += '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>';
+            html += 'Previous';
+            html += '</button>';
+            html += '<span class="slide-counter" id="slide-counter">1 / ' + slides.length + '</span>';
+            html += '<button class="slide-nav-btn" onclick="nextSlide()" id="next-slide-btn"' + (slides.length <= 1 ? ' disabled' : '') + '>';
+            html += 'Next';
+            html += '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>';
+            html += '</button>';
+            html += '</div>';
+
+            html += '</div>';
+            return html;
+        }
+
+        function renderSlideThumb(slide, idx) {
+            const type = slide.type || 'content';
+            let html = '<div class="slide-thumb-content">';
+
+            if (type === 'title' || type === 'section') {
+                html += '<div class="slide-thumb-title">' + escapeHtml(slide.title || '') + '</div>';
+                if (slide.subtitle) html += '<div style="font-size:0.35rem;color:var(--text-muted)">' + escapeHtml(slide.subtitle.substring(0, 30)) + '</div>';
+            } else if (type === 'quote') {
+                html += '<div style="font-style:italic;font-size:0.35rem">"' + escapeHtml((slide.quote || '').substring(0, 40)) + '..."</div>';
+            } else if (type === 'two_column') {
+                html += '<div class="slide-thumb-title">' + escapeHtml(slide.title || '') + '</div>';
+                html += '<div style="display:flex;gap:0.1rem;width:100%"><div style="flex:1;background:var(--border);height:0.5rem;border-radius:1px"></div><div style="flex:1;background:var(--border);height:0.5rem;border-radius:1px"></div></div>';
+            } else {
+                html += '<div class="slide-thumb-title">' + escapeHtml(slide.title || '') + '</div>';
+                const bullets = slide.bullets || [];
+                if (bullets.length > 0) {
+                    html += '<div style="width:100%;text-align:left">';
+                    bullets.slice(0, 3).forEach(() => {
+                        html += '<div style="background:var(--border);height:2px;margin:1px 0;border-radius:1px"></div>';
+                    });
+                    html += '</div>';
+                }
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function renderSlide(slide, idx) {
+            if (!slide) return '<div class="empty-state">No slide data</div>';
+
+            const type = slide.type || 'content';
+            let html = '<div class="slide-frame slide-type-' + type + '">';
+            html += '<div class="slide-frame-inner">';
+
+            switch (type) {
+                case 'title':
+                    html += '<div class="slide-main-title">' + escapeHtml(slide.title || '') + '</div>';
+                    if (slide.subtitle) html += '<div class="slide-subtitle">' + escapeHtml(slide.subtitle) + '</div>';
+                    html += '<div class="slide-accent"></div>';
+                    break;
+
+                case 'section':
+                    html += '<div class="slide-main-title">' + escapeHtml(slide.title || '') + '</div>';
+                    if (slide.subtitle) html += '<div class="slide-subtitle">' + escapeHtml(slide.subtitle) + '</div>';
+                    break;
+
+                case 'content':
+                    html += '<div class="slide-header">';
+                    html += '<div class="slide-main-title">' + escapeHtml(slide.title || '') + '</div>';
+                    html += '<div class="slide-title-accent"></div>';
+                    html += '</div>';
+                    if (slide.bullets && slide.bullets.length > 0) {
+                        html += '<ul class="slide-bullets">';
+                        slide.bullets.forEach(bullet => {
+                            html += '<li class="slide-bullet">' + escapeHtml(bullet) + '</li>';
+                        });
+                        html += '</ul>';
+                    }
+                    break;
+
+                case 'two_column':
+                    html += '<div class="slide-header">';
+                    html += '<div class="slide-main-title">' + escapeHtml(slide.title || '') + '</div>';
+                    html += '</div>';
+                    html += '<div class="slide-columns">';
+                    html += '<div class="slide-column">';
+                    if (slide.left_title) html += '<div class="slide-column-title">' + escapeHtml(slide.left_title) + '</div>';
+                    if (slide.left_bullets && slide.left_bullets.length > 0) {
+                        html += '<ul class="slide-bullets">';
+                        slide.left_bullets.forEach(bullet => {
+                            html += '<li class="slide-bullet">' + escapeHtml(bullet) + '</li>';
+                        });
+                        html += '</ul>';
+                    }
+                    html += '</div>';
+                    html += '<div class="slide-column">';
+                    if (slide.right_title) html += '<div class="slide-column-title">' + escapeHtml(slide.right_title) + '</div>';
+                    if (slide.right_bullets && slide.right_bullets.length > 0) {
+                        html += '<ul class="slide-bullets">';
+                        slide.right_bullets.forEach(bullet => {
+                            html += '<li class="slide-bullet">' + escapeHtml(bullet) + '</li>';
+                        });
+                        html += '</ul>';
+                    }
+                    html += '</div></div>';
+                    break;
+
+                case 'quote':
+                    html += '<div class="slide-quote-mark">"</div>';
+                    html += '<div class="slide-quote-text">' + escapeHtml(slide.quote || '') + '</div>';
+                    if (slide.author) html += '<div class="slide-quote-author">' + escapeHtml(slide.author) + '</div>';
+                    break;
+
+                case 'image':
+                    html += '<div class="slide-header">';
+                    html += '<div class="slide-main-title">' + escapeHtml(slide.title || '') + '</div>';
+                    html += '</div>';
+                    html += '<div class="slide-image-container">';
+                    if (slide.image_path) {
+                        html += '<img src="' + escapeHtml(slide.image_path) + '" alt="' + escapeHtml(slide.title || 'Slide image') + '" style="max-width:100%;max-height:100%;object-fit:contain">';
+                    } else {
+                        html += '<div class="slide-image-placeholder">';
+                        html += '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+                        html += '<span>Image placeholder</span>';
+                        html += '</div>';
+                    }
+                    html += '</div>';
+                    if (slide.image_caption) html += '<div class="slide-image-caption">' + escapeHtml(slide.image_caption) + '</div>';
+                    break;
+
+                default:
+                    html += '<div class="slide-main-title">' + escapeHtml(slide.title || 'Untitled Slide') + '</div>';
+            }
+
+            html += '</div></div>';
+            return html;
+        }
+
+        function goToSlide(idx) {
+            if (!slidesData || !slidesData.slides) return;
+            const slides = slidesData.slides;
+            if (idx < 0 || idx >= slides.length) return;
+
+            currentSlideIndex = idx;
+
+            // Update canvas
+            document.getElementById('slide-canvas').innerHTML = renderSlide(slides[idx], idx);
+
+            // Update counter
+            document.getElementById('slide-counter').textContent = (idx + 1) + ' / ' + slides.length;
+
+            // Update buttons
+            document.getElementById('prev-slide-btn').disabled = idx === 0;
+            document.getElementById('next-slide-btn').disabled = idx === slides.length - 1;
+
+            // Update thumbnails
+            document.querySelectorAll('.slide-thumb').forEach((el, i) => {
+                el.classList.toggle('active', i === idx);
+            });
+
+            // Scroll thumbnail into view
+            const activeThumb = document.querySelector('.slide-thumb.active');
+            if (activeThumb) activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            // Update notes
+            const notes = slides[idx].notes || '';
+            const notesEl = document.getElementById('slide-notes');
+            const notesContentEl = document.getElementById('slide-notes-content');
+            notesEl.style.display = notes ? 'block' : 'none';
+            notesContentEl.textContent = notes;
+        }
+
+        function prevSlide() {
+            goToSlide(currentSlideIndex - 1);
+        }
+
+        function nextSlide() {
+            goToSlide(currentSlideIndex + 1);
+        }
+
+        // Keyboard navigation for slides
+        document.addEventListener('keydown', function(e) {
+            if (!slidesData || document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return;
+            if (document.getElementById('tab-documents').style.display === 'none') return;
+            if (!currentDocData?.isSlides) return;
+
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                prevSlide();
+                e.preventDefault();
+            } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+                nextSlide();
+                e.preventDefault();
+            }
+        });
+
+        // ==================== METADATA VIEWER ====================
+        function renderMetadataViewer(metadata, docType) {
+            if (!metadata || Object.keys(metadata).length === 0) {
+                return '<div class="empty-state">No metadata available</div>';
+            }
+
+            let html = '<div class="metadata-viewer">';
+
+            // Group metadata into sections
+            const documentInfo = {};
+            const statusInfo = {};
+            const translationInfo = {};
+            const dateInfo = {};
+            const referencesInfo = {};
+            const otherInfo = {};
+
+            // Categorize metadata fields
+            const documentFields = ['title', 'description', 'summary', 'author', 'category', 'reference_id', 'type'];
+            const statusFields = ['status', 'accuracy', 'version', 'review_status'];
+            const translationFields = ['language', 'source_document', 'source_version', 'translated_from'];
+            const dateFields = ['last_modified', 'last_reviewed', 'created', 'published', 'freshness_days'];
+            const referenceFields = ['references', 'depends_on', 'tags', 'related'];
+
+            for (const [key, value] of Object.entries(metadata)) {
+                if (documentFields.includes(key)) documentInfo[key] = value;
+                else if (statusFields.includes(key)) statusInfo[key] = value;
+                else if (translationFields.includes(key)) translationInfo[key] = value;
+                else if (dateFields.includes(key)) dateInfo[key] = value;
+                else if (referenceFields.includes(key)) referencesInfo[key] = value;
+                else otherInfo[key] = value;
+            }
+
+            // Render sections
+            if (Object.keys(documentInfo).length > 0) {
+                html += renderMetadataSection('Document', documentInfo, 'info', '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>');
+            }
+
+            if (Object.keys(statusInfo).length > 0) {
+                html += renderMetadataSection('Status', statusInfo, 'status', '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>');
+            }
+
+            if (Object.keys(translationInfo).length > 0) {
+                html += renderMetadataSection('Translation', translationInfo, 'translation', '<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>');
+            }
+
+            if (Object.keys(dateInfo).length > 0) {
+                html += renderMetadataSection('Dates', dateInfo, 'dates', '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>');
+            }
+
+            if (Object.keys(referencesInfo).length > 0) {
+                html += renderMetadataSection('References', referencesInfo, 'refs', '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>');
+            }
+
+            if (Object.keys(otherInfo).length > 0) {
+                html += renderMetadataSection('Other', otherInfo, 'other', '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>');
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function renderMetadataSection(title, data, sectionType, svgPath) {
+            const count = Object.keys(data).length;
+            let html = '<div class="metadata-section" data-section="' + sectionType + '">';
+            html += '<div class="metadata-section-header" onclick="toggleMetadataSection(this)">';
+            html += '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' + svgPath + '</svg>';
+            html += '<span class="metadata-section-title">' + title + '</span>';
+            html += '<span class="metadata-section-badge">' + count + '</span>';
+            html += '<svg class="metadata-section-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>';
+            html += '</div>';
+            html += '<div class="metadata-section-content">';
+
+            for (const [key, value] of Object.entries(data)) {
+                html += renderMetadataRow(key, value);
+            }
+
+            html += '</div></div>';
+            return html;
+        }
+
+        function renderMetadataRow(key, value) {
+            let html = '<div class="metadata-row">';
+            html += '<div class="metadata-key">' + escapeHtml(key.replace(/_/g, ' ')) + '</div>';
+            html += '<div class="metadata-value">';
+
+            // Special formatting based on key type
+            if (key === 'version' && value) {
+                html += '<span class="metadata-badge badge-version">v' + escapeHtml(String(value)) + '</span>';
+            } else if (key === 'status' && value) {
+                html += '<span class="metadata-badge badge-status status-' + String(value).toLowerCase() + '">' + escapeHtml(String(value)) + '</span>';
+            } else if (key === 'accuracy' && value) {
+                html += '<span class="metadata-badge badge-accuracy">' + escapeHtml(String(value)) + '</span>';
+            } else if (key === 'language' && value) {
+                html += '<span class="metadata-badge badge-language">' + escapeHtml(String(value).toUpperCase()) + '</span>';
+            } else if (key === 'tags' && Array.isArray(value)) {
+                html += '<div class="metadata-tags">';
+                value.forEach(tag => {
+                    html += '<span class="metadata-tag">' + escapeHtml(String(tag)) + '</span>';
+                });
+                html += '</div>';
+            } else if ((key === 'depends_on' || key === 'related') && Array.isArray(value)) {
+                if (value.length === 0) {
+                    html += '<span class="metadata-empty">None</span>';
+                } else {
+                    html += '<ul class="metadata-list">';
+                    value.forEach(item => {
+                        html += '<li>' + escapeHtml(String(item)) + '</li>';
+                    });
+                    html += '</ul>';
+                }
+            } else if (key === 'references' && Array.isArray(value)) {
+                if (value.length === 0) {
+                    html += '<span class="metadata-empty">None</span>';
+                } else {
+                    html += '<ul class="metadata-list">';
+                    value.forEach(ref => {
+                        if (typeof ref === 'object') {
+                            html += '<li>' + escapeHtml(ref.title || ref.id || JSON.stringify(ref)) + '</li>';
+                        } else {
+                            html += '<li>' + escapeHtml(String(ref)) + '</li>';
+                        }
+                    });
+                    html += '</ul>';
+                }
+            } else if ((key.includes('date') || key.includes('modified') || key.includes('reviewed') || key.includes('created') || key.includes('published')) && value) {
+                const dateStr = String(value);
+                html += '<div class="metadata-date">';
+                html += '<span>' + escapeHtml(dateStr) + '</span>';
+                try {
+                    const date = new Date(dateStr);
+                    if (!isNaN(date.getTime())) {
+                        const days = Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
+                        if (days === 0) html += '<span class="metadata-date-relative">(today)</span>';
+                        else if (days === 1) html += '<span class="metadata-date-relative">(yesterday)</span>';
+                        else if (days < 30) html += '<span class="metadata-date-relative">(' + days + ' days ago)</span>';
+                        else if (days < 365) html += '<span class="metadata-date-relative">(' + Math.floor(days/30) + ' months ago)</span>';
+                    }
+                } catch(e) {}
+                html += '</div>';
+            } else if (typeof value === 'object' && value !== null) {
+                html += '<div class="metadata-json">' + escapeHtml(JSON.stringify(value, null, 2)) + '</div>';
+            } else if (value === null || value === undefined || value === '') {
+                html += '<span class="metadata-empty">Not set</span>';
+            } else {
+                html += escapeHtml(String(value));
+            }
+
+            html += '</div></div>';
+            return html;
+        }
+
+        function toggleMetadataSection(header) {
+            const section = header.parentElement;
+            section.classList.toggle('collapsed');
+        }
+
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
@@ -1856,6 +3579,7 @@ def get_javascript() -> str:
                 loadMatrix(),
                 loadQuality(),
                 loadAuditLog(),
+                loadFreshnessOverview(),
             ]);
         }
 

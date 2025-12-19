@@ -14,6 +14,11 @@ from .tabs import (
     get_assets_tab,
     get_translations_tab,
     get_quality_tab,
+    get_freshness_tab,
+    get_provenance_tab,
+    get_build_tab,
+    get_search_tab,
+    get_dependencies_tab,
     get_activity_tab,
 )
 from .scripts import get_javascript
@@ -38,6 +43,11 @@ def generate_dashboard_html() -> str:
         + get_assets_tab()
         + get_translations_tab()
         + get_quality_tab()
+        + get_freshness_tab()
+        + get_provenance_tab()
+        + get_build_tab()
+        + get_search_tab()
+        + get_dependencies_tab()
         + get_activity_tab()
         + get_body_end()
         + get_javascript()

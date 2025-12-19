@@ -5,6 +5,7 @@ from .cache import cmd_cache
 from .content import cmd_changelog, cmd_gaps, cmd_links, cmd_readability, cmd_security
 from .dashboard import cmd_dashboard
 from .demos import cmd_demos
+from .freshness import cmd_freshness
 from .init import cmd_init
 from .integrity import cmd_integrity
 from .pack import cmd_pack
@@ -38,4 +39,5 @@ __all__ = [
     "cmd_security",
     "cmd_changelog",
     "cmd_demos",
+    "cmd_freshness",
 ]

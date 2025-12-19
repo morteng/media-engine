@@ -22,6 +22,9 @@ def cmd_build(args):
 
     console.print(f"[bold]Building {project.config.name}[/bold]")
 
+    # Check for provenance issues (unverified/expired claims)
+    _check_provenance_warnings(project)
+
     # Determine what to build
     formats = args.only.split(",") if args.only else ["html", "pdf"]
     languages = args.lang.split(",") if args.lang else list(project.languages.keys())
@@ -423,3 +426,51 @@ def _export_video_props_only(script, output_path: Path, project: Project):
         )
 
     output_path.write_text(json.dumps(props, indent=2))
+
+
+def _check_provenance_warnings(project: Project) -> None:
+    """Check for provenance issues and display warnings."""
+    try:
+        from ...provenance import ProvenanceTracker
+
+        tracker = ProvenanceTracker(project)
+        issues = tracker.get_documents_with_claim_issues()
+
+        if not issues:
+            return
+
+        # Count issues by type
+        unverified_count = 0
+        expired_count = 0
+        expiring_count = 0
+        affected_docs = set()
+
+        for path, issue_type, count in issues:
+            affected_docs.add(str(path))
+            if issue_type == "unverified_claims":
+                unverified_count += count
+            elif issue_type == "expired_claims":
+                expired_count += count
+            elif issue_type == "expiring_claims":
+                expiring_count += count
+
+        # Show warnings
+        console.print()
+        console.print("[yellow bold]Provenance Warnings:[/yellow bold]")
+
+        if unverified_count > 0:
+            console.print(f"  [yellow]! {unverified_count} unverified claim(s) in {len(affected_docs)} document(s)[/yellow]")
+
+        if expired_count > 0:
+            console.print(f"  [red]! {expired_count} expired claim(s) need re-verification[/red]")
+
+        if expiring_count > 0:
+            console.print(f"  [dim]! {expiring_count} claim(s) expiring within 30 days[/dim]")
+
+        console.print()
+        console.print("  Run [bold]media-engine provenance report[/bold] for details")
+        console.print()
+
+    except Exception:
+        # Provenance module not available or failed - silently continue
+        pass

@@ -4,7 +4,7 @@ MCP Tools for Media Engine
 Tool registration functions organized by domain.
 """
 
-from . import audit, build, cache, documents, project, quality, search, translation
+from . import audit, build, cache, documents, project, provenance, quality, search, translation
 
 __all__ = [
     "audit",
@@ -12,6 +12,7 @@ __all__ = [
     "cache",
     "documents",
     "project",
+    "provenance",
     "quality",
     "search",
     "translation",

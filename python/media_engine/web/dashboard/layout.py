@@ -49,6 +49,11 @@ def get_body_start() -> str:
             <button class="tab" onclick="showTab('assets')">Assets</button>
             <button class="tab" onclick="showTab('translations')">Translations</button>
             <button class="tab" onclick="showTab('quality')">Quality</button>
+            <button class="tab" onclick="showTab('freshness')">Freshness</button>
+            <button class="tab" onclick="showTab('provenance')">Provenance</button>
+            <button class="tab" onclick="showTab('build')">Build</button>
+            <button class="tab" onclick="showTab('search')">Search</button>
+            <button class="tab" onclick="showTab('dependencies')">Dependencies</button>
             <button class="tab" onclick="showTab('activity')">Activity</button>
         </div>
 """

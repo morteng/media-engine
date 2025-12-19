@@ -21,6 +21,7 @@ from .commands import (
     cmd_changelog,
     cmd_dashboard,
     cmd_demos,
+    cmd_freshness,
     cmd_gaps,
     cmd_index,
     cmd_init,
@@ -157,6 +158,25 @@ def main():
     prov_queue = prov_subparsers.add_parser("queue", help="Show review queue")
     prov_queue.add_argument("--json", action="store_true", help="Output as JSON")
 
+    prov_scan = prov_subparsers.add_parser("scan", help="Scan documents for potential claims")
+    prov_scan.add_argument("--json", action="store_true", help="Output as JSON")
+
+    prov_validate = prov_subparsers.add_parser("validate-urls", help="Validate external URLs in claims")
+    prov_validate.add_argument("--json", action="store_true", help="Output as JSON")
+
+    prov_add = prov_subparsers.add_parser("add", help="Add a new claim")
+    prov_add.add_argument("--document", "-d", required=True, help="Document path")
+    prov_add.add_argument("--claim", "-c", required=True, help="Claim text")
+    prov_add.add_argument("--source", "-s", required=True, help="Source attribution")
+    prov_add.add_argument("--url", "-u", help="Source URL (optional)")
+    prov_add.add_argument("--type", "-t", default="internal", help="Source type: internal, external, research, data")
+
+    prov_verify = prov_subparsers.add_parser("verify", help="Verify a claim")
+    prov_verify.add_argument("--document", "-d", required=True, help="Document path")
+    prov_verify.add_argument("--claim-id", "-c", required=True, help="Claim ID to verify")
+    prov_verify.add_argument("--verifier", "-v", required=True, help="Verifier name")
+    prov_verify.add_argument("--expiry-days", "-e", type=int, default=365, help="Days until expiry")
+
     # integrity
     integ_parser = subparsers.add_parser("integrity", help="Asset and terminology integrity")
     integ_subparsers = integ_parser.add_subparsers(dest="integrity_command")
@@ -215,6 +235,21 @@ def main():
     demos_build.add_argument("--output", "-o", help="Output directory")
     demos_build.add_argument("--json", action="store_true", help="Output as JSON")
 
+    # freshness
+    fresh_parser = subparsers.add_parser("freshness", help="Content freshness tracking")
+    fresh_parser.add_argument("--scan", action="store_true", help="Scan and register all content")
+    fresh_parser.add_argument("--stale", action="store_true", help="Show only stale items")
+    fresh_parser.add_argument("--untracked", action="store_true", help="Show only untracked files")
+    fresh_parser.add_argument("--ignored", action="store_true", help="Show ignored files")
+    fresh_parser.add_argument(
+        "--show-ignored", action="store_true", help="Show active ignore patterns"
+    )
+    fresh_parser.add_argument(
+        "--type",
+        help="Filter by content type (e.g., video_render, source_document)",
+    )
+    fresh_parser.add_argument("--json", action="store_true", help="Output as JSON")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -243,6 +278,7 @@ def main():
         "security": cmd_security,
         "changelog": cmd_changelog,
         "demos": cmd_demos,
+        "freshness": cmd_freshness,
     }
 
     if args.command in commands:

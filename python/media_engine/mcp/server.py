@@ -131,7 +131,17 @@ class MediaEngineMCPServer:
             return
 
         # Import tool registration functions
-        from .tools import audit, build, cache, documents, project, quality, search, translation
+        from .tools import (
+            audit,
+            build,
+            cache,
+            documents,
+            project,
+            provenance,
+            quality,
+            search,
+            translation,
+        )
 
         # Register all tool categories
         project.register_project_tools(self.mcp, self)
@@ -142,6 +152,7 @@ class MediaEngineMCPServer:
         build.register_build_tools(self.mcp, self)
         cache.register_cache_tools(self.mcp, self)
         audit.register_audit_tools(self.mcp, self)
+        provenance.register_provenance_tools(self.mcp, self)
 
     def _register_resources(self):
         """Register MCP resources for context."""

@@ -48,12 +48,17 @@ def register_routes(
     from fastapi import APIRouter
 
     from .assets import register_assets_routes
+    from .build import register_build_routes
     from .core import register_core_routes
+    from .dependencies import register_dependencies_routes
     from .documents import register_document_routes
+    from .freshness import register_freshness_routes
     from .media import register_media_routes
+    from .provenance import register_provenance_routes
     from .quality import register_quality_routes
     from .registry import register_registry_routes
     from .scene_notes import register_scene_notes_routes
+    from .search import register_search_routes
     from .translations import register_translation_routes
     from .websocket import register_websocket_routes
 
@@ -64,6 +69,11 @@ def register_routes(
     register_core_routes(router, get_project, manager, static_dir, set_project)
     register_translation_routes(router, get_project, manager)
     register_quality_routes(router, get_project, manager)
+    register_freshness_routes(router, get_project, manager)
+    register_provenance_routes(router, get_project, manager)
+    register_build_routes(router, get_project, manager)
+    register_search_routes(router, get_project, manager)
+    register_dependencies_routes(router, get_project, manager)
     register_document_routes(router, get_project, manager)
     register_registry_routes(router, get_project, manager)
     register_assets_routes(router, get_project, manager)

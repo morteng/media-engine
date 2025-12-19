@@ -43,6 +43,15 @@ class PathsConfig:
 
 
 @dataclass
+class FreshnessConfig:
+    """Freshness tracking settings."""
+
+    ignore_patterns: list = field(default_factory=list)
+    default_freshness_days: int = 60
+    scan_dirs: list = field(default_factory=list)  # Additional dirs to scan
+
+
+@dataclass
 class Config:
     """Project configuration."""
 
@@ -51,6 +60,7 @@ class Config:
     voiceover: VoiceoverConfig = field(default_factory=VoiceoverConfig)
     video: VideoConfig = field(default_factory=VideoConfig)
     paths: PathsConfig = field(default_factory=PathsConfig)
+    freshness: FreshnessConfig = field(default_factory=FreshnessConfig)
     extra: Dict[str, Any] = field(default_factory=dict)
 
     @classmethod
@@ -60,6 +70,7 @@ class Config:
         voiceover = data.get("voiceover", {})
         video = data.get("video", {})
         paths = data.get("paths", {})
+        freshness = data.get("freshness", {})
 
         return cls(
             name=project.get("name", "Untitled Project"),
@@ -83,8 +94,15 @@ class Config:
                 content=Path(paths.get("content", "content")),
                 publish=Path(paths["publish"]) if paths.get("publish") else None,
             ),
+            freshness=FreshnessConfig(
+                ignore_patterns=freshness.get("ignore_patterns", []),
+                default_freshness_days=freshness.get("default_freshness_days", 60),
+                scan_dirs=freshness.get("scan_dirs", []),
+            ),
             extra={
-                k: v for k, v in data.items() if k not in ("project", "voiceover", "video", "paths")
+                k: v
+                for k, v in data.items()
+                if k not in ("project", "voiceover", "video", "paths", "freshness")
             },
         )
 
