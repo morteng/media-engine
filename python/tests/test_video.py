@@ -226,20 +226,28 @@ from media_engine.video.builder import (
     VideoScene,
     VideoScript,
 )
+from media_engine.video.quality import (
+    VideoQuality,
+    QualityPreset,
+    get_preset,
+    is_preview_video,
+    PREVIEW_PRESET,
+    PRODUCTION_PRESET,
+)
 
 
 class TestVideoConfig:
     """Tests for VideoConfig dataclass."""
 
     def test_default_values(self):
-        """Test default configuration values."""
+        """Test default configuration values (production quality)."""
         config = VideoConfig()
         assert config.width == 1920
         assert config.height == 1080
-        assert config.fps == 30
+        assert config.fps == 60  # Production default
         assert config.format == "mp4"
         assert config.codec == "h264"
-        assert config.crf == 23
+        assert config.crf == 18  # Production default
 
     def test_custom_values(self):
         """Test custom configuration values."""
@@ -255,6 +263,73 @@ class TestVideoConfig:
         assert config.height == 720
         assert config.fps == 60
         assert config.format == "webm"
+
+    def test_from_quality_preview(self):
+        """Test creating config from preview quality preset."""
+        config = VideoConfig.from_quality(VideoQuality.PREVIEW)
+        assert config.width == 1280
+        assert config.height == 720
+        assert config.fps == 24
+        assert config.crf == 28
+        assert config.quality == VideoQuality.PREVIEW
+        assert config.is_releasable is False
+
+    def test_from_quality_production(self):
+        """Test creating config from production quality preset."""
+        config = VideoConfig.from_quality(VideoQuality.PRODUCTION)
+        assert config.width == 1920
+        assert config.height == 1080
+        assert config.fps == 60
+        assert config.crf == 18
+        assert config.quality == VideoQuality.PRODUCTION
+        assert config.is_releasable is True
+
+
+class TestVideoQuality:
+    """Tests for VideoQuality enum and presets."""
+
+    def test_quality_enum_values(self):
+        """Test VideoQuality enum has correct values."""
+        assert VideoQuality.PREVIEW.value == "preview"
+        assert VideoQuality.PRODUCTION.value == "production"
+
+    def test_preview_preset_values(self):
+        """Test preview preset has fast iteration values."""
+        assert PREVIEW_PRESET.width == 1280
+        assert PREVIEW_PRESET.height == 720
+        assert PREVIEW_PRESET.fps == 24
+        assert PREVIEW_PRESET.crf == 28
+        assert PREVIEW_PRESET.is_releasable is False
+
+    def test_production_preset_values(self):
+        """Test production preset has full quality values."""
+        assert PRODUCTION_PRESET.width == 1920
+        assert PRODUCTION_PRESET.height == 1080
+        assert PRODUCTION_PRESET.fps == 60
+        assert PRODUCTION_PRESET.crf == 18
+        assert PRODUCTION_PRESET.is_releasable is True
+
+    def test_get_preset_preview(self):
+        """Test getting preview preset."""
+        preset = get_preset(VideoQuality.PREVIEW)
+        assert preset == PREVIEW_PRESET
+
+    def test_get_preset_production(self):
+        """Test getting production preset."""
+        preset = get_preset(VideoQuality.PRODUCTION)
+        assert preset == PRODUCTION_PRESET
+
+    def test_is_preview_video_true(self):
+        """Test detecting preview videos by filename."""
+        assert is_preview_video("demo.preview.mp4") is True
+        assert is_preview_video("my-video.preview.mp4") is True
+        assert is_preview_video("test.preview.webm") is True
+
+    def test_is_preview_video_false(self):
+        """Test production videos are not detected as preview."""
+        assert is_preview_video("demo.mp4") is False
+        assert is_preview_video("my-video.mp4") is False
+        assert is_preview_video("preview-demo.mp4") is False  # 'preview' in name but not .preview.
 
 
 class TestVideoScene:
@@ -336,10 +411,10 @@ class TestVideoBuilder:
     """Tests for VideoBuilder class."""
 
     def test_create_builder(self):
-        """Test creating a builder."""
+        """Test creating a builder with production defaults."""
         builder = VideoBuilder()
         assert builder.config.width == 1920
-        assert builder.config.fps == 30
+        assert builder.config.fps == 60  # Production default
 
     def test_create_with_config(self):
         """Test creating builder with custom config."""

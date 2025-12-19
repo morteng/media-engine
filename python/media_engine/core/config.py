@@ -44,6 +44,7 @@ class PathsConfig:
     assets: Path = field(default_factory=lambda: Path(DIRS.assets))
     content: Path = field(default_factory=lambda: Path(DIRS.content))
     publish: Optional[Path] = None  # None means use default: {project}/dist
+    deliverables: Optional[str] = None  # None means use default: {project}/deliverables
 
 
 @dataclass
@@ -97,6 +98,7 @@ class Config:
                 assets=Path(paths.get("assets", DIRS.assets)),
                 content=Path(paths.get("content", DIRS.content)),
                 publish=Path(paths["publish"]) if paths.get("publish") else None,
+                deliverables=paths.get("deliverables"),  # String path or None
             ),
             freshness=FreshnessConfig(
                 ignore_patterns=freshness.get("ignore_patterns", []),

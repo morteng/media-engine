@@ -20,6 +20,11 @@ from typing import TYPE_CHECKING, Optional
 
 import yaml
 
+from .quality import (
+    VideoQuality,
+    get_filename_suffix,
+    get_preset,
+)
 from .voiceover import (
     VoiceoverResult,
     clean_text,
@@ -36,10 +41,29 @@ class VideoConfig:
 
     width: int = 1920
     height: int = 1080
-    fps: int = 30
+    fps: int = 60
     format: str = "mp4"
     codec: str = "h264"
-    crf: int = 23  # Quality (lower = better, 0-51)
+    crf: int = 18  # Quality (lower = better, 0-51)
+    quality: VideoQuality = VideoQuality.PRODUCTION
+
+    @classmethod
+    def from_quality(cls, quality: VideoQuality) -> "VideoConfig":
+        """Create config from a quality preset."""
+        preset = get_preset(quality)
+        return cls(
+            width=preset.width,
+            height=preset.height,
+            fps=preset.fps,
+            crf=preset.crf,
+            quality=quality,
+        )
+
+    @property
+    def is_releasable(self) -> bool:
+        """Check if output from this config can be released."""
+        preset = get_preset(self.quality)
+        return preset.is_releasable
 
 
 @dataclass
@@ -65,6 +89,10 @@ class VideoScene:
     visual: dict = field(default_factory=dict)
     audio_start: Optional[float] = None
     audio_end: Optional[float] = None
+    # Frame-accurate timing (primary source of truth)
+    start_frame: int = 0
+    end_frame: int = 0
+    duration_frames: int = 0
     # Scene-based demo capture
     demo_clip_path: Optional[Path] = None  # Path to captured clip for this scene
 
@@ -142,6 +170,9 @@ class VideoBuildResult:
     duration: float = 0.0
     success: bool = False
     error: Optional[str] = None
+    # Quality tracking
+    quality: VideoQuality = VideoQuality.PRODUCTION
+    is_releasable: bool = True
 
 
 class VideoBuilder:
@@ -194,7 +225,13 @@ class VideoBuilder:
         Returns:
             VideoBuildResult with paths to generated files
         """
-        result = VideoBuildResult()
+        result = VideoBuildResult(
+            quality=self.config.quality,
+            is_releasable=self.config.is_releasable,
+        )
+
+        # Get filename suffix based on quality (.preview for preview mode)
+        suffix = get_filename_suffix(self.config.quality)
 
         try:
             # Parse script
@@ -208,7 +245,7 @@ class VideoBuilder:
                     output_dir = script_path.parent / "output"
             output_dir.mkdir(parents=True, exist_ok=True)
 
-            # Generate voiceover
+            # Generate voiceover (always full quality - audio doesn't need preview)
             audio_path = output_dir / f"{script.name}.mp3"
             voiceover = await self._generate_voiceover(script, audio_path)
             result.audio_path = audio_path
@@ -222,19 +259,19 @@ class VideoBuilder:
             if capture_demos and self._has_scene_demos(script):
                 demo_clips = await self._capture_scene_demos(script, output_dir)
 
-            # Generate captions
+            # Generate captions (reuse for all quality levels)
             captions_path = output_dir / f"{script.name}.vtt"
             self._generate_captions(script, voiceover, captions_path)
             result.captions_path = captions_path
 
-            # Export Remotion props (with demo clip paths)
-            props_path = output_dir / f"{script.name}.props.json"
+            # Export Remotion props with quality suffix
+            props_path = output_dir / f"{script.name}{suffix}.props.json"
             self._export_remotion_props(script, voiceover, props_path, demo_clips)
             result.props_path = props_path
 
             # Optionally render with Remotion
             if render and remotion_project:
-                video_path = output_dir / f"{script.name}.mp4"
+                video_path = output_dir / f"{script.name}{suffix}.mp4"
                 self._render_with_remotion(
                     remotion_project,
                     props_path,
@@ -305,30 +342,54 @@ class VideoBuilder:
         script: VideoScript,
         voiceover: VoiceoverResult,
     ):
-        """Update scene timings from voiceover segments."""
+        """
+        Update scene timings from voiceover segments.
+
+        Uses frame-based cumulative calculation to prevent timing drift.
+        Frames are the primary source of truth; float times are computed.
+        """
         # Create lookup by scene ID
         segment_lookup = {seg.id: seg for seg in voiceover.segments}
+        fps = self.config.fps
 
-        current_time = 0.0
+        # Cumulative frame counter (prevents drift)
+        current_frame = 0
+
         for scene in script.scenes:
             segment = segment_lookup.get(scene.id)
 
+            scene.start_frame = current_frame
+
             if segment:
-                scene.audio_start = current_time
-                scene.duration = segment.duration + segment.pause_after
-                scene.audio_end = current_time + scene.duration
-                current_time = scene.audio_end
+                # Calculate frames from duration, rounding properly
+                duration_frames = round(segment.duration * fps)
+                pause_frames = round(segment.pause_after * fps)
+                scene.duration_frames = duration_frames + pause_frames
             elif scene.duration:
                 # Scene has explicit duration but no voiceover
-                scene.audio_start = current_time
-                scene.audio_end = current_time + scene.duration
-                current_time = scene.audio_end
+                scene.duration_frames = round(scene.duration * fps)
             else:
-                # Default duration for non-voiced scenes
-                scene.audio_start = current_time
-                scene.duration = 2.0
-                scene.audio_end = current_time + 2.0
-                current_time += 2.0
+                # Default 2 seconds for non-voiced scenes
+                scene.duration_frames = round(2.0 * fps)
+
+            scene.end_frame = current_frame + scene.duration_frames
+            current_frame = scene.end_frame
+
+            # Compute float times from frames (for backwards compatibility)
+            scene.audio_start = scene.start_frame / fps
+            scene.audio_end = scene.end_frame / fps
+            scene.duration = scene.duration_frames / fps
+
+        # Validate total frames match voiceover duration (within 1 frame tolerance)
+        expected_frames = round(voiceover.total_duration * fps)
+        if abs(current_frame - expected_frames) > 1:
+            # Log warning but don't fail - voiceover timing may include rounding
+            import logging
+
+            logging.warning(
+                f"Frame timing mismatch: scenes={current_frame} frames, "
+                f"audio={expected_frames} frames (diff={current_frame - expected_frames})"
+            )
 
     def _generate_captions(
         self,
@@ -415,7 +476,7 @@ class VideoBuilder:
         output_path: Path,
         demo_clips: dict[str, Path] = None,
     ):
-        """Export Remotion-compatible props JSON."""
+        """Export Remotion-compatible props JSON with quality metadata."""
         demo_clips = demo_clips or {}
 
         props = {
@@ -426,18 +487,26 @@ class VideoBuilder:
             "fps": self.config.fps,
             "width": self.config.width,
             "height": self.config.height,
+            # Quality metadata
+            "quality": self.config.quality.value,
+            "is_releasable": self.config.is_releasable,
+            "resolution": {
+                "width": self.config.width,
+                "height": self.config.height,
+            },
             "scenes": [],
         }
 
         for scene in script.scenes:
+            # Use frame properties directly (no conversion needed)
             scene_props = {
                 "id": scene.id,
                 "type": scene.type,
                 "title": scene.title,
                 "text": clean_text(scene.text) if scene.text else None,
-                "startFrame": int((scene.audio_start or 0) * self.config.fps),
-                "endFrame": int((scene.audio_end or 0) * self.config.fps),
-                "durationFrames": int((scene.duration or 0) * self.config.fps),
+                "startFrame": scene.start_frame,
+                "endFrame": scene.end_frame,
+                "durationFrames": scene.duration_frames,
                 "visual": scene.visual,
             }
 
@@ -462,7 +531,7 @@ class VideoBuilder:
         audio_path: Path,
         output_path: Path,
     ):
-        """Render video using Remotion CLI."""
+        """Render video using Remotion CLI with quality settings."""
         # Check if Remotion is available
         result = subprocess.run(
             ["npx", "remotion", "--version"],
@@ -472,7 +541,7 @@ class VideoBuilder:
         if result.returncode != 0:
             raise RuntimeError("Remotion not available. Install with: npm install @remotion/cli")
 
-        # Render video
+        # Render video with quality settings
         cmd = [
             "npx",
             "remotion",
@@ -487,6 +556,13 @@ class VideoBuilder:
             self.config.codec,
             "--crf",
             str(self.config.crf),
+            # Apply quality settings
+            "--width",
+            str(self.config.width),
+            "--height",
+            str(self.config.height),
+            "--fps",
+            str(self.config.fps),
         ]
 
         result = subprocess.run(
@@ -506,6 +582,7 @@ async def build_video(
     project: "Project" = None,
     render: bool = False,
     remotion_project: Optional[Path] = None,
+    quality: VideoQuality = VideoQuality.PRODUCTION,
 ) -> VideoBuildResult:
     """
     Convenience function to build a video.
@@ -516,11 +593,13 @@ async def build_video(
         project: Optional Project for configuration
         render: Whether to render with Remotion
         remotion_project: Path to Remotion project
+        quality: Video quality level (PREVIEW or PRODUCTION)
 
     Returns:
         VideoBuildResult
     """
-    builder = VideoBuilder(project=project)
+    config = VideoConfig.from_quality(quality)
+    builder = VideoBuilder(project=project, config=config)
     return await builder.build(
         script_path=script_path,
         output_dir=output_dir,

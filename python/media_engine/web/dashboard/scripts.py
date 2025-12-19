@@ -343,7 +343,8 @@ def get_javascript() -> str:
             if (qualityRefreshInterval) clearInterval(qualityRefreshInterval);
             // Auto-refresh every 30 seconds
             qualityRefreshInterval = setInterval(() => {
-                if (qualityAutoRefresh && document.getElementById('tab-quality').style.display !== 'none') {
+                const qualityTab = document.getElementById('tab-quality-report');
+                if (qualityAutoRefresh && qualityTab && qualityTab.style.display !== 'none') {
                     loadQuality(false);
                 }
             }, 30000);
@@ -381,21 +382,30 @@ def get_javascript() -> str:
                 const total = data.total_items;
                 const stale = data.stale_count + data.expired_count;
 
-                document.getElementById('stat-freshness').textContent = total;
-
+                const statFreshness = document.getElementById('stat-freshness');
+                const statDetail = document.getElementById('stat-freshness-detail');
                 const card = document.getElementById('freshness-overview-card');
+
+                if (statFreshness) statFreshness.textContent = total;
+
                 if (stale > 0) {
-                    document.getElementById('stat-freshness-detail').textContent = stale + ' need attention';
-                    document.getElementById('stat-freshness-detail').style.color = '#eab308';
-                    card.style.borderColor = '#eab308';
+                    if (statDetail) {
+                        statDetail.textContent = stale + ' need attention';
+                        statDetail.style.color = '#eab308';
+                    }
+                    if (card) card.style.borderColor = '#eab308';
                 } else {
-                    document.getElementById('stat-freshness-detail').textContent = 'all fresh';
-                    document.getElementById('stat-freshness-detail').style.color = '#22c55e';
-                    card.style.borderColor = '';
+                    if (statDetail) {
+                        statDetail.textContent = 'all fresh';
+                        statDetail.style.color = '#22c55e';
+                    }
+                    if (card) card.style.borderColor = '';
                 }
             } catch (e) {
-                document.getElementById('stat-freshness').textContent = '-';
-                document.getElementById('stat-freshness-detail').textContent = 'not available';
+                const statFreshness = document.getElementById('stat-freshness');
+                const statDetail = document.getElementById('stat-freshness-detail');
+                if (statFreshness) statFreshness.textContent = '-';
+                if (statDetail) statDetail.textContent = 'not available';
             }
         }
 
@@ -406,13 +416,15 @@ def get_javascript() -> str:
             'quality': 'quality-report'
         };
 
-        function showTab(name) {
+        function showTab(name, evt) {
             // Hide all main tab content
             document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none');
 
             // Update main tab button states
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-            event.target.classList.add('active');
+            // Find and activate the clicked tab button
+            const clickedTab = evt?.target || document.querySelector('.tab[onclick*="' + name + '"]');
+            if (clickedTab) clickedTab.classList.add('active');
 
             // Hide all sub-tab containers and dropdowns
             document.querySelectorAll('.subtabs').forEach(el => el.style.display = 'none');
@@ -423,14 +435,17 @@ def get_javascript() -> str:
             // Handle sections with sub-tabs
             if (name === 'content') {
                 // Show sub-tabs (desktop) or dropdown (mobile)
+                const subtabsContent = document.getElementById('subtabs-content');
+                const subtabsDropdown = document.getElementById('subtabs-dropdown-content');
                 if (window.innerWidth > 768) {
-                    document.getElementById('subtabs-content').style.display = 'flex';
+                    if (subtabsContent) subtabsContent.style.display = 'flex';
                 } else {
-                    document.getElementById('subtabs-dropdown-content').style.display = 'block';
+                    if (subtabsDropdown) subtabsDropdown.style.display = 'block';
                 }
 
                 const activeSubTab = activeSubTabs['content'];
-                document.getElementById('tab-' + activeSubTab).style.display = 'block';
+                const tabEl = document.getElementById('tab-' + activeSubTab);
+                if (tabEl) tabEl.style.display = 'block';
                 updateSubTabStates('content', activeSubTab);
 
                 // Lazy load
@@ -448,18 +463,22 @@ def get_javascript() -> str:
                 }
             } else if (name === 'quality') {
                 // Show sub-tabs (desktop) or dropdown (mobile)
+                const subtabsQuality = document.getElementById('subtabs-quality');
+                const subtabsDropdownQuality = document.getElementById('subtabs-dropdown-quality');
                 if (window.innerWidth > 768) {
-                    document.getElementById('subtabs-quality').style.display = 'flex';
+                    if (subtabsQuality) subtabsQuality.style.display = 'flex';
                 } else {
-                    document.getElementById('subtabs-dropdown-quality').style.display = 'block';
+                    if (subtabsDropdownQuality) subtabsDropdownQuality.style.display = 'block';
                 }
 
                 const activeSubTab = activeSubTabs['quality'];
-                document.getElementById('tab-' + activeSubTab).style.display = 'block';
+                const qualityTabEl = document.getElementById('tab-' + activeSubTab);
+                if (qualityTabEl) qualityTabEl.style.display = 'block';
                 updateSubTabStates('quality', activeSubTab);
             } else {
                 // Simple standalone tabs
-                document.getElementById('tab-' + name).style.display = 'block';
+                const standaloneTab = document.getElementById('tab-' + name);
+                if (standaloneTab) standaloneTab.style.display = 'block';
 
                 // Existing lazy load logic
                 if (name === 'insights' && !insightsLoaded) {
@@ -550,21 +569,26 @@ def get_javascript() -> str:
 
         // Handle window resize (switch between desktop/mobile sub-tab display)
         window.addEventListener('resize', () => {
+            const subtabsContent = document.getElementById('subtabs-content');
+            const subtabsDropdownContent = document.getElementById('subtabs-dropdown-content');
+            const subtabsQuality = document.getElementById('subtabs-quality');
+            const subtabsDropdownQuality = document.getElementById('subtabs-dropdown-quality');
+
             if (activeMainTab === 'content') {
                 if (window.innerWidth > 768) {
-                    document.getElementById('subtabs-content').style.display = 'flex';
-                    document.getElementById('subtabs-dropdown-content').style.display = 'none';
+                    if (subtabsContent) subtabsContent.style.display = 'flex';
+                    if (subtabsDropdownContent) subtabsDropdownContent.style.display = 'none';
                 } else {
-                    document.getElementById('subtabs-content').style.display = 'none';
-                    document.getElementById('subtabs-dropdown-content').style.display = 'block';
+                    if (subtabsContent) subtabsContent.style.display = 'none';
+                    if (subtabsDropdownContent) subtabsDropdownContent.style.display = 'block';
                 }
             } else if (activeMainTab === 'quality') {
                 if (window.innerWidth > 768) {
-                    document.getElementById('subtabs-quality').style.display = 'flex';
-                    document.getElementById('subtabs-dropdown-quality').style.display = 'none';
+                    if (subtabsQuality) subtabsQuality.style.display = 'flex';
+                    if (subtabsDropdownQuality) subtabsDropdownQuality.style.display = 'none';
                 } else {
-                    document.getElementById('subtabs-quality').style.display = 'none';
-                    document.getElementById('subtabs-dropdown-quality').style.display = 'block';
+                    if (subtabsQuality) subtabsQuality.style.display = 'none';
+                    if (subtabsDropdownQuality) subtabsDropdownQuality.style.display = 'block';
                 }
             }
         });
@@ -3417,7 +3441,8 @@ def get_javascript() -> str:
         // Keyboard navigation for slides
         document.addEventListener('keydown', function(e) {
             if (!slidesData || document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return;
-            if (document.getElementById('tab-documents').style.display === 'none') return;
+            const docsTab = document.getElementById('tab-documents');
+            if (!docsTab || docsTab.style.display === 'none') return;
             if (!currentDocData?.isSlides) return;
 
             if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
@@ -3608,8 +3633,10 @@ def get_javascript() -> str:
 
             document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none');
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-documents').style.display = 'block';
-            document.querySelectorAll('.tab')[1].classList.add('active');
+            const tabDocs = document.getElementById('tab-documents');
+            if (tabDocs) tabDocs.style.display = 'block';
+            const tabs = document.querySelectorAll('.tab');
+            if (tabs[1]) tabs[1].classList.add('active');
 
             if (!documentsLoaded) {
                 await initDocumentBrowser();

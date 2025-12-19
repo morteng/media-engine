@@ -9,7 +9,7 @@ def get_media_tab() -> str:
     """Generate the media tab HTML with media files list and preview."""
     return """
         <div id="tab-media" style="display: none;">
-            <div class="grid grid-4" style="margin-bottom: 1.5rem;">
+            <div class="stats-grid" style="margin-bottom: 1.5rem;">
                 <div class="card">
                     <div class="card-title">Audio Files</div>
                     <div class="stat" id="stat-audio">-</div>

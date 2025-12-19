@@ -33,6 +33,9 @@ def get_styles() -> str:
             line-height: 1.5;
         }
         .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        @media (max-width: 640px) {
+            .container { padding: 1rem; }
+        }
         header {
             display: flex;
             justify-content: space-between;
@@ -40,8 +43,14 @@ def get_styles() -> str:
             margin-bottom: 2rem;
             padding-bottom: 1rem;
             border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 1rem;
         }
         h1 { font-size: 1.5rem; font-weight: 600; }
+        @media (max-width: 640px) {
+            header { margin-bottom: 1rem; }
+            h1 { font-size: 1.25rem; }
+        }
         .status-badge {
             padding: 0.25rem 0.75rem;
             border-radius: 9999px;
@@ -59,6 +68,34 @@ def get_styles() -> str:
         @media (max-width: 1200px) { .grid-5 { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 1024px) { .grid-3, .grid-4, .grid-5 { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 640px) { .grid-2, .grid-3, .grid-4, .grid-5 { grid-template-columns: 1fr; } }
+        /* Stats grid - compact cards that don't stretch excessively */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+        }
+        .stats-grid > .card {
+            padding: 1rem 1.25rem;
+            min-width: 0;
+        }
+        .stats-grid .stat {
+            font-size: 2rem;
+        }
+        @media (max-width: 1000px) {
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        @media (max-width: 700px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 400px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
         .card {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -178,7 +215,15 @@ def get_styles() -> str:
         }
 
         /* Document browser styles */
-        .doc-browser { display: grid; grid-template-columns: 320px 1fr; gap: 1.5rem; min-height: calc(100vh - 200px); }
+        .doc-browser { display: grid; grid-template-columns: 280px 1fr; gap: 1rem; min-height: calc(100vh - 200px); }
+        @media (max-width: 900px) {
+            .doc-browser { grid-template-columns: 240px 1fr; }
+        }
+        @media (max-width: 768px) {
+            .doc-browser { grid-template-columns: 1fr; min-height: auto; }
+            .doc-sidebar { max-height: 300px; }
+            .doc-preview { min-height: 400px; }
+        }
         .doc-sidebar { background: var(--bg-card); border: 1px solid var(--border); border-radius: 0.5rem; overflow: hidden; display: flex; flex-direction: column; }
         .doc-sidebar-header { padding: 1rem; border-bottom: 1px solid var(--border); }
         .doc-list { flex: 1; overflow-y: auto; }
@@ -475,7 +520,8 @@ def get_styles() -> str:
             max-height: calc(90vh - 60px);
         }
         #media-preview-body iframe {
-            width: 800px;
+            width: 100%;
+            max-width: 800px;
             height: 600px;
             border: none;
             background: #fff;
@@ -486,7 +532,10 @@ def get_styles() -> str:
         }
         #media-preview-body audio {
             width: 100%;
-            min-width: 400px;
+            min-width: 280px;
+        }
+        @media (max-width: 640px) {
+            #media-preview-body iframe { height: 400px; }
         }
         #media-preview-body pre {
             background: var(--bg);
@@ -539,7 +588,8 @@ def get_styles() -> str:
             position: absolute;
             top: calc(100% + 0.5rem);
             left: 0;
-            min-width: 320px;
+            min-width: 280px;
+            max-width: calc(100vw - 2rem);
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 0.5rem;
@@ -604,6 +654,12 @@ def get_styles() -> str:
         .slide-viewer { display: flex; flex-direction: column; height: 100%; min-height: 600px; background: var(--bg); }
         .slide-viewer-main { display: flex; flex: 1; gap: 1rem; padding: 1rem; overflow: hidden; }
         .slide-viewer-sidebar { width: 180px; flex-shrink: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; padding-right: 0.5rem; }
+        @media (max-width: 768px) {
+            .slide-viewer { min-height: auto; }
+            .slide-viewer-main { flex-direction: column; }
+            .slide-viewer-sidebar { width: 100%; flex-direction: row; overflow-x: auto; max-height: 80px; padding-right: 0; padding-bottom: 0.5rem; }
+            .slide-thumb { flex: 0 0 100px; }
+        }
         .slide-thumb { aspect-ratio: 16/9; background: var(--bg-card); border: 2px solid var(--border); border-radius: 0.375rem; cursor: pointer; overflow: hidden; transition: all 0.2s; position: relative; }
         .slide-thumb:hover { border-color: var(--primary); transform: scale(1.02); }
         .slide-thumb.active { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3); }

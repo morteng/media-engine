@@ -23,6 +23,7 @@ from .integrity import cmd_integrity
 from .pack import cmd_pack
 from .provenance import cmd_provenance
 from .publish import cmd_publish
+from .release import cmd_release
 from .quality import cmd_quality, cmd_stale
 from .search import cmd_index, cmd_search
 from .status import cmd_status
@@ -33,6 +34,7 @@ __all__ = [
     "cmd_status",
     "cmd_build",
     "cmd_publish",
+    "cmd_release",
     "cmd_quality",
     "cmd_stale",
     "cmd_cache",

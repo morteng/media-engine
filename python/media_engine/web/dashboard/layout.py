@@ -42,13 +42,13 @@ def get_body_start() -> str:
         </header>
 
         <div class="tabs">
-            <button class="tab active" onclick="showTab('overview')">Overview</button>
-            <button class="tab" onclick="showTab('insights')">Insights</button>
-            <button class="tab" onclick="showTab('content')">Content</button>
-            <button class="tab" onclick="showTab('quality')">Quality</button>
-            <button class="tab" onclick="showTab('build')">Build</button>
-            <button class="tab" onclick="showTab('search')">Search</button>
-            <button class="tab" onclick="showTab('activity')">Activity</button>
+            <button class="tab active" onclick="showTab('overview', event)">Overview</button>
+            <button class="tab" onclick="showTab('insights', event)">Insights</button>
+            <button class="tab" onclick="showTab('content', event)">Content</button>
+            <button class="tab" onclick="showTab('quality', event)">Quality</button>
+            <button class="tab" onclick="showTab('build', event)">Build</button>
+            <button class="tab" onclick="showTab('search', event)">Search</button>
+            <button class="tab" onclick="showTab('activity', event)">Activity</button>
         </div>
 
         <!-- Content Sub-tabs (horizontal) -->

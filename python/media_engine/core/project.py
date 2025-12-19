@@ -174,6 +174,32 @@ class Project:
         # Default to project/dist/project-name
         return self.root / "dist" / self.config.name.lower().replace(" ", "-")
 
+    @property
+    def deliverables_dir(self) -> Path:
+        """
+        Directory for final video deliverables (release-quality only).
+
+        Priority:
+        1. Environment variable MEDIA_ENGINE_DELIVERABLES_DIR
+        2. Configured paths.deliverables in project.yaml (supports ~)
+        3. Default: {project_root}/deliverables
+
+        Preview videos are never copied to this directory.
+        """
+        import os
+
+        # Check environment variable first
+        env_deliverables = os.environ.get("MEDIA_ENGINE_DELIVERABLES_DIR")
+        if env_deliverables:
+            return Path(env_deliverables).expanduser()
+
+        # Check project config
+        if self.config.paths.deliverables:
+            return Path(self.config.paths.deliverables).expanduser()
+
+        # Default to project/deliverables
+        return self.root / "deliverables"
+
     # === Content Access ===
 
     def get_content_path(self, language: str, *parts: str) -> Path:

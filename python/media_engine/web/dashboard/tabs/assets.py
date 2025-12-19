@@ -9,7 +9,7 @@ def get_assets_tab() -> str:
     """Generate the assets tab HTML with asset statistics and grid."""
     return """
         <div id="tab-assets" style="display: none;">
-            <div class="grid grid-4" style="margin-bottom: 1.5rem;">
+            <div class="stats-grid" style="margin-bottom: 1.5rem;">
                 <div class="card">
                     <div class="card-title">Diagrams</div>
                     <div class="stat" id="stat-diagrams">-</div>

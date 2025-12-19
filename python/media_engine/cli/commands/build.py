@@ -55,7 +55,7 @@ def cmd_build(args):
             # Build
             console.print(f"  [yellow]Building {output_key}...[/yellow]")
             try:
-                output_path = _build_format(project, lang, fmt, deps)
+                output_path = _build_format(project, lang, fmt, deps, args)
                 if output_path:
                     project.record_build(output_key, output_path, deps)
                     console.print(f"  [green]{output_key}: {output_path.name}[/green]")
@@ -77,7 +77,7 @@ def cmd_build(args):
         print(json.dumps(results, indent=2))
 
 
-def _build_format(project: Project, lang: str, fmt: str, deps: list[Path]) -> Path | None:
+def _build_format(project: Project, lang: str, fmt: str, deps: list[Path], args) -> Path | None:
     """Build a specific format. Returns output path or None if not implemented."""
     output_dir = project.output_dir / lang
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -95,7 +95,7 @@ def _build_format(project: Project, lang: str, fmt: str, deps: list[Path]) -> Pa
     elif fmt == "diagrams":
         return _build_diagrams(project, lang, output_dir)
     elif fmt == "video":
-        return _build_video(project, lang, output_dir)
+        return _build_video(project, lang, output_dir, args)
     elif fmt == "demos":
         return _build_demos(project, lang, output_dir)
 
@@ -323,9 +323,9 @@ def _build_diagrams(project: Project, lang: str, output_dir: Path) -> Path | Non
     return diagrams_output if generated else None
 
 
-def _build_video(project: Project, lang: str, output_dir: Path) -> Path | None:
+def _build_video(project: Project, lang: str, output_dir: Path, args) -> Path | None:
     """Build video from script definitions."""
-    from ...video import VideoBuilder, VideoScript
+    from ...video import VideoBuilder, VideoConfig, VideoQuality, VideoScript
 
     scripts_dir = project.get_content_path(lang, "scripts")
     if not scripts_dir.exists():
@@ -335,7 +335,16 @@ def _build_video(project: Project, lang: str, output_dir: Path) -> Path | None:
     if not script_files:
         return None
 
-    builder = VideoBuilder(project=project)
+    # Create config based on quality setting
+    quality_str = getattr(args, "quality", "production")
+    quality = VideoQuality(quality_str)
+    config = VideoConfig.from_quality(quality)
+
+    # Show quality info
+    if quality == VideoQuality.PREVIEW:
+        console.print(f"    [yellow]Preview mode: {config.width}x{config.height} @ {config.fps}fps[/yellow]")
+
+    builder = VideoBuilder(project=project, config=config)
     videos_output = output_dir / "videos"
     videos_output.mkdir(parents=True, exist_ok=True)
 
@@ -365,7 +374,7 @@ def _build_video(project: Project, lang: str, output_dir: Path) -> Path | None:
                 )
                 # Still export props for Remotion
                 props_path = videos_output / f"{script_file.stem}.props.json"
-                _export_video_props_only(script, props_path, project)
+                _export_video_props_only(script, props_path, project, config)
                 generated.append(props_path)
                 console.print(f"    [dim]Exported {script_file.stem}.props.json[/dim]")
                 continue
@@ -398,19 +407,27 @@ def _build_video(project: Project, lang: str, output_dir: Path) -> Path | None:
     return videos_output if generated else None
 
 
-def _export_video_props_only(script, output_path: Path, project: Project):
+def _export_video_props_only(script, output_path: Path, project: Project, config=None):
     """Export Remotion props without generating voiceover."""
     import json
 
-    fps = 30
-    if project.config.video:
-        fps = getattr(project.config.video, "fps", 30)
+    from ...video import VideoConfig, VideoQuality
+
+    # Use provided config or create default
+    if config is None:
+        config = VideoConfig()
 
     props = {
         "title": script.title,
         "name": script.name,
         "language": script.language,
-        "fps": fps,
+        "fps": config.fps,
+        "quality": config.quality.value,
+        "is_releasable": config.is_releasable,
+        "resolution": {
+            "width": config.width,
+            "height": config.height,
+        },
         "scenes": [],
     }
 

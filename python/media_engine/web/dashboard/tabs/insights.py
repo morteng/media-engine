@@ -9,7 +9,7 @@ features from the insights module.
 def get_insights_tab() -> str:
     """Generate the insights tab HTML with health score and metrics."""
     return """
-        <div id="tab-insights">
+        <div id="tab-insights" style="display: none;">
             <!-- Health Score Section -->
             <div class="grid grid-3" style="margin-bottom: 1.5rem;">
                 <div class="card" style="text-align: center;">
@@ -47,7 +47,7 @@ def get_insights_tab() -> str:
             </div>
 
             <!-- Statistics Section -->
-            <div class="grid grid-4" style="margin-bottom: 1.5rem;">
+            <div class="stats-grid" style="margin-bottom: 1.5rem;">
                 <div class="card">
                     <div class="card-title">Total Documents</div>
                     <div class="stat" id="insights-docs">-</div>
@@ -365,8 +365,12 @@ def get_insights_styles() -> str:
 def get_insights_scripts() -> str:
     """JavaScript for the insights tab."""
     return """<script>
+        // Insights tab state
+        let insightsLoaded = false;
+
         // Load insights data
         async function loadInsights() {
+            insightsLoaded = true;
             try {
                 const response = await fetch('/api/insights');
                 const data = await response.json();

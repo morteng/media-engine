@@ -9,7 +9,7 @@ def get_overview_tab() -> str:
     """Generate the overview tab HTML with project statistics and matrix."""
     return """
         <div id="tab-overview">
-            <div class="grid grid-5" style="margin-bottom: 1.5rem;">
+            <div class="stats-grid" style="margin-bottom: 1.5rem;">
                 <div class="card">
                     <div class="card-title">Documents</div>
                     <div class="stat" id="stat-docs">-</div>
@@ -30,7 +30,7 @@ def get_overview_tab() -> str:
                     <div class="stat" id="stat-quality">-</div>
                     <div class="stat-label" id="stat-quality-detail">issues</div>
                 </div>
-                <div class="card" id="freshness-overview-card" onclick="showTab('freshness'); document.querySelector('[onclick*=freshness]').classList.add('active');" style="cursor: pointer;">
+                <div class="card" id="freshness-overview-card" onclick="showTab('quality', event); showSubTab('quality', 'freshness');" style="cursor: pointer;">
                     <div class="card-title">Freshness</div>
                     <div class="stat" id="stat-freshness">-</div>
                     <div class="stat-label" id="stat-freshness-detail">content items</div>

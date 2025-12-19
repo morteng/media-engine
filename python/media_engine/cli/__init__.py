@@ -39,6 +39,7 @@ from .commands import (
     cmd_publish,
     cmd_quality,
     cmd_readability,
+    cmd_release,
     cmd_search,
     cmd_security,
     cmd_stale,
@@ -76,6 +77,13 @@ def main():
     build_parser.add_argument("--force", action="store_true", help="Force rebuild all")
     build_parser.add_argument("--lang", help="Only build specific languages (comma-separated)")
     build_parser.add_argument("--json", action="store_true", help="Output results as JSON")
+    build_parser.add_argument(
+        "--quality",
+        "-q",
+        choices=["preview", "production"],
+        default="production",
+        help="Video quality: preview (720p/24fps) or production (1080p/60fps, default)",
+    )
 
     # publish
     publish_parser = subparsers.add_parser("publish", help="Publish complete deliverable package")
@@ -89,6 +97,18 @@ def main():
         "--no-index", action="store_true", help="Skip navigation index generation"
     )
     publish_parser.add_argument("--zip", action="store_true", help="Create ZIP archive")
+
+    # release
+    release_parser = subparsers.add_parser(
+        "release", help="Copy production videos to deliverables folder"
+    )
+    release_parser.add_argument(
+        "--dry-run", action="store_true", help="Show what would be copied"
+    )
+    release_parser.add_argument(
+        "--force", "-f", action="store_true", help="Overwrite existing files"
+    )
+    release_parser.add_argument("--lang", "-l", help="Only release specific language")
 
     # quality
     quality_parser = subparsers.add_parser("quality", help="Run quality checks")
@@ -324,6 +344,7 @@ def main():
         "status": cmd_status,
         "build": cmd_build,
         "publish": cmd_publish,
+        "release": cmd_release,
         "quality": cmd_quality,
         "stale": cmd_stale,
         "cache": cmd_cache,

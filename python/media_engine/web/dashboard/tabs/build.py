@@ -20,7 +20,7 @@ def get_build_tab() -> str:
                         <div style="font-weight: 600; color: #92400e;">Stale Content Detected</div>
                         <div id="build-freshness-message" style="font-size: 0.85rem; color: #a16207;"></div>
                     </div>
-                    <button onclick="showTab('freshness')" style="padding: 0.4rem 0.75rem; background: #f59e0b; border: none; border-radius: 0.25rem; color: white; font-size: 0.8rem; cursor: pointer;">
+                    <button onclick="showTab('quality', event); showSubTab('quality', 'freshness');" style="padding: 0.4rem 0.75rem; background: #f59e0b; border: none; border-radius: 0.25rem; color: white; font-size: 0.8rem; cursor: pointer;">
                         View Details
                     </button>
                 </div>
