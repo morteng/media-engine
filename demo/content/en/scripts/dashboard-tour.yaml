@@ -1,0 +1,122 @@
+# Dashboard Tour Video with Scene-Based Demo Capture
+#
+# This script demonstrates the new scene-centric rendering system.
+# Each scene with a `demo:` reference will capture a video clip
+# of that specific UI state, perfectly synced to the voiceover duration.
+#
+# Duration: ~45 seconds | Resolution: 1920x1080 @ 60fps
+
+title: "Dashboard Tour"
+description: "A tour of the Media Engine web dashboard"
+language: "en"
+
+metadata:
+  version: "1.0.0"
+  status: "draft"
+
+output:
+  resolution:
+    width: 1920
+    height: 1080
+  framerate: 60
+  filename: "dashboard-tour"
+
+scenes:
+  # ============================================================
+  # INTRO - Start with dashboard overview
+  # ============================================================
+  - id: intro
+    name: "Welcome"
+    type: intro
+    voiceover: "The Media Engine dashboard gives you complete control over your content pipeline."
+    visual:
+      background: aurora
+      transition_in: fade
+      text_effect: bounce
+    # Scene-based demo capture: captures 'initial' state for voiceover duration
+    demo:
+      source: dashboard-demo
+      state: initial
+
+  # ============================================================
+  # OVERVIEW - Show the overview panel
+  # ============================================================
+  - id: overview
+    name: "Project Overview"
+    type: content
+    voiceover: "Start with the overview. See your project status, recent activity, and quick actions at a glance."
+    visual:
+      text_effect: fade-up
+    demo:
+      source: dashboard-demo
+      state: overview
+
+  # ============================================================
+  # TRANSLATIONS - Show translation matrix
+  # ============================================================
+  - id: translations
+    name: "Translation Status"
+    type: feature
+    voiceover: "The translation matrix shows which documents need updating. Green means synced, yellow needs review."
+    visual:
+      text_effect: elastic
+      feature_card:
+        highlight: cyan
+    demo:
+      source: dashboard-demo
+      state: translations
+
+  # ============================================================
+  # QUALITY - Show quality validation
+  # ============================================================
+  - id: quality
+    name: "Quality Checks"
+    type: feature
+    voiceover: "Quality checks run automatically. Catch broken links, readability issues, and security concerns before publishing."
+    visual:
+      text_effect: wave
+      feature_card:
+        highlight: purple
+    demo:
+      source: dashboard-demo
+      state: quality-issues
+
+  # ============================================================
+  # BUILD - Show build process
+  # ============================================================
+  - id: build
+    name: "Build Your Content"
+    type: demo
+    voiceover: "Ready to publish? Click build, select your formats, and watch your content transform."
+    visual:
+      text_effect: bounce
+    demo:
+      source: dashboard-demo
+      state: build-options
+
+  # ============================================================
+  # FRESHNESS - Show content freshness
+  # ============================================================
+  - id: freshness
+    name: "Track Freshness"
+    type: content
+    voiceover: "Content freshness tracking shows when documents were last updated, helping you keep everything current."
+    visual:
+      text_effect: split
+    demo:
+      source: dashboard-demo
+      state: freshness
+
+  # ============================================================
+  # OUTRO - Call to action
+  # ============================================================
+  - id: outro
+    name: "Get Started"
+    type: outro
+    voiceover: "Try the dashboard yourself. Install media-engine and run media-engine dashboard."
+    visual:
+      background: waves
+      show_logo: true
+      gradient_text: true
+      cta: "media-engine dashboard"
+    # No demo capture for outro - uses animated background

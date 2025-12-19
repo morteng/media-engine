@@ -133,13 +133,18 @@ class MediaEngineMCPServer:
         # Import tool registration functions
         from .tools import (
             audit,
+            batch,
             build,
             cache,
+            claude,
+            context,
             documents,
             project,
             provenance,
             quality,
             search,
+            session,
+            suggestions,
             translation,
         )
 
@@ -153,6 +158,13 @@ class MediaEngineMCPServer:
         cache.register_cache_tools(self.mcp, self)
         audit.register_audit_tools(self.mcp, self)
         provenance.register_provenance_tools(self.mcp, self)
+
+        # Enhanced AI agent tools
+        context.register_context_tools(self.mcp, self)
+        suggestions.register_suggestion_tools(self.mcp, self)
+        batch.register_batch_tools(self.mcp, self)
+        session.register_session_tools(self.mcp, self)
+        claude.register_claude_tools(self.mcp, self)
 
     def _register_resources(self):
         """Register MCP resources for context."""

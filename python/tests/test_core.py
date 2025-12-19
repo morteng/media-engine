@@ -16,7 +16,7 @@ class TestConfig:
         assert config.voiceover.provider == "elevenlabs"
         assert config.video.width == 1920
         assert config.video.height == 1080
-        assert config.video.fps == 30
+        assert config.video.fps == 60
 
     def test_config_from_dict(self):
         """Test creating config from dictionary."""

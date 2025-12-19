@@ -53,6 +53,7 @@ def register_routes(
     from .dependencies import register_dependencies_routes
     from .documents import register_document_routes
     from .freshness import register_freshness_routes
+    from .insights import register_insights_routes
     from .media import register_media_routes
     from .provenance import register_provenance_routes
     from .quality import register_quality_routes
@@ -74,6 +75,7 @@ def register_routes(
     register_build_routes(router, get_project, manager)
     register_search_routes(router, get_project, manager)
     register_dependencies_routes(router, get_project, manager)
+    register_insights_routes(router, get_project, manager)
     register_document_routes(router, get_project, manager)
     register_registry_routes(router, get_project, manager)
     register_assets_routes(router, get_project, manager)

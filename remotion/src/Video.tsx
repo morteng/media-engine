@@ -13,6 +13,8 @@ import {
   interpolate,
   spring,
   Easing,
+  Video as RemotionVideo,
+  staticFile,
 } from "remotion";
 import { Background } from "./components/Background";
 import { TitleCard } from "./components/TitleCard";
@@ -79,6 +81,12 @@ interface SceneVisual {
   output_animation?: string;
 }
 
+// Demo clip info for scene-based rendering
+interface DemoClipInfo {
+  clipPath: string;  // Relative path to captured video clip
+  state: string;     // Named state that was captured
+}
+
 interface Scene {
   id: string;
   type: 'intro' | 'content' | 'feature' | 'demo' | 'section' | 'outro';
@@ -88,6 +96,7 @@ interface Scene {
   endFrame: number;
   durationFrames: number;
   visual?: SceneVisual;
+  demo?: DemoClipInfo;  // Per-scene demo video clip
 }
 
 interface VideoProps {
@@ -1175,6 +1184,43 @@ const OutroScene: React.FC<{
 };
 
 // ============================================================================
+// Demo Clip Background Component
+// ============================================================================
+
+/**
+ * Renders a demo video clip as scene background.
+ * The clip is synced to start at frame 0 within the scene.
+ */
+const DemoClipBackground: React.FC<{
+  clipPath: string;
+  sceneFrame: number;
+  opacity?: number;
+}> = ({ clipPath, sceneFrame, opacity = 1 }) => {
+  const { fps } = useVideoConfig();
+
+  // Calculate the time offset into the clip
+  const startFromFrame = 0; // Clips are pre-cut to scene duration
+
+  return (
+    <AbsoluteFill
+      style={{
+        opacity,
+      }}
+    >
+      <RemotionVideo
+        src={staticFile(clipPath)}
+        startFrom={startFromFrame}
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+        }}
+      />
+    </AbsoluteFill>
+  );
+};
+
+// ============================================================================
 // Main Video Component
 // ============================================================================
 
@@ -1227,12 +1273,22 @@ export const Video: React.FC<VideoProps> = ({ title, scenes, theme }) => {
     }
   };
 
+  // Check if scene has a demo clip
+  const hasDemoClip = currentScene.demo?.clipPath;
+
   return (
     <AbsoluteFill style={{ backgroundColor: colors.dark.bgPrimary }}>
-      {/* Background */}
-      <Background variant={bgVariant} intensity={bgIntensity} />
+      {/* Background - demo clip or animated background */}
+      {hasDemoClip ? (
+        <DemoClipBackground
+          clipPath={currentScene.demo!.clipPath}
+          sceneFrame={sceneFrame}
+        />
+      ) : (
+        <Background variant={bgVariant} intensity={bgIntensity} />
+      )}
 
-      {/* Scene content */}
+      {/* Scene content (overlays on top of demo clip) */}
       {renderScene()}
 
       {/* Transition in */}

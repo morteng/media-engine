@@ -8,6 +8,9 @@ from .styles import get_styles
 from .layout import get_body_start, get_body_end
 from .tabs import (
     get_overview_tab,
+    get_insights_tab,
+    get_insights_styles,
+    get_insights_scripts,
     get_documents_tab,
     get_media_tab,
     get_packs_tab,
@@ -35,8 +38,10 @@ def generate_dashboard_html() -> str:
     """
     return (
         get_styles()
+        + get_insights_styles()
         + get_body_start()
         + get_overview_tab()
+        + get_insights_tab()
         + get_documents_tab()
         + get_media_tab()
         + get_packs_tab()
@@ -51,6 +56,7 @@ def generate_dashboard_html() -> str:
         + get_activity_tab()
         + get_body_end()
         + get_javascript()
+        + get_insights_scripts()
         + "</body></html>"
     )
 

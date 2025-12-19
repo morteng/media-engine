@@ -5,6 +5,8 @@ Provides video production tools:
     - VideoBuilder: High-level video orchestrator
     - Timeline: Frame-accurate video sequencing
     - Capture: Playwright-based screen recording
+    - SceneCapture: Per-scene demo clip capture
+    - DemoRegistry: Named demo state management
     - Voiceover: ElevenLabs TTS integration with caching
     - Captions: WebVTT caption generation
 """
@@ -16,6 +18,17 @@ from .builder import (
     VideoScene,
     VideoScript,
     build_video,
+)
+from .demo_registry import (
+    DemoDefinition,
+    DemoRegistry,
+    DemoState,
+)
+from .scene_capture import (
+    SceneCaptureConfig,
+    SceneCaptureEngine,
+    SceneCaptureResult,
+    capture_scene_clips,
 )
 from .timeline import (
     TimelineClip,
@@ -40,6 +53,15 @@ __all__ = [
     "VideoScene",
     "VideoBuildResult",
     "build_video",
+    # Demo Registry
+    "DemoRegistry",
+    "DemoDefinition",
+    "DemoState",
+    # Scene Capture
+    "SceneCaptureEngine",
+    "SceneCaptureConfig",
+    "SceneCaptureResult",
+    "capture_scene_clips",
     # Timeline
     "VideoTimeline",
     "TimelineClip",

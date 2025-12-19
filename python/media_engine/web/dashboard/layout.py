@@ -43,6 +43,7 @@ def get_body_start() -> str:
 
         <div class="tabs">
             <button class="tab active" onclick="showTab('overview')">Overview</button>
+            <button class="tab" onclick="showTab('insights')">Insights</button>
             <button class="tab" onclick="showTab('documents')">Documents</button>
             <button class="tab" onclick="showTab('media')">Media</button>
             <button class="tab" onclick="showTab('packs')">Packs</button>

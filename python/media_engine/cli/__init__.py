@@ -19,15 +19,22 @@ from .commands import (
     cmd_build,
     cmd_cache,
     cmd_changelog,
+    cmd_consistency,
     cmd_dashboard,
     cmd_demos,
+    cmd_duplicates,
     cmd_freshness,
     cmd_gaps,
+    cmd_graph,
+    cmd_health,
+    cmd_incomplete,
     cmd_index,
     cmd_init,
     cmd_integrity,
     cmd_links,
     cmd_pack,
+    cmd_parity,
+    cmd_path,
     cmd_provenance,
     cmd_publish,
     cmd_quality,
@@ -35,9 +42,12 @@ from .commands import (
     cmd_search,
     cmd_security,
     cmd_stale,
+    cmd_stats,
     cmd_status,
+    cmd_terms,
     cmd_translation,
     cmd_validate,
+    cmd_velocity,
 )
 
 
@@ -250,6 +260,60 @@ def main():
     )
     fresh_parser.add_argument("--json", action="store_true", help="Output as JSON")
 
+    # ============== INSIGHTS COMMANDS ==============
+
+    # health
+    health_parser = subparsers.add_parser("health", help="Show project health score")
+    health_parser.add_argument("document", nargs="?", help="Specific document to check")
+    health_parser.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # stats
+    stats_parser = subparsers.add_parser("stats", help="Show project statistics")
+    stats_parser.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # incomplete
+    incomplete_parser = subparsers.add_parser("incomplete", help="Find incomplete content (TODO/TBD)")
+    incomplete_parser.add_argument("--high", action="store_true", help="Only high priority items")
+    incomplete_parser.add_argument("--summary", action="store_true", help="Show summary only")
+    incomplete_parser.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # consistency
+    consistency_parser = subparsers.add_parser("consistency", help="Check status consistency")
+    consistency_parser.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # parity
+    parity_parser = subparsers.add_parser("parity", help="Translation parity matrix")
+    parity_parser.add_argument("--primary", default="en", help="Primary language")
+    parity_parser.add_argument("--lang", help="Show missing for specific language")
+    parity_parser.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # terms
+    terms_parser = subparsers.add_parser("terms", help="Check terminology consistency")
+    terms_parser.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # duplicates
+    dup_parser = subparsers.add_parser("duplicates", help="Find duplicate content")
+    dup_parser.add_argument("--exact", action="store_true", help="Only exact duplicates")
+    dup_parser.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # velocity
+    velocity_parser = subparsers.add_parser("velocity", help="Content velocity metrics")
+    velocity_parser.add_argument("--days", type=int, default=30, help="Days to analyze")
+    velocity_parser.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # graph
+    graph_parser = subparsers.add_parser("graph", help="Knowledge graph")
+    graph_parser.add_argument("--format", choices=["json", "dot", "cytoscape"], help="Export format")
+    graph_parser.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # path
+    path_parser = subparsers.add_parser("path", help="Reading paths")
+    path_parser.add_argument("--persona", help="Generate persona-specific path")
+    path_parser.add_argument("--complexity", action="store_true", help="Order by complexity")
+    path_parser.add_argument("--lang", default="en", help="Language")
+    path_parser.add_argument("--export", choices=["md"], help="Export format")
+    path_parser.add_argument("--json", action="store_true", help="Output as JSON")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -279,6 +343,17 @@ def main():
         "changelog": cmd_changelog,
         "demos": cmd_demos,
         "freshness": cmd_freshness,
+        # Insights commands
+        "health": cmd_health,
+        "stats": cmd_stats,
+        "incomplete": cmd_incomplete,
+        "consistency": cmd_consistency,
+        "parity": cmd_parity,
+        "terms": cmd_terms,
+        "duplicates": cmd_duplicates,
+        "velocity": cmd_velocity,
+        "graph": cmd_graph,
+        "path": cmd_path,
     }
 
     if args.command in commands:

@@ -13,6 +13,7 @@ from .build import get_build_tab
 from .search import get_search_tab
 from .dependencies import get_dependencies_tab
 from .activity import get_activity_tab
+from .insights import get_insights_tab, get_insights_styles, get_insights_scripts
 
 __all__ = [
     "get_overview_tab",
@@ -28,4 +29,7 @@ __all__ = [
     "get_search_tab",
     "get_dependencies_tab",
     "get_activity_tab",
+    "get_insights_tab",
+    "get_insights_styles",
+    "get_insights_scripts",
 ]

@@ -1,0 +1,72 @@
+# Dashboard Demo Definition
+# Defines named states for scene-based video capture
+#
+# Each state represents a specific UI configuration that can be
+# referenced by video scripts. States are captured independently
+# with fresh browser instances for reliability.
+
+name: dashboard-demo
+url: "http://localhost:8080"  # Media Engine web dashboard
+
+viewport:
+  width: 1920
+  height: 1080
+
+metadata:
+  description: "Media Engine dashboard demo states"
+  author: "Media Engine"
+  version: "1.0.0"
+
+states:
+  # Initial dashboard view
+  initial:
+    description: "Clean dashboard landing page"
+    setup: null  # No action needed - default state
+
+  # Overview tab active
+  overview:
+    description: "Project overview with status indicators"
+    setup: |
+      document.querySelector('button[onclick*="overview"], a[href*="overview"]')?.click();
+
+  # Translation matrix visible
+  translations:
+    description: "Translation status matrix view"
+    setup: |
+      document.querySelector('button[onclick*="translation"], a[href*="translation"]')?.click();
+
+  # Quality tab with issues
+  quality-issues:
+    description: "Quality tab showing validation issues"
+    setup: |
+      document.querySelector('button[onclick*="quality"], a[href*="quality"]')?.click();
+
+  # Build tab
+  build-options:
+    description: "Build configuration options"
+    setup: |
+      document.querySelector('button[onclick*="build"], a[href*="build"]')?.click();
+
+  # Build in progress
+  build-running:
+    description: "Build process running with progress"
+    setup: |
+      document.querySelector('button[onclick*="build"], a[href*="build"]')?.click();
+
+  # Build complete
+  build-complete:
+    description: "Build completed successfully"
+    setup: |
+      document.querySelector('button[onclick*="build"], a[href*="build"]')?.click();
+
+  # Content freshness view
+  freshness:
+    description: "Content freshness tracking"
+    setup: |
+      document.querySelector('button[onclick*="freshness"], a[href*="freshness"]')?.click();
+
+  # Insights tab
+  insights:
+    description: "AI insights and recommendations"
+    setup: |
+      document.querySelector('button[onclick*="insights"], a[href*="insights"]')?.click();

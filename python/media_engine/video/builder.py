@@ -65,6 +65,8 @@ class VideoScene:
     visual: dict = field(default_factory=dict)
     audio_start: Optional[float] = None
     audio_end: Optional[float] = None
+    # Scene-based demo capture
+    demo_clip_path: Optional[Path] = None  # Path to captured clip for this scene
 
 
 @dataclass
@@ -101,6 +103,14 @@ class VideoScript:
             if isinstance(text, str):
                 text = text.strip()
 
+            # Parse visual with demo reference
+            visual = scene_data.get("visual", {})
+
+            # Support demo reference at scene level or in visual
+            demo_ref = scene_data.get("demo") or visual.get("demo")
+            if demo_ref:
+                visual["demo"] = demo_ref
+
             scenes.append(
                 VideoScene(
                     id=scene_data.get("id", f"scene_{len(scenes)}"),
@@ -108,7 +118,7 @@ class VideoScript:
                     title=scene_data.get("title") or scene_data.get("name"),
                     text=text,
                     duration=scene_data.get("duration"),
-                    visual=scene_data.get("visual", {}),
+                    visual=visual,
                 )
             )
 
@@ -169,6 +179,7 @@ class VideoBuilder:
         output_dir: Optional[Path] = None,
         render: bool = False,
         remotion_project: Optional[Path] = None,
+        capture_demos: bool = True,
     ) -> VideoBuildResult:
         """
         Build video from script.
@@ -178,6 +189,7 @@ class VideoBuilder:
             output_dir: Output directory (default: project output dir)
             render: Whether to render video with Remotion
             remotion_project: Path to Remotion project for rendering
+            capture_demos: Whether to capture per-scene demo clips
 
         Returns:
             VideoBuildResult with paths to generated files
@@ -205,14 +217,19 @@ class VideoBuilder:
             # Update scene timings from voiceover
             self._update_scene_timings(script, voiceover)
 
+            # Capture per-scene demo clips (after timing is set)
+            demo_clips = {}
+            if capture_demos and self._has_scene_demos(script):
+                demo_clips = await self._capture_scene_demos(script, output_dir)
+
             # Generate captions
             captions_path = output_dir / f"{script.name}.vtt"
             self._generate_captions(script, voiceover, captions_path)
             result.captions_path = captions_path
 
-            # Export Remotion props
+            # Export Remotion props (with demo clip paths)
             props_path = output_dir / f"{script.name}.props.json"
-            self._export_remotion_props(script, voiceover, props_path)
+            self._export_remotion_props(script, voiceover, props_path, demo_clips)
             result.props_path = props_path
 
             # Optionally render with Remotion
@@ -364,13 +381,43 @@ class VideoBuilder:
         secs = seconds % 60
         return f"{hours:02d}:{minutes:02d}:{secs:06.3f}"
 
+    def _has_scene_demos(self, script: VideoScript) -> bool:
+        """Check if any scene has a demo reference."""
+        for scene in script.scenes:
+            demo_ref = scene.visual.get("demo")
+            if demo_ref and isinstance(demo_ref, dict):
+                if "source" in demo_ref and "state" in demo_ref:
+                    return True
+        return False
+
+    async def _capture_scene_demos(
+        self,
+        script: VideoScript,
+        output_dir: Path,
+    ) -> dict[str, Path]:
+        """Capture per-scene demo clips using SceneCaptureEngine."""
+        from .scene_capture import SceneCaptureEngine
+
+        engine = SceneCaptureEngine(project=self.project)
+        clips = await engine.capture_all_scenes(script, output_dir)
+
+        # Store clip paths on scenes for reference
+        for scene in script.scenes:
+            if scene.id in clips:
+                scene.demo_clip_path = clips[scene.id]
+
+        return clips
+
     def _export_remotion_props(
         self,
         script: VideoScript,
         voiceover: VoiceoverResult,
         output_path: Path,
+        demo_clips: dict[str, Path] = None,
     ):
         """Export Remotion-compatible props JSON."""
+        demo_clips = demo_clips or {}
+
         props = {
             "title": script.title,
             "name": script.name,
@@ -383,18 +430,28 @@ class VideoBuilder:
         }
 
         for scene in script.scenes:
-            props["scenes"].append(
-                {
-                    "id": scene.id,
-                    "type": scene.type,
-                    "title": scene.title,
-                    "text": clean_text(scene.text) if scene.text else None,
-                    "startFrame": int((scene.audio_start or 0) * self.config.fps),
-                    "endFrame": int((scene.audio_end or 0) * self.config.fps),
-                    "durationFrames": int((scene.duration or 0) * self.config.fps),
-                    "visual": scene.visual,
+            scene_props = {
+                "id": scene.id,
+                "type": scene.type,
+                "title": scene.title,
+                "text": clean_text(scene.text) if scene.text else None,
+                "startFrame": int((scene.audio_start or 0) * self.config.fps),
+                "endFrame": int((scene.audio_end or 0) * self.config.fps),
+                "durationFrames": int((scene.duration or 0) * self.config.fps),
+                "visual": scene.visual,
+            }
+
+            # Add demo clip info if captured
+            if scene.id in demo_clips:
+                clip_path = demo_clips[scene.id]
+                # Use relative path from output directory
+                rel_path = clip_path.relative_to(output_path.parent)
+                scene_props["demo"] = {
+                    "clipPath": str(rel_path),
+                    "state": scene.visual.get("demo", {}).get("state", ""),
                 }
-            )
+
+            props["scenes"].append(scene_props)
 
         output_path.write_text(json.dumps(props, indent=2))
 

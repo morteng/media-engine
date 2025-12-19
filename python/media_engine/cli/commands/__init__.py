@@ -7,6 +7,18 @@ from .dashboard import cmd_dashboard
 from .demos import cmd_demos
 from .freshness import cmd_freshness
 from .init import cmd_init
+from .insights import (
+    cmd_consistency,
+    cmd_duplicates,
+    cmd_graph,
+    cmd_health,
+    cmd_incomplete,
+    cmd_parity,
+    cmd_path,
+    cmd_stats,
+    cmd_terms,
+    cmd_velocity,
+)
 from .integrity import cmd_integrity
 from .pack import cmd_pack
 from .provenance import cmd_provenance
@@ -40,4 +52,15 @@ __all__ = [
     "cmd_changelog",
     "cmd_demos",
     "cmd_freshness",
+    # Insights commands
+    "cmd_health",
+    "cmd_stats",
+    "cmd_incomplete",
+    "cmd_consistency",
+    "cmd_parity",
+    "cmd_terms",
+    "cmd_duplicates",
+    "cmd_velocity",
+    "cmd_graph",
+    "cmd_path",
 ]
