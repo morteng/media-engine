@@ -2477,15 +2477,31 @@ def get_javascript() -> str:
                 html += '</div></div>';
             }
 
+            // Build scene timing lookup from actual video props (if available)
+            // This ensures sync matches the rendered video, not just YAML durations
+            const sceneTimingMap = {};
+            if (video && video.sceneTiming && Array.isArray(video.sceneTiming)) {
+                video.sceneTiming.forEach(st => {
+                    if (st.id) {
+                        sceneTimingMap[st.id] = { start: st.startTime || 0, end: st.endTime || 0 };
+                    }
+                });
+            }
+            const hasActualTiming = Object.keys(sceneTimingMap).length > 0;
+            const actualTotalDuration = video && video.duration ? video.duration : totalDuration;
+
             // Timeline
             html += '<div class="script-timeline">';
-            html += '<div class="script-timeline-title"><span>Scene Timeline</span><span style="font-weight:normal;color:var(--text-muted)">' + formatDuration(totalDuration) + ' total</span></div>';
+            html += '<div class="script-timeline-title"><span>Scene Timeline</span><span style="font-weight:normal;color:var(--text-muted)">' + formatDuration(actualTotalDuration) + ' total</span></div>';
             html += '<div class="script-timeline-bar">';
             let cumulativeTime = 0;
             scenes.forEach((scene, i) => {
-                const width = totalDuration > 0 ? ((scene.duration || 0) / totalDuration * 100) : 0;
+                const sceneId = scene.id || 'scene-' + i;
+                const timing = sceneTimingMap[sceneId];
+                const sceneDur = timing ? (timing.end - timing.start) : (scene.duration || 0);
+                const width = actualTotalDuration > 0 ? (sceneDur / actualTotalDuration * 100) : 0;
                 const color = sceneColors[i % sceneColors.length];
-                html += '<div class="script-timeline-segment" style="width:' + width + '%;background:' + color + '" title="' + escapeHtml(scene.name || scene.id) + ' (' + (scene.duration || 0) + 's)" onclick="scrollToScene(' + i + ')"></div>';
+                html += '<div class="script-timeline-segment" style="width:' + width + '%;background:' + color + '" title="' + escapeHtml(scene.name || scene.id) + ' (' + sceneDur.toFixed(1) + 's)" onclick="scrollToScene(' + i + ')"></div>';
             });
             html += '</div>';
 
@@ -2499,18 +2515,23 @@ def get_javascript() -> str:
                 const words = countWords(scene.voiceover || '');
                 const color = sceneColors[i % sceneColors.length];
                 const hasNote = sceneNotes[sceneId] && sceneNotes[sceneId].text;
-                const sceneStartTime = cumulativeTime;
 
-                html += '<div class="script-scene" id="scene-' + i + '" data-start="' + sceneStartTime + '" data-end="' + (sceneStartTime + (scene.duration || 0)) + '">';
+                // Use actual timing from video props if available, otherwise fall back to YAML
+                const timing = sceneTimingMap[sceneId];
+                const sceneStartTime = timing ? timing.start : cumulativeTime;
+                const sceneEndTime = timing ? timing.end : (cumulativeTime + (scene.duration || 0));
+                const actualSceneDuration = sceneEndTime - sceneStartTime;
+
+                html += '<div class="script-scene" id="scene-' + i + '" data-start="' + sceneStartTime + '" data-end="' + sceneEndTime + '">';
                 html += '<div class="script-scene-header" onclick="toggleScene(' + i + ')">';
                 html += '<div class="script-scene-number" style="background:' + color + '">' + (i + 1) + '</div>';
                 html += '<div class="script-scene-info">';
                 html += '<div class="script-scene-name">' + escapeHtml(scene.name || 'Scene ' + (i + 1)) + '</div>';
-                html += '<div class="script-scene-id">' + escapeHtml(sceneId) + ' \\u00B7 starts at ' + formatDuration(cumulativeTime) + '</div>';
+                html += '<div class="script-scene-id">' + escapeHtml(sceneId) + ' \\u00B7 starts at ' + formatDuration(sceneStartTime) + '</div>';
                 html += '</div>';
                 html += '<div class="script-scene-badges">';
                 html += '<span class="script-scene-badge ' + typeClass + '">' + escapeHtml(sceneType.replace('_', ' ')) + '</span>';
-                html += '<span class="script-scene-badge duration">' + (scene.duration || 0) + 's</span>';
+                html += '<span class="script-scene-badge duration">' + actualSceneDuration.toFixed(1) + 's</span>';
                 if (words > 0) html += '<span class="script-scene-badge duration">' + words + ' words</span>';
                 html += '<span class="script-scene-badge has-note" id="note-badge-' + sceneId + '" style="display:' + (hasNote ? 'inline-block' : 'none') + '">Note</span>';
                 html += '</div>';
@@ -2529,11 +2550,10 @@ def get_javascript() -> str:
 
                 // Scene-specific video player (if video available)
                 if (video && video.hasVideo) {
-                    const sceneDuration = scene.duration || 0;
                     html += '<div class="script-scene-section scene-video-section">';
-                    html += '<div class="script-scene-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5,3 19,12 5,21"/></svg>Scene Preview (' + sceneDuration + 's)</div>';
+                    html += '<div class="script-scene-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5,3 19,12 5,21"/></svg>Scene Preview (' + actualSceneDuration.toFixed(1) + 's)</div>';
                     html += '<div class="scene-video-container">';
-                    html += '<video class="scene-video-player" id="scene-video-' + i + '" preload="metadata" data-start="' + sceneStartTime + '" data-end="' + (sceneStartTime + sceneDuration) + '">';
+                    html += '<video class="scene-video-player" id="scene-video-' + i + '" preload="metadata" data-start="' + sceneStartTime + '" data-end="' + sceneEndTime + '">';
                     html += '<source src="' + escapeHtml(video.videoUrl) + '" type="video/mp4">';
                     html += '</video>';
                     html += '<div class="scene-video-controls">';
@@ -2725,7 +2745,10 @@ def get_javascript() -> str:
                 html += '</div></div>';
 
                 html += '</div></div>';
-                cumulativeTime += (scene.duration || 0);
+                // Update cumulative time for fallback calculation (when no video timing available)
+                if (!timing) {
+                    cumulativeTime += (scene.duration || 0);
+                }
             });
             html += '</div></div>';
 
