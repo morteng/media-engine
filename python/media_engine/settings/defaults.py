@@ -18,14 +18,14 @@ class VideoDefaults:
     """Default video rendering settings."""
     width: int = 1920
     height: int = 1080
-    fps: int = 30
+    fps: int = 60
     codec: str = "h264"
 
     # FFmpeg encoding presets
     ffmpeg_preset: str = "slow"
     ffmpeg_crf: int = 18  # Quality (lower = better, 18 is visually lossless)
     ffmpeg_profile: str = "high"
-    ffmpeg_level: str = "4.2"
+    ffmpeg_level: str = "5.1"  # Level 5.1 supports 1080p@60fps
     ffmpeg_pixel_format: str = "yuv420p"
 
     # Capture settings
