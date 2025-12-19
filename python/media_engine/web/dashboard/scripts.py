@@ -2723,7 +2723,7 @@ def get_javascript() -> str:
                     html += '<div class="scene-video-progress" onclick="seekSceneVideo(event, ' + i + ')">';
                     html += '<div class="scene-video-progress-fill" id="scene-progress-' + i + '" style="width:0%"></div>';
                     html += '</div>';
-                    html += '<span class="scene-video-time" id="scene-time-' + i + '">0:00 / ' + formatDuration(sceneDuration) + '</span>';
+                    html += '<span class="scene-video-time" id="scene-time-' + i + '">0:00 / ' + formatDuration(actualSceneDuration) + '</span>';
                     html += '<button class="scene-video-loop-btn" id="scene-loop-btn-' + i + '" onclick="toggleSceneLoop(' + i + ')" title="Loop scene">';
                     html += '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>';
                     html += '</button>';
