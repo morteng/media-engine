@@ -1,0 +1,228 @@
+# Media Engine Walkthrough
+# A complete tour of Media Engine's capabilities
+# Duration: ~90 seconds | Resolution: 1920x1080 @ 60fps
+
+title: "Media Engine Walkthrough"
+description: "Complete tour of the agent-operated media production framework"
+language: "en"
+
+metadata:
+  version: "2.0.0"
+  status: "production"
+
+narrator:
+  voice: "Professional"
+  speed: 1.0
+
+output:
+  resolution:
+    width: 1920
+    height: 1080
+  framerate: 60
+  filename: "media-engine-walkthrough"
+
+scenes:
+  # ============================================================
+  # HOOK (0:00 - 0:05)
+  # ============================================================
+  - id: hook
+    name: "The Problem"
+    type: intro
+    duration: 5
+    voiceover: "You write great documentation. But turning it into polished deliverables? That takes forever."
+    visual:
+      background: cyber
+      transition_in: glitch
+      text_effect: bounce
+
+  # ============================================================
+  # SOLUTION (0:05 - 0:12)
+  # ============================================================
+  - id: intro
+    name: "Media Engine"
+    type: intro
+    duration: 7
+    voiceover: "Media Engine automates your entire content pipeline. Write once in Markdown, publish everywhere."
+    visual:
+      background: aurora
+      transition_in: aurora-sweep
+      show_logo: true
+      gradient_text: true
+      glow: true
+
+  # ============================================================
+  # DASHBOARD OVERVIEW (0:12 - 0:22)
+  # ============================================================
+  - id: dashboard-overview
+    name: "Dashboard Overview"
+    type: demo
+    duration: 10
+    voiceover: "The dashboard gives you complete visibility. See document counts, translation status, quality scores, and content freshness at a glance."
+    visual:
+      background: dark
+      transition_in: fade
+    demo:
+      source: dashboard
+      state: overview
+      highlight:
+        - stats-grid
+        - translation-matrix
+
+  # ============================================================
+  # INSIGHTS (0:22 - 0:32)
+  # ============================================================
+  - id: insights
+    name: "Project Insights"
+    type: feature
+    duration: 10
+    voiceover: "The Insights tab shows your project health score. Track freshness, translation coverage, consistency, and more. Get actionable recommendations automatically."
+    visual:
+      background: dark
+      transition_in: slide-left
+      feature_card:
+        icon: chart
+        highlight: cyan
+    demo:
+      source: dashboard
+      state: insights
+      highlight:
+        - health-score
+        - components
+
+  # ============================================================
+  # CONTENT MANAGEMENT (0:32 - 0:42)
+  # ============================================================
+  - id: content
+    name: "Content Management"
+    type: feature
+    duration: 10
+    voiceover: "Browse all your documents, media files, and assets in one place. Preview markdown with live rendering, view metadata, and manage translations across languages."
+    visual:
+      background: dark
+      transition_in: slide-left
+      feature_card:
+        icon: folder
+        highlight: blue
+    demo:
+      source: dashboard
+      state: content-documents
+      highlight:
+        - document-browser
+        - preview-panel
+
+  # ============================================================
+  # QUALITY CHECKS (0:42 - 0:52)
+  # ============================================================
+  - id: quality
+    name: "Quality Assurance"
+    type: feature
+    duration: 10
+    voiceover: "Quality checks run automatically. Catch broken links, readability issues, stale content, and security concerns before they reach production."
+    visual:
+      background: dark
+      transition_in: slide-left
+      feature_card:
+        icon: shield
+        highlight: purple
+    demo:
+      source: dashboard
+      state: quality-report
+      highlight:
+        - quality-summary
+        - issues-list
+
+  # ============================================================
+  # BUILD SYSTEM (0:52 - 1:02)
+  # ============================================================
+  - id: build
+    name: "Build System"
+    type: demo
+    duration: 10
+    voiceover: "Ready to publish? Select your output formats. HTML, PDF, PowerPoint, Excel. Choose languages, click build, and watch your content transform."
+    visual:
+      background: dark
+      transition_in: slide-left
+    demo:
+      source: dashboard
+      state: build
+      highlight:
+        - format-checkboxes
+        - build-button
+      actions:
+        - click: build-button
+
+  # ============================================================
+  # AI INTEGRATION (1:02 - 1:12)
+  # ============================================================
+  - id: ai-integration
+    name: "AI Agent Integration"
+    type: feature
+    duration: 10
+    voiceover: "Connect AI agents through MCP. Twenty plus tools let you manage content, run quality checks, and trigger builds conversationally. Works with Claude Desktop out of the box."
+    visual:
+      background: particles
+      transition_in: diagonal-split
+      feature_card:
+        icon: ai
+        highlight: hot
+      pipeline:
+        - Claude Desktop
+        - MCP Server
+        - Media Engine
+        - All Outputs
+
+  # ============================================================
+  # VIDEO PIPELINE (1:12 - 1:20)
+  # ============================================================
+  - id: video
+    name: "Video Production"
+    type: feature
+    duration: 8
+    voiceover: "Define video scripts in YAML. Media Engine generates voiceovers, creates captions, and renders motion graphics. This video? Built with Media Engine."
+    visual:
+      background: pulse
+      transition_in: zoom-burst
+      feature_card:
+        icon: video
+        highlight: cyan
+      pipeline:
+        - YAML Script
+        - AI Voiceover
+        - Auto Captions
+        - Motion Graphics
+
+  # ============================================================
+  # INSTALLATION (1:20 - 1:25)
+  # ============================================================
+  - id: install
+    name: "Get Started"
+    type: demo
+    duration: 5
+    voiceover: "Get started in seconds."
+    visual:
+      background: grid
+      transition_in: rotate-wipe
+      terminal:
+        commands:
+          - "pip install media-engine"
+          - "media-engine dashboard"
+
+  # ============================================================
+  # CLOSING (1:25 - 1:32)
+  # ============================================================
+  - id: closing
+    name: "Media Engine"
+    type: outro
+    duration: 7
+    voiceover: "Media Engine. Write content. Generate media. Ship faster."
+    visual:
+      background: waves
+      transition_in: aurora-sweep
+      show_logo: true
+      gradient_text: true
+      logo_glow: true
+      pulse_animation: true
+      cta:
+        primary: "pip install media-engine"
+        secondary: "github.com/morteng/media-engine"
+      fade_out: true
