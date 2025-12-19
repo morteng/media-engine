@@ -3,6 +3,8 @@ Project Management
 
 A Project is the main entry point for media-engine. It loads project.yaml,
 manages content, and coordinates builds.
+
+Uses centralized settings from media_engine.settings for paths and defaults.
 """
 
 import hashlib
@@ -15,6 +17,7 @@ import yaml
 
 from .config import Config
 from .theme import Theme, load_theme
+from ..settings import DIRS, FILES, ENV, CACHE, CLI
 
 
 @dataclass
@@ -51,7 +54,7 @@ class Project:
     config: Config
     theme: Theme
     languages: dict[str, LanguageConfig] = field(default_factory=dict)
-    source_language: str = "en"
+    source_language: str = CLI.default_language
     _cache_manifest: dict = field(default_factory=dict)
 
     @classmethod
@@ -141,7 +144,7 @@ class Project:
     @property
     def cache_dir(self) -> Path:
         """Directory for build cache."""
-        return self.root / ".cache"
+        return self.root / DIRS.cache
 
     @property
     def publish_dir(self) -> Path:
@@ -155,8 +158,8 @@ class Project:
         """
         import os
 
-        # Check environment variable first
-        env_publish = os.environ.get("MEDIA_ENGINE_PUBLISH_DIR")
+        # Check environment variable first (uses centralized ENV var name)
+        env_publish = os.environ.get(ENV.publish_dir)
         if env_publish:
             return Path(env_publish) / self.config.name.lower().replace(" ", "-")
 
@@ -229,13 +232,13 @@ class Project:
             return ""
         hasher = hashlib.sha256()
         with open(path, "rb") as f:
-            for chunk in iter(lambda: f.read(8192), b""):
+            for chunk in iter(lambda: f.read(CACHE.chunk_size), b""):
                 hasher.update(chunk)
-        return hasher.hexdigest()[:16]
+        return hasher.hexdigest()[:CACHE.hash_length]
 
     def hash_content(self, content: str) -> str:
         """Compute SHA256 hash of string content."""
-        return hashlib.sha256(content.encode()).hexdigest()[:16]
+        return hashlib.sha256(content.encode()).hexdigest()[:CACHE.hash_length]
 
     def is_cached(self, key: str, current_hash: str) -> bool:
         """Check if a cached item is still valid."""

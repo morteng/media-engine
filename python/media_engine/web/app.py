@@ -9,6 +9,8 @@ Provides REST API and WebSocket endpoints for:
 - Build operations
 - Scene notes and suggestions
 - Project switching and recent projects
+
+Uses centralized settings from media_engine.settings for defaults.
 """
 
 import webbrowser
@@ -29,6 +31,7 @@ except ImportError:
 
 from ..config.user_config import add_recent_project
 from ..core.project import Project, find_project
+from ..settings import WEB
 from .routes import register_routes
 from .websocket import ConnectionManager
 
@@ -102,21 +105,26 @@ def create_app(project_path: Optional[Path] = None) -> "FastAPI":
 
 def run_dashboard(
     project_path: Optional[Path] = None,
-    host: str = "127.0.0.1",
-    port: int = 8080,
-    open_browser: bool = True,
+    host: str = None,
+    port: int = None,
+    open_browser: bool = None,
 ):
     """
     Run the dashboard server.
 
     Args:
         project_path: Path to project root
-        host: Host to bind to
-        port: Port to bind to
-        open_browser: Whether to open browser automatically
+        host: Host to bind to (default from settings)
+        port: Port to bind to (default from settings)
+        open_browser: Whether to open browser automatically (default from settings)
     """
     if not HAS_FASTAPI:
         raise RuntimeError("FastAPI not installed. Install with: pip install media-engine[web]")
+
+    # Use settings defaults if not specified
+    host = host or WEB.host
+    port = port or WEB.port
+    open_browser = open_browser if open_browser is not None else WEB.auto_open_browser
 
     app = create_app(project_path)
 
@@ -126,7 +134,7 @@ def run_dashboard(
         def open_browser_delayed():
             import time
 
-            time.sleep(1)
+            time.sleep(WEB.browser_open_delay)
             webbrowser.open(f"http://{host}:{port}")
 
         threading.Thread(target=open_browser_delayed, daemon=True).start()

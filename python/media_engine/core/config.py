@@ -2,6 +2,7 @@
 Configuration Management
 
 Load and validate project configuration from YAML files.
+Uses centralized settings from media_engine.settings for all defaults.
 """
 
 from dataclasses import dataclass, field
@@ -10,35 +11,38 @@ from typing import Any, Dict, Optional
 
 import yaml
 
+# Import centralized settings
+from ..settings import VIDEO, VOICEOVER, QUALITY, DIRS
+
 
 @dataclass
 class VoiceoverConfig:
     """Voiceover generation settings."""
 
-    provider: str = "elevenlabs"
+    provider: str = VOICEOVER.provider
     voice_id: str = ""
-    stability: float = 0.5
-    similarity_boost: float = 0.75
-    language: str = "en"
+    stability: float = VOICEOVER.stability
+    similarity_boost: float = VOICEOVER.similarity_boost
+    language: str = VOICEOVER.language
 
 
 @dataclass
 class VideoConfig:
     """Video output settings."""
 
-    width: int = 1920
-    height: int = 1080
-    fps: int = 30
-    codec: str = "h264"
+    width: int = VIDEO.width
+    height: int = VIDEO.height
+    fps: int = VIDEO.fps
+    codec: str = VIDEO.codec
 
 
 @dataclass
 class PathsConfig:
     """Project paths."""
 
-    output: Path = field(default_factory=lambda: Path("output"))
-    assets: Path = field(default_factory=lambda: Path("assets"))
-    content: Path = field(default_factory=lambda: Path("content"))
+    output: Path = field(default_factory=lambda: Path(DIRS.output))
+    assets: Path = field(default_factory=lambda: Path(DIRS.assets))
+    content: Path = field(default_factory=lambda: Path(DIRS.content))
     publish: Optional[Path] = None  # None means use default: {project}/dist
 
 
@@ -47,7 +51,7 @@ class FreshnessConfig:
     """Freshness tracking settings."""
 
     ignore_patterns: list = field(default_factory=list)
-    default_freshness_days: int = 60
+    default_freshness_days: int = QUALITY.freshness_default_days
     scan_dirs: list = field(default_factory=list)  # Additional dirs to scan
 
 
@@ -76,27 +80,29 @@ class Config:
             name=project.get("name", "Untitled Project"),
             description=project.get("description", ""),
             voiceover=VoiceoverConfig(
-                provider=voiceover.get("provider", "elevenlabs"),
+                provider=voiceover.get("provider", VOICEOVER.provider),
                 voice_id=voiceover.get("voice_id", ""),
-                stability=voiceover.get("stability", 0.5),
-                similarity_boost=voiceover.get("similarity_boost", 0.75),
-                language=voiceover.get("language", "en"),
+                stability=voiceover.get("stability", VOICEOVER.stability),
+                similarity_boost=voiceover.get("similarity_boost", VOICEOVER.similarity_boost),
+                language=voiceover.get("language", VOICEOVER.language),
             ),
             video=VideoConfig(
-                width=video.get("width", 1920),
-                height=video.get("height", 1080),
-                fps=video.get("fps", 30),
-                codec=video.get("codec", "h264"),
+                width=video.get("width", VIDEO.width),
+                height=video.get("height", VIDEO.height),
+                fps=video.get("fps", VIDEO.fps),
+                codec=video.get("codec", VIDEO.codec),
             ),
             paths=PathsConfig(
-                output=Path(paths.get("output", "output")),
-                assets=Path(paths.get("assets", "assets")),
-                content=Path(paths.get("content", "content")),
+                output=Path(paths.get("output", DIRS.output)),
+                assets=Path(paths.get("assets", DIRS.assets)),
+                content=Path(paths.get("content", DIRS.content)),
                 publish=Path(paths["publish"]) if paths.get("publish") else None,
             ),
             freshness=FreshnessConfig(
                 ignore_patterns=freshness.get("ignore_patterns", []),
-                default_freshness_days=freshness.get("default_freshness_days", 60),
+                default_freshness_days=freshness.get(
+                    "default_freshness_days", QUALITY.freshness_default_days
+                ),
                 scan_dirs=freshness.get("scan_dirs", []),
             ),
             extra={

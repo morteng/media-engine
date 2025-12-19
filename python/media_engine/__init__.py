@@ -15,6 +15,7 @@ Modules:
     validation: Schema and reference validation
     packs: Curated deliverable packages (investor, pilot)
     core: Configuration and theming utilities
+    settings: Centralized configuration and defaults
 """
 
 __version__ = "0.1.0"
@@ -28,12 +29,35 @@ from .packs import PackResult, generate_investor_pack, generate_pilot_pack
 from .publish import PublishConfig, publish_project
 from .quality import QualityReport, run_quality_checks
 from .search import SearchIndex, build_search_index
+from .settings import (
+    VIDEO,
+    VOICEOVER,
+    WEB,
+    NETWORK,
+    QUALITY,
+    CACHE,
+    DIRS,
+    FILES,
+    ENV,
+    get_default,
+)
 from .status import get_project_dashboard, print_dashboard
 from .templates import DocumentTemplate, render_document
 from .validation import ValidationReport, validate_project
 
 __all__ = [
     "__version__",
+    # Settings
+    "VIDEO",
+    "VOICEOVER",
+    "WEB",
+    "NETWORK",
+    "QUALITY",
+    "CACHE",
+    "DIRS",
+    "FILES",
+    "ENV",
+    "get_default",
     # Theme
     "Theme",
     "COPPER_AND_CREAM",

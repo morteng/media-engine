@@ -3,6 +3,8 @@ Content Registry
 
 Central registry for tracking all project content with dependency chains.
 Provides freshness computation and untracked content detection.
+
+Uses centralized settings from media_engine.settings for defaults.
 """
 
 import fnmatch
@@ -13,24 +15,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple
 
 from .types import ContentType, FreshnessReport, FreshnessStatus, TrackedItem
+from ..settings import DEFAULT_IGNORE_PATTERNS, DIRS, FILES
 
 if TYPE_CHECKING:
     from ..core.project import Project
 
-
-# Default patterns to always ignore
-DEFAULT_IGNORE_PATTERNS = [
-    "**/.cache/**",
-    "**/__pycache__/**",
-    "**/.git/**",
-    "**/.media-engine/**",
-    "**/node_modules/**",
-    "**/*.pyc",
-    "**/*-poster.jpg",
-    "**/*-poster.png",
-    "**/videos/audio/**",
-    "**/audio/**/*.mp3",
-]
 
 # File extensions tracked by content type
 TRACKED_EXTENSIONS: Dict[ContentType, Set[str]] = {
@@ -54,8 +43,8 @@ ALL_TRACKED_EXTENSIONS: Set[str] = set()
 for exts in TRACKED_EXTENSIONS.values():
     ALL_TRACKED_EXTENSIONS.update(exts)
 
-# Registry file location
-REGISTRY_FILE = ".media-engine/content_registry.json"
+# Registry file location (from centralized settings)
+REGISTRY_FILE = f"{DIRS.media_engine}/{FILES.content_registry}"
 
 
 class ContentRegistry:
