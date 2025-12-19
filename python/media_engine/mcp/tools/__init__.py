@@ -19,6 +19,7 @@ from . import (
     session,
     suggestions,
     translation,
+    webhooks,
 )
 
 __all__ = [
@@ -36,4 +37,5 @@ __all__ = [
     "session",
     "suggestions",
     "translation",
+    "webhooks",
 ]

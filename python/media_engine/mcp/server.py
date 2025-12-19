@@ -146,6 +146,7 @@ class MediaEngineMCPServer:
             session,
             suggestions,
             translation,
+            webhooks,
         )
 
         # Register all tool categories
@@ -165,6 +166,7 @@ class MediaEngineMCPServer:
         batch.register_batch_tools(self.mcp, self)
         session.register_session_tools(self.mcp, self)
         claude.register_claude_tools(self.mcp, self)
+        webhooks.register_webhook_tools(self.mcp, self)
 
     def _register_resources(self):
         """Register MCP resources for context."""
