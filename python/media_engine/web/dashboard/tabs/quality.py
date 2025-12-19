@@ -8,7 +8,7 @@ Provides the quality tab HTML for the Media Engine Dashboard.
 def get_quality_tab() -> str:
     """Generate the quality tab HTML with quality report and refresh controls."""
     return """
-        <div id="tab-quality" style="display: none;">
+        <div id="tab-quality-report" style="display: none;">
             <div class="card">
                 <div class="card-header">
                     <div style="display: flex; align-items: center; gap: 1rem;">

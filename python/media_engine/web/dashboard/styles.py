@@ -119,6 +119,64 @@ def get_styles() -> str:
         .tab:hover { border-color: var(--primary); color: var(--text); }
         .tab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
 
+        /* Sub-tabs horizontal navigation */
+        .subtabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            padding: 0.75rem 1rem;
+            background: var(--bg-card);
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .subtab {
+            padding: 0.4rem 0.9rem;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 0.25rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            font-size: 0.875rem;
+        }
+        .subtab:hover {
+            color: var(--text);
+            background: rgba(59, 130, 246, 0.1);
+        }
+        .subtab.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+        }
+
+        /* Mobile sub-tab dropdowns */
+        .subtabs-dropdown {
+            display: none;
+            margin-bottom: 1rem;
+        }
+        .subtabs-select {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+
+        /* Responsive: Mobile sub-tabs */
+        @media (max-width: 768px) {
+            .subtabs {
+                display: none !important;
+            }
+            .subtabs-dropdown {
+                display: block;
+            }
+        }
+
         /* Document browser styles */
         .doc-browser { display: grid; grid-template-columns: 320px 1fr; gap: 1.5rem; min-height: calc(100vh - 200px); }
         .doc-sidebar { background: var(--bg-card); border: 1px solid var(--border); border-radius: 0.5rem; overflow: hidden; display: flex; flex-direction: column; }

@@ -44,18 +44,49 @@ def get_body_start() -> str:
         <div class="tabs">
             <button class="tab active" onclick="showTab('overview')">Overview</button>
             <button class="tab" onclick="showTab('insights')">Insights</button>
-            <button class="tab" onclick="showTab('documents')">Documents</button>
-            <button class="tab" onclick="showTab('media')">Media</button>
-            <button class="tab" onclick="showTab('packs')">Packs</button>
-            <button class="tab" onclick="showTab('assets')">Assets</button>
-            <button class="tab" onclick="showTab('translations')">Translations</button>
+            <button class="tab" onclick="showTab('content')">Content</button>
             <button class="tab" onclick="showTab('quality')">Quality</button>
-            <button class="tab" onclick="showTab('freshness')">Freshness</button>
-            <button class="tab" onclick="showTab('provenance')">Provenance</button>
             <button class="tab" onclick="showTab('build')">Build</button>
             <button class="tab" onclick="showTab('search')">Search</button>
-            <button class="tab" onclick="showTab('dependencies')">Dependencies</button>
             <button class="tab" onclick="showTab('activity')">Activity</button>
+        </div>
+
+        <!-- Content Sub-tabs (horizontal) -->
+        <div id="subtabs-content" class="subtabs" style="display: none;">
+            <button class="subtab active" onclick="showSubTab('content', 'documents')">Documents</button>
+            <button class="subtab" onclick="showSubTab('content', 'media')">Media</button>
+            <button class="subtab" onclick="showSubTab('content', 'packs')">Packs</button>
+            <button class="subtab" onclick="showSubTab('content', 'assets')">Assets</button>
+            <button class="subtab" onclick="showSubTab('content', 'translations')">Translations</button>
+        </div>
+
+        <!-- Quality Sub-tabs (horizontal) -->
+        <div id="subtabs-quality" class="subtabs" style="display: none;">
+            <button class="subtab active" onclick="showSubTab('quality', 'quality-report')">Quality Report</button>
+            <button class="subtab" onclick="showSubTab('quality', 'freshness')">Freshness</button>
+            <button class="subtab" onclick="showSubTab('quality', 'provenance')">Provenance</button>
+            <button class="subtab" onclick="showSubTab('quality', 'dependencies')">Dependencies</button>
+        </div>
+
+        <!-- Mobile: Content dropdown -->
+        <div id="subtabs-dropdown-content" class="subtabs-dropdown" style="display: none;">
+            <select id="subtabs-select-content" class="subtabs-select" onchange="onSubTabDropdownChange('content')">
+                <option value="documents">Documents</option>
+                <option value="media">Media</option>
+                <option value="packs">Packs</option>
+                <option value="assets">Assets</option>
+                <option value="translations">Translations</option>
+            </select>
+        </div>
+
+        <!-- Mobile: Quality dropdown -->
+        <div id="subtabs-dropdown-quality" class="subtabs-dropdown" style="display: none;">
+            <select id="subtabs-select-quality" class="subtabs-select" onchange="onSubTabDropdownChange('quality')">
+                <option value="quality-report">Quality Report</option>
+                <option value="freshness">Freshness</option>
+                <option value="provenance">Provenance</option>
+                <option value="dependencies">Dependencies</option>
+            </select>
         </div>
 """
 

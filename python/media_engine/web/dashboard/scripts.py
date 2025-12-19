@@ -399,39 +399,175 @@ def get_javascript() -> str:
             }
         }
 
+        // State management for active tabs
+        let activeMainTab = 'overview';
+        let activeSubTabs = {
+            'content': 'documents',
+            'quality': 'quality-report'
+        };
+
         function showTab(name) {
+            // Hide all main tab content
             document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none');
+
+            // Update main tab button states
             document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-' + name).style.display = 'block';
             event.target.classList.add('active');
-            if (name === 'documents' && !documentsLoaded) {
+
+            // Hide all sub-tab containers and dropdowns
+            document.querySelectorAll('.subtabs').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.subtabs-dropdown').forEach(el => el.style.display = 'none');
+
+            activeMainTab = name;
+
+            // Handle sections with sub-tabs
+            if (name === 'content') {
+                // Show sub-tabs (desktop) or dropdown (mobile)
+                if (window.innerWidth > 768) {
+                    document.getElementById('subtabs-content').style.display = 'flex';
+                } else {
+                    document.getElementById('subtabs-dropdown-content').style.display = 'block';
+                }
+
+                const activeSubTab = activeSubTabs['content'];
+                document.getElementById('tab-' + activeSubTab).style.display = 'block';
+                updateSubTabStates('content', activeSubTab);
+
+                // Lazy load
+                if (activeSubTab === 'documents' && !documentsLoaded) {
+                    initDocumentBrowser();
+                }
+                if (activeSubTab === 'media' && !mediaLoaded) {
+                    loadMedia();
+                }
+                if (activeSubTab === 'packs' && !packsLoaded) {
+                    loadPacks();
+                }
+                if (activeSubTab === 'assets' && !assetsLoaded) {
+                    loadAssets();
+                }
+            } else if (name === 'quality') {
+                // Show sub-tabs (desktop) or dropdown (mobile)
+                if (window.innerWidth > 768) {
+                    document.getElementById('subtabs-quality').style.display = 'flex';
+                } else {
+                    document.getElementById('subtabs-dropdown-quality').style.display = 'block';
+                }
+
+                const activeSubTab = activeSubTabs['quality'];
+                document.getElementById('tab-' + activeSubTab).style.display = 'block';
+                updateSubTabStates('quality', activeSubTab);
+            } else {
+                // Simple standalone tabs
+                document.getElementById('tab-' + name).style.display = 'block';
+
+                // Existing lazy load logic
+                if (name === 'insights' && !insightsLoaded) {
+                    loadInsights();
+                }
+                if (name === 'build' && !buildLoaded) {
+                    loadBuildStatus();
+                }
+                if (name === 'search' && !searchLoaded) {
+                    initSearch();
+                }
+            }
+        }
+
+        function showSubTab(section, subTabName) {
+            // Hide all content within this section
+            const tabIds = {
+                'content': ['documents', 'media', 'packs', 'assets', 'translations'],
+                'quality': ['quality-report', 'freshness', 'provenance', 'dependencies']
+            };
+
+            tabIds[section].forEach(id => {
+                const el = document.getElementById('tab-' + id);
+                if (el) el.style.display = 'none';
+            });
+
+            // Show selected sub-tab content
+            const targetTab = document.getElementById('tab-' + subTabName);
+            if (targetTab) {
+                targetTab.style.display = 'block';
+            }
+
+            // Remember active sub-tab
+            activeSubTabs[section] = subTabName;
+
+            // Update sub-tab button states
+            updateSubTabStates(section, subTabName);
+
+            // Update mobile dropdown
+            const dropdown = document.getElementById('subtabs-select-' + section);
+            if (dropdown) {
+                dropdown.value = subTabName;
+            }
+
+            // Trigger lazy loading
+            if (subTabName === 'documents' && !documentsLoaded) {
                 initDocumentBrowser();
             }
-            if (name === 'media' && !mediaLoaded) {
+            if (subTabName === 'media' && !mediaLoaded) {
                 loadMedia();
             }
-            if (name === 'packs' && !packsLoaded) {
+            if (subTabName === 'packs' && !packsLoaded) {
                 loadPacks();
             }
-            if (name === 'assets' && !assetsLoaded) {
+            if (subTabName === 'assets' && !assetsLoaded) {
                 loadAssets();
             }
-            if (name === 'freshness' && !freshnessLoaded) {
+            if (subTabName === 'freshness' && !freshnessLoaded) {
                 loadFreshness();
             }
-            if (name === 'provenance' && !provenanceLoaded) {
+            if (subTabName === 'provenance' && !provenanceLoaded) {
                 loadProvenance();
             }
-            if (name === 'build' && !buildLoaded) {
-                loadBuildStatus();
-            }
-            if (name === 'search' && !searchLoaded) {
-                initSearch();
-            }
-            if (name === 'dependencies' && !depsLoaded) {
+            if (subTabName === 'dependencies' && !depsLoaded) {
                 loadDependencies();
             }
         }
+
+        function updateSubTabStates(section, activeSubTab) {
+            const container = document.getElementById('subtabs-' + section);
+            if (!container) return;
+
+            container.querySelectorAll('.subtab').forEach(btn => {
+                btn.classList.remove('active');
+                const onclick = btn.getAttribute('onclick');
+                if (onclick && onclick.includes("'" + activeSubTab + "'")) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        function onSubTabDropdownChange(section) {
+            const select = document.getElementById('subtabs-select-' + section);
+            if (select) {
+                showSubTab(section, select.value);
+            }
+        }
+
+        // Handle window resize (switch between desktop/mobile sub-tab display)
+        window.addEventListener('resize', () => {
+            if (activeMainTab === 'content') {
+                if (window.innerWidth > 768) {
+                    document.getElementById('subtabs-content').style.display = 'flex';
+                    document.getElementById('subtabs-dropdown-content').style.display = 'none';
+                } else {
+                    document.getElementById('subtabs-content').style.display = 'none';
+                    document.getElementById('subtabs-dropdown-content').style.display = 'block';
+                }
+            } else if (activeMainTab === 'quality') {
+                if (window.innerWidth > 768) {
+                    document.getElementById('subtabs-quality').style.display = 'flex';
+                    document.getElementById('subtabs-dropdown-quality').style.display = 'none';
+                } else {
+                    document.getElementById('subtabs-quality').style.display = 'none';
+                    document.getElementById('subtabs-dropdown-quality').style.display = 'block';
+                }
+            }
+        });
 
         // Freshness tab state
         let freshnessLoaded = false;
