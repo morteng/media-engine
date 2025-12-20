@@ -1,7 +1,7 @@
 ---
 title: "Video Production"
 version: "1.0.0"
-status: "draft"
+status: "final"
 last_modified: "2025-12-16"
 freshness_days: 60
 depends_on:
@@ -13,7 +13,7 @@ tags:
 
 # Video Production
 
-Media Engine integrates with Remotion for programmatic video generation and ElevenLabs for AI voiceovers.
+Media Engine provides a complete video production pipeline, integrating Remotion for programmatic video rendering and ElevenLabs for high-quality AI voiceovers. This allows you to generate professional videos directly from YAML script definitions—no video editing software required.
 
 ## Video Scripts
 
@@ -69,3 +69,12 @@ Video composition is handled by Remotion components:
 - **StatCounter**: Animated statistics
 - **Background**: Dynamic backgrounds
 - **Transition**: Scene transitions
+
+## Quick Reference
+
+| Component | Purpose | Example Use |
+|-----------|---------|-------------|
+| Script YAML | Define video structure | `content/en/scripts/demo.yaml` |
+| Voiceover | AI narration | Auto-generated from script text |
+| Cache | Avoid regeneration | `.cache/voiceover/` |
+| Remotion | Video rendering | TypeScript components in `remotion/` |
