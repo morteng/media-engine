@@ -10,3 +10,4 @@ export { MediaPlayer } from './MediaPlayer';
 export { SelectionAnnotation } from './SelectionAnnotation';
 export { ConnectionStatus } from './ConnectionStatus';
 export { ToastProvider, useToast } from './Toast';
+export { CommandPalette } from './CommandPalette';
