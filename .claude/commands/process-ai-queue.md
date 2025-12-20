@@ -1,3 +1,8 @@
+---
+name: process-ai-queue
+description: Process pending AI tasks from the dashboard queue with Claude Code tools
+---
+
 # Process AI Queue
 
 Process pending AI tasks from the dashboard queue with full tool access.
