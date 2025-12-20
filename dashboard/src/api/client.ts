@@ -13,7 +13,17 @@ import type {
   RecentProjectsResponse,
   OpenProjectResponse,
   BrowseProjectResponse,
+  VideoInfo,
+  VideoScript,
 } from './types';
+
+export interface FileResponse {
+  path: string;
+  filename: string;
+  content: string;
+  parsed?: VideoScript;
+  video?: VideoInfo;
+}
 
 const api = axios.create({
   baseURL: '/api',
@@ -44,11 +54,11 @@ export const getDocuments = (language: string) =>
 export const getDocument = (path: string) =>
   api.get<DocumentContent>('/document', { params: { path } }).then(r => r.data);
 
+export const saveDocument = (path: string, content: string, metadata?: Record<string, unknown>) =>
+  api.post<{ status: string; path: string }>('/document', { content, metadata }, { params: { path } }).then(r => r.data);
+
 export const getFile = (path: string) =>
-  api.get<{ path: string; filename: string; content: string; parsed?: unknown; video?: unknown }>(
-    '/file',
-    { params: { path } }
-  ).then(r => r.data);
+  api.get<FileResponse>('/file', { params: { path } }).then(r => r.data);
 
 // Translations
 export const getTranslations = () =>

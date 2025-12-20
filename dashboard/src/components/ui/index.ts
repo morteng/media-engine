@@ -5,3 +5,7 @@ export { StatCard } from './StatCard';
 export { ProgressBar } from './ProgressBar';
 export { Spinner, LoadingState } from './Spinner';
 export { SubTabs } from './SubTabs';
+export { MarkdownPreview } from './MarkdownPreview';
+export { MediaPlayer } from './MediaPlayer';
+export { SelectionAnnotation } from './SelectionAnnotation';
+export { ConnectionStatus } from './ConnectionStatus';

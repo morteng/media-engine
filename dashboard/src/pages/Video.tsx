@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, Badge, Spinner } from '@/components/ui';
+import { Card, Badge, Spinner, MediaPlayer } from '@/components/ui';
 import { getDocuments, getFile, getSceneNotes, saveSceneNote } from '@/api/client';
-import type { Document, VideoScript, VideoScene } from '@/api/types';
+import type { FileResponse } from '@/api/client';
+import type { Document, VideoScene } from '@/api/types';
 import {
   Film,
   Clock,
@@ -12,7 +13,8 @@ import {
   X,
   Mic,
   Eye,
-  Layers
+  Layers,
+  Play,
 } from 'lucide-react';
 
 interface SceneNote {
@@ -37,13 +39,14 @@ export function Video() {
   const scripts = docsData?.categories?.script || [];
 
   // Fetch selected script content
-  const { data: scriptData, isLoading: scriptLoading } = useQuery({
+  const { data: scriptData, isLoading: scriptLoading } = useQuery<FileResponse | null>({
     queryKey: ['file', selectedScript],
     queryFn: () => selectedScript ? getFile(selectedScript) : null,
     enabled: !!selectedScript,
   });
 
-  const videoScript = scriptData?.parsed as VideoScript | undefined;
+  const videoScript = scriptData?.parsed;
+  const videoInfo = scriptData?.video;
 
   // Fetch scene notes for selected script
   const { data: notesData } = useQuery({
@@ -171,6 +174,23 @@ export function Video() {
                     )}
                   </div>
                 </div>
+
+                {/* Video/Audio Preview */}
+                {(videoInfo?.hasVideo || videoInfo?.hasAudio) && (
+                  <div className="video-preview-section">
+                    <h4><Play size={14} /> Preview</h4>
+                    <MediaPlayer
+                      src={videoInfo.videoUrl || videoInfo.audioUrl || ''}
+                      type={videoInfo.hasVideo ? 'video' : 'audio'}
+                      poster={undefined}
+                      captions={videoInfo.captionsUrl}
+                      title={videoScript.title}
+                      sceneTiming={videoInfo.sceneTiming}
+                      onSceneChange={(sceneId) => setSelectedScene(sceneId)}
+                      className="script-media-player"
+                    />
+                  </div>
+                )}
 
                 <div className="scenes-container">
                   <h4>Scenes</h4>
@@ -381,6 +401,28 @@ export function Video() {
           gap: 0.5rem;
           margin-top: 0.75rem;
           flex-wrap: wrap;
+        }
+
+        .video-preview-section {
+          margin-bottom: 1.5rem;
+          padding-bottom: 1rem;
+          border-bottom: 1px solid var(--border);
+        }
+
+        .video-preview-section h4 {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin: 0 0 0.75rem 0;
+          font-size: 0.875rem;
+          color: var(--text-secondary);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        .script-media-player {
+          border-radius: 0.5rem;
+          overflow: hidden;
         }
 
         .scenes-container h4 {

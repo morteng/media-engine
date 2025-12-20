@@ -56,6 +56,18 @@ export const useFile = (path: string) =>
     enabled: !!path,
   });
 
+export const useSaveDocument = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ path, content, metadata }: { path: string; content: string; metadata?: Record<string, unknown> }) =>
+      api.saveDocument(path, content, metadata),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.document(variables.path) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.file(variables.path) });
+    },
+  });
+};
+
 // Translation Hooks
 export const useTranslations = () =>
   useQuery({

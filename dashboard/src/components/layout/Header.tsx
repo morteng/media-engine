@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useProject, useRecentProjects, useOpenProject, useBrowseProject } from '@/hooks/useApi';
+import { ConnectionStatus } from '@/components/ui';
 import {
   Search,
   Moon,
@@ -118,6 +119,7 @@ export function Header() {
 
       {/* Actions */}
       <div className="header-actions">
+        <ConnectionStatus />
         <button className="icon-btn" onClick={toggleTheme} title="Toggle theme">
           {isDark ? <Sun size={18} /> : <Moon size={18} />}
         </button>

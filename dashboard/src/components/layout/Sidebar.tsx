@@ -7,6 +7,7 @@ import {
   BarChart3,
   Search,
   Film,
+  Image,
   Sparkles
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -15,6 +16,7 @@ const navItems = [
   { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { path: '/content', icon: FileText, label: 'Content' },
   { path: '/video', icon: Film, label: 'Video' },
+  { path: '/media', icon: Image, label: 'Media' },
   { path: '/quality', icon: Shield, label: 'Quality' },
   { path: '/build', icon: Hammer, label: 'Build' },
   { path: '/insights', icon: BarChart3, label: 'Insights' },

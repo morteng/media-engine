@@ -1,6 +1,7 @@
 export { Dashboard } from './Dashboard';
 export { Content } from './Content';
 export { Video } from './Video';
+export { Media } from './Media';
 export { Quality } from './Quality';
 export { Build } from './Build';
 export { Insights } from './Insights';

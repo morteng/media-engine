@@ -1,20 +1,29 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { useProject, useDocuments, useFile, useInsights } from '@/hooks/useApi';
+import { useProject, useDocuments, useDocument, useInsights, useSaveDocument } from '@/hooks/useApi';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { LoadingState } from '@/components/ui/Spinner';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { SubTabs } from '@/components/ui/SubTabs';
+import { MarkdownPreview } from '@/components/ui/MarkdownPreview';
+import { SelectionAnnotation } from '@/components/ui/SelectionAnnotation';
 import {
   FileText,
   FolderOpen,
   Languages,
   CheckCircle,
   XCircle,
-  AlertTriangle
+  AlertTriangle,
+  Eye,
+  Edit3,
+  Save,
+  X,
+  Code,
 } from 'lucide-react';
 import clsx from 'clsx';
+import './Content.css';
 
 const tabs = [
   { path: '', label: 'Documents' },
@@ -26,17 +35,58 @@ function DocumentsView() {
   const { data: project } = useProject();
   const [selectedLang, setSelectedLang] = useState('en');
   const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'preview' | 'source' | 'edit'>('preview');
+  const [editContent, setEditContent] = useState('');
+  const [hasChanges, setHasChanges] = useState(false);
 
   const { data: documents, isLoading: docsLoading } = useDocuments(selectedLang);
-  const { data: fileData, isLoading: fileLoading } = useFile(selectedDoc ?? '');
+  const { data: docData, isLoading: docLoading, refetch } = useDocument(selectedDoc ?? '');
+  const saveDocument = useSaveDocument();
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const languages = project?.languages ? Object.keys(project.languages) : ['en'];
+
+  // Update edit content when document changes
+  useEffect(() => {
+    if (docData?.content) {
+      setEditContent(docData.content);
+      setHasChanges(false);
+    }
+  }, [docData?.content]);
+
+  const handleContentChange = (value: string) => {
+    setEditContent(value);
+    setHasChanges(value !== docData?.content);
+  };
+
+  const handleSave = async () => {
+    if (!selectedDoc || !hasChanges) return;
+
+    try {
+      await saveDocument.mutateAsync({
+        path: selectedDoc,
+        content: editContent,
+      });
+      setHasChanges(false);
+      setViewMode('preview');
+      refetch();
+    } catch (error) {
+      console.error('Failed to save document:', error);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditContent(docData?.content ?? '');
+    setHasChanges(false);
+    setViewMode('preview');
+  };
 
   if (docsLoading) {
     return <LoadingState message="Loading documents..." />;
   }
 
   const categories = documents?.categories ?? {};
+  const isMarkdown = selectedDoc?.endsWith('.md');
 
   return (
     <div className="content-layout">
@@ -71,7 +121,10 @@ function DocumentsView() {
                   <button
                     key={doc.path}
                     className={clsx('doc-item', { active: selectedDoc === doc.path })}
-                    onClick={() => setSelectedDoc(doc.path)}
+                    onClick={() => {
+                      setSelectedDoc(doc.path);
+                      setViewMode('preview');
+                    }}
                   >
                     <FileText size={12} />
                     <span className="doc-title">{doc.title}</span>
@@ -87,20 +140,105 @@ function DocumentsView() {
       <Card className="document-viewer">
         {selectedDoc ? (
           <>
-            <CardHeader title={fileData?.filename ?? 'Loading...'} subtitle={selectedDoc} />
+            <CardHeader
+              title={docData?.title ?? 'Loading...'}
+              subtitle={selectedDoc}
+              action={
+                isMarkdown && (
+                  <div className="view-mode-toggle">
+                    <Button
+                      variant={viewMode === 'preview' ? 'primary' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('preview')}
+                      title="Preview"
+                    >
+                      <Eye size={14} />
+                    </Button>
+                    <Button
+                      variant={viewMode === 'source' ? 'primary' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('source')}
+                      title="Source"
+                    >
+                      <Code size={14} />
+                    </Button>
+                    <Button
+                      variant={viewMode === 'edit' ? 'primary' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('edit')}
+                      title="Edit"
+                    >
+                      <Edit3 size={14} />
+                    </Button>
+                    {viewMode === 'edit' && hasChanges && (
+                      <>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={handleSave}
+                          disabled={saveDocument.isPending}
+                        >
+                          <Save size={14} />
+                          Save
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleCancelEdit}
+                        >
+                          <X size={14} />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                )
+              }
+            />
             <CardContent>
-              {fileLoading ? (
+              {docLoading ? (
                 <LoadingState message="Loading..." />
               ) : (
                 <div className="document-content">
-                  {fileData?.parsed != null && (
-                    <div className="frontmatter">
-                      <pre>{JSON.stringify(fileData.parsed, null, 2)}</pre>
-                    </div>
+                  {/* Frontmatter */}
+                  {docData?.metadata && Object.keys(docData.metadata).length > 0 && (
+                    <details className="frontmatter-details">
+                      <summary>
+                        <Badge variant="info" size="sm">Frontmatter</Badge>
+                      </summary>
+                      <pre className="frontmatter-content">
+                        {JSON.stringify(docData.metadata, null, 2)}
+                      </pre>
+                    </details>
                   )}
-                  <div className="markdown-content">
-                    <pre>{String(fileData?.content ?? '')}</pre>
+
+                  {/* Content based on view mode */}
+                  <div ref={contentRef} className="document-content-inner">
+                    {viewMode === 'preview' && docData?.html ? (
+                      <MarkdownPreview html={docData.html} className="markdown-rendered" />
+                    ) : viewMode === 'edit' ? (
+                      <textarea
+                        className="document-editor"
+                        value={editContent}
+                        onChange={(e) => handleContentChange(e.target.value)}
+                        spellCheck={false}
+                      />
+                    ) : (
+                      <pre className="document-source">{docData?.content ?? ''}</pre>
+                    )}
                   </div>
+
+                  {/* Selection Annotation for AI Queue */}
+                  {viewMode !== 'edit' && selectedDoc && (
+                    <SelectionAnnotation
+                      documentPath={selectedDoc}
+                      documentTitle={docData?.title ?? 'Document'}
+                      contentRef={contentRef}
+                      onAnnotationSubmitted={() => {
+                        // Could show a toast notification here
+                        console.log('Annotation queued for AI');
+                      }}
+                    />
+                  )}
                 </div>
               )}
             </CardContent>
