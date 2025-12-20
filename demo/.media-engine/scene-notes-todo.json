@@ -1,0 +1,20 @@
+{
+  "generated": "2025-12-20T01:35:18.496386",
+  "project": "Media Engine Demo",
+  "total_notes": 1,
+  "scripts": [
+    {
+      "script_path": "/Users/Morten/media-engine/demo/content/en/scripts/walkthrough.yaml",
+      "script_name": "Media Engine Walkthrough",
+      "notes": [
+        {
+          "scene_id": "hook",
+          "scene_name": "The Problem",
+          "scene_type": "",
+          "text": "Consider adding a dramatic pause after \"forever\" for emphasis.",
+          "created": "2025-12-20T01:35:18.495488"
+        }
+      ]
+    }
+  ]
+}

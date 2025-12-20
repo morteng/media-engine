@@ -29,7 +29,6 @@ def register_core_routes(
         project_exists,
         remove_recent_project,
     )
-    from ..dashboard import generate_dashboard_html
 
     # === Dashboard Page ===
 
@@ -39,7 +38,19 @@ def register_core_routes(
         index_path = static_dir / "index.html"
         if index_path.exists():
             return FileResponse(index_path)
-        return HTMLResponse(generate_dashboard_html())
+        # React SPA not built - return simple message
+        return HTMLResponse(
+            """<!DOCTYPE html>
+<html><head><title>Media Engine Dashboard</title></head>
+<body style="font-family: system-ui; background: #0f172a; color: #e2e8f0; padding: 2rem;">
+<h1>Dashboard Not Built</h1>
+<p>The React SPA dashboard needs to be built. Run:</p>
+<pre style="background: #1e293b; padding: 1rem; border-radius: 0.5rem;">
+cd dashboard && npm install && npm run build
+</pre>
+<p>Then restart the server.</p>
+</body></html>"""
+        )
 
     # === Project API ===
 

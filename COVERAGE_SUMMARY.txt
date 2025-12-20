@@ -1,0 +1,173 @@
+================================================================================
+MEDIA ENGINE TEST COVERAGE ANALYSIS SUMMARY
+================================================================================
+
+Date: 2025-12-19
+Overall Coverage: 43% (9,109 / 15,901 lines)
+Test Results: 554 passed, 10 skipped, 0 failed
+Target: 80% coverage
+
+================================================================================
+QUICK PRIORITY RANKINGS
+================================================================================
+
+TIER 1: UNTESTED MODULES (0% COVERAGE) - CREATE NEW TESTS
+────────────────────────────────────────────────────────────
+1. video/captions.py           419 LOC    [0% → 95%]    *** CRITICAL
+2. video/capture.py            705 LOC    [0% → 95%]    *** CRITICAL
+3. publish/packager.py         727 LOC    [0% → 95%]    *** HIGH IMPACT
+4. demos/__init__.py           795 LOC    [0% → 95%]    *** HIGH IMPACT
+5. integrity/__init__.py       427 LOC    [0% → 95%]    *** HIGH IMPACT
+6. gui/__init__.py             128 LOC    [0% → 95%]    MEDIUM
+7. mcp/helpers.py               38 LOC    [0% → 95%]    SMALL
+8. mcp/resources.py             30 LOC    [0% → 95%]    SMALL
+
+TIER 2: SEVERELY UNDERCOVERED (<20%) - EXPAND EXISTING
+────────────────────────────────────────────────────────────
+1. freshness/scanner.py        128 LOC    9%  [+116]    *** CRITICAL
+2. status/views.py             169 LOC    8%  [+155]    *** CRITICAL
+3. web/routes/search.py         70 LOC   10%  [+63]     HIGH
+4. publish/packager.py         259 LOC   13%  [+225]    HIGH
+5. freshness/registry.py       269 LOC   14%  [+230]    HIGH
+6. web/routes/dependencies.py   63 LOC   16%  [+53]     HIGH
+7. web/routes/insights.py      173 LOC   17%  [+144]    HIGH
+8. mcp/tools/session.py         64 LOC   16%  [+54]     MEDIUM
+9. video/voiceover.py          173 LOC   18%  [+142]    MEDIUM
+10. cms/references.py          194 LOC   18%  [+160]    MEDIUM
+
+TIER 3: PARTIALLY TESTED (20-70%) - COMPLETE COVERAGE
+────────────────────────────────────────────────────────────
+HIGH IMPACT (Large files):
+  - cms/index.py               208 LOC   22%  [+162]
+  - cms/graph.py               156 LOC   26%  [+116]
+  - cms/quality.py             193 LOC   22%  [+150]
+  - cms/schema.py              219 LOC   27%  [+160]
+  - video/timeline.py          216 LOC   45%  [+119]
+  - video/builder.py           239 LOC   41%  [+141]
+  - cms/document.py            320 LOC   41%  [+189]
+
+MEDIUM IMPACT:
+  - insights/health.py         275 LOC   73%  [+73]
+  - insights/codesync.py       162 LOC   44%  [+90]
+  - video/scene_capture.py     126 LOC   23%  [+97]
+  - dependencies/__init__.py   171 LOC   38%  [+106]
+
+TIER 4: WELL-TESTED (>70%) - MINOR IMPROVEMENTS
+────────────────────────────────────────────────────────────
+✓ core/config.py              100%
+✓ readability/__init__.py      100%
+✓ core/theme.py                98% (need 1 line)
+✓ gaps/__init__.py             98%
+✓ diagrams/generator.py        97%
+✓ security/__init__.py         96%
+✓ cms/translation.py           90%
+✓ links/__init__.py            92%
+
+================================================================================
+FASTEST PATH TO 80% (Estimated: 2-3 days)
+================================================================================
+
+PHASE 1: QUICK WINS (2-3 hours) → Gain 7%
+──────────────────────────────────────────
+□ Create test_video_captions.py      [30-45 min]  419 LOC test
+□ Expand test_cms.py                 [1.5-2 h]    736 LOC target
+□ Expand test_mcp_tools.py           [30-45 min]  Multiple small modules
+□ Create test_freshness.py           [45-60 min]  Scanner + registry
+
+Target: 43% → 50%
+
+PHASE 2: MEDIUM EFFORT (3-4 hours) → Gain 10%
+──────────────────────────────────────────────
+□ Expand test_video.py               [1.5-2 h]    builder, timeline, voiceover
+□ Create test_publish.py             [45-60 min]  packager module
+□ Create test_demos.py               [1-1.5 h]    demo generation
+
+Target: 50% → 60%
+
+PHASE 3: FRESHNESS & STATUS (3-4 hours) → Gain 8%
+──────────────────────────────────────────────────
+□ Create test_status.py              [1-1.5 h]    dashboard + views
+□ Create test_integrity.py           [1-1.5 h]    asset verification
+□ Expand web routes tests            [1.5-2 h]    insights, dependencies, search
+
+Target: 60% → 68%
+
+PHASE 4: FINAL PUSH (2-3 hours) → Gain 12%
+──────────────────────────────────────────
+□ Complete remaining CMS tests       [1-1.5 h]    document, schema, references
+□ Complete video tests               [45-60 min]  edge cases, error handling
+□ Complete MCP/web tests             [30-45 min]  final gaps
+
+Target: 68% → 80%+
+
+================================================================================
+MODULES NEEDING MOST ATTENTION (By Combined Impact)
+================================================================================
+
+Rank  Module                    LOC  Coverage  Untested  Impact
+────  ──────────────────────   ────  ────────  ────────  ───────────────
+ 1.   video/captions.py         419    0%      419      CREATE FROM SCRATCH
+ 2.   video/capture.py          705    0%      705      CREATE FROM SCRATCH
+ 3.   cms/document.py           320   41%      189      +8.5% coverage
+ 4.   video/timeline.py         216   45%      119      +5.3% coverage
+ 5.   publish/packager.py       259   13%      225      +10% coverage
+ 6.   cms/index.py             208   22%      162      +7.2% coverage
+ 7.   cms/schema.py            219   27%      160      +7.1% coverage
+ 8.   video/builder.py         239   41%      141      +6.3% coverage
+ 9.   freshness/registry.py    269   14%      230      +10% coverage
+10.   cms/quality.py           193   22%      150      +6.7% coverage
+
+Total potential gain from top 10: ~70 percentage points
+Estimated gain to reach 80%: Need ~37 percentage points (from 43%)
+
+================================================================================
+KEY INSIGHTS
+================================================================================
+
+GOOD NEWS:
+✓ Core modules (config, theme, core/project) are 95%+ tested
+✓ Test infrastructure is solid (554 passing tests, pytest configured)
+✓ Existing tests follow good patterns (AAA, fixtures, fixtures)
+✓ Low-hanging fruit: 8 files with 0% coverage can be tested quickly
+
+CHALLENGES:
+✗ Video pipeline largely untested (captions, capture, voiceover)
+✗ CMS module has good foundation but needs breadth (avg 26%)
+✗ Freshness tracking is new module with minimal coverage
+✗ Web routes need 50%+ coverage improvement
+
+OPPORTUNITY:
+→ Adding 11-15 hours of focused testing → 80% coverage
+→ 3-4 new test files + expand 5-6 existing test files
+→ Biggest wins: video/captions, video/capture, cms/*, freshness/*
+
+================================================================================
+SPECIFIC TEST RECOMMENDATIONS
+================================================================================
+
+Create test_video_captions.py:
+  ✓ test_format_timestamp() - timestamp formatting
+  ✓ test_caption_entry_creation() - dataclass initialization
+  ✓ test_webvtt_generation() - WebVTT format output
+  ✓ test_caption_timing() - timing calculations
+  ✓ test_empty_captions() - edge cases
+
+Expand test_cms.py (currently 8 tests):
+  ✓ test_document_parsing() - frontmatter, metadata
+  ✓ test_schema_validation() - field validation, required fields
+  ✓ test_reference_resolution() - cross-document links
+  ✓ test_dependency_graph() - document relationships
+  ✓ test_provenance_tracking() - approval workflows
+
+Expand test_video.py (currently good, needs:
+  ✓ test_voiceover_synthesis() - TTS generation
+  ✓ test_timeline_operations() - timing, sequencing
+  ✓ test_video_builder_output() - video file generation
+
+Create test_freshness.py:
+  ✓ test_freshness_detection() - staleness calculation
+  ✓ test_staleness_threshold() - configurable thresholds
+  ✓ test_registry_updates() - tracking updates
+  ✓ test_scanner_performance() - large document sets
+
+================================================================================

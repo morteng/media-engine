@@ -1,15 +1,15 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, HTMLAttributes } from 'react';
 import clsx from 'clsx';
 
-interface CardProps {
+interface CardProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
   className?: string;
   variant?: 'default' | 'glow' | 'gradient';
 }
 
-export function Card({ children, className, variant = 'default' }: CardProps) {
+export function Card({ children, className, variant = 'default', ...props }: CardProps) {
   return (
-    <div className={clsx('card', `card-${variant}`, className)}>
+    <div className={clsx('card', `card-${variant}`, className)} {...props}>
       {children}
     </div>
   );
@@ -17,7 +17,7 @@ export function Card({ children, className, variant = 'default' }: CardProps) {
 
 interface CardHeaderProps {
   title: string;
-  subtitle?: string;
+  subtitle?: ReactNode;
   action?: ReactNode;
 }
 
@@ -26,7 +26,7 @@ export function CardHeader({ title, subtitle, action }: CardHeaderProps) {
     <div className="card-header">
       <div>
         <h3 className="card-title">{title}</h3>
-        {subtitle && <p className="card-subtitle">{subtitle}</p>}
+        {subtitle && <div className="card-subtitle">{subtitle}</div>}
       </div>
       {action && <div className="card-action">{action}</div>}
     </div>

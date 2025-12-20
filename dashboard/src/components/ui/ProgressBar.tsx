@@ -3,7 +3,7 @@ import clsx from 'clsx';
 interface ProgressBarProps {
   value: number;
   max?: number;
-  variant?: 'default' | 'success' | 'warning' | 'error' | 'accent';
+  variant?: 'default' | 'success' | 'warning' | 'error' | 'accent' | 'info';
   size?: 'sm' | 'md' | 'lg';
   showLabel?: boolean;
 }

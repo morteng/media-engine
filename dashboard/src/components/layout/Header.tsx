@@ -1,66 +1,125 @@
-import { useProject, useStatus } from '@/hooks/useApi';
-import { Search, Bell, Settings, Moon, Sun } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useProject, useRecentProjects, useOpenProject, useBrowseProject } from '@/hooks/useApi';
+import {
+  Search,
+  Moon,
+  Sun,
+  ChevronDown,
+  FolderOpen,
+  Clock,
+  Check
+} from 'lucide-react';
 
 export function Header() {
-  const { data: project } = useProject();
-  const { data: status } = useStatus();
+  const { data: project, refetch: refetchProject } = useProject();
+  const { data: recentProjects } = useRecentProjects();
+  const openProject = useOpenProject();
+  const browseProject = useBrowseProject();
+
   const [isDark, setIsDark] = useState(true);
+  const [projectMenuOpen, setProjectMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setProjectMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const toggleTheme = () => {
     setIsDark(!isDark);
     document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
   };
 
+  const handleOpenProject = async (path: string) => {
+    await openProject.mutateAsync(path);
+    setProjectMenuOpen(false);
+    refetchProject();
+  };
+
+  const handleBrowse = async () => {
+    const result = await browseProject.mutateAsync();
+    if (result.status === 'selected' && result.path) {
+      await handleOpenProject(result.path);
+    }
+  };
+
+  const currentProject = recentProjects?.current;
+  const recent = recentProjects?.recent?.filter(p => p.path !== currentProject?.path) ?? [];
+
   return (
     <header className="header">
-      <div className="header-left">
-        <h1 className="header-title">
-          <span className="header-logo">ME</span>
-          {project?.name || 'Media Engine'}
-        </h1>
-      </div>
+      {/* Project Selector */}
+      <div className="project-selector" ref={menuRef}>
+        <button
+          className="project-button"
+          onClick={() => setProjectMenuOpen(!projectMenuOpen)}
+        >
+          <span className="project-logo">ME</span>
+          <span className="project-name">{project?.name || 'Media Engine'}</span>
+          <ChevronDown size={16} className={projectMenuOpen ? 'rotate' : ''} />
+        </button>
 
-      <div className="header-center">
-        <div className="search-bar">
-          <Search size={18} />
-          <input
-            type="text"
-            placeholder="Search documents, media, content..."
-            className="search-input"
-          />
-          <kbd className="search-kbd">⌘K</kbd>
-        </div>
-      </div>
-
-      <div className="header-right">
-        {status && (
-          <div className="header-stats">
-            <span className="stat">
-              <span className="stat-value">{status.documentCount}</span>
-              <span className="stat-label">docs</span>
-            </span>
-            <span className="stat">
-              <span className="stat-value">{status.languageCount}</span>
-              <span className="stat-label">langs</span>
-            </span>
-            {status.qualityIssues > 0 && (
-              <span className="stat stat-warning">
-                <span className="stat-value">{status.qualityIssues}</span>
-                <span className="stat-label">issues</span>
-              </span>
+        {projectMenuOpen && (
+          <div className="project-menu">
+            {currentProject && (
+              <div className="menu-section">
+                <div className="menu-label">Current Project</div>
+                <div className="menu-item current">
+                  <Check size={14} />
+                  <span className="item-name">{currentProject.name}</span>
+                </div>
+              </div>
             )}
+
+            {recent.length > 0 && (
+              <div className="menu-section">
+                <div className="menu-label">Recent Projects</div>
+                {recent.slice(0, 5).map((p) => (
+                  <button
+                    key={p.path}
+                    className="menu-item"
+                    onClick={() => handleOpenProject(p.path)}
+                    disabled={!p.exists}
+                  >
+                    <Clock size={14} />
+                    <span className="item-name">{p.name}</span>
+                    {!p.exists && <span className="item-badge">Missing</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="menu-divider" />
+
+            <button className="menu-item" onClick={handleBrowse}>
+              <FolderOpen size={14} />
+              <span>Open Project...</span>
+            </button>
           </div>
         )}
+      </div>
 
-        <button className="icon-button" onClick={toggleTheme} title="Toggle theme">
-          {isDark ? <Sun size={20} /> : <Moon size={20} />}
-        </button>
-        <button className="icon-button" title="Notifications">
-          <Bell size={20} />
-        </button>
-        <button className="icon-button" title="Settings">
-          <Settings size={20} />
+      {/* Search */}
+      <div className="search-container">
+        <Search size={16} />
+        <input
+          type="text"
+          placeholder="Search..."
+          className="search-input"
+        />
+        <kbd>⌘K</kbd>
+      </div>
+
+      {/* Actions */}
+      <div className="header-actions">
+        <button className="icon-btn" onClick={toggleTheme} title="Toggle theme">
+          {isDark ? <Sun size={18} /> : <Moon size={18} />}
         </button>
       </div>
     </header>

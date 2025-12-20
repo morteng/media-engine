@@ -2,32 +2,22 @@ import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
   FileText,
-  Languages,
-  Lightbulb,
-  Hammer,
   Shield,
-  Clock,
-  Activity,
-  Package,
-  Image,
+  Hammer,
+  BarChart3,
   Search,
-  GitBranch
+  Film
 } from 'lucide-react';
 import clsx from 'clsx';
 
 const navItems = [
-  { path: '/', icon: LayoutDashboard, label: 'Overview' },
+  { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { path: '/content', icon: FileText, label: 'Content' },
-  { path: '/translations', icon: Languages, label: 'Translations' },
-  { path: '/insights', icon: Lightbulb, label: 'Insights' },
-  { path: '/build', icon: Hammer, label: 'Build' },
+  { path: '/video', icon: Film, label: 'Video' },
   { path: '/quality', icon: Shield, label: 'Quality' },
-  { path: '/freshness', icon: Clock, label: 'Freshness' },
-  { path: '/activity', icon: Activity, label: 'Activity' },
-  { path: '/media', icon: Image, label: 'Media' },
-  { path: '/packs', icon: Package, label: 'Packs' },
+  { path: '/build', icon: Hammer, label: 'Build' },
+  { path: '/insights', icon: BarChart3, label: 'Insights' },
   { path: '/search', icon: Search, label: 'Search' },
-  { path: '/dependencies', icon: GitBranch, label: 'Dependencies' },
 ];
 
 export function Sidebar() {
@@ -39,18 +29,13 @@ export function Sidebar() {
             key={item.path}
             to={item.path}
             className={({ isActive }) => clsx('nav-item', { active: isActive })}
+            end={item.path === '/'}
           >
-            <item.icon size={20} />
+            <item.icon size={18} />
             <span>{item.label}</span>
           </NavLink>
         ))}
       </nav>
-
-      <div className="sidebar-footer">
-        <div className="version-badge">
-          v2.0.0
-        </div>
-      </div>
     </aside>
   );
 }

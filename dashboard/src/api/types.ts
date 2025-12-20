@@ -288,3 +288,46 @@ export interface VideoInfo {
     endTime: number;
   }>;
 }
+
+// Project Switching
+export interface RecentProject {
+  path: string;
+  name: string;
+  last_accessed: string;
+  exists: boolean;
+}
+
+export interface RecentProjectsResponse {
+  current: {
+    path: string;
+    name: string;
+  } | null;
+  recent: RecentProject[];
+}
+
+export interface OpenProjectResponse {
+  status: 'switched' | 'error';
+  project?: {
+    path: string;
+    name: string;
+  };
+  error?: string;
+}
+
+export interface BrowseProjectResponse {
+  status: 'selected' | 'prompt' | 'invalid';
+  path: string | null;
+  message?: string;
+  error?: string;
+}
+
+// Scene Notes
+export interface SceneNote {
+  text: string;
+  created: string;
+  scene_id: string;
+}
+
+export interface SceneNotesResponse {
+  notes: Record<string, SceneNote>;
+}

@@ -1,0 +1,177 @@
+================================================================================
+MEDIA ENGINE COVERAGE HEAT MAP
+================================================================================
+
+                                    COVERAGE PERCENTAGE
+    Module Category                    0%    25%    50%    75%   100%
+    ═════════════════════════════════════════════════════════════════════════
+
+    TIER 1: UNTESTED (0%)
+    ────────────────────────────────────────────────────────────────────────
+    video/captions.py          [419]   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  CRITICAL
+    video/capture.py           [705]   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  CRITICAL
+    publish/packager.py        [259]   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  HIGH
+    demos/__init__.py          [795]   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  HIGH
+    integrity/__init__.py      [427]   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  HIGH
+    gui/__init__.py            [128]   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  MEDIUM
+
+    TIER 2: SEVERELY UNDERCOVERED (<20%)
+    ────────────────────────────────────────────────────────────────────────
+    status/views.py            [169]   ░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  8% CRITICAL
+    freshness/scanner.py       [128]   ░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  9% CRITICAL
+    web/routes/search.py       [70]    ░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ 10% HIGH
+    mcp/tools/cache.py         [17]    ░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ 12% SMALL
+    mcp/tools/quality.py       [17]    ░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ 12% SMALL
+    publish/packager.py        [259]   ░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ 13% HIGH
+    freshness/registry.py      [269]   ░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ 14% HIGH
+    mcp/tools/session.py       [64]    ░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ 16% MEDIUM
+    web/routes/dependencies.py [63]    ░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ 16% HIGH
+    web/routes/insights.py     [173]   ░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ 17% HIGH
+    cms/references.py          [194]   ░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ 18% MEDIUM
+    video/voiceover.py         [173]   ░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ 18% MEDIUM
+
+    TIER 3: PARTIALLY TESTED (20-70%)
+    ────────────────────────────────────────────────────────────────────────
+    cms/index.py               [208]   ░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ 22% HIGH
+    cms/quality.py             [193]   ░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ 22% HIGH
+    cms/graph.py               [156]   ░░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ 26% HIGH
+    cms/schema.py              [219]   ░░░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ 27% HIGH
+    cms/provenance.py          [159]   ░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ 30% MEDIUM
+    dependencies/__init__.py   [171]   ░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒ 38% MEDIUM
+    cms/document.py            [320]   ░░░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒ 41% HIGH
+    cms/document_manager.py    [108]   ░░░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒ 35% MEDIUM
+    video/demo_registry.py     [75]    ░░░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒ 35% SMALL
+    status/dashboard.py        [205]   ░░░░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒ 36% MEDIUM
+    packs/generator.py         [126]   ░░░░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒ 30% SMALL
+    insights/codesync.py       [162]   ░░░░░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒ 44% MEDIUM
+    video/scene_capture.py     [126]   ░░░░░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒ 23% MEDIUM
+    video/timeline.py          [216]   ░░░░░░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒ 45% MEDIUM
+    video/builder.py           [239]   ░░░░░░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒ 41% MEDIUM
+    insights/velocity.py       [198]   ░░░░░░░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒▒ 49% SMALL
+    insights/graph.py          [193]   ░░░░░░░░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒▒ 63% SMALL
+    insights/parity.py         [147]   ░░░░░░░░░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▒▒ 60% SMALL
+    insights/consistency.py    [166]   ░░░░░░░░░░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▒ 68% SMALL
+    insights/duplicates.py     [197]   ░░░░░░░░░░░░░░░░░░░░░░░░░░░▒▒▒▒▒▒▒ 68% SMALL
+    core/project.py            [207]   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒▒▒▒▒ 71% MEDIUM
+
+    TIER 4: WELL-TESTED (>70%)
+    ────────────────────────────────────────────────────────────────────────
+    insights/health.py         [275]   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒▒▒ 73% SMALL
+    insights/terminology.py    [175]   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒▒ 72% SMALL
+    insights/statistics.py     [197]   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒▒ 71% SMALL
+    config/user_config.py      [90]    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒ 84% SMALL
+    validation/references.py   [142]   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒ 70% SMALL
+    insights/incomplete.py     [137]   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒ 83% SMALL
+    templates/html_index.py    [45]    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒ 78% TINY
+    templates/html_document.py [44]    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒ 82% TINY
+    web/routes/core.py         [89]    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒ 61% SMALL
+    video/quality.py           [30]    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒ 83% TINY
+    search/indexer.py          [157]   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒ 82% SMALL
+    links/__init__.py          [418]   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒ 92% MEDIUM
+    cms/translation.py         [162]   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒ 90% SMALL
+    settings/defaults.py       [134]   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒ 97% SMALL
+    security/__init__.py       [102]   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒ 96% SMALL
+    diagrams/generator.py      [414]   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒ 97% MEDIUM
+    gaps/__init__.py          [466]   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▒ 98% MEDIUM
+    core/theme.py             [56]    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 98% TINY
+    readability/__init__.py   [481]   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 100% MEDIUM
+    core/config.py            [53]    ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 100% TINY
+
+================================================================================
+COVERAGE GOALS - WHERE TO FOCUS
+================================================================================
+
+PRIORITY 1: EASY WINS (Quick & Impactful)
+─────────────────────────────────────────
+Goal: 43% → 50% in 3-4 hours
+
+▼ video/captions.py               0% → 95%     45 min    +2.0%
+▼ cms/document.py                41% → 80%     120 min   +1.8%
+▼ Expand test_mcp_tools.py      35% → 65%      30 min   +0.5%
+▼ freshness/scanner.py            9% → 80%      60 min   +2.1%
+   ───────────────────────────────────────────────────
+   Result:                                       ~4 hrs   +6-7%
+
+PRIORITY 2: CORE MODULE STRATEGY (CMS)
+──────────────────────────────────────
+Goal: 50% → 60% in 4-5 hours
+
+▼ cms/schema.py                  27% → 80%      90 min   +2.5%
+▼ cms/index.py                   22% → 80%      90 min   +2.3%
+▼ cms/references.py              18% → 80%      90 min   +2.6%
+▼ cms/graph.py                   26% → 80%      60 min   +1.8%
+   ───────────────────────────────────────────────────
+   Result:                                       ~5 hrs   +9-10%
+
+PRIORITY 3: VIDEO & FRESHNESS
+──────────────────────────────
+Goal: 60% → 68% in 4-5 hours
+
+▼ freshness/registry.py          14% → 80%     120 min   +2.5%
+▼ video/timeline.py              45% → 80%     120 min   +2.0%
+▼ video/voiceover.py             18% → 80%     120 min   +2.3%
+▼ video/builder.py               41% → 80%      90 min   +1.6%
+   ───────────────────────────────────────────────────
+   Result:                                       ~5 hrs   +8-9%
+
+PRIORITY 4: FINAL PUSH
+──────────────────────
+Goal: 68% → 80% in 2-3 hours
+
+▼ publish/packager.py            13% → 80%      90 min   +2.2%
+▼ integrity/__init__.py            0% → 80%      90 min   +1.3%
+▼ Complete remaining gaps         var → 80%      60 min   +2.5%
+   ───────────────────────────────────────────────────
+   Result:                                       ~4 hrs   +6-8%
+
+FINAL TARGET: 80%+ in 11-15 hours
+
+================================================================================
+MODULE SIZE REFERENCE
+================================================================================
+
+LARGEST MODULES (Highest Impact When Improving)
+────────────────────────────────────────────────
+    video/capture.py              705 LOC      0% coverage
+    demos/__init__.py             795 LOC      0% coverage
+    web/dashboard/scripts.py    3,785 LOC     50% coverage (not main source)
+    publish/packager.py           727 LOC     13% coverage
+    video/builder.py              608 LOC     41% coverage
+    insights/health.py            664 LOC     73% coverage
+    readability/__init__.py       481 LOC    100% coverage ✓
+    gaps/__init__.py              466 LOC     98% coverage ✓
+
+KEY INSIGHT: The biggest untested modules are video/capture.py (705 LOC, 0%)
+             and demos/__init__.py (795 LOC, 0%). But they may have more
+             complex logic, so they'll take longer per LOC than simple modules.
+
+================================================================================
+TIME ESTIMATE BY DIFFICULTY
+================================================================================
+
+QUICK (15 min each):
+  - mcp/tools/audit.py
+  - mcp/tools/cache.py
+
+EASY (30-45 min each):
+  - video/captions.py
+  - mcp/tools/quality.py
+  - video/demo_registry.py
+
+MEDIUM (60-90 min each):
+  - cms/schema.py
+  - cms/index.py
+  - cms/references.py
+  - freshness/scanner.py
+  - video/voiceover.py
+  - publish/packager.py (just the important parts)
+
+HARD (120+ min each):
+  - cms/document.py (large, complex class)
+  - cms/graph.py (graph algorithms)
+  - video/timeline.py (timing logic)
+  - video/capture.py (video rendering - may need mocking)
+  - freshness/registry.py (persistence, state management)
+  - publish/packager.py (full coverage)
+
+================================================================================

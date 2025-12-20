@@ -10,6 +10,9 @@ import type {
   InsightsResponse,
   BuildStatus,
   AuditLogEntry,
+  RecentProjectsResponse,
+  OpenProjectResponse,
+  BrowseProjectResponse,
 } from './types';
 
 const api = axios.create({
@@ -25,7 +28,18 @@ export const getStatus = () => api.get<ProjectStatus>('/status').then(r => r.dat
 
 // Documents
 export const getDocuments = (language: string) =>
-  api.get<{ categories: Record<string, Document[]> }>(`/documents/${language}`).then(r => r.data);
+  api.get<{ documents: Document[] }>(`/documents/${language}`).then(r => {
+    // Transform flat document list into categories
+    const categories: Record<string, Document[]> = {};
+    for (const doc of r.data.documents || []) {
+      const category = doc.type || 'other';
+      if (!categories[category]) {
+        categories[category] = [];
+      }
+      categories[category].push(doc);
+    }
+    return { categories };
+  });
 
 export const getDocument = (path: string) =>
   api.get<DocumentContent>('/document', { params: { path } }).then(r => r.data);
@@ -87,5 +101,18 @@ export const getSceneNotes = (scriptPath: string) =>
 
 export const saveSceneNote = (scriptPath: string, sceneId: string, note: string) =>
   api.post(`/scene-notes/${encodeURIComponent(scriptPath)}`, { scene_id: sceneId, note }).then(r => r.data);
+
+// Project Switching
+export const getRecentProjects = () =>
+  api.get<RecentProjectsResponse>('/recent-projects').then(r => r.data);
+
+export const openProject = (path: string) =>
+  api.post<OpenProjectResponse>('/open-project', null, { params: { path } }).then(r => r.data);
+
+export const browseProject = () =>
+  api.post<BrowseProjectResponse>('/browse-project').then(r => r.data);
+
+export const removeRecentProject = (path: string) =>
+  api.delete('/recent-projects', { params: { path } }).then(r => r.data);
 
 export default api;

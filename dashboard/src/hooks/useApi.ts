@@ -146,3 +146,27 @@ export const useSaveSceneNote = (scriptPath: string) => {
     },
   });
 };
+
+// Project Switching Hooks
+export const useRecentProjects = () =>
+  useQuery({
+    queryKey: ['recentProjects'] as const,
+    queryFn: api.getRecentProjects,
+  });
+
+export const useOpenProject = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: api.openProject,
+    onSuccess: () => {
+      // Invalidate all queries when project changes
+      queryClient.invalidateQueries();
+    },
+  });
+};
+
+export const useBrowseProject = () => {
+  return useMutation({
+    mutationFn: api.browseProject,
+  });
+};

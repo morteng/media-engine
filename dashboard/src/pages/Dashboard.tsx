@@ -15,7 +15,7 @@ import {
   Award
 } from 'lucide-react';
 
-export function Overview() {
+export function Dashboard() {
   const { data: status, isLoading: statusLoading } = useStatus();
   const { data: insights, isLoading: insightsLoading } = useInsights();
   const { data: freshness } = useFreshness();

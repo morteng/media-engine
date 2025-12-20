@@ -1,0 +1,255 @@
+================================================================================
+MEDIA ENGINE TEST COVERAGE ANALYSIS - COMPLETE REPORT
+================================================================================
+
+Report Generated: 2025-12-19
+Status: ANALYSIS COMPLETE - Ready for test development
+
+Four comprehensive analysis documents have been created:
+
+1. START_HERE.md (5 min read)
+   ├─ Quick overview of current state
+   ├─ Top 5 modules to test first
+   ├─ 4-day implementation plan
+   └─ Success criteria
+
+2. COVERAGE_SUMMARY.txt (5 min read)
+   ├─ Quick reference with priority rankings
+   ├─ Tier 1-4 module categorization
+   ├─ 4-phase implementation plan
+   ├─ Key statistics by coverage level
+   └─ Fast path to 80% in 2-3 days
+
+3. COVERAGE_ANALYSIS.md (20 min read)
+   ├─ Detailed analysis of every module
+   ├─ Specific missing test coverage by line
+   ├─ Recommendations for each priority tier
+   ├─ CMS module deep-dive strategy
+   ├─ Coverage goals by module
+   └─ Implementation roadmap with timeline
+
+4. TESTING_ROADMAP.md (20 min read)
+   ├─ Function-level test templates for top 10 modules
+   ├─ Complete test examples with assertions
+   ├─ Testing priority chart (effort vs impact)
+   ├─ Command reference for test execution
+   ├─ Test file template boilerplate
+   └─ Coverage maintenance strategy
+
+5. COVERAGE_VISUAL_MAP.txt (5 min read)
+   ├─ Heat map showing coverage for all modules
+   ├─ Visual tier representation (░ = untested, ▒ = tested)
+   ├─ 4-priority implementation plan with specific metrics
+   ├─ Module size reference for impact assessment
+   └─ Time estimate by difficulty level
+
+================================================================================
+KEY FINDINGS
+================================================================================
+
+CURRENT STATE:
+  Overall Coverage: 43% (9,109 / 15,901 lines)
+  Tests: 554 passed, 10 skipped, 0 failed
+  Target: 80% coverage
+  Gap: 37 percentage points
+
+TIER 1 GAPS (0% Coverage - 8 modules):
+  - video/captions.py (419 LOC)
+  - video/capture.py (705 LOC)
+  - publish/packager.py (259 LOC)
+  - demos/__init__.py (795 LOC)
+  - integrity/__init__.py (427 LOC)
+  - gui/__init__.py (128 LOC)
+  - mcp/helpers.py (38 LOC)
+  - mcp/resources.py (30 LOC)
+
+TIER 2 GAPS (<20% Coverage - 13 modules):
+  - status/views.py (8%)
+  - freshness/scanner.py (9%)
+  - web/routes/search.py (10%)
+  - mcp/tools/cache.py (12%)
+  - mcp/tools/quality.py (12%)
+  - publish/packager.py (13%)
+  - freshness/registry.py (14%)
+  - mcp/tools/session.py (16%)
+  - web/routes/dependencies.py (16%)
+  - web/routes/insights.py (17%)
+  - cms/references.py (18%)
+  - video/voiceover.py (18%)
+
+TIER 3 GAPS (20-70% Coverage - 20 modules):
+  - cms/index.py (22%)
+  - cms/quality.py (22%)
+  - cms/graph.py (26%)
+  - cms/schema.py (27%)
+  - ... (14 more modules with 30-71% coverage)
+
+STRENGTHS (>70% Coverage):
+  - core/config.py (100%)
+  - readability/__init__.py (100%)
+  - core/theme.py (98%)
+  - gaps/__init__.py (98%)
+  - diagrams/generator.py (97%)
+  - settings/defaults.py (97%)
+  - security/__init__.py (96%)
+
+================================================================================
+RECOMMENDED IMPLEMENTATION PATH
+================================================================================
+
+PHASE 1: QUICK WINS (3-4 hours)
+Modules: video/captions.py, cms/document.py, freshness/scanner.py, MCP tools
+Target: 43% → 50% (+7%)
+Effort: Create 1 new test file, expand 2 existing
+Status: EASY - Clear functionality, straightforward tests
+
+PHASE 2: CORE MODULES (4-5 hours)
+Modules: cms/schema.py, cms/index.py, cms/references.py, cms/graph.py
+Target: 50% → 60% (+10%)
+Effort: Expand test_cms.py significantly
+Status: MEDIUM - Schema validation logic, dependency analysis
+
+PHASE 3: VIDEO & FRESHNESS (4-5 hours)
+Modules: freshness/registry.py, video/timeline.py, video/voiceover.py, video/builder.py
+Target: 60% → 68% (+8%)
+Effort: Expand test_video.py, create test_freshness.py
+Status: MEDIUM-HARD - Timing logic, persistence, audio processing
+
+PHASE 4: FINAL PUSH (2-3 hours)
+Modules: publish/packager.py, integrity/__init__.py, remaining edge cases
+Target: 68% → 80%+ (+12%)
+Effort: Create 1-2 new test files, complete all remaining gaps
+Status: MEDIUM - Package generation, asset verification
+
+TOTAL EFFORT: 11-15 hours across 2-3 working days
+EXPECTED RESULT: 43% → 80%+ coverage
+
+================================================================================
+BEST PRACTICES FROM EXISTING TESTS
+================================================================================
+
+The following test files have excellent patterns to follow:
+  - test_security.py (18 KB, comprehensive coverage)
+  - test_links.py (20 KB, parallel processing patterns)
+  - test_readability.py (18 KB, data-driven tests)
+  - test_gaps.py (23 KB, complex logic testing)
+  - test_builders.py (9 KB, clean and concise)
+
+Key patterns to follow:
+  ✓ AAA (Arrange, Act, Assert) pattern
+  ✓ Use fixtures for common setup (temp_dir, sample_config, etc.)
+  ✓ Descriptive test names: test_{function}_{scenario}()
+  ✓ Group related tests in test classes
+  ✓ Use pytest.mark for categorization
+  ✓ Mock external dependencies
+  ✓ Test both success and error cases
+  ✓ Provide clear assertion messages
+
+================================================================================
+QUICK REFERENCE - WHERE TO START
+================================================================================
+
+FASTEST WINS (If you have 2-3 hours):
+  1. video/captions.py (45 min) - Single file, clear functions
+  2. Expand test_mcp_tools.py (30 min) - Small modules, easy wins
+  3. Expand cms/document.py tests (2 hours) - Core module
+
+MOST IMPACTFUL (If you have 4-5 hours):
+  1. cms/schema.py (90 min) - Validation logic, high impact
+  2. cms/index.py (90 min) - Search/indexing core
+  3. freshness/scanner.py (60 min) - New feature, incomplete
+  4. cms/references.py (90 min) - Cross-doc linking
+
+COMPLETE SOLUTION (If you have 11-15 hours):
+  Follow the 4-phase plan in COVERAGE_ANALYSIS.md or TESTING_ROADMAP.md
+
+================================================================================
+SUPPORTING DOCUMENTATION
+================================================================================
+
+Each analysis document serves a specific purpose:
+
+START_HERE.md
+  → Use this if you want: Quick orientation
+  → Time to read: 5 minutes
+  → Action items: Top 5 modules, 4-day timeline
+
+COVERAGE_SUMMARY.txt
+  → Use this if you want: Priority overview
+  → Time to read: 5 minutes
+  → Action items: Tier-based recommendations, quick statistics
+
+COVERAGE_ANALYSIS.md
+  → Use this if you want: Detailed planning
+  → Time to read: 20 minutes
+  → Action items: Phase-by-phase roadmap, module strategies, coverage goals
+
+TESTING_ROADMAP.md
+  → Use this if you want: Specific test templates
+  → Time to read: 20 minutes
+  → Action items: Ready-to-use test examples, command reference
+
+COVERAGE_VISUAL_MAP.txt
+  → Use this if you want: Visual representation
+  → Time to read: 5 minutes
+  → Action items: Prioritized effort chart, difficulty estimates
+
+================================================================================
+COMMANDS TO RUN
+================================================================================
+
+Generate Full Coverage Report:
+  uv run pytest --cov=media_engine --cov-report=term-missing
+
+Generate HTML Coverage Report:
+  uv run pytest --cov=media_engine --cov-report=html
+  # Then open htmlcov/index.html in browser
+
+Test Specific Module:
+  uv run pytest python/tests/test_cms.py -v
+
+Run with Detailed Output:
+  uv run pytest -vv
+
+Stop on First Failure:
+  uv run pytest -x
+
+Run All Tests:
+  uv run pytest
+
+Check Only Coverage:
+  uv run pytest --cov=media_engine --cov-fail-under=80
+
+================================================================================
+SUCCESS METRICS
+================================================================================
+
+✓ Phase 1 Complete: 50% coverage (7% gain)
+✓ Phase 2 Complete: 60% coverage (10% gain)
+✓ Phase 3 Complete: 70% coverage (8% gain)
+✓ Phase 4 Complete: 80%+ coverage (10%+ gain)
+
+All phases should maintain:
+  - 100% test pass rate
+  - Zero linting errors (uv run ruff check python/)
+  - Clear, descriptive test names
+  - AAA pattern followed consistently
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+1. Read START_HERE.md (2 min)
+2. Decide which phase to tackle first
+3. Read TESTING_ROADMAP.md for module-specific guidance
+4. Pick a module and create/expand test file
+5. Run pytest to verify coverage improvement
+6. Iterate through remaining modules
+
+Recommended starting point:
+  → video/captions.py (quick win, foundational module)
+
+Good luck! The test infrastructure is ready, existing tests are high-quality,
+and this analysis provides everything needed to reach 80% coverage.
+
+================================================================================

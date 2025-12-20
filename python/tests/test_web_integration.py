@@ -50,11 +50,11 @@ def client(demo_project_web):
 @pytest.fixture
 def sample_script_path(demo_project_web):
     """Return path to a sample script for testing scene notes."""
-    # Use the showcase script from demo
-    script_path = demo_project_web / "content" / "en" / "scripts" / "showcase.yaml"
+    # Use the walkthrough script from demo
+    script_path = demo_project_web / "content" / "en" / "scripts" / "walkthrough.yaml"
     if not script_path.exists():
         pytest.skip("Sample script not found")
-    return "content/en/scripts/showcase.yaml"
+    return "content/en/scripts/walkthrough.yaml"
 
 
 class TestProjectAPI:
@@ -231,10 +231,10 @@ class TestSceneNotesAPI:
     def test_get_scene_notes_after_save(self, client, sample_script_path):
         """Test GET /api/scene-notes/{script_path} retrieves saved notes."""
         # First, save a note
-        note_text = "Test note for solution scene"
+        note_text = "Test note for intro scene"
         client.post(
             f"/api/scene-notes/{sample_script_path}",
-            params={"scene_id": "solution", "note": note_text},
+            params={"scene_id": "intro", "note": note_text},
         )
 
         # Then retrieve it
@@ -243,17 +243,17 @@ class TestSceneNotesAPI:
 
         data = response.json()
         notes = data["notes"]
-        assert "solution" in notes
-        assert notes["solution"]["text"] == note_text
-        assert "created" in notes["solution"]
-        assert "scene_id" in notes["solution"]
+        assert "intro" in notes
+        assert notes["intro"]["text"] == note_text
+        assert "created" in notes["intro"]
+        assert "scene_id" in notes["intro"]
 
     def test_save_multiple_scene_notes(self, client, sample_script_path):
         """Test saving notes for multiple scenes."""
         scenes = [
             ("hook", "Improve opening hook"),
-            ("solution", "Add company logo here"),
-            ("core_concept", "Need better animation for this part"),
+            ("intro", "Add company logo here"),
+            ("insights", "Need better animation for this part"),
         ]
 
         # Save multiple notes
@@ -278,7 +278,7 @@ class TestSceneNotesAPI:
 
     def test_update_scene_note(self, client, sample_script_path):
         """Test updating an existing scene note."""
-        scene_id = "feature_video"
+        scene_id = "video"
         original_note = "Original note"
         updated_note = "Updated note with more details"
 
@@ -302,7 +302,7 @@ class TestSceneNotesAPI:
 
     def test_delete_scene_note(self, client, sample_script_path):
         """Test DELETE /api/scene-notes/{script_path}/{scene_id} deletes a note."""
-        scene_id = "feature_quality"
+        scene_id = "quality"
 
         # First, save a note
         client.post(
@@ -331,7 +331,7 @@ class TestSceneNotesAPI:
 
     def test_save_empty_note_deletes(self, client, sample_script_path):
         """Test that saving an empty note deletes it."""
-        scene_id = "feature_ai"
+        scene_id = "ai-integration"
 
         # Save a note
         client.post(

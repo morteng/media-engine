@@ -7,11 +7,20 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable
 
+from pydantic import BaseModel
+
 if TYPE_CHECKING:
     from fastapi import APIRouter
 
     from ...core.project import Project
     from ..websocket import ConnectionManager
+
+
+class SceneNoteRequest(BaseModel):
+    """Request body for saving a scene note."""
+
+    scene_id: str
+    note: str
 
 
 def register_scene_notes_routes(
@@ -43,7 +52,7 @@ def register_scene_notes_routes(
             return {"notes": {}}
 
     @router.post("/api/scene-notes/{script_path:path}")
-    async def save_scene_note(script_path: str, scene_id: str, note: str):
+    async def save_scene_note(script_path: str, request: SceneNoteRequest):
         """Save a note for a specific scene."""
         project = get_project()
         notes_dir = project.root / ".media-engine" / "scene-notes"
@@ -62,14 +71,14 @@ def register_scene_notes_routes(
                 pass
 
         # Update note
-        if note.strip():
-            data["notes"][scene_id] = {
-                "text": note,
+        if request.note.strip():
+            data["notes"][request.scene_id] = {
+                "text": request.note,
                 "created": datetime.now().isoformat(),
-                "scene_id": scene_id,
+                "scene_id": request.scene_id,
             }
-        elif scene_id in data["notes"]:
-            del data["notes"][scene_id]
+        elif request.scene_id in data["notes"]:
+            del data["notes"][request.scene_id]
 
         data["updated"] = datetime.now().isoformat()
 
@@ -79,7 +88,7 @@ def register_scene_notes_routes(
         # Also update the consolidated todo file
         await _update_scene_notes_export(project)
 
-        return {"status": "saved", "scene_id": scene_id}
+        return {"status": "saved", "scene_id": request.scene_id}
 
     @router.delete("/api/scene-notes/{script_path:path}/{scene_id}")
     async def delete_scene_note(script_path: str, scene_id: str):
