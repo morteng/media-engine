@@ -11,6 +11,7 @@ import {
   useAITasks,
   useSubmitAITask,
   useCancelAITask,
+  useDeleteAITask,
 } from '@/hooks/useAI';
 import { useStatus } from '@/hooks/useApi';
 import { getDocuments, getFile } from '@/api/client';
@@ -59,7 +60,7 @@ interface AIResult {
 export function AIAssist() {
   const [selections, setSelections] = useState<SelectionItem[]>([]);
   const [instructions, setInstructions] = useState('');
-  const [operation, setOperation] = useState('improve');
+  const [operation, setOperation] = useState('general');
   const [targetLanguage, setTargetLanguage] = useState('');
   const [priority, setPriority] = useState('normal');
   const [results, setResults] = useState<AIResult[]>([]);
@@ -76,6 +77,7 @@ export function AIAssist() {
   const processAI = useProcessAI();
   const submitTask = useSubmitAITask();
   const cancelTask = useCancelAITask();
+  const deleteTask = useDeleteAITask();
   const updateConfig = useUpdateAIConfig();
 
   const languages = status?.languages || ['en'];
@@ -120,7 +122,8 @@ export function AIAssist() {
 
   const handleProcess = async () => {
     const selectedItems = selections.filter(s => s.selected);
-    if (selectedItems.length === 0) return;
+    // Allow submission with just instructions (no selections) for general tasks
+    if (selectedItems.length === 0 && !instructions.trim()) return;
 
     const apiSelections: AIContentSelection[] = selectedItems.map(s => ({
       path: s.path,
@@ -203,6 +206,14 @@ export function AIAssist() {
       await cancelTask.mutateAsync(taskId);
     } catch (error) {
       console.error('Failed to cancel task:', error);
+    }
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      await deleteTask.mutateAsync(taskId);
+    } catch (error) {
+      console.error('Failed to delete task:', error);
     }
   };
 
@@ -410,6 +421,7 @@ export function AIAssist() {
                   onChange={e => setOperation(e.target.value)}
                   className="select-input"
                 >
+                  <option value="general">General Task - Any custom request or instruction</option>
                   {operationsData?.operations.map(op => (
                     <option key={op.id} value={op.id}>
                       {op.name} - {op.description}
@@ -456,25 +468,32 @@ export function AIAssist() {
               )}
 
               <div className="form-group">
-                <label>Instructions</label>
+                <label>Instructions {selections.filter(s => s.selected).length === 0 && <span className="required">*</span>}</label>
                 <textarea
                   value={instructions}
                   onChange={e => setInstructions(e.target.value)}
                   placeholder={
                     mode === 'claude_code'
-                      ? 'Detailed instructions for Claude Code... (e.g., "Improve clarity, add examples, then run quality check")'
+                      ? selections.filter(s => s.selected).length === 0
+                        ? 'Enter a general task for Claude Code... (e.g., "Create a new chapter about API integration", "Run quality checks on all documents")'
+                        : 'Detailed instructions for Claude Code... (e.g., "Improve clarity, add examples, then run quality check")'
                       : 'Add specific instructions for the AI... (optional)'
                   }
                   rows={4}
                   className="textarea-input"
                 />
+                {selections.filter(s => s.selected).length === 0 && (
+                  <p className="text-secondary text-sm" style={{ marginTop: '0.25rem' }}>
+                    No documents selected — submit a general task with just instructions
+                  </p>
+                )}
               </div>
 
               <Button
                 onClick={handleProcess}
                 disabled={
                   (mode === 'claude_code' ? submitTask.isPending : processAI.isPending) ||
-                  selections.filter(s => s.selected).length === 0 ||
+                  (selections.filter(s => s.selected).length === 0 && !instructions.trim()) ||
                   (mode === 'direct' && !aiConfig?.configured)
                 }
                 className="process-button"
@@ -530,6 +549,7 @@ export function AIAssist() {
                           key={task.id}
                           task={task}
                           onCancel={() => handleCancelTask(task.id)}
+                          onDelete={() => handleDeleteTask(task.id)}
                         />
                       ))}
                     </div>
@@ -748,6 +768,11 @@ export function AIAssist() {
           font-weight: 500;
         }
 
+        .ai-page .form-group label .required {
+          color: var(--error, #ef4444);
+          margin-left: 0.25rem;
+        }
+
         .ai-page .select-input,
         .ai-page .textarea-input {
           width: 100%;
@@ -801,9 +826,10 @@ export function AIAssist() {
 interface TaskCardProps {
   task: AITask;
   onCancel: () => void;
+  onDelete: () => void;
 }
 
-function TaskCard({ task, onCancel }: TaskCardProps) {
+function TaskCard({ task, onCancel, onDelete }: TaskCardProps) {
   const statusColors: Record<string, 'default' | 'info' | 'success' | 'warning' | 'error'> = {
     pending: 'default',
     claimed: 'info',
@@ -830,11 +856,18 @@ function TaskCard({ task, onCancel }: TaskCardProps) {
           <span className="task-op">{task.operation}</span>
           <Badge size="sm" variant="default">{task.priority}</Badge>
         </div>
-        {task.status === 'pending' && (
-          <button className="cancel-btn" onClick={onCancel} title="Cancel task">
-            <X size={14} />
-          </button>
-        )}
+        <div className="task-actions">
+          {task.status === 'pending' && (
+            <button className="cancel-btn" onClick={onCancel} title="Cancel task">
+              <X size={14} />
+            </button>
+          )}
+          {['completed', 'failed', 'cancelled'].includes(task.status) && (
+            <button className="delete-btn" onClick={onDelete} title="Delete task">
+              <Trash2 size={14} />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="task-selections">
@@ -896,16 +929,26 @@ function TaskCard({ task, onCancel }: TaskCardProps) {
           text-transform: capitalize;
         }
 
-        .cancel-btn {
+        .task-actions {
+          display: flex;
+          gap: 0.25rem;
+        }
+
+        .cancel-btn,
+        .delete-btn {
           background: none;
           border: none;
           color: var(--text-secondary);
           cursor: pointer;
           padding: 0.25rem;
+          border-radius: 4px;
+          transition: all 0.15s ease;
         }
 
-        .cancel-btn:hover {
+        .cancel-btn:hover,
+        .delete-btn:hover {
           color: var(--error);
+          background: var(--error-bg, rgba(239, 68, 68, 0.1));
         }
 
         .task-selections {

@@ -370,6 +370,34 @@ def register_ai_routes(
             detail=f"Task {task_id} not found or cannot be cancelled",
         )
 
+    @router.delete("/api/ai/tasks/{task_id}")
+    async def delete_task(task_id: str):
+        """
+        Delete a completed, failed, or cancelled task.
+
+        Only tasks with terminal status can be deleted.
+        """
+        from ...ai.queue import TaskQueue
+
+        project = get_project()
+        queue = TaskQueue(project.root)
+
+        if queue.delete(task_id):
+            await manager.broadcast(
+                {
+                    "type": "ai_task_deleted",
+                    "task_id": task_id,
+                }
+            )
+            return {"status": "deleted", "task_id": task_id}
+
+        from fastapi import HTTPException
+
+        raise HTTPException(
+            status_code=400,
+            detail=f"Task {task_id} not found or cannot be deleted (only completed/failed/cancelled tasks can be deleted)",
+        )
+
     @router.get("/api/ai/queue/stats")
     async def get_queue_stats():
         """Get AI task queue statistics."""

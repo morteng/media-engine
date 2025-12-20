@@ -1,0 +1,28 @@
+{
+  "version": "1.0.0",
+  "project": "Media Engine Demo",
+  "last_updated": "2025-12-20T03:00:28.970927",
+  "stats": {
+    "total": 1,
+    "pending": 0,
+    "completed": 1,
+    "archived": 0
+  },
+  "notes": {
+    "0db329a3": {
+      "note_id": "0db329a3",
+      "note_type": "scene",
+      "target_path": "content/en/scripts/walkthrough.yaml",
+      "target_id": null,
+      "text": "Consider adding a dramatic pause after the hook",
+      "status": "completed",
+      "priority": "medium",
+      "created": "2025-12-20T03:00:12.279559",
+      "updated": "2025-12-20T03:00:28.970827",
+      "completed_at": "2025-12-20T03:00:28.970807",
+      "created_by": null,
+      "tags": [],
+      "metadata": {}
+    }
+  }
+}

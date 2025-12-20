@@ -89,8 +89,8 @@ properties:
 
 Systemet sjekker:
 
-1. **Interne lenker**: `[tekst](../chapter.md)` løses opp
-2. **Bildereferanser**: `![alt](image.png)` filer eksisterer
+1. **Interne lenker**: Markdown-lenker til andre dokumenter løses opp
+2. **Bildereferanser**: Bildeinnlemminger refererer til filer som eksisterer
 3. **Dokumentavhengigheter**: `depends_on` oppføringer er gyldige
 
 ## Feileksempler

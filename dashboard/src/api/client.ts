@@ -262,6 +262,9 @@ export const getAITask = (taskId: string) =>
 export const cancelAITask = (taskId: string) =>
   api.post<{ status: string; task_id: string }>('/ai/tasks/' + taskId + '/cancel').then(r => r.data);
 
+export const deleteAITask = (taskId: string) =>
+  api.delete<{ status: string; task_id: string }>('/ai/tasks/' + taskId).then(r => r.data);
+
 export const getAIQueueStats = () =>
   api.get<AITasksResponse['stats']>('/ai/queue/stats').then(r => r.data);
 

@@ -1,0 +1,72 @@
+{
+  "content/en/chapters/17_capybara_facts.md": {
+    "document_path": "content/en/chapters/17_capybara_facts.md",
+    "claims": [
+      {
+        "claim_id": "e1d1922d",
+        "text": "Capybaras are the world's largest living rodent",
+        "source": "Natural History Museum London",
+        "source_url": "https://www.nhm.ac.uk/discover/things-you-might-not-know-about-capybaras.html",
+        "source_type": "external",
+        "verified_by": "Claude Code",
+        "verified_date": "2025-12-20T14:17:57.945687",
+        "expires": "2026-12-20",
+        "status": "verified",
+        "notes": null
+      },
+      {
+        "claim_id": "44423246",
+        "text": "Adult capybaras grow up to 1.3 metres in length and weigh over 60 kilogrammes",
+        "source": "Natural History Museum London",
+        "source_url": "https://www.nhm.ac.uk/discover/things-you-might-not-know-about-capybaras.html",
+        "source_type": "external",
+        "verified_by": "Claude Code",
+        "verified_date": "2025-12-20T14:17:58.149674",
+        "expires": "2026-12-20",
+        "status": "verified",
+        "notes": null
+      },
+      {
+        "claim_id": "c9949f3c",
+        "text": "Capybaras can hold their breath underwater for up to 5 minutes",
+        "source": "Natural History Museum London",
+        "source_url": "https://www.nhm.ac.uk/discover/things-you-might-not-know-about-capybaras.html",
+        "source_type": "external",
+        "verified_by": "Claude Code",
+        "verified_date": "2025-12-20T14:17:58.321172",
+        "expires": "2026-12-20",
+        "status": "verified",
+        "notes": null
+      },
+      {
+        "claim_id": "cd979d18",
+        "text": "Capybaras mate exclusively in water for approximately 6 seconds",
+        "source": "The Nature Conservancy",
+        "source_url": "https://blog.nature.org/2020/02/11/capybara-meet-the-worlds-largest-rodent/",
+        "source_type": "external",
+        "verified_by": null,
+        "verified_date": null,
+        "expires": null,
+        "status": "unverified",
+        "notes": null
+      },
+      {
+        "claim_id": "c43d5d37",
+        "text": "Capybaras give birth to 2-8 pups per litter",
+        "source": "Natural History Museum London",
+        "source_url": "https://www.nhm.ac.uk/discover/things-you-might-not-know-about-capybaras.html",
+        "source_type": "external",
+        "verified_by": null,
+        "verified_date": null,
+        "expires": null,
+        "status": "unverified",
+        "notes": null
+      }
+    ],
+    "approvals": [],
+    "dependencies": [],
+    "external_refs": [],
+    "last_verified": null,
+    "verified_by": null
+  }
+}

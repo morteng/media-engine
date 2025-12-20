@@ -98,6 +98,17 @@ export const useCancelAITask = () => {
   });
 };
 
+export const useDeleteAITask = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: api.deleteAITask,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: aiQueryKeys.tasks });
+      queryClient.invalidateQueries({ queryKey: aiQueryKeys.queueStats });
+    },
+  });
+};
+
 export const useAIQueueStats = () => {
   return useQuery({
     queryKey: aiQueryKeys.queueStats,

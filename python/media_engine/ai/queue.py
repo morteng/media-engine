@@ -400,6 +400,31 @@ class TaskQueue:
             "failed": by_status.get("failed", 0),
         }
 
+    def delete(self, task_id: str) -> bool:
+        """
+        Delete a task from the queue.
+
+        Only completed, failed, or cancelled tasks can be deleted.
+
+        Args:
+            task_id: The task ID to delete
+
+        Returns:
+            True if deleted, False if not found or not deletable
+        """
+        tasks = self._load_tasks()
+        deletable_statuses = (TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.CANCELLED)
+
+        for i, task in enumerate(tasks):
+            if task.id == task_id:
+                if task.status not in deletable_statuses:
+                    return False
+                tasks.pop(i)
+                self._save_tasks(tasks)
+                return True
+
+        return False
+
     def cleanup(self, max_age_days: int = 7) -> int:
         """
         Remove old completed/failed tasks.

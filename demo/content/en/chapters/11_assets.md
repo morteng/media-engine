@@ -128,13 +128,7 @@ class BundleResult:
 
 ## Image References
 
-Reference images in Markdown:
-
-```markdown
-![Architecture Diagram](../assets/images/architecture.png)
-```
-
-The validation system checks that referenced images exist.
+Reference images in Markdown using the standard image embed syntax with `![alt text]` followed by the path in parentheses. The validation system checks that referenced images exist.
 
 ## Brand Assets
 

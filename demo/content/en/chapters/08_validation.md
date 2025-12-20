@@ -130,8 +130,8 @@ If no schema is provided, a default schema is used:
 
 The system checks:
 
-1. **Internal links**: `[text](../chapter.md)` links resolve
-2. **Image references**: `![alt](image.png)` files exist
+1. **Internal links**: Markdown links to other documents resolve correctly
+2. **Image references**: Image embeds reference files that exist
 3. **Document dependencies**: `depends_on` entries are valid
 4. **Citations**: Numbered references like `[1]` have matching entries
 

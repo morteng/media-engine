@@ -1,11 +1,5 @@
 {
   "script_path": "/Users/Morten/media-engine/demo/content/en/scripts/walkthrough.yaml",
-  "notes": {
-    "hook": {
-      "text": "Consider adding a dramatic pause after \"forever\" for emphasis.",
-      "created": "2025-12-20T01:35:18.495488",
-      "scene_id": "hook"
-    }
-  },
-  "updated": "2025-12-20T01:35:18.495504"
+  "notes": {},
+  "updated": "2025-12-20T14:30:00.000000"
 }

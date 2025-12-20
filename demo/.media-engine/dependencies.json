@@ -1,0 +1,370 @@
+{
+  "dependencies": {
+    "/Users/Morten/media-engine/demo/content/en/chapters/02_content_management.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/chapters/01_introduction",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/en/chapters/03_video_production.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/chapters/02_content_management",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/en/chapters/04_quality_checks.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/chapters/02_content_management",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/en/chapters/05_builders.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/chapters/02_content_management",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/en/chapters/06_diagrams.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/chapters/05_builders",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/en/chapters/07_search_indexing.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/chapters/02_content_management",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/en/chapters/08_validation.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/path/to/chapter.md",
+        "type": "reference",
+        "line": null,
+        "context": "Link: text"
+      },
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/path/to/image.png",
+        "type": "asset",
+        "line": null,
+        "context": "Image: alt"
+      },
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/chapters/02_content_management",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      },
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/chapters/04_quality_checks",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/en/chapters/09_publishing.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/chapters/05_builders",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/en/chapters/10_packs.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/chapters/09_publishing",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/en/chapters/11_assets.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/assets/images/diagram.png",
+        "type": "asset",
+        "line": null,
+        "context": "Image: Architecture Diagram"
+      },
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/chapters/05_builders",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/en/chapters/12_cli_reference.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/chapters/01_introduction",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/en/chapters/13_security.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/chapters/04_quality_checks",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/en/chapters/14_integrations.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/chapters/01_introduction",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/en/chapters/15_analysis.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/chapters/04_quality_checks",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/no/chapters/01_introduksjon.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/01_introduction.md",
+        "type": "translation",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/no/chapters/02_innholdsstyring.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/02_content_management.md",
+        "type": "translation",
+        "line": null,
+        "context": null
+      },
+      {
+        "target": "/Users/Morten/media-engine/demo/content/no/chapters/chapters/01_introduksjon",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/no/chapters/03_videoproduksjon.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/03_video_production.md",
+        "type": "translation",
+        "line": null,
+        "context": null
+      },
+      {
+        "target": "/Users/Morten/media-engine/demo/content/no/chapters/chapters/02_innholdsstyring",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/no/chapters/04_kvalitetssjekker.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/04_quality_checks.md",
+        "type": "translation",
+        "line": null,
+        "context": null
+      },
+      {
+        "target": "/Users/Morten/media-engine/demo/content/no/chapters/chapters/02_innholdsstyring",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/no/chapters/05_byggere.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/05_builders.md",
+        "type": "translation",
+        "line": null,
+        "context": null
+      },
+      {
+        "target": "/Users/Morten/media-engine/demo/content/no/chapters/chapters/02_innholdsstyring",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/no/chapters/06_diagrammer.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/06_diagrams.md",
+        "type": "translation",
+        "line": null,
+        "context": null
+      },
+      {
+        "target": "/Users/Morten/media-engine/demo/content/no/chapters/chapters/05_byggere",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/no/chapters/07_sokindeksering.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/07_search_indexing.md",
+        "type": "translation",
+        "line": null,
+        "context": null
+      },
+      {
+        "target": "/Users/Morten/media-engine/demo/content/no/chapters/chapters/02_innholdsstyring",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/no/chapters/08_validering.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/no/chapters/path/to/chapter.md",
+        "type": "reference",
+        "line": null,
+        "context": "Link: tekst"
+      },
+      {
+        "target": "/Users/Morten/media-engine/demo/content/no/chapters/path/to/image.png",
+        "type": "asset",
+        "line": null,
+        "context": "Image: alt"
+      },
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/08_validation.md",
+        "type": "translation",
+        "line": null,
+        "context": null
+      },
+      {
+        "target": "/Users/Morten/media-engine/demo/content/no/chapters/chapters/02_innholdsstyring",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      },
+      {
+        "target": "/Users/Morten/media-engine/demo/content/no/chapters/chapters/04_kvalitetssjekker",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/no/chapters/09_publisering.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/09_publishing.md",
+        "type": "translation",
+        "line": null,
+        "context": null
+      },
+      {
+        "target": "/Users/Morten/media-engine/demo/content/no/chapters/chapters/05_byggere",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/no/chapters/10_pakker.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/10_packs.md",
+        "type": "translation",
+        "line": null,
+        "context": null
+      },
+      {
+        "target": "/Users/Morten/media-engine/demo/content/no/chapters/chapters/09_publisering",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/no/chapters/11_ressurser.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/11_assets.md",
+        "type": "translation",
+        "line": null,
+        "context": null
+      },
+      {
+        "target": "/Users/Morten/media-engine/demo/content/no/chapters/chapters/05_byggere",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/no/chapters/12_cli_referanse.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/12_cli_reference.md",
+        "type": "translation",
+        "line": null,
+        "context": null
+      },
+      {
+        "target": "/Users/Morten/media-engine/demo/content/no/chapters/chapters/01_introduksjon",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/no/chapters/13_sikkerhet.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/13_security.md",
+        "type": "translation",
+        "line": null,
+        "context": null
+      },
+      {
+        "target": "/Users/Morten/media-engine/demo/content/no/chapters/chapters/04_kvalitetssjekker",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/no/chapters/14_integrasjoner.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/14_integrations.md",
+        "type": "translation",
+        "line": null,
+        "context": null
+      },
+      {
+        "target": "/Users/Morten/media-engine/demo/content/no/chapters/chapters/01_introduksjon",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/no/chapters/15_analyse.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/15_analysis.md",
+        "type": "translation",
+        "line": null,
+        "context": null
+      },
+      {
+        "target": "/Users/Morten/media-engine/demo/content/no/chapters/chapters/04_kvalitetssjekker",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/no/chapters/16_github_utstillingsvindu.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/16_github_showcase.md",
+        "type": "translation",
+        "line": null,
+        "context": null
+      }
+    ]
+  }
+}

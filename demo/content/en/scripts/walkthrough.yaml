@@ -29,7 +29,7 @@ scenes:
     name: "The Problem"
     type: intro
     duration: 5
-    voiceover: "You write great documentation. But turning it into polished deliverables? That takes forever."
+    voiceover: "You write great documentation. But turning it into polished deliverables? That takes forever... until now."
     visual:
       background: cyber
       transition_in: glitch
