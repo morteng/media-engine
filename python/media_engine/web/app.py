@@ -96,6 +96,10 @@ def create_app(project_path: Optional[Path] = None) -> "FastAPI":
     static_dir = Path(__file__).parent / "static"
     if static_dir.exists():
         app.mount("/static", StaticFiles(directory=static_dir), name="static")
+        # Also mount assets directory for Vite builds
+        assets_dir = static_dir / "assets"
+        if assets_dir.exists():
+            app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
 
     # Register all routes
     register_routes(app, get_project, manager, static_dir, set_project)

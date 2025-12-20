@@ -394,3 +394,507 @@ class TestClaudeTools:
 
         assert result["query_type"] == "status"
         assert "total_documents" in result
+
+
+class TestDocumentLifecycleTools:
+    """Tests for document lifecycle tools in documents.py."""
+
+    @pytest.fixture
+    def mock_server(self, sample_project):
+        """Create a mock MCP server for testing."""
+        from media_engine.mcp.server import MediaEngineMCPServer
+
+        server = MediaEngineMCPServer(project_path=sample_project)
+        return server
+
+    @pytest.mark.asyncio
+    async def test_scaffold_document_chapter(self, mock_server):
+        """Test scaffolding a chapter document."""
+        import json
+
+        from media_engine.mcp.tools import documents
+
+        class MockMCP:
+            def __init__(self):
+                self.tools = {}
+
+            def tool(self):
+                def decorator(func):
+                    self.tools[func.__name__] = func
+                    return func
+                return decorator
+
+        mock = MockMCP()
+        documents.register_document_tools(mock, mock_server)
+
+        result = await mock.tools["scaffold_document"](
+            doc_type="chapter",
+            language="en",
+            title="Test Chapter"
+        )
+
+        data = json.loads(result)
+        assert data["doc_type"] == "chapter"
+        assert data["language"] == "en"
+        assert "suggested_path" in data
+        assert "content" in data
+        assert data["metadata"]["title"] == "Test Chapter"
+        assert data["metadata"]["status"] == "draft"
+
+    @pytest.mark.asyncio
+    async def test_scaffold_document_script(self, mock_server):
+        """Test scaffolding a video script."""
+        import json
+
+        from media_engine.mcp.tools import documents
+
+        class MockMCP:
+            def __init__(self):
+                self.tools = {}
+
+            def tool(self):
+                def decorator(func):
+                    self.tools[func.__name__] = func
+                    return func
+                return decorator
+
+        mock = MockMCP()
+        documents.register_document_tools(mock, mock_server)
+
+        result = await mock.tools["scaffold_document"](
+            doc_type="script",
+            language="en",
+            title="Demo Video"
+        )
+
+        data = json.loads(result)
+        assert data["doc_type"] == "script"
+        assert "scenes:" in data["content"]
+        assert "voiceover:" in data["content"]
+
+    @pytest.mark.asyncio
+    async def test_create_document(self, mock_server, sample_project):
+        """Test creating a new document."""
+        import json
+
+        from media_engine.mcp.tools import documents
+
+        class MockMCP:
+            def __init__(self):
+                self.tools = {}
+
+            def tool(self):
+                def decorator(func):
+                    self.tools[func.__name__] = func
+                    return func
+                return decorator
+
+        mock = MockMCP()
+        documents.register_document_tools(mock, mock_server)
+
+        result = await mock.tools["create_document"](
+            path="content/en/chapters/99_test.md",
+            title="Test Document",
+            doc_type="chapter",
+            content="# Test\n\nThis is test content.",
+            status="draft",
+            tags="test,automation"
+        )
+
+        data = json.loads(result)
+        assert data["status"] == "created"
+        assert "99_test.md" in data["path"]
+        assert data["title"] == "Test Document"
+        assert data["metadata"]["status"] == "draft"
+        assert "test" in data["metadata"]["tags"]
+
+        # Verify file was created
+        created_file = sample_project / "content" / "en" / "chapters" / "99_test.md"
+        assert created_file.exists()
+        content = created_file.read_text()
+        assert "title: Test Document" in content
+
+    @pytest.mark.asyncio
+    async def test_create_document_already_exists(self, mock_server):
+        """Test creating a document that already exists."""
+        import json
+
+        from media_engine.mcp.tools import documents
+
+        class MockMCP:
+            def __init__(self):
+                self.tools = {}
+
+            def tool(self):
+                def decorator(func):
+                    self.tools[func.__name__] = func
+                    return func
+                return decorator
+
+        mock = MockMCP()
+        documents.register_document_tools(mock, mock_server)
+
+        result = await mock.tools["create_document"](
+            path="content/en/chapters/01_intro.md",
+            title="Already Exists",
+            doc_type="chapter"
+        )
+
+        data = json.loads(result)
+        assert "error" in data
+        assert "already exists" in data["error"]
+
+    @pytest.mark.asyncio
+    async def test_update_document_content(self, mock_server, sample_project):
+        """Test updating document content."""
+        import json
+
+        from media_engine.mcp.tools import documents
+
+        class MockMCP:
+            def __init__(self):
+                self.tools = {}
+
+            def tool(self):
+                def decorator(func):
+                    self.tools[func.__name__] = func
+                    return func
+                return decorator
+
+        mock = MockMCP()
+        documents.register_document_tools(mock, mock_server)
+
+        new_content = "# Updated Introduction\n\nThis content has been updated."
+        result = await mock.tools["update_document_content"](
+            path="content/en/chapters/01_intro.md",
+            content=new_content,
+            update_modified=True,
+            increment_version="minor"
+        )
+
+        data = json.loads(result)
+        assert data["status"] == "content_updated"
+        assert data["new_word_count"] > 0
+
+        # Verify file was updated
+        doc_file = sample_project / "content" / "en" / "chapters" / "01_intro.md"
+        content = doc_file.read_text()
+        assert "This content has been updated" in content
+
+    @pytest.mark.asyncio
+    async def test_delete_document_archive(self, mock_server, sample_project):
+        """Test archiving a document."""
+        import json
+
+        from media_engine.mcp.tools import documents
+
+        class MockMCP:
+            def __init__(self):
+                self.tools = {}
+
+            def tool(self):
+                def decorator(func):
+                    self.tools[func.__name__] = func
+                    return func
+                return decorator
+
+        mock = MockMCP()
+        documents.register_document_tools(mock, mock_server)
+
+        # First create a document to delete
+        await mock.tools["create_document"](
+            path="content/en/chapters/98_to_delete.md",
+            title="To Delete",
+            doc_type="chapter"
+        )
+
+        # Now archive it
+        result = await mock.tools["delete_document"](
+            path="content/en/chapters/98_to_delete.md",
+            archive=True,
+            check_dependencies=True
+        )
+
+        data = json.loads(result)
+        assert data["status"] == "archived"
+        assert ".archive" in data["archive_path"]
+
+        # Verify original is gone
+        original = sample_project / "content" / "en" / "chapters" / "98_to_delete.md"
+        assert not original.exists()
+
+        # Verify archive exists
+        archive = sample_project / ".archive" / "content" / "en" / "chapters" / "98_to_delete.md"
+        assert archive.exists()
+
+    @pytest.mark.asyncio
+    async def test_delete_document_permanent(self, mock_server, sample_project):
+        """Test permanently deleting a document."""
+        import json
+
+        from media_engine.mcp.tools import documents
+
+        class MockMCP:
+            def __init__(self):
+                self.tools = {}
+
+            def tool(self):
+                def decorator(func):
+                    self.tools[func.__name__] = func
+                    return func
+                return decorator
+
+        mock = MockMCP()
+        documents.register_document_tools(mock, mock_server)
+
+        # First create a document to delete
+        await mock.tools["create_document"](
+            path="content/en/chapters/97_to_delete.md",
+            title="To Delete Permanently",
+            doc_type="chapter"
+        )
+
+        # Now permanently delete it
+        result = await mock.tools["delete_document"](
+            path="content/en/chapters/97_to_delete.md",
+            archive=False,
+            check_dependencies=False
+        )
+
+        data = json.loads(result)
+        assert data["status"] == "deleted"
+
+        # Verify file is gone
+        deleted = sample_project / "content" / "en" / "chapters" / "97_to_delete.md"
+        assert not deleted.exists()
+
+    @pytest.mark.asyncio
+    async def test_move_document(self, mock_server, sample_project):
+        """Test moving a document."""
+        import json
+
+        from media_engine.mcp.tools import documents
+
+        class MockMCP:
+            def __init__(self):
+                self.tools = {}
+
+            def tool(self):
+                def decorator(func):
+                    self.tools[func.__name__] = func
+                    return func
+                return decorator
+
+        mock = MockMCP()
+        documents.register_document_tools(mock, mock_server)
+
+        # First create a document to move
+        await mock.tools["create_document"](
+            path="content/en/chapters/96_original.md",
+            title="Original Location",
+            doc_type="chapter"
+        )
+
+        # Now move it
+        result = await mock.tools["move_document"](
+            source_path="content/en/chapters/96_original.md",
+            dest_path="content/en/chapters/96_moved.md",
+            update_references=True
+        )
+
+        data = json.loads(result)
+        assert data["status"] == "moved"
+
+        # Verify old location is gone
+        old = sample_project / "content" / "en" / "chapters" / "96_original.md"
+        assert not old.exists()
+
+        # Verify new location exists
+        new = sample_project / "content" / "en" / "chapters" / "96_moved.md"
+        assert new.exists()
+
+    @pytest.mark.asyncio
+    async def test_move_document_not_found(self, mock_server):
+        """Test moving a document that doesn't exist."""
+        import json
+
+        from media_engine.mcp.tools import documents
+
+        class MockMCP:
+            def __init__(self):
+                self.tools = {}
+
+            def tool(self):
+                def decorator(func):
+                    self.tools[func.__name__] = func
+                    return func
+                return decorator
+
+        mock = MockMCP()
+        documents.register_document_tools(mock, mock_server)
+
+        result = await mock.tools["move_document"](
+            source_path="content/en/chapters/nonexistent.md",
+            dest_path="content/en/chapters/moved.md"
+        )
+
+        data = json.loads(result)
+        assert "error" in data
+        assert "not found" in data["error"]
+
+
+class TestSessionPersistence:
+    """Tests for session persistence tools."""
+
+    @pytest.fixture
+    def mock_server(self, sample_project):
+        """Create a mock MCP server for testing."""
+        from media_engine.mcp.server import MediaEngineMCPServer
+
+        server = MediaEngineMCPServer(project_path=sample_project)
+        return server
+
+    @pytest.mark.asyncio
+    async def test_enable_session_persistence(self, mock_server, sample_project):
+        """Test enabling session persistence."""
+        import json
+
+        from media_engine.mcp.tools import session
+        from media_engine.mcp.tools.session import reset_session
+
+        # Reset session state
+        reset_session()
+
+        class MockMCP:
+            def __init__(self):
+                self.tools = {}
+
+            def tool(self):
+                def decorator(func):
+                    self.tools[func.__name__] = func
+                    return func
+                return decorator
+
+        mock = MockMCP()
+        session.register_session_tools(mock, mock_server)
+
+        result = await mock.tools["enable_session_persistence"](enable=True)
+
+        data = json.loads(result)
+        assert data["status"] == "enabled"
+        assert "path" in data
+
+    @pytest.mark.asyncio
+    async def test_session_context_roundtrip(self, mock_server):
+        """Test setting and getting session context."""
+        import json
+
+        from media_engine.mcp.tools import session
+        from media_engine.mcp.tools.session import reset_session
+
+        # Reset session state
+        reset_session()
+
+        class MockMCP:
+            def __init__(self):
+                self.tools = {}
+
+            def tool(self):
+                def decorator(func):
+                    self.tools[func.__name__] = func
+                    return func
+                return decorator
+
+        mock = MockMCP()
+        session.register_session_tools(mock, mock_server)
+
+        # Set a value
+        await mock.tools["set_session_context"](
+            key="test_key",
+            value="test_value"
+        )
+
+        # Get it back
+        result = await mock.tools["get_session_context"](key="test_key")
+
+        data = json.loads(result)
+        assert data["key"] == "test_key"
+        assert data["value"] == "test_value"
+
+        # Cleanup
+        reset_session()
+
+    @pytest.mark.asyncio
+    async def test_clear_session_context(self, mock_server):
+        """Test clearing session context."""
+        import json
+
+        from media_engine.mcp.tools import session
+        from media_engine.mcp.tools.session import reset_session
+
+        # Reset session state
+        reset_session()
+
+        class MockMCP:
+            def __init__(self):
+                self.tools = {}
+
+            def tool(self):
+                def decorator(func):
+                    self.tools[func.__name__] = func
+                    return func
+                return decorator
+
+        mock = MockMCP()
+        session.register_session_tools(mock, mock_server)
+
+        # Set a value
+        await mock.tools["set_session_context"](key="to_clear", value="value")
+
+        # Clear it
+        result = await mock.tools["clear_session_context"](key="to_clear")
+
+        data = json.loads(result)
+        assert data["status"] == "cleared"
+
+        # Verify it's gone
+        result2 = await mock.tools["get_session_context"](key="to_clear")
+        data2 = json.loads(result2)
+        assert "error" in data2  # Key not found returns error
+
+        # Cleanup
+        reset_session()
+
+
+class TestPathValidation:
+    """Tests for path validation in MCP server."""
+
+    @pytest.fixture
+    def mock_server(self, sample_project):
+        """Create a mock MCP server for testing."""
+        from media_engine.mcp.server import MediaEngineMCPServer
+
+        server = MediaEngineMCPServer(project_path=sample_project)
+        return server
+
+    def test_validate_relative_path(self, mock_server, sample_project):
+        """Test validating a relative path."""
+        result = mock_server._validate_path("content/en/chapters/01_intro.md")
+        expected = sample_project / "content" / "en" / "chapters" / "01_intro.md"
+        assert result == expected.resolve()
+
+    def test_validate_absolute_path(self, mock_server, sample_project):
+        """Test validating an absolute path within project."""
+        abs_path = sample_project / "content" / "en" / "chapters" / "01_intro.md"
+        result = mock_server._validate_path(str(abs_path))
+        assert result == abs_path.resolve()
+
+    def test_validate_path_outside_project(self, mock_server):
+        """Test that paths outside project are rejected."""
+        with pytest.raises(ValueError, match="Path outside project"):
+            mock_server._validate_path("/etc/passwd")
+
+    def test_validate_path_traversal_attack(self, mock_server):
+        """Test that path traversal attacks are blocked."""
+        with pytest.raises(ValueError, match="Path outside project"):
+            mock_server._validate_path("content/../../../etc/passwd")

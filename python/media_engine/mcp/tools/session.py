@@ -2,12 +2,18 @@
 
 Provides tools for managing agent session state and maintaining
 an audit trail of agent actions with reasoning.
+
+Features:
+- In-memory session storage for fast access
+- Optional file-based persistence for cross-restart continuity
+- Agent action audit trail with reasoning
+- Session export for handoff or review
 """
 
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from ..server import MediaEngineMCPServer
@@ -15,10 +21,140 @@ if TYPE_CHECKING:
 # In-memory session storage (persists for server lifetime)
 _session_store: dict = {}
 _agent_actions: list = []
+_persistence_path: Optional[Path] = None
+
+
+def _get_persistence_path(project_root: Path) -> Path:
+    """Get the path for session persistence file."""
+    return project_root / ".media-engine" / "agent_session.json"
+
+
+def _load_persisted_session(project_root: Path) -> None:
+    """Load session from persistence file if it exists."""
+    global _session_store, _agent_actions, _persistence_path
+
+    _persistence_path = _get_persistence_path(project_root)
+
+    if _persistence_path.exists():
+        try:
+            with open(_persistence_path, "r") as f:
+                data = json.load(f)
+                _session_store = data.get("context", {})
+                _agent_actions = data.get("actions", [])
+        except Exception:
+            pass  # Start fresh if file is corrupt
+
+
+def _persist_session() -> None:
+    """Save session to persistence file."""
+    global _persistence_path
+
+    if _persistence_path is None:
+        return
+
+    try:
+        _persistence_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(_persistence_path, "w") as f:
+            json.dump(
+                {
+                    "context": _session_store,
+                    "actions": _agent_actions,
+                    "last_saved": datetime.now().isoformat(),
+                },
+                f,
+                indent=2,
+            )
+    except Exception:
+        pass  # Persistence is optional
 
 
 def register_session_tools(mcp, server_instance: "MediaEngineMCPServer"):
     """Register session context and audit MCP tools."""
+
+    # Load persisted session if project is available
+    if server_instance.project:
+        _load_persisted_session(server_instance.project.root)
+
+    @mcp.tool()
+    async def enable_session_persistence(enable: bool = True) -> str:
+        """
+        Enable or disable session persistence to disk.
+
+        When enabled, session context and actions are saved to
+        .media-engine/agent_session.json and restored on server restart.
+
+        Args:
+            enable: True to enable persistence, False to disable
+
+        Returns:
+            Confirmation of persistence status.
+        """
+        global _persistence_path
+
+        if not server_instance.project:
+            return json.dumps({"error": "No project found"}, indent=2)
+
+        if enable:
+            _persistence_path = _get_persistence_path(server_instance.project.root)
+            _persist_session()
+            return json.dumps(
+                {
+                    "status": "enabled",
+                    "path": str(_persistence_path),
+                    "note": "Session will persist across server restarts",
+                },
+                indent=2,
+            )
+        else:
+            old_path = _persistence_path
+            _persistence_path = None
+            return json.dumps(
+                {
+                    "status": "disabled",
+                    "previous_path": str(old_path) if old_path else None,
+                    "note": "Session is now in-memory only",
+                },
+                indent=2,
+            )
+
+    @mcp.tool()
+    async def load_previous_session() -> str:
+        """
+        Load a previously persisted session.
+
+        Restores session context and action history from the last saved session.
+        Useful for continuing work from a previous session.
+
+        Returns:
+            Loaded session info or error if no session found.
+        """
+        if not server_instance.project:
+            return json.dumps({"error": "No project found"}, indent=2)
+
+        path = _get_persistence_path(server_instance.project.root)
+
+        if not path.exists():
+            return json.dumps(
+                {
+                    "status": "not_found",
+                    "path": str(path),
+                    "note": "No previous session found",
+                },
+                indent=2,
+            )
+
+        _load_persisted_session(server_instance.project.root)
+
+        return json.dumps(
+            {
+                "status": "loaded",
+                "path": str(path),
+                "context_keys": list(_session_store.keys()),
+                "action_count": len(_agent_actions),
+                "note": "Previous session restored",
+            },
+            indent=2,
+        )
 
     @mcp.tool()
     async def set_session_context(key: str, value: str) -> str:
@@ -41,6 +177,9 @@ def register_session_tools(mcp, server_instance: "MediaEngineMCPServer"):
             "value": value,
             "set_at": datetime.now().isoformat(),
         }
+
+        # Persist to disk if enabled
+        _persist_session()
 
         return json.dumps(
             {
@@ -100,12 +239,14 @@ def register_session_tools(mcp, server_instance: "MediaEngineMCPServer"):
         if key:
             if key in _session_store:
                 del _session_store[key]
+                _persist_session()
                 return json.dumps({"status": "cleared", "key": key}, indent=2)
             else:
                 return json.dumps({"error": f"Key not found: {key}"}, indent=2)
         else:
             count = len(_session_store)
             _session_store.clear()
+            _persist_session()
             return json.dumps({"status": "cleared_all", "keys_cleared": count}, indent=2)
 
     @mcp.tool()
@@ -137,6 +278,9 @@ def register_session_tools(mcp, server_instance: "MediaEngineMCPServer"):
         }
 
         _agent_actions.append(action_record)
+
+        # Persist to disk if enabled
+        _persist_session()
 
         # Also log to project audit if available
         if server_instance.project:

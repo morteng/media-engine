@@ -5,6 +5,7 @@ Tool registration functions organized by domain.
 """
 
 from . import (
+    ai,
     audit,
     batch,
     build,
@@ -12,6 +13,7 @@ from . import (
     claude,
     context,
     documents,
+    notes,
     project,
     provenance,
     quality,
@@ -23,6 +25,7 @@ from . import (
 )
 
 __all__ = [
+    "ai",
     "audit",
     "batch",
     "build",
@@ -30,6 +33,7 @@ __all__ = [
     "claude",
     "context",
     "documents",
+    "notes",
     "project",
     "provenance",
     "quality",

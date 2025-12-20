@@ -193,11 +193,11 @@ def _get_health_context(project) -> dict:
         scorer = HealthScorer(project)
         health = scorer.score_project()
         return {
-            "score": health.score,
+            "score": health.overall,
             "grade": health.grade,
-            "summary": f"Project health is {health.grade} ({health.score}/100)",
+            "summary": f"Project health is {health.grade} ({health.overall}/100)",
             "components": {
-                comp: {"score": score, "weight": health.weights.get(comp, 0)}
+                comp: {"score": score, "weight": scorer.weights.get(comp, 0)}
                 for comp, score in health.components.items()
             },
             "top_issues": [issue.to_dict() for issue in health.issues[:5]],
@@ -281,12 +281,12 @@ def _get_recommendations(project) -> list:
         scorer = HealthScorer(project)
         health = scorer.score_project()
 
-        if health.score < 70:
+        if health.overall < 70:
             recommendations.append(
                 {
                     "priority": "high",
                     "action": "improve_health",
-                    "message": f"Project health is low ({health.score}/100). Focus on fixing quality issues.",
+                    "message": f"Project health is low ({health.overall}/100). Focus on fixing quality issues.",
                 }
             )
 
@@ -572,7 +572,7 @@ def _get_document_context(project, document_path: str) -> dict:
         scorer = HealthScorer(project)
         doc_health = scorer.score_document(Path(document_path))
         context["quality"] = {
-            "score": doc_health.score if hasattr(doc_health, "score") else None,
+            "score": doc_health.overall if hasattr(doc_health, "overall") else None,
             "issues": [i.to_dict() for i in doc_health.issues[:5]] if hasattr(doc_health, "issues") else [],
         }
     except Exception:

@@ -20,6 +20,7 @@ from .insights import (
     cmd_velocity,
 )
 from .integrity import cmd_integrity
+from .notes import cmd_notes
 from .pack import cmd_pack
 from .provenance import cmd_provenance
 from .publish import cmd_publish
@@ -47,6 +48,7 @@ __all__ = [
     "cmd_dashboard",
     "cmd_provenance",
     "cmd_integrity",
+    "cmd_notes",
     "cmd_readability",
     "cmd_gaps",
     "cmd_links",

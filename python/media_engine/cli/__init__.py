@@ -32,6 +32,7 @@ from .commands import (
     cmd_init,
     cmd_integrity,
     cmd_links,
+    cmd_notes,
     cmd_pack,
     cmd_parity,
     cmd_path,
@@ -223,6 +224,62 @@ def main():
     integ_terms = integ_subparsers.add_parser("terms", help="Check terminology consistency")
     integ_terms.add_argument("--json", action="store_true", help="Output as JSON")
 
+    # notes
+    notes_parser = subparsers.add_parser("notes", help="General notes management")
+    notes_subparsers = notes_parser.add_subparsers(dest="notes_command")
+
+    notes_list = notes_subparsers.add_parser("list", help="List notes")
+    notes_list.add_argument(
+        "--status", choices=["pending", "completed", "archived"], help="Filter by status"
+    )
+    notes_list.add_argument(
+        "--type",
+        choices=[
+            "scene",
+            "document",
+            "asset",
+            "project",
+            "chapter",
+            "translation",
+            "script",
+            "diagram",
+        ],
+        help="Filter by type",
+    )
+    notes_list.add_argument(
+        "--priority", choices=["low", "medium", "high", "critical"], help="Filter by priority"
+    )
+    notes_list.add_argument("--pending", action="store_true", help="Show only pending notes")
+    notes_list.add_argument("--json", action="store_true", help="Output as JSON")
+
+    notes_add = notes_subparsers.add_parser("add", help="Add a new note")
+    notes_add.add_argument("--type", "-t", required=True, help="Note type")
+    notes_add.add_argument("--target", "-T", required=True, help="Target content path")
+    notes_add.add_argument("--text", "-m", required=True, help="Note text")
+    notes_add.add_argument("--target-id", help="Sub-target ID (e.g., scene_id)")
+    notes_add.add_argument("--priority", "-p", default="medium", help="Priority level")
+    notes_add.add_argument("--tags", help="Comma-separated tags")
+
+    notes_complete = notes_subparsers.add_parser("complete", help="Mark note as completed")
+    notes_complete.add_argument("note_id", help="Note ID to complete")
+
+    notes_archive = notes_subparsers.add_parser("archive", help="Archive a note")
+    notes_archive.add_argument("note_id", help="Note ID to archive")
+
+    notes_reopen = notes_subparsers.add_parser("reopen", help="Reopen a note")
+    notes_reopen.add_argument("note_id", help="Note ID to reopen")
+
+    notes_delete = notes_subparsers.add_parser("delete", help="Delete a note")
+    notes_delete.add_argument("note_id", help="Note ID to delete")
+
+    notes_report = notes_subparsers.add_parser("report", help="Generate notes report")
+    notes_report.add_argument("--json", action="store_true", help="Output as JSON")
+
+    notes_export = notes_subparsers.add_parser("export", help="Export notes for agents")
+
+    notes_migrate = notes_subparsers.add_parser("migrate", help="Migrate legacy scene notes")
+    notes_migrate.add_argument("--json", action="store_true", help="Output as JSON")
+
     # readability
     read_parser = subparsers.add_parser("readability", help="Readability analysis")
     read_parser.add_argument(
@@ -365,6 +422,7 @@ def main():
         "dashboard": cmd_dashboard,
         "provenance": cmd_provenance,
         "integrity": cmd_integrity,
+        "notes": cmd_notes,
         "readability": cmd_readability,
         "gaps": cmd_gaps,
         "links": cmd_links,

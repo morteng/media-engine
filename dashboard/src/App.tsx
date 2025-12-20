@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Layout } from '@/components/layout';
-import { Dashboard, Content, Video, Quality, Build, Insights, SearchPage } from '@/pages';
+import { Dashboard, Content, Video, Quality, Build, Insights, AIAssist, SearchPage } from '@/pages';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,6 +24,7 @@ export default function App() {
             <Route path="quality/*" element={<Quality />} />
             <Route path="build/*" element={<Build />} />
             <Route path="insights/*" element={<Insights />} />
+            <Route path="ai-assist/*" element={<AIAssist />} />
             <Route path="search" element={<SearchPage />} />
           </Route>
         </Routes>

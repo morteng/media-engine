@@ -110,13 +110,70 @@ class IncompleteTracker:
         # Determine document status for priority calculation
         doc_status = self._get_document_status(full_path, content)
 
+        # Track code block state and frontmatter state
+        in_code_block = False
+        in_frontmatter = False
+        past_frontmatter = False
+
         # Scan for pattern-based markers
         for line_num, line in enumerate(lines, start=1):
+            # Track frontmatter (YAML between --- markers at start)
+            if line.strip() == "---":
+                if line_num == 1:
+                    in_frontmatter = True
+                    continue
+                elif in_frontmatter:
+                    in_frontmatter = False
+                    past_frontmatter = True
+                    continue
+
+            # Skip frontmatter content
+            if in_frontmatter:
+                continue
+
+            # Track code block state
+            if line.strip().startswith("```"):
+                in_code_block = not in_code_block
+                continue
+
+            # Skip content inside code blocks
+            if in_code_block:
+                continue
+
+            # Skip markdown headings (they often contain these terms as section titles)
+            if line.strip().startswith("#"):
+                continue
+
             for marker_type, pattern in self.patterns.items():
                 if marker_type == "truncated":
                     continue  # Handle separately (multi-line)
 
-                matches = pattern.finditer(line)
+                # Remove inline code before checking (content in backticks)
+                line_without_code = re.sub(r"`[^`]+`", "", line)
+
+                # Skip lines that are documenting patterns (contain documentation words)
+                # Includes Norwegian terms (markører, oppdager, sjekk, etc.)
+                doc_pattern = r"(markers?|patterns?|detects?|checks?|found|flagged|types?|examples?|markør|oppdager|sjekk|placeholder\s+pattern|content\s+placeholder|addressed|severity|warning|error|issues?)"
+                if re.search(doc_pattern, line_without_code, re.IGNORECASE):
+                    continue
+
+                # Skip lines that mention "placeholders" (plural) in parentheses - documentation context
+                if re.search(r"\(.*placeholders.*\)", line_without_code, re.IGNORECASE):
+                    continue
+
+                # Skip if line contains multiple placeholder words (documentation)
+                placeholder_words = re.findall(
+                    r"\b(TODO|TBD|FIXME|XXX|HACK)\b", line_without_code, re.IGNORECASE
+                )
+                if len(placeholder_words) >= 2:
+                    continue
+
+                # Skip table rows documenting patterns (| pattern | description |)
+                if line.strip().startswith("|"):
+                    # Tables often document patterns with backticks
+                    continue
+
+                matches = pattern.finditer(line_without_code)
                 for match in matches:
                     matched_text = match.group(0)
                     context = self._get_context(lines, line_num - 1, 2)
@@ -280,7 +337,21 @@ class IncompleteTracker:
     ) -> list[IncompleteItem]:
         """Find sections with headings but no content."""
         items: list[IncompleteItem] = []
-        headings = list(HEADING_PATTERN.finditer(content))
+
+        # Find all headings, but filter out those inside code blocks
+        all_headings = list(HEADING_PATTERN.finditer(content))
+
+        # Track which character positions are inside code blocks
+        in_code_positions = set()
+        for code_match in re.finditer(r"```[\s\S]*?```", content):
+            for pos in range(code_match.start(), code_match.end()):
+                in_code_positions.add(pos)
+
+        # Filter headings to only those outside code blocks
+        headings = [
+            h for h in all_headings
+            if h.start() not in in_code_positions
+        ]
 
         for i, match in enumerate(headings):
             heading_level = len(match.group(1))
@@ -288,7 +359,6 @@ class IncompleteTracker:
             heading_pos = match.end()
 
             # Find next heading of same or higher level
-            next_content_start = heading_pos
             next_heading_pos = len(content)
 
             for next_match in headings[i + 1 :]:
@@ -298,21 +368,37 @@ class IncompleteTracker:
                     break
 
             # Extract content between headings
-            section_content = content[next_content_start:next_heading_pos].strip()
+            section_content = content[heading_pos:next_heading_pos].strip()
 
-            # Check if section is empty (only whitespace or very short)
-            if len(section_content) < 10:
-                line_num = content[:match.start()].count("\n") + 1
-                items.append(
-                    IncompleteItem(
-                        document=doc_path,
-                        line_number=line_num,
-                        marker_type="empty_section",
-                        content=f'Empty section: "{heading_text}"',
-                        priority=self._calculate_priority("empty_section", doc_status),
-                        context=f"## {heading_text}\n(no content)",
-                    )
+            # Skip if section contains code block (considered valid content)
+            if "```" in section_content:
+                continue
+
+            # Skip if section contains a list (bullet or numbered)
+            if re.search(r"^\s*[-*+\d]\.*\s+", section_content, re.MULTILINE):
+                continue
+
+            # Skip if section contains any real text content (more than just whitespace)
+            # Remove blank lines and check for actual content
+            section_lines = [
+                line for line in section_content.split("\n") if line.strip()
+            ]
+            if section_lines:
+                continue
+
+            # Section is truly empty
+            line_num = content[:match.start()].count("\n") + 1
+
+            items.append(
+                IncompleteItem(
+                    document=doc_path,
+                    line_number=line_num,
+                    marker_type="empty_section",
+                    content=f'Empty section: "{heading_text}"',
+                    priority=self._calculate_priority("empty_section", doc_status),
+                    context=f"## {heading_text}\n(no content)",
                 )
+            )
 
         return items
 

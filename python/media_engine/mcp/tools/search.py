@@ -52,7 +52,7 @@ def register_search_tools(mcp, server_instance):
                         "path": str(r.entry.path),
                         "language": r.entry.language,
                         "score": round(r.score, 3),
-                        "snippet": r.snippet[:200] + "..." if len(r.snippet) > 200 else r.snippet,
+                        "snippet": r.entry.excerpt[:200] + "..." if len(r.entry.excerpt) > 200 else r.entry.excerpt,
                     }
                     for r in results[:limit]
                 ],

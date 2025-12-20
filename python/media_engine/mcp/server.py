@@ -89,14 +89,21 @@ class MediaEngineMCPServer:
         Validate and sanitize a file path for security.
 
         Prevents path traversal attacks and ensures paths are within project.
+        Relative paths are resolved from project root.
         """
         if not self.project:
             raise ValueError("No project loaded")
 
         # Resolve and check if within project
         try:
-            resolved = Path(path).resolve()
             project_root = self.project.root.resolve()
+
+            # Handle relative paths by prepending project root
+            path_obj = Path(path)
+            if not path_obj.is_absolute():
+                path_obj = project_root / path_obj
+
+            resolved = path_obj.resolve()
 
             # Allow paths within project root
             if project_root in resolved.parents or resolved == project_root:
@@ -132,6 +139,7 @@ class MediaEngineMCPServer:
 
         # Import tool registration functions
         from .tools import (
+            ai,
             audit,
             batch,
             build,
@@ -139,6 +147,7 @@ class MediaEngineMCPServer:
             claude,
             context,
             documents,
+            notes,
             project,
             provenance,
             quality,
@@ -159,6 +168,7 @@ class MediaEngineMCPServer:
         cache.register_cache_tools(self.mcp, self)
         audit.register_audit_tools(self.mcp, self)
         provenance.register_provenance_tools(self.mcp, self)
+        notes.register_notes_tools(self.mcp, self)
 
         # Enhanced AI agent tools
         context.register_context_tools(self.mcp, self)
@@ -166,6 +176,7 @@ class MediaEngineMCPServer:
         batch.register_batch_tools(self.mcp, self)
         session.register_session_tools(self.mcp, self)
         claude.register_claude_tools(self.mcp, self)
+        ai.register_ai_tools(self.mcp, self)
         webhooks.register_webhook_tools(self.mcp, self)
 
     def _register_resources(self):

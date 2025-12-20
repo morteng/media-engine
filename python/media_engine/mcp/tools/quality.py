@@ -21,19 +21,22 @@ def register_quality_tools(mcp, server_instance):
 
         report = run_quality_checks(server_instance.project, console_output=False)
 
+        # Calculate counts from issues
+        info_count = sum(1 for i in report.issues if i.severity == "info")
+
         return json.dumps(
             {
                 "summary": {
-                    "total": report.total_count,
+                    "total": len(report.issues),
                     "errors": report.error_count,
                     "warnings": report.warning_count,
-                    "info": report.info_count,
+                    "info": info_count,
                     "passed": report.error_count == 0,
                 },
                 "issues": [
                     {
                         "severity": i.severity,
-                        "category": i.category,
+                        "category": i.type,
                         "message": i.message,
                         "file": str(i.file_path) if i.file_path else None,
                         "line": i.line,
@@ -69,7 +72,7 @@ def register_quality_tools(mcp, server_instance):
                 "valid": report.error_count == 0,
                 "schema_used": str(schema_path) if schema_path.exists() else None,
                 "summary": {
-                    "total": report.total_count,
+                    "total": len(report.issues),
                     "errors": report.error_count,
                     "warnings": report.warning_count,
                 },

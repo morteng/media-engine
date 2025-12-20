@@ -229,3 +229,45 @@ cd dashboard && npm install && npm run build
                     pass
 
         return {"entries": entries[-limit:]}
+
+    # NOTE: SPA catch-all route is registered separately via register_spa_catch_all
+    # to ensure it's registered LAST after all API routes
+
+
+def register_spa_catch_all(
+    router: "APIRouter",
+    static_dir: Path,
+):
+    """
+    Register the SPA catch-all route.
+
+    IMPORTANT: This must be called LAST after all other routes are registered,
+    otherwise it will match API routes before they can be handled.
+    """
+    from fastapi import HTTPException
+    from fastapi.responses import FileResponse, HTMLResponse
+
+    @router.get("/{full_path:path}", response_class=HTMLResponse)
+    async def spa_catch_all(full_path: str):
+        """
+        Catch-all route for SPA frontend.
+
+        Serves index.html for any route that doesn't match an API endpoint,
+        allowing React Router to handle client-side routing.
+        """
+        # Don't serve index.html for API routes or static assets
+        if full_path.startswith("api/") or full_path.startswith("static/"):
+            raise HTTPException(404, "Not Found")
+
+        index_path = static_dir / "index.html"
+        if index_path.exists():
+            return FileResponse(index_path)
+
+        return HTMLResponse(
+            """<!DOCTYPE html>
+<html><head><title>Media Engine Dashboard</title></head>
+<body style="font-family: system-ui; background: #0f172a; color: #e2e8f0; padding: 2rem;">
+<h1>Dashboard Not Built</h1>
+<p>Build the React SPA: <code>cd dashboard && npm run build</code></p>
+</body></html>"""
+        )

@@ -49,14 +49,16 @@ def register_routes(
     """
     from fastapi import APIRouter
 
+    from .ai import register_ai_routes
     from .assets import register_assets_routes
     from .build import register_build_routes
-    from .core import register_core_routes
+    from .core import register_core_routes, register_spa_catch_all
     from .dependencies import register_dependencies_routes
     from .documents import register_document_routes
     from .freshness import register_freshness_routes
     from .insights import register_insights_routes
     from .media import register_media_routes
+    from .notes import register_notes_routes
     from .provenance import register_provenance_routes
     from .quality import register_quality_routes
     from .registry import register_registry_routes
@@ -70,6 +72,7 @@ def register_routes(
 
     # Register all route modules
     register_core_routes(router, get_project, manager, static_dir, set_project)
+    register_ai_routes(router, get_project, manager)
     register_translation_routes(router, get_project, manager)
     register_quality_routes(router, get_project, manager)
     register_freshness_routes(router, get_project, manager)
@@ -82,8 +85,13 @@ def register_routes(
     register_registry_routes(router, get_project, manager)
     register_assets_routes(router, get_project, manager)
     register_media_routes(router, get_project, manager)
+    register_notes_routes(router, get_project, manager)
     register_scene_notes_routes(router, get_project, manager)
     register_websocket_routes(router, get_project, manager)
+
+    # IMPORTANT: SPA catch-all must be registered LAST
+    # to avoid matching API routes before they can be handled
+    register_spa_catch_all(router, static_dir)
 
     # Include the router in the app
     app.include_router(router)

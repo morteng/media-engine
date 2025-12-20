@@ -6,7 +6,8 @@ import {
   Hammer,
   BarChart3,
   Search,
-  Film
+  Film,
+  Sparkles
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -17,6 +18,7 @@ const navItems = [
   { path: '/quality', icon: Shield, label: 'Quality' },
   { path: '/build', icon: Hammer, label: 'Build' },
   { path: '/insights', icon: BarChart3, label: 'Insights' },
+  { path: '/ai-assist', icon: Sparkles, label: 'AI Assist' },
   { path: '/search', icon: Search, label: 'Search' },
 ];
 
