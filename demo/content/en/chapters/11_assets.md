@@ -2,7 +2,7 @@
 title: "Assets and Fonts"
 version: "1.0.0"
 status: "final"
-last_modified: "2025-12-16"
+last_modified: "2025-12-23"
 freshness_days: 60
 depends_on:
   - "chapters/05_builders"
@@ -10,6 +10,8 @@ tags:
   - assets
   - fonts
   - bundling
+  - brand
+  - dashboard
 ---
 
 # Assets and Fonts
@@ -130,17 +132,70 @@ class BundleResult:
 
 Reference images in Markdown using the standard image embed syntax with `![alt text]` followed by the path in parentheses. The validation system checks that referenced images exist.
 
-## Brand Assets
+## Brand System
+
+Media Engine uses `brand.yaml` for unified visual identity management:
+
+```yaml
+# brand.yaml
+name: "Project Name"
+
+identity:
+  logos:
+    primary: { path: "brand/logos/logo.svg", alt: "Logo" }
+    dark: { path: "brand/logos/logo-dark.svg" }
+    icon: { path: "brand/logos/icon.png", sizes: [16, 32, 64] }
+
+colors:
+  brand:
+    primary: "#6366f1"
+    secondary: "#8b5cf6"
+    accent: "#06b6d4"
+  semantic:
+    success: "#10b981"
+    warning: "#f59e0b"
+    error: "#ef4444"
+
+typography:
+  fonts:
+    heading: { family: "Inter", weights: [500, 600, 700], source: "google" }
+    body: { family: "Inter", weights: [400, 500], source: "google" }
+    code: { family: "JetBrains Mono", weights: [400], source: "google" }
+```
+
+### Brand CLI Commands
+
+```bash
+media-engine brand status       # View brand profile
+media-engine brand init         # Create brand.yaml template
+media-engine brand validate     # Validate configuration
+media-engine brand export-css   # Export CSS variables
+```
+
+### Dashboard Brand Hub
+
+The web dashboard provides a Brand Hub at `/brand` with six tabs:
+
+| Tab | Description |
+|-----|-------------|
+| Overview | Visual summary of brand identity |
+| Colors | Color palette with dark mode variants |
+| Typography | Font families, weights, and scale |
+| Logos | Logo variants and usage guidelines |
+| Tokens | Design tokens and spacing |
+| Export | CSS, JSON, and tailwind.config export |
+
+## Brand Assets Directory
 
 Store brand assets for consistent use:
 
 ```
-assets/brand/
-├── logo.svg           # Primary logo
-├── logo-dark.svg      # Dark mode variant
-├── logo-square.svg    # Square format
-├── favicon.ico        # Browser favicon
-└── colors.json        # Brand color definitions
+brand/
+├── logos/
+│   ├── logo.svg           # Primary logo
+│   ├── logo-dark.svg      # Dark mode variant
+│   └── icon.png           # App icon
+└── fonts/                 # Local fonts (if source: local)
 ```
 
 ## Asset Paths in Code

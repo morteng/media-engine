@@ -2,7 +2,7 @@
 title: "Integrations"
 version: "1.0.0"
 status: "final"
-last_modified: "2025-12-16"
+last_modified: "2025-12-23"
 freshness_days: 60
 depends_on:
   - "chapters/01_introduction"
@@ -68,7 +68,7 @@ Add to `~/.claude/claude_desktop_config.json`:
 
 ## Web Dashboard
 
-A browser-based UI for project management.
+A browser-based UI for project management with real-time collaboration features.
 
 ### Installation
 
@@ -90,15 +90,73 @@ Opens `http://localhost:8080` by default.
 
 ### Features
 
-The dashboard provides visual project management.
+The dashboard provides visual project management with a modern DaisyUI-based interface.
 
 | View | Description |
 |------|-------------|
-| Overview | Project status and statistics |
-| Documents | Browse and read all chapters |
+| Overview | Project status, statistics, and health metrics |
+| Content | Browse chapters with markdown preview and AI annotations |
 | Translations | Matrix view of translation status |
-| Quality | Issue tracking and resolution |
-| Build | Trigger builds and view output |
+| Quality | Issue tracking with semantic, readability, and freshness checks |
+| Build | Trigger builds, view output, and download artifacts |
+| Media | Media registry and asset management |
+| Insights | Analytics, velocity metrics, and content health |
+| Video | Video timeline and scene management |
+| Brand | Brand profile with colors, typography, and logos |
+| Settings | Theme preferences and dashboard configuration |
+
+### Theme System
+
+The dashboard supports multiple themes with automatic dark mode detection.
+
+| Theme | Description |
+|-------|-------------|
+| Nord | Light theme with soft colors (default) |
+| Sunset | Dark theme for low-light environments |
+
+Switch themes via:
+- Settings page (`/settings`)
+- Theme toggle button in header
+- Command palette (`Cmd+K` then search "theme")
+
+Settings persist in localStorage across sessions.
+
+### Command Palette
+
+Press `Cmd+K` (Mac) or `Ctrl+K` (Windows/Linux) to open the command palette for quick navigation.
+
+| Command | Action |
+|---------|--------|
+| Go to Dashboard | Navigate to overview |
+| Go to Content | Navigate to documents |
+| Go to Settings | Open settings page |
+| Toggle Theme | Switch between light/dark |
+| Search... | Search all content |
+
+### AI Content Annotations
+
+When viewing documents in the Content page, you can:
+
+1. **Select text** - Highlight any text in the document preview
+2. **Add comment** - Leave a comment or question for AI processing
+3. **Submit to queue** - The annotation is queued for AI analysis
+4. **Persistent highlights** - Annotations remain visible with yellow highlighting
+5. **Click to edit** - Click any highlight to view or update the comment
+
+Annotations are tracked per document and submitted to the AI task queue.
+
+### Real-time Collaboration
+
+The dashboard uses WebSocket connections for real-time updates.
+
+| Event | Description |
+|-------|-------------|
+| Document changes | Auto-refresh when content updates |
+| Build status | Live build progress indicators |
+| AI task updates | Queue status notifications |
+| User presence | See who else is viewing the dashboard |
+
+Connection status is shown in the sidebar. The WebSocket automatically reconnects with exponential backoff if disconnected.
 
 ### GUI Launcher
 

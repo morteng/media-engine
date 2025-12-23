@@ -2,7 +2,7 @@
 title: "Output Builders"
 version: "1.0.0"
 status: "final"
-last_modified: "2025-12-16"
+last_modified: "2025-12-23"
 freshness_days: 60
 depends_on:
   - "chapters/02_content_management"
@@ -11,6 +11,8 @@ tags:
   - html
   - pptx
   - xlsx
+  - brand
+  - dashboard
 
 # Hierarchy metadata
 doc_type: "implementation"
@@ -246,3 +248,42 @@ if project.should_rebuild("en/html", dependencies):
 ```
 
 The build system computes hashes of source files to determine if outputs are stale.
+
+## Brand Integration
+
+All builders support brand-aware styling via `brand.yaml`:
+
+```python
+from media_engine.brand import BrandContext
+
+# Create brand context
+brand = BrandContext(profile=project.brand_profile)
+
+# Use with builders
+html_builder = HTMLBuilder(brand=brand)
+pptx_builder = PPTXBuilder(brand=brand)
+xlsx_builder = XLSXBuilder(brand=brand)
+```
+
+Brand integration provides:
+- **Colors**: Primary, secondary, accent, semantic colors
+- **Typography**: Font families for headings, body, and code
+- **Logos**: Automatic format conversion (SVG to PNG for PPTX)
+- **Dark mode**: Automatic dark variant styling
+
+See the Brand chapter for detailed configuration.
+
+## Dashboard Build Page
+
+The web dashboard provides a visual build interface at `/build`:
+
+| Feature | Description |
+|---------|-------------|
+| Format Selection | Choose HTML, PPTX, XLSX individually or all |
+| Language Filtering | Build specific languages |
+| Progress Indicators | Real-time build status via WebSocket |
+| Output Preview | View and download built artifacts |
+| Build History | Recent builds with timestamps |
+| Error Display | Detailed error messages with file references |
+
+Launch with `media-engine dashboard` and navigate to Build.

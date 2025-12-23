@@ -2,7 +2,7 @@
 title: "Quality Checks"
 version: "1.0.0"
 status: "final"
-last_modified: "2025-12-16"
+last_modified: "2025-12-23"
 freshness_days: 60
 depends_on:
   - "chapters/02_content_management"
@@ -167,6 +167,45 @@ for issue in report.issues:
     issue.message    # Human-readable description
     issue.context    # Surrounding text
 ```
+
+## Dashboard Quality Views
+
+The web dashboard provides comprehensive quality analysis across multiple specialized tabs.
+
+### Quality Tab Structure
+
+| Tab | Analysis |
+|-----|----------|
+| Quality | Overview of issues, coverage, and health score |
+| Semantic | Semantic similarity, duplicate detection, terminology drift |
+| Knowledge | Knowledge graph, concept mapping, prerequisite tracking |
+| Readability | Flesch-Kincaid, Gunning Fog, LIX (Norwegian) scoring |
+| Freshness | Content age tracking and staleness prediction |
+| Code Sync | Code-documentation synchronization status |
+| Advanced | Audience analysis, style checking, engagement metrics |
+| Activity | Recent changes, review queue, audit log |
+
+### Using the Dashboard
+
+```bash
+# Launch dashboard
+media-engine dashboard
+
+# Navigate to /quality for quality analysis
+```
+
+The Quality page displays:
+- Overall health score (0-100)
+- Issue counts by severity
+- Sub-tab navigation for specialized analysis
+- Filtering by document, language, and severity
+
+### AI-Assisted Review
+
+Select text in any document preview to:
+1. Add comments for AI review
+2. Queue issues for automated analysis
+3. Track annotation history
 
 ## Integration with CI/CD
 
