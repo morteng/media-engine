@@ -54,11 +54,11 @@ export function Header() {
   const recent = recentProjects?.recent?.filter(p => p.path !== currentProject?.path) ?? [];
 
   return (
-    <header className="flex items-center justify-between h-14 px-4 bg-base-200 border-b border-base-300 gap-4">
-      {/* Left side - menu toggle and project selector */}
-      <div className="flex items-center gap-2 flex-shrink-0">
+    <header className="flex items-center justify-between h-14 pr-4 bg-base-200 border-b border-base-300 gap-4">
+      {/* Left side - toggle and project selector */}
+      <div className="flex items-center">
         <button
-          className="btn btn-ghost btn-sm btn-square"
+          className="btn btn-ghost btn-sm btn-square ml-[13px]"
           onClick={isMobile ? toggleMobileMenu : toggleSidebar}
           title={isMobile ? "Open menu" : (isCollapsed ? "Expand sidebar" : "Collapse sidebar")}
           aria-label={isMobile ? "Open navigation menu" : (isCollapsed ? "Expand sidebar" : "Collapse sidebar")}
@@ -74,16 +74,16 @@ export function Header() {
         </button>
 
         {/* Project Selector */}
-        <div className={`dropdown ${projectMenuOpen ? 'dropdown-open' : ''}`} ref={menuRef}>
+        <div className={`dropdown ml-[35px] ${projectMenuOpen ? 'dropdown-open' : ''}`} ref={menuRef}>
           <button
             tabIndex={0}
-            className="btn btn-ghost btn-sm gap-2"
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
             onClick={() => setProjectMenuOpen(!projectMenuOpen)}
           >
             <span className="flex items-center justify-center w-7 h-7 rounded bg-gradient-to-br from-primary to-secondary text-white text-xs font-bold">
               ME
             </span>
-            <span className="max-w-[150px] truncate hidden sm:inline">{project?.name || 'Media Engine'}</span>
+            <span className="max-w-[150px] truncate hidden sm:inline font-medium">{project?.name || 'Media Engine'}</span>
             <ChevronDown size={16} className={`transition-transform ${projectMenuOpen ? 'rotate-180' : ''}`} />
           </button>
 
