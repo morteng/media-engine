@@ -1,0 +1,470 @@
+# ============================================================================
+# Media Engine Brand Configuration
+# ============================================================================
+# Unified brand system for consistent identity across all outputs:
+# documentation, presentations, videos, and dashboard.
+#
+# Usage:
+#   media-engine brand status    # View brand profile
+#   media-engine brand validate  # Validate configuration
+#   media-engine brand voice     # View voice profile
+# ============================================================================
+
+name: "Media Engine"
+version: "1.0.0"
+
+# ============================================================================
+# IDENTITY
+# ============================================================================
+# Core brand identity including logos, taglines, and legal information.
+
+identity:
+  logos:
+    primary:
+      path: "brand/logos/logo.svg"
+      alt: "Media Engine"
+      description: "Primary logo for light backgrounds"
+    dark:
+      path: "brand/logos/logo-dark.svg"
+      alt: "Media Engine"
+      description: "Logo variant for dark backgrounds"
+    icon:
+      path: "brand/logos/icon.svg"
+      alt: "ME"
+      description: "Square icon for favicons and small displays"
+      sizes: [16, 32, 48, 64, 128, 256]
+    icon_dark:
+      path: "brand/logos/icon-dark.svg"
+      alt: "ME"
+      description: "Square icon for dark mode"
+
+  legal:
+    copyright: "2024 Media Engine Project"
+    license: "MIT License"
+
+  taglines:
+    primary: "Agent-based media production framework"
+    short: "Automate your media workflow"
+    technical: "From markdown to multi-format output"
+
+# ============================================================================
+# COLORS
+# ============================================================================
+# Complete color system with semantic colors and dark mode support.
+
+colors:
+  # Brand colors - primary palette
+  brand:
+    primary: "#6366f1"      # Indigo-500 - main brand color
+    secondary: "#8b5cf6"    # Violet-500 - accent/secondary
+    accent: "#06b6d4"       # Cyan-500 - highlights and CTAs
+    muted: "#a5b4fc"        # Indigo-300 - subtle brand touches
+
+  # Semantic colors for status and feedback
+  semantic:
+    success: "#10b981"      # Emerald-500
+    warning: "#f59e0b"      # Amber-500
+    error: "#ef4444"        # Red-500
+    info: "#3b82f6"         # Blue-500
+
+  # Text colors
+  text:
+    primary: "#1f2937"      # Gray-800 - main text
+    secondary: "#4b5563"    # Gray-600 - secondary text
+    muted: "#9ca3af"        # Gray-400 - tertiary/disabled
+    inverse: "#f9fafb"      # Gray-50 - text on dark backgrounds
+    link: "#6366f1"         # Brand primary for links
+    link_hover: "#4f46e5"   # Indigo-600 for link hover
+
+  # Background colors
+  background:
+    primary: "#ffffff"      # Main background
+    secondary: "#f9fafb"    # Gray-50 - cards, sections
+    tertiary: "#f3f4f6"     # Gray-100 - nested elements
+    elevated: "#ffffff"     # Elevated surfaces (modals, dropdowns)
+    overlay: "rgba(17, 24, 39, 0.5)"  # Modal overlays
+
+  # Border colors
+  border:
+    default: "#e5e7eb"      # Gray-200
+    subtle: "#f3f4f6"       # Gray-100
+    strong: "#d1d5db"       # Gray-300
+    focus: "#6366f1"        # Brand primary for focus states
+
+  # Code/syntax highlighting
+  code:
+    background: "#1e1e2e"   # Dark code background
+    text: "#cdd6f4"         # Light text for code
+    comment: "#6c7086"      # Muted comments
+    keyword: "#cba6f7"      # Purple keywords
+    string: "#a6e3a1"       # Green strings
+    number: "#fab387"       # Orange numbers
+    function: "#89b4fa"     # Blue functions
+
+  # Dark mode overrides
+  dark:
+    brand:
+      primary: "#818cf8"    # Indigo-400 - brighter for dark mode
+      secondary: "#a78bfa"  # Violet-400
+      accent: "#22d3ee"     # Cyan-400
+
+    text:
+      primary: "#f9fafb"    # Gray-50
+      secondary: "#d1d5db"  # Gray-300
+      muted: "#6b7280"      # Gray-500
+      link: "#818cf8"       # Indigo-400
+
+    background:
+      primary: "#111827"    # Gray-900
+      secondary: "#1f2937"  # Gray-800
+      tertiary: "#374151"   # Gray-700
+      elevated: "#1f2937"   # Gray-800
+
+    border:
+      default: "#374151"    # Gray-700
+      subtle: "#1f2937"     # Gray-800
+      strong: "#4b5563"     # Gray-600
+
+# ============================================================================
+# TYPOGRAPHY
+# ============================================================================
+# Font families, weights, and sizing scale.
+
+typography:
+  fonts:
+    # Heading font - clear and professional
+    heading:
+      family: "Inter"
+      fallback: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+      weights: [500, 600, 700]
+      source: "google"
+
+    # Body font - highly readable
+    body:
+      family: "Inter"
+      fallback: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+      weights: [400, 500, 600]
+      source: "google"
+
+    # Code font - monospace for technical content
+    code:
+      family: "JetBrains Mono"
+      fallback: "'Fira Code', 'SF Mono', Consolas, monospace"
+      weights: [400, 500]
+      source: "google"
+
+  # Type scale (in pixels, converts to rem in CSS)
+  scale:
+    xs: 12         # Captions, small labels
+    sm: 14         # Secondary text, metadata
+    base: 16       # Body text
+    lg: 18         # Large body, lead paragraphs
+    xl: 20         # H4, small headings
+    2xl: 24        # H3
+    3xl: 30        # H2
+    4xl: 36        # H1
+    5xl: 48        # Hero headings
+    display: 64    # Display/marketing headings
+
+  # Line heights
+  line_height:
+    tight: 1.25    # Headings
+    snug: 1.375    # Subheadings
+    normal: 1.5    # Body text
+    relaxed: 1.625 # Long-form content
+    loose: 2       # Very spacious
+
+  # Letter spacing
+  letter_spacing:
+    tight: "-0.025em"   # Display text
+    normal: "0"         # Body text
+    wide: "0.025em"     # Uppercase labels
+    wider: "0.05em"     # Small caps
+
+# ============================================================================
+# SPACING
+# ============================================================================
+# Consistent spacing scale based on 4px unit.
+
+spacing:
+  unit: 4  # Base unit in pixels
+
+  scale:
+    0: 0
+    0.5: 2
+    1: 4
+    1.5: 6
+    2: 8
+    2.5: 10
+    3: 12
+    3.5: 14
+    4: 16
+    5: 20
+    6: 24
+    7: 28
+    8: 32
+    9: 36
+    10: 40
+    11: 44
+    12: 48
+    14: 56
+    16: 64
+    20: 80
+    24: 96
+    28: 112
+    32: 128
+
+# ============================================================================
+# BORDERS & RADIUS
+# ============================================================================
+# Border widths and radius values.
+
+borders:
+  width:
+    none: 0
+    sm: 1
+    default: 1
+    md: 2
+    lg: 4
+
+  radius:
+    none: 0
+    sm: 2        # Subtle rounding
+    default: 4   # Standard buttons/inputs
+    md: 6        # Cards
+    lg: 8        # Large cards
+    xl: 12       # Modals
+    2xl: 16      # Large panels
+    full: 9999   # Pills, circles
+
+# ============================================================================
+# SHADOWS
+# ============================================================================
+# Elevation system for depth hierarchy.
+
+shadows:
+  none: "none"
+  sm: "0 1px 2px 0 rgba(0, 0, 0, 0.05)"
+  default: "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)"
+  md: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)"
+  lg: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)"
+  xl: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)"
+  2xl: "0 25px 50px -12px rgba(0, 0, 0, 0.25)"
+  inner: "inset 0 2px 4px 0 rgba(0, 0, 0, 0.05)"
+  focus: "0 0 0 3px rgba(99, 102, 241, 0.4)"  # Focus ring using brand color
+
+# ============================================================================
+# VOICE
+# ============================================================================
+# Brand voice and writing style guidelines.
+
+voice:
+  # Core personality traits
+  personality:
+    - "technical"        # Precise and accurate
+    - "helpful"          # User-focused and practical
+    - "efficient"        # Concise and to the point
+    - "professional"     # Polished but approachable
+    - "empowering"       # Helps users succeed
+
+  # Overall tone
+  tone: "professional"   # Options: casual, professional, formal, academic
+
+  # Formality scale (1-5)
+  # 1 = Very casual, 5 = Very formal
+  formality_level: 3
+
+  # Writing style guidelines
+  style:
+    # Target percentage of active voice usage (0.0 - 1.0)
+    active_voice_target: 0.85
+
+    # Target sentence length (words)
+    sentence_length_target: 18
+
+    # Maximum paragraph length (sentences)
+    paragraph_length_max: 5
+
+    # Contraction usage
+    use_contractions: true
+
+    # Person usage
+    use_first_person: true    # "We provide...", "Our system..."
+    use_second_person: true   # "You can...", "Your project..."
+    use_third_person: false   # Avoid "The user should..."
+
+  # Document-type specific overrides
+  by_document_type:
+    api_reference:
+      formality_level: 4
+      style:
+        use_contractions: false
+        sentence_length_target: 15
+        active_voice_target: 0.90
+
+    tutorial:
+      formality_level: 2
+      style:
+        use_contractions: true
+        use_second_person: true
+        sentence_length_target: 16
+
+    changelog:
+      formality_level: 3
+      style:
+        active_voice_target: 0.95
+        sentence_length_target: 12
+        paragraph_length_max: 3
+
+  # Audience-specific overrides
+  by_audience:
+    developer:
+      formality_level: 3
+      personality:
+        - "technical"
+        - "precise"
+
+    content_creator:
+      formality_level: 2
+      personality:
+        - "helpful"
+        - "encouraging"
+        - "practical"
+
+    enterprise:
+      formality_level: 4
+      style:
+        use_contractions: false
+
+  # Terminology preferences
+  preferred_terms:
+    # Use consistent terminology
+    - prefer: "document"
+      avoid: ["doc", "file", "page"]
+
+    - prefer: "project"
+      avoid: ["workspace", "repo", "folder"]
+
+    - prefer: "build"
+      avoid: ["compile", "generate", "create"]
+
+    - prefer: "content"
+      avoid: ["text", "copy", "material"]
+
+    - prefer: "chapter"
+      avoid: ["section", "part", "article"]
+
+    - prefer: "translation"
+      avoid: ["localization", "i18n", "l10n"]
+
+    - prefer: "dashboard"
+      avoid: ["UI", "interface", "web app", "GUI"]
+
+    - prefer: "CLI"
+      avoid: ["command line", "terminal", "shell"]
+
+    - prefer: "configuration"
+      avoid: ["config", "settings", "options"]
+
+    - prefer: "Media Engine"
+      avoid: ["media-engine", "the system", "the tool"]
+
+  # Phrases to avoid
+  avoid_phrases:
+    - "simply"           # Dismissive of complexity
+    - "just"             # Same as above
+    - "obviously"        # Assumes knowledge
+    - "clearly"          # Same as above
+    - "easy"             # Subjective difficulty
+    - "trivial"          # Dismissive
+    - "as you know"      # Assumes knowledge
+    - "of course"        # Same as above
+    - "basically"        # Filler word
+    - "actually"         # Often unnecessary
+    - "in order to"      # Use "to" instead
+    - "due to the fact"  # Use "because" instead
+    - "at this point in time"  # Use "now" instead
+    - "leverage"         # Jargon, use "use"
+    - "utilize"          # Use "use" instead
+
+# ============================================================================
+# ANIMATIONS
+# ============================================================================
+# Motion and transition settings.
+
+animations:
+  # Duration scale (milliseconds)
+  duration:
+    instant: 0
+    fast: 100
+    normal: 200
+    slow: 300
+    slower: 500
+
+  # Easing functions
+  easing:
+    default: "cubic-bezier(0.4, 0, 0.2, 1)"    # ease-out
+    linear: "linear"
+    in: "cubic-bezier(0.4, 0, 1, 1)"           # ease-in
+    out: "cubic-bezier(0, 0, 0.2, 1)"          # ease-out
+    in_out: "cubic-bezier(0.4, 0, 0.2, 1)"     # ease-in-out
+    bounce: "cubic-bezier(0.68, -0.55, 0.265, 1.55)"
+
+  # Respect user preference for reduced motion
+  reduced_motion: true
+
+# ============================================================================
+# COMPONENTS
+# ============================================================================
+# Component-specific styling tokens.
+
+components:
+  # Button variants
+  button:
+    padding:
+      sm: "6px 12px"
+      md: "8px 16px"
+      lg: "12px 24px"
+    font_weight: 500
+    border_radius: "default"
+
+  # Card styling
+  card:
+    padding: "24px"
+    border_radius: "lg"
+    shadow: "default"
+    border: true
+
+  # Input fields
+  input:
+    padding: "8px 12px"
+    border_radius: "default"
+    border_width: 1
+    focus_ring: true
+
+  # Code blocks
+  code_block:
+    padding: "16px"
+    border_radius: "md"
+    font_size: "sm"
+    line_numbers: true
+
+# ============================================================================
+# MEDIA
+# ============================================================================
+# Responsive breakpoints and container widths.
+
+media:
+  breakpoints:
+    sm: 640
+    md: 768
+    lg: 1024
+    xl: 1280
+    2xl: 1536
+
+  containers:
+    sm: 640
+    md: 768
+    lg: 1024
+    xl: 1280
+    prose: 65ch  # Optimal reading width

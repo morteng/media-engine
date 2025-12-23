@@ -1,0 +1,52 @@
+# ============================================================================
+# Media Engine Documentation Project
+# ============================================================================
+# This project.yaml configures the media-engine documentation system.
+# The demo/ directory contains example content for testing.
+
+name: "Media Engine"
+version: "1.0.0"
+description: "Agent-based media production framework for automated content generation"
+
+# Paths configuration
+paths:
+  content: "demo/content"
+  assets: "demo/assets"
+  output: "demo/output"
+  publish: "dist"
+
+# Language configuration
+localization:
+  source: "en"
+  languages:
+    en:
+      name: "English"
+      native_name: "English"
+    "no":
+      name: "Norwegian"
+      native_name: "Norsk"
+
+# Build settings
+build:
+  formats:
+    - html
+    - pptx
+  include_assets: true
+
+# Video/voiceover settings
+video:
+  format: "1080p"
+  fps: 30
+  provider: "elevenlabs"
+
+# Quality thresholds
+quality:
+  min_freshness_days: 90
+  required_metadata:
+    - title
+    - status
+  allowed_statuses:
+    - draft
+    - in_review
+    - approved
+    - final
