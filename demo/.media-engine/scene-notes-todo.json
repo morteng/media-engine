@@ -1,6 +1,20 @@
 {
-  "generated": "2025-12-20T14:30:00.000000",
+  "generated": "2025-12-20T16:58:31.019569",
   "project": "Media Engine Demo",
-  "total_notes": 0,
-  "scripts": []
+  "total_notes": 1,
+  "scripts": [
+    {
+      "script_path": "/Users/Morten/media-engine/demo/content/en/scripts/walkthrough.yaml",
+      "script_name": "Media Engine Walkthrough",
+      "notes": [
+        {
+          "scene_id": "closing",
+          "scene_name": "Media Engine",
+          "scene_type": "",
+          "text": "the pip install example should be larger and centered on screen. also, fade to black at end\n",
+          "created": "2025-12-20T16:58:31.017465"
+        }
+      ]
+    }
+  ]
 }

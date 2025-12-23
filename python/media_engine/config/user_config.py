@@ -222,8 +222,7 @@ def cleanup_temp_projects() -> int:
     original_count = len(config.get("recent_projects", []))
 
     config["recent_projects"] = [
-        p for p in config.get("recent_projects", [])
-        if not _is_temp_path(p.get("path", ""))
+        p for p in config.get("recent_projects", []) if not _is_temp_path(p.get("path", ""))
     ]
 
     removed = original_count - len(config["recent_projects"])

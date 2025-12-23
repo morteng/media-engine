@@ -58,19 +58,34 @@ class QualityReport:
             self.passed = False
 
 
-# Placeholder patterns
-PLACEHOLDER_PATTERNS = [
-    (r"\bTODO\b", "TODO marker found"),
-    (r"\bTBD\b", "TBD marker found"),
-    (r"\bFIXME\b", "FIXME marker found"),
-    (r"\bXXX\b", "XXX marker found"),
-    (r"\[placeholder\]", "Placeholder marker"),
-    (r"\[TBD\]", "TBD marker"),
-    (r"\[TODO\]", "TODO marker"),
-    (r"<placeholder>", "Placeholder marker"),
-    (r"\$\{.*?\}", "Template variable not replaced"),
-    (r"\{\{.*?\}\}", "Template variable not replaced"),
-]
+# Import placeholder patterns from centralized settings
+from ..settings.defaults import QUALITY as QUALITY_SETTINGS
+
+
+# Build pattern list with messages from centralized settings
+def _build_placeholder_patterns():
+    """Build placeholder patterns from settings with descriptive messages."""
+    pattern_messages = {
+        r"\bTODO\b": "TODO marker found",
+        r"\bTBD\b": "TBD marker found",
+        r"\bFIXME\b": "FIXME marker found",
+        r"\bXXX\b": "XXX marker found",
+        r"\[placeholder\]": "Placeholder marker",
+        r"\[TBD\]": "TBD marker",
+        r"\[TODO\]": "TODO marker",
+        r"<placeholder>": "Placeholder marker",
+        r"\$\{.*?\}": "Template variable not replaced",
+        r"\{\{.*?\}\}": "Template variable not replaced",
+    }
+    # Use patterns from settings, falling back to defaults
+    patterns = []
+    for pattern in QUALITY_SETTINGS.placeholder_patterns:
+        message = pattern_messages.get(pattern, f"Pattern matched: {pattern}")
+        patterns.append((pattern, message))
+    return patterns
+
+
+PLACEHOLDER_PATTERNS = _build_placeholder_patterns()
 
 
 def check_placeholders(
@@ -116,7 +131,9 @@ def check_placeholders(
         doc_pattern = r"(markers?|patterns?|detects?|checks?|found|flagged|markør|oppdager|sjekk)"
         if re.search(doc_pattern, line_without_code, re.IGNORECASE):
             # Check if line contains multiple placeholder words (documentation)
-            placeholder_words = re.findall(r"\b(TODO|TBD|FIXME|XXX)\b", line_without_code, re.IGNORECASE)
+            placeholder_words = re.findall(
+                r"\b(TODO|TBD|FIXME|XXX)\b", line_without_code, re.IGNORECASE
+            )
             if len(placeholder_words) >= 2:
                 continue
 

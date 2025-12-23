@@ -6,7 +6,8 @@ describe('Video', () => {
   it('renders video scripts header', async () => {
     render(<Video />);
     await waitFor(() => {
-      expect(screen.getByText('Video Scripts')).toBeInTheDocument();
+      // Header shows "Scripts" with icon
+      expect(screen.getByText('Scripts')).toBeInTheDocument();
     });
   });
 
@@ -27,7 +28,8 @@ describe('Video', () => {
   it('renders page with manage notes subtitle', async () => {
     render(<Video />);
     await waitFor(() => {
-      expect(screen.getByText(/manage video scripts/i)).toBeInTheDocument();
+      // The page shows "manage notes" in the empty state description
+      expect(screen.getByText(/manage notes/i)).toBeInTheDocument();
     });
   });
 });

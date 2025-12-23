@@ -12,9 +12,11 @@ from typing import Any
 # VIDEO SETTINGS
 # =============================================================================
 
+
 @dataclass(frozen=True)
 class VideoDefaults:
     """Default video rendering settings."""
+
     width: int = 1920
     height: int = 1080
     fps: int = 60
@@ -41,9 +43,11 @@ VIDEO = VideoDefaults()
 # VOICEOVER SETTINGS
 # =============================================================================
 
+
 @dataclass(frozen=True)
 class VoiceoverDefaults:
     """Default voiceover generation settings."""
+
     provider: str = "elevenlabs"
     model: str = "eleven_turbo_v2_5"
     language: str = "en"
@@ -73,9 +77,11 @@ VOICEOVER = VoiceoverDefaults()
 # WEB SERVER SETTINGS
 # =============================================================================
 
+
 @dataclass(frozen=True)
 class WebDefaults:
     """Default web server settings."""
+
     host: str = "127.0.0.1"
     port: int = 8080
     auto_open_browser: bool = True
@@ -95,9 +101,11 @@ WEB = WebDefaults()
 # NETWORK SETTINGS
 # =============================================================================
 
+
 @dataclass(frozen=True)
 class NetworkDefaults:
     """Default network and HTTP settings."""
+
     # Timeouts (seconds)
     timeout_default: int = 10
     timeout_download: int = 10
@@ -123,9 +131,11 @@ NETWORK = NetworkDefaults()
 # QUALITY & READABILITY SETTINGS
 # =============================================================================
 
+
 @dataclass(frozen=True)
 class QualityDefaults:
     """Default quality check thresholds."""
+
     # Readability
     max_sentence_words: int = 25
     max_complex_word_percent: float = 15.0
@@ -159,9 +169,11 @@ QUALITY = QualityDefaults()
 # SEARCH SETTINGS
 # =============================================================================
 
+
 @dataclass(frozen=True)
 class SearchDefaults:
     """Default search and indexing settings."""
+
     results_limit: int = 20
     excerpt_length: int = 200  # characters
     min_query_length: int = 2
@@ -175,9 +187,11 @@ SEARCH = SearchDefaults()
 # CACHE SETTINGS
 # =============================================================================
 
+
 @dataclass(frozen=True)
 class CacheDefaults:
     """Default cache settings."""
+
     # TTL (seconds)
     mcp_cache_ttl: int = 30
     link_cache_ttl: int = 900  # 15 minutes
@@ -194,9 +208,11 @@ CACHE = CacheDefaults()
 # THEME & COLORS
 # =============================================================================
 
+
 @dataclass(frozen=True)
 class ThemeDefaults:
     """Default theme and color settings."""
+
     # Light mode colors
     primary: str = "#000000"
     secondary: str = "#333333"
@@ -230,9 +246,11 @@ THEME = ThemeDefaults()
 # PROVENANCE SETTINGS
 # =============================================================================
 
+
 @dataclass(frozen=True)
 class ProvenanceDefaults:
     """Default provenance and tracking settings."""
+
     default_source_type: str = "internal"
     expiry_days: int = 365
     review_stale_days: int = 14  # Days before in_review is considered stale
@@ -245,9 +263,11 @@ PROVENANCE = ProvenanceDefaults()
 # CLI SETTINGS
 # =============================================================================
 
+
 @dataclass(frozen=True)
 class CLIDefaults:
     """Default CLI behavior settings."""
+
     default_language: str = "en"
     missing_translation_lang: str = "no"
     verbose: bool = False
@@ -260,9 +280,11 @@ CLI = CLIDefaults()
 # FILE EXTENSIONS
 # =============================================================================
 
+
 @dataclass(frozen=True)
 class FileExtensions:
     """File extension mappings by content type."""
+
     documents: frozenset = frozenset({".md"})
     configs: frozenset = frozenset({".yaml", ".yml"})
     videos: frozenset = frozenset({".mp4", ".webm"})

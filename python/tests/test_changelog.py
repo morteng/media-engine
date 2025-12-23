@@ -2,13 +2,10 @@
 Tests for the changelog generation module.
 """
 
-import json
-from datetime import datetime, timedelta
-from pathlib import Path
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from media_engine.changelog import (
     ChangeEntry,
     ChangelogGenerator,
@@ -167,9 +164,7 @@ class TestGitHistoryParser:
         from media_engine.changelog import GitHistoryParser
 
         parser = GitHistoryParser(mock_project)
-        change_type, desc, breaking = parser.parse_commit_type(
-            "refactor: BREAKING change to API"
-        )
+        change_type, desc, breaking = parser.parse_commit_type("refactor: BREAKING change to API")
 
         assert breaking is True
 
@@ -178,9 +173,7 @@ class TestGitHistoryParser:
         from media_engine.changelog import GitHistoryParser
 
         parser = GitHistoryParser(mock_project)
-        change_type, desc, breaking = parser.parse_commit_type(
-            "Some commit message without type"
-        )
+        change_type, desc, breaking = parser.parse_commit_type("Some commit message without type")
 
         assert change_type == ChangeType.CHANGED
 
@@ -298,7 +291,7 @@ class TestChangelogGenerator:
         """Test generating changelog from git."""
         mock_get_commits.return_value = []
 
-        entries = generator.generate(include_git=True, include_docs=False)
+        generator.generate(include_git=True, include_docs=False)
 
         mock_get_commits.assert_called_once()
 

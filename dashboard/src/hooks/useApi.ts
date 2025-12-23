@@ -182,3 +182,67 @@ export const useBrowseProject = () => {
     mutationFn: api.browseProject,
   });
 };
+
+// ============== ADVANCED ANALYSIS HOOKS ==============
+
+export const useAdvancedInsights = () =>
+  useQuery({
+    queryKey: ['advancedInsights'] as const,
+    queryFn: api.getAdvancedInsights,
+    staleTime: 1000 * 60 * 5, // 5 minutes - heavy computation
+  });
+
+export const useQualitySummary = () =>
+  useQuery({
+    queryKey: ['qualitySummary'] as const,
+    queryFn: api.getQualitySummary,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+  });
+
+export const useSemanticAnalysis = (options?: Parameters<typeof api.getSemanticAnalysis>[0]) =>
+  useQuery({
+    queryKey: ['semanticAnalysis', options] as const,
+    queryFn: () => api.getSemanticAnalysis(options),
+    staleTime: 1000 * 60 * 5,
+    enabled: true,
+  });
+
+export const useKnowledgeGraph = (options?: Parameters<typeof api.getKnowledgeGraph>[0]) =>
+  useQuery({
+    queryKey: ['knowledgeGraph', options] as const,
+    queryFn: () => api.getKnowledgeGraph(options),
+    staleTime: 1000 * 60 * 5,
+    enabled: true,
+  });
+
+export const useNorwegianReadability = (options?: Parameters<typeof api.getNorwegianReadability>[0]) =>
+  useQuery({
+    queryKey: ['norwegianReadability', options] as const,
+    queryFn: () => api.getNorwegianReadability(options),
+    staleTime: 1000 * 60 * 5,
+    enabled: true,
+  });
+
+export const usePredictiveFreshness = (options?: Parameters<typeof api.getPredictiveFreshness>[0]) =>
+  useQuery({
+    queryKey: ['predictiveFreshness', options] as const,
+    queryFn: () => api.getPredictiveFreshness(options),
+    staleTime: 1000 * 60 * 5,
+    enabled: true,
+  });
+
+export const useEnhancedCodeSync = (options?: Parameters<typeof api.getEnhancedCodeSync>[0]) =>
+  useQuery({
+    queryKey: ['enhancedCodeSync', options] as const,
+    queryFn: () => api.getEnhancedCodeSync(options),
+    staleTime: 1000 * 60 * 5,
+    enabled: true,
+  });
+
+export const useAdvancedAnalysis = (options?: Parameters<typeof api.getAdvancedAnalysis>[0]) =>
+  useQuery({
+    queryKey: ['advancedAnalysis', options] as const,
+    queryFn: () => api.getAdvancedAnalysis(options),
+    staleTime: 1000 * 60 * 5,
+    enabled: true,
+  });

@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, List, Optional
 from jinja2 import Template
 
 if TYPE_CHECKING:
+    from ..brand import BrandContext
     from ..core.theme import Theme
 
 
@@ -59,16 +60,19 @@ class LanguageInfo:
 
 # Project Index Template (root index.html)
 PROJECT_INDEX_TEMPLATE = """<!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark" class="project-index">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ project_name }} - Deliverables</title>
     <link rel="stylesheet" href="shared/fonts.css">
+    <link rel="stylesheet" href="{{ assets_path }}/css/index.css">
     <style>
+        /* CSS Variables - Theme System (dynamic values from theme) */
         :root {
             --bg-primary: {{ theme.dark.background }};
             --bg-secondary: {{ theme.dark.surface }};
+            --bg-tertiary: {{ theme.dark.border }};
             --text-primary: {{ theme.dark.text }};
             --text-muted: {{ theme.dark.muted }};
             --accent-color: {{ theme.dark.accent }};
@@ -80,134 +84,11 @@ PROJECT_INDEX_TEMPLATE = """<!DOCTYPE html>
         [data-theme="light"] {
             --bg-primary: {{ theme.colors.background }};
             --bg-secondary: {{ theme.colors.surface }};
+            --bg-tertiary: {{ theme.colors.border }};
             --text-primary: {{ theme.colors.text }};
             --text-muted: {{ theme.colors.muted }};
             --accent-color: {{ theme.colors.accent }};
             --border-color: {{ theme.colors.border }};
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            font-family: var(--font-body);
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 60px 20px;
-        }
-
-        .container {
-            max-width: 800px;
-            width: 100%;
-        }
-
-        .top-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px 24px;
-            background: var(--bg-primary);
-            border-bottom: 1px solid var(--border-color);
-            z-index: 100;
-        }
-
-        .logo {
-            height: 48px;
-            width: auto;
-        }
-
-        .logo-dark { display: block; }
-        .logo-light { display: none; }
-
-        [data-theme="light"] .logo-dark { display: none; }
-        [data-theme="light"] .logo-light { display: block; }
-
-        header {
-            text-align: center;
-            margin-bottom: 60px;
-            padding-top: 40px;
-        }
-
-        h1 {
-            font-family: var(--font-heading);
-            font-size: 2.5rem;
-            font-weight: 600;
-            margin-bottom: 12px;
-            letter-spacing: -0.02em;
-        }
-
-        .tagline {
-            color: var(--text-muted);
-            font-size: 1.1rem;
-        }
-
-        .languages {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 24px;
-            margin-bottom: 40px;
-        }
-
-        .language-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 32px;
-            text-decoration: none;
-            transition: all 0.2s ease;
-        }
-
-        .language-card:hover {
-            border-color: var(--accent-color);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
-        }
-
-        .language-flag {
-            font-size: 2rem;
-            margin-bottom: 16px;
-        }
-
-        .language-name {
-            font-family: var(--font-heading);
-            font-size: 1.5rem;
-            color: var(--text-primary);
-            margin-bottom: 8px;
-        }
-
-        .language-desc {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        .theme-toggle {
-            padding: 8px 14px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            background: var(--bg-secondary);
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 13px;
-        }
-
-        .theme-toggle:hover {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-        }
-
-        footer {
-            margin-top: auto;
-            padding-top: 40px;
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 0.875rem;
         }
     </style>
 </head>
@@ -247,33 +128,22 @@ PROJECT_INDEX_TEMPLATE = """<!DOCTYPE html>
         <p>Generated {{ date }} by Media Engine</p>
     </footer>
 
-    <script>
-        const toggle = document.getElementById('theme-toggle');
-        function setTheme(theme) {
-            document.documentElement.setAttribute('data-theme', theme);
-            localStorage.setItem('theme', theme);
-            toggle.textContent = theme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode';
-        }
-        const saved = localStorage.getItem('theme') || 'dark';
-        setTheme(saved);
-        toggle.addEventListener('click', () => {
-            const current = document.documentElement.getAttribute('data-theme');
-            setTheme(current === 'light' ? 'dark' : 'light');
-        });
-    </script>
+    <script src="{{ assets_path }}/js/index.js"></script>
 </body>
 </html>"""
 
 
 # Language Index Template (en/index.html)
 LANGUAGE_INDEX_TEMPLATE = """<!DOCTYPE html>
-<html lang="{{ lang_code }}" data-theme="dark">
+<html lang="{{ lang_code }}" data-theme="dark" class="language-index">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ lang_name }} - {{ project_name }}</title>
     <link rel="stylesheet" href="../shared/fonts.css">
+    <link rel="stylesheet" href="{{ assets_path }}/css/index.css">
     <style>
+        /* CSS Variables - Theme System (dynamic values from theme) */
         :root {
             --bg-primary: {{ theme.dark.background }};
             --bg-secondary: {{ theme.dark.surface }};
@@ -294,286 +164,6 @@ LANGUAGE_INDEX_TEMPLATE = """<!DOCTYPE html>
             --text-muted: {{ theme.colors.muted }};
             --accent-color: {{ theme.colors.accent }};
             --border-color: {{ theme.colors.border }};
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            font-family: var(--font-body);
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            min-height: 100vh;
-            padding: 100px 40px 40px 40px;
-        }
-
-        .top-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px 24px;
-            background: var(--bg-primary);
-            border-bottom: 1px solid var(--border-color);
-            z-index: 100;
-        }
-
-        .top-bar-left {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .logo {
-            height: 48px;
-            width: auto;
-        }
-
-        .logo-dark { display: block; }
-        .logo-light { display: none; }
-
-        [data-theme="light"] .logo-dark { display: none; }
-        [data-theme="light"] .logo-light { display: block; }
-
-        .back-link {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 14px;
-        }
-
-        .back-link:hover {
-            color: var(--accent-color);
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .page-title {
-            font-family: var(--font-heading);
-            font-size: 1.75rem;
-            font-weight: 600;
-            margin-bottom: 40px;
-        }
-
-        .theme-toggle {
-            padding: 8px 14px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            background: var(--bg-secondary);
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 13px;
-        }
-
-        .category {
-            margin-bottom: 48px;
-        }
-
-        .category-title {
-            font-family: var(--font-heading);
-            font-size: 1.25rem;
-            color: var(--text-primary);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .category-icon {
-            font-size: 1.25rem;
-        }
-
-        .items {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 16px;
-        }
-
-        .item {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 16px 20px;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            text-decoration: none;
-            transition: all 0.15s ease;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: inherit;
-            text-align: left;
-            width: 100%;
-        }
-
-        .item:hover {
-            border-color: var(--accent-color);
-            background: var(--bg-tertiary);
-        }
-
-        button.item {
-            -webkit-appearance: none;
-            appearance: none;
-        }
-
-        .item-icon {
-            font-size: 1.5rem;
-            flex-shrink: 0;
-        }
-
-        .item-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .item-name {
-            color: var(--text-primary);
-            font-weight: 500;
-            margin-bottom: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .item-desc {
-            color: var(--text-muted);
-            font-size: 0.8rem;
-        }
-
-        .item-type {
-            font-size: 0.7rem;
-            padding: 3px 8px;
-            background: var(--bg-tertiary);
-            border-radius: 4px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* Format badges for grouped items */
-        .format-links {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-
-        .format-badge {
-            font-size: 0.7rem;
-            padding: 4px 10px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            text-decoration: none;
-            transition: all 0.15s ease;
-        }
-
-        .format-badge:hover {
-            background: var(--accent-color);
-            border-color: var(--accent-color);
-            color: white;
-        }
-
-        .format-badge.primary {
-            background: var(--accent-color);
-            border-color: var(--accent-color);
-            color: white;
-        }
-
-        .format-badge.primary:hover {
-            background: var(--text-primary);
-            border-color: var(--text-primary);
-        }
-
-        /* Card without link (container for format badges) */
-        .item-card {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 16px 20px;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            width: 100%;
-        }
-
-        /* Video Player Modal */
-        .video-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .video-modal.active {
-            display: flex;
-        }
-
-        .video-modal-content {
-            position: relative;
-            max-width: 90%;
-            max-height: 90%;
-        }
-
-        .video-modal video {
-            max-width: 100%;
-            max-height: 80vh;
-            border-radius: 8px;
-        }
-
-        .video-modal-close {
-            position: absolute;
-            top: -40px;
-            right: 0;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-            padding: 8px;
-        }
-
-        .video-modal-title {
-            color: white;
-            text-align: center;
-            margin-top: 16px;
-            font-size: 1.1rem;
-        }
-
-        .video-modal-download {
-            display: block;
-            text-align: center;
-            margin-top: 12px;
-            color: var(--accent-color);
-            font-size: 0.9rem;
-        }
-
-        /* Video item play indicator */
-        .item[data-video] .item-icon::after {
-            content: "▶";
-            font-size: 0.6rem;
-            margin-left: 4px;
-        }
-
-        footer {
-            margin-top: 60px;
-            padding-top: 24px;
-            border-top: 1px solid var(--border-color);
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 0.875rem;
         }
     </style>
 </head>
@@ -664,59 +254,7 @@ LANGUAGE_INDEX_TEMPLATE = """<!DOCTYPE html>
         <p>Generated {{ date }} by Media Engine</p>
     </footer>
 
-    <script>
-        // Theme toggle
-        const toggle = document.getElementById('theme-toggle');
-        function setTheme(theme) {
-            document.documentElement.setAttribute('data-theme', theme);
-            localStorage.setItem('theme', theme);
-            toggle.textContent = theme === 'light' ? '🌙 Dark' : '☀️ Light';
-        }
-        const saved = localStorage.getItem('theme') || 'dark';
-        setTheme(saved);
-        toggle.addEventListener('click', () => {
-            const current = document.documentElement.getAttribute('data-theme');
-            setTheme(current === 'light' ? 'dark' : 'light');
-        });
-
-        // Video player modal
-        const videoModal = document.getElementById('video-modal');
-        const videoPlayer = document.getElementById('video-player');
-        const videoTitle = document.getElementById('video-title');
-        const videoDownload = document.getElementById('video-download');
-        const videoClose = document.getElementById('video-close');
-
-        // Open video modal
-        document.querySelectorAll('[data-video]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const videoPath = btn.dataset.video;
-                const title = btn.dataset.title;
-                videoPlayer.querySelector('source').src = videoPath;
-                videoPlayer.load();
-                videoTitle.textContent = title;
-                videoDownload.href = videoPath;
-                videoModal.classList.add('active');
-                videoPlayer.play();
-            });
-        });
-
-        // Close video modal
-        function closeVideoModal() {
-            videoModal.classList.remove('active');
-            videoPlayer.pause();
-            videoPlayer.currentTime = 0;
-        }
-
-        videoClose.addEventListener('click', closeVideoModal);
-        videoModal.addEventListener('click', (e) => {
-            if (e.target === videoModal) closeVideoModal();
-        });
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && videoModal.classList.contains('active')) {
-                closeVideoModal();
-            }
-        });
-    </script>
+    <script src="{{ assets_path }}/js/index.js"></script>
 </body>
 </html>"""
 
@@ -724,10 +262,21 @@ LANGUAGE_INDEX_TEMPLATE = """<!DOCTYPE html>
 class IndexTemplate:
     """Navigation index template renderer."""
 
-    def __init__(self, theme: "Theme" = None):
-        from ..core.theme import COPPER_AND_CREAM
+    def __init__(self, theme: "Theme" = None, brand: "BrandContext" = None):
+        """
+        Initialize index template.
 
-        self.theme = theme or COPPER_AND_CREAM
+        Args:
+            theme: Legacy Theme for styling (deprecated, use brand instead)
+            brand: BrandContext for unified brand access (recommended)
+        """
+        if brand:
+            # Convert BrandContext to Theme for template compatibility
+            self.theme = brand.to_legacy_theme()
+        else:
+            from ..core.theme import COPPER_AND_CREAM
+
+            self.theme = theme or COPPER_AND_CREAM
         self.project_template = Template(PROJECT_INDEX_TEMPLATE)
         self.language_template = Template(LANGUAGE_INDEX_TEMPLATE)
 
@@ -737,6 +286,7 @@ class IndexTemplate:
         languages: List[LanguageInfo],
         tagline: str = "",
         logo_path: Optional[str] = None,
+        assets_path: str = "shared/assets",
     ) -> str:
         """Render the root project index."""
         return self.project_template.render(
@@ -744,6 +294,7 @@ class IndexTemplate:
             languages=languages,
             tagline=tagline,
             logo_path=logo_path,
+            assets_path=assets_path,
             theme=self.theme,
             date=datetime.now().strftime("%Y-%m-%d"),
         )
@@ -755,6 +306,7 @@ class IndexTemplate:
         lang_name: str,
         categories: List[DeliverableCategory],
         logo_path: Optional[str] = None,
+        assets_path: str = "../shared/assets",
     ) -> str:
         """Render a language-specific index."""
         return self.language_template.render(
@@ -763,6 +315,7 @@ class IndexTemplate:
             lang_name=lang_name,
             categories=categories,
             logo_path=logo_path,
+            assets_path=assets_path,
             theme=self.theme,
             date=datetime.now().strftime("%Y-%m-%d"),
         )
@@ -774,10 +327,12 @@ def render_project_index(
     theme: "Theme" = None,
     tagline: str = "",
     logo_path: Optional[str] = None,
+    brand: "BrandContext" = None,
+    assets_path: str = "shared/assets",
 ) -> str:
     """Convenience function to render project index."""
-    template = IndexTemplate(theme=theme)
-    return template.render_project_index(project_name, languages, tagline, logo_path)
+    template = IndexTemplate(theme=theme, brand=brand)
+    return template.render_project_index(project_name, languages, tagline, logo_path, assets_path)
 
 
 def render_language_index(
@@ -787,7 +342,11 @@ def render_language_index(
     categories: List[DeliverableCategory],
     theme: "Theme" = None,
     logo_path: Optional[str] = None,
+    brand: "BrandContext" = None,
+    assets_path: str = "../shared/assets",
 ) -> str:
     """Convenience function to render language index."""
-    template = IndexTemplate(theme=theme)
-    return template.render_language_index(project_name, lang_code, lang_name, categories, logo_path)
+    template = IndexTemplate(theme=theme, brand=brand)
+    return template.render_language_index(
+        project_name, lang_code, lang_name, categories, logo_path, assets_path
+    )

@@ -2,11 +2,7 @@
 Tests for media_engine.publish.packager module.
 """
 
-import shutil
-from pathlib import Path
 from unittest.mock import Mock, patch
-
-import pytest
 
 from media_engine.publish.packager import (
     PublishConfig,
@@ -17,7 +13,6 @@ from media_engine.publish.packager import (
     generate_navigation_indexes,
     publish_project,
 )
-from media_engine.templates.html_index import DeliverableCategory, DeliverableItem
 
 
 class TestPublishConfig:
@@ -780,7 +775,7 @@ class TestCopyDocuments:
 
         # Copy to destination
         dest_dir = temp_dir / "dest"
-        count = copy_documents(mock_project, dest_dir, console_output=False)
+        copy_documents(mock_project, dest_dir, console_output=False)
 
         # Should copy legacy demos and shared files
         assert (dest_dir / "en" / "demos" / "demo1.html").exists()
@@ -1062,9 +1057,10 @@ class TestPublishProject:
             console_output=False,
         )
 
-        with patch("media_engine.publish.packager.create_shared_css") as mock_css, patch(
-            "media_engine.publish.packager.generate_font_faces"
-        ) as mock_fonts:
+        with (
+            patch("media_engine.publish.packager.create_shared_css") as mock_css,
+            patch("media_engine.publish.packager.generate_font_faces") as mock_fonts,
+        ):
             mock_css.return_value = "/* CSS */"
             mock_fonts.return_value = "/* Fonts */"
 

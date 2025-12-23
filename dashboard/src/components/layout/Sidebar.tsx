@@ -1,45 +1,76 @@
 import { NavLink } from 'react-router-dom';
+import { useSidebar } from '@/contexts';
 import {
   LayoutDashboard,
   FileText,
   Shield,
   Hammer,
-  BarChart3,
-  Search,
-  Film,
-  Image,
-  Sparkles
+  Sparkles,
+  X,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { NavTooltip } from '@/components/ui/InfoTooltip';
 
 const navItems = [
   { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { path: '/content', icon: FileText, label: 'Content' },
-  { path: '/video', icon: Film, label: 'Video' },
-  { path: '/media', icon: Image, label: 'Media' },
   { path: '/quality', icon: Shield, label: 'Quality' },
   { path: '/build', icon: Hammer, label: 'Build' },
-  { path: '/insights', icon: BarChart3, label: 'Insights' },
   { path: '/ai-assist', icon: Sparkles, label: 'AI Assist' },
-  { path: '/search', icon: Search, label: 'Search' },
 ];
 
 export function Sidebar() {
+  const { isCollapsed, isMobileOpen, isMobile, closeMobileMenu } = useSidebar();
+
+  const handleNavClick = () => {
+    // Close mobile menu on navigation
+    if (isMobile && isMobileOpen) {
+      closeMobileMenu();
+    }
+  };
+
   return (
-    <aside className="sidebar">
-      <nav className="sidebar-nav">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) => clsx('nav-item', { active: isActive })}
-            end={item.path === '/'}
-          >
-            <item.icon size={18} />
-            <span>{item.label}</span>
-          </NavLink>
-        ))}
-      </nav>
-    </aside>
+    <>
+      {/* Mobile overlay backdrop */}
+      {isMobile && isMobileOpen && (
+        <div className="sidebar-backdrop" onClick={closeMobileMenu} />
+      )}
+
+      <aside className={clsx('sidebar', {
+        collapsed: isCollapsed && !isMobile,
+        'mobile-open': isMobile && isMobileOpen,
+        'mobile-closed': isMobile && !isMobileOpen,
+      })}>
+        {/* Mobile header with close button */}
+        {isMobile && isMobileOpen && (
+          <div className="sidebar-header">
+            <span className="sidebar-title">Menu</span>
+            <button className="sidebar-close" onClick={closeMobileMenu} title="Close menu">
+              <X size={20} />
+            </button>
+          </div>
+        )}
+
+        <nav className="sidebar-nav">
+          {navItems.map((item) => (
+            <NavTooltip
+              key={item.path}
+              label={item.label}
+              show={isCollapsed && !isMobile}
+            >
+              <NavLink
+                to={item.path}
+                className={({ isActive }) => clsx('nav-item', { active: isActive })}
+                end={item.path === '/'}
+                onClick={handleNavClick}
+              >
+                <item.icon size={18} />
+                {(!isCollapsed || isMobile) && <span>{item.label}</span>}
+              </NavLink>
+            </NavTooltip>
+          ))}
+        </nav>
+      </aside>
+    </>
   );
 }

@@ -91,12 +91,14 @@ cd dashboard && npm install && npm run build
         # Check which projects still exist
         result = []
         for p in projects:
-            result.append({
-                "path": p.path,
-                "name": p.name,
-                "last_accessed": p.last_accessed,
-                "exists": project_exists(p.path),
-            })
+            result.append(
+                {
+                    "path": p.path,
+                    "name": p.name,
+                    "last_accessed": p.last_accessed,
+                    "exists": project_exists(p.path),
+                }
+            )
 
         # Get current project info
         current = None
@@ -131,14 +133,16 @@ cd dashboard && npm install && npm run build
             new_project = set_project(project_path)
 
             # Notify connected clients of project switch
-            await manager.broadcast({
-                "type": "project_switched",
-                "project": {
-                    "path": str(new_project.root),
-                    "name": new_project.config.name,
-                },
-                "timestamp": datetime.now().isoformat(),
-            })
+            await manager.broadcast(
+                {
+                    "type": "project_switched",
+                    "project": {
+                        "path": str(new_project.root),
+                        "name": new_project.config.name,
+                    },
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
 
             return {
                 "status": "switched",
@@ -173,9 +177,9 @@ cd dashboard && npm install && npm run build
                 script_lines = [
                     'tell application "System Events" to activate',
                     (
-                        'set projectFile to POSIX path of (choose file with prompt '
+                        "set projectFile to POSIX path of (choose file with prompt "
                         '"Select project.yaml" of type {"yaml", "public.yaml"} '
-                        'default location (path to home folder))'
+                        "default location (path to home folder))"
                     ),
                     "return projectFile",
                 ]

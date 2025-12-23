@@ -11,13 +11,16 @@ import hashlib
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import yaml
 
 from ..settings import CACHE, CLI, DIRS, ENV
 from .config import Config
 from .theme import Theme, load_theme
+
+if TYPE_CHECKING:
+    from ..brand import BrandContext, BrandProfile
 
 
 @dataclass
@@ -56,6 +59,8 @@ class Project:
     languages: dict[str, LanguageConfig] = field(default_factory=dict)
     source_language: str = CLI.default_language
     _cache_manifest: dict = field(default_factory=dict)
+    _brand_profile: Optional["BrandProfile"] = field(default=None, repr=False)
+    _brand_context: Optional["BrandContext"] = field(default=None, repr=False)
 
     @classmethod
     def load(cls, project_dir: Path) -> "Project":
@@ -123,6 +128,37 @@ class Project:
     def name(self) -> str:
         """Project name."""
         return self.config.name
+
+    # === Brand System ===
+
+    @property
+    def brand(self) -> "BrandProfile":
+        """
+        Get the brand profile for this project.
+
+        Lazy-loads from brand.yaml or falls back to theme.yaml.
+        """
+        if self._brand_profile is None:
+            from ..brand import load_brand_profile
+
+            self._brand_profile = load_brand_profile(self.root)
+        return self._brand_profile
+
+    @property
+    def brand_context(self) -> "BrandContext":
+        """
+        Get a BrandContext for builder integration.
+
+        This is the recommended way to access brand assets in builders.
+        """
+        if self._brand_context is None:
+            from ..brand import BrandContext
+
+            self._brand_context = BrandContext(
+                profile=self.brand,
+                output_dir=self.output_dir,
+            )
+        return self._brand_context
 
     # === Path Properties ===
 
@@ -260,11 +296,11 @@ class Project:
         with open(path, "rb") as f:
             for chunk in iter(lambda: f.read(CACHE.chunk_size), b""):
                 hasher.update(chunk)
-        return hasher.hexdigest()[:CACHE.hash_length]
+        return hasher.hexdigest()[: CACHE.hash_length]
 
     def hash_content(self, content: str) -> str:
         """Compute SHA256 hash of string content."""
-        return hashlib.sha256(content.encode()).hexdigest()[:CACHE.hash_length]
+        return hashlib.sha256(content.encode()).hexdigest()[: CACHE.hash_length]
 
     def is_cached(self, key: str, current_hash: str) -> bool:
         """Check if a cached item is still valid."""

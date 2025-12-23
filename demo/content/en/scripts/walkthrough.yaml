@@ -1,6 +1,6 @@
 # Media Engine Walkthrough
 # A complete tour of Media Engine's capabilities
-# Duration: ~90 seconds | Resolution: 1920x1080 @ 60fps
+# Duration: ~100 seconds | Resolution: 1920x1080 @ 60fps
 
 title: "Media Engine Walkthrough"
 description: "Complete tour of the agent-operated media production framework"
@@ -93,28 +93,47 @@ scenes:
         - Readability
 
   # ============================================================
-  # CONTENT MANAGEMENT (0:32 - 0:42)
+  # CONTENT PREVIEW (0:32 - 0:42)
   # ============================================================
   - id: content
-    name: "Content Management"
+    name: "Rich Content Preview"
     type: feature
     duration: 10
-    voiceover: "Browse all your documents, media files, and assets in one place. Preview markdown with live rendering, view metadata, and manage translations across languages."
+    voiceover: "Browse documents with beautiful rendered previews. Toggle between preview, source, and edit modes. View frontmatter metadata, and manage translations across languages."
     visual:
       background: dark
       transition_in: slide-left
       feature_card:
         icon: folder
         highlight: blue
-      pipeline:
-        - Documents
-        - Media
-        - Packs
-        - Assets
-        - Translations
+      highlights:
+        - Markdown Preview
+        - Edit Mode
+        - Frontmatter Display
+        - Multi-language
 
   # ============================================================
-  # QUALITY CHECKS (0:42 - 0:52)
+  # MEDIA GALLERY (0:42 - 0:50)
+  # ============================================================
+  - id: media
+    name: "Media Gallery"
+    type: feature
+    duration: 8
+    voiceover: "All your media in one place. Browse videos, audio files, and demos with instant previews. Filter by type, play directly in the browser."
+    visual:
+      background: gradient
+      transition_in: slide-left
+      feature_card:
+        icon: media
+        highlight: purple
+      highlights:
+        - Video Preview
+        - Audio Player
+        - Type Filtering
+        - File Details
+
+  # ============================================================
+  # QUALITY CHECKS (0:50 - 1:00)
   # ============================================================
   - id: quality
     name: "Quality Assurance"

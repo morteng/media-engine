@@ -382,9 +382,7 @@ class TaskQueue:
 
         by_status = {}
         for status in TaskStatus:
-            by_status[status.value] = len(
-                [t for t in tasks if t.status == status]
-            )
+            by_status[status.value] = len([t for t in tasks if t.status == status])
 
         by_operation = {}
         for task in tasks:

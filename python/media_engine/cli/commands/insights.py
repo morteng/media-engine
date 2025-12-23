@@ -49,7 +49,10 @@ def cmd_health(args):
             print(json.dumps(health.to_dict(), indent=2))
         else:
             print("\n╔══════════════════════════════════════════════════╗")
-            print(f"║  PROJECT HEALTH: {health.overall:.0f}/100 (Grade: {health.grade})".ljust(51) + "║")
+            print(
+                f"║  PROJECT HEALTH: {health.overall:.0f}/100 (Grade: {health.grade})".ljust(51)
+                + "║"
+            )
             print(f"║  Status: {health.status}".ljust(51) + "║")
             print("╚══════════════════════════════════════════════════╝")
             print("\nComponent Breakdown:")
@@ -108,9 +111,13 @@ def cmd_stats(args):
         # Activity
         print("║  Recent Activity:".ljust(51) + "║")
         print(f"║    Modified this week: {stats.activity.documents_modified_week}".ljust(51) + "║")
-        print(f"║    Modified this month: {stats.activity.documents_modified_month}".ljust(51) + "║")
+        print(
+            f"║    Modified this month: {stats.activity.documents_modified_month}".ljust(51) + "║"
+        )
         if stats.activity.contributors:
-            print(f"║    Contributors: {', '.join(stats.activity.contributors[:3])}".ljust(51) + "║")
+            print(
+                f"║    Contributors: {', '.join(stats.activity.contributors[:3])}".ljust(51) + "║"
+            )
 
         print("╚══════════════════════════════════════════════════╝")
 
@@ -163,7 +170,13 @@ def cmd_incomplete(args):
                         current_doc = str(item.document)
                         print(f"\n{current_doc}")
 
-                    priority_icon = "🔴" if item.priority == "high" else "🟡" if item.priority == "medium" else "⚪"
+                    priority_icon = (
+                        "🔴"
+                        if item.priority == "high"
+                        else "🟡"
+                        if item.priority == "medium"
+                        else "⚪"
+                    )
                     print(f"  {priority_icon} Line {item.line_number}: {item.content[:60]}")
 
 
@@ -323,7 +336,13 @@ def cmd_velocity(args):
         if metrics.area_breakdown:
             print("\nArea Breakdown:")
             for area, area_metrics in list(metrics.area_breakdown.items())[:5]:
-                trend_icon = "↑" if area_metrics.trend == "up" else "↓" if area_metrics.trend == "down" else "→"
+                trend_icon = (
+                    "↑"
+                    if area_metrics.trend == "up"
+                    else "↓"
+                    if area_metrics.trend == "down"
+                    else "→"
+                )
                 print(f"  {area}: {area_metrics.commits} changes {trend_icon}")
 
 

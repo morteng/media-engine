@@ -212,10 +212,7 @@ class HealthScorer:
         components["metadata"] = self._score_metadata(frontmatter, issues, doc_path)
 
         # Calculate weighted overall score
-        overall = sum(
-            components.get(key, 100) * weight
-            for key, weight in self.weights.items()
-        )
+        overall = sum(components.get(key, 100) * weight for key, weight in self.weights.items())
 
         # Determine grade and status
         grade = self._calculate_grade(overall)
@@ -278,9 +275,7 @@ class HealthScorer:
             overall = 100.0
 
         # Identify critical documents
-        critical_documents = [
-            path for path, score in document_scores.items() if score < 50
-        ]
+        critical_documents = [path for path, score in document_scores.items() if score < 50]
 
         grade = self._calculate_grade(overall)
         status = self._calculate_status(overall)
@@ -303,9 +298,7 @@ class HealthScorer:
         project_health = self.score_project()
         return [i for i in project_health.issues if i.severity == "critical"]
 
-    def _score_freshness(
-        self, path: Path, issues: list[HealthIssue], doc_path: Path
-    ) -> float:
+    def _score_freshness(self, path: Path, issues: list[HealthIssue], doc_path: Path) -> float:
         """Score based on how recently the document was modified."""
         try:
             mtime = datetime.fromtimestamp(path.stat().st_mtime)
@@ -438,14 +431,12 @@ class HealthScorer:
 
         return max(0, score)
 
-    def _score_links(
-        self, body: str, issues: list[HealthIssue], doc_path: Path
-    ) -> float:
+    def _score_links(self, body: str, issues: list[HealthIssue], doc_path: Path) -> float:
         """Score based on link validity."""
         import re
 
         # Find markdown links
-        link_pattern = re.compile(r'\[([^\]]+)\]\(([^)]+)\)')
+        link_pattern = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
         links = link_pattern.findall(body)
 
         if not links:
@@ -474,9 +465,7 @@ class HealthScorer:
 
         return 100.0
 
-    def _score_readability(
-        self, body: str, issues: list[HealthIssue], doc_path: Path
-    ) -> float:
+    def _score_readability(self, body: str, issues: list[HealthIssue], doc_path: Path) -> float:
         """Score based on readability metrics."""
         # Simple readability check based on sentence and word length
         sentences = body.split(".")
@@ -578,7 +567,7 @@ class HealthScorer:
         try:
             end_idx = content.index("---", 3)
             frontmatter = yaml.safe_load(content[3:end_idx]) or {}
-            body = content[end_idx + 3:].strip()
+            body = content[end_idx + 3 :].strip()
             return frontmatter, body
         except (ValueError, yaml.YAMLError):
             return {}, content

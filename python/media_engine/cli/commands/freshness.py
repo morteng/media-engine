@@ -49,7 +49,9 @@ def cmd_freshness(args):
         try:
             filter_type = ContentType(args.type)
             report.stale_items = [i for i in report.stale_items if i.content_type == filter_type]
-            report.expired_items = [i for i in report.expired_items if i.content_type == filter_type]
+            report.expired_items = [
+                i for i in report.expired_items if i.content_type == filter_type
+            ]
         except ValueError:
             console.print(f"[red]Unknown content type: {args.type}[/red]")
             sys.exit(1)

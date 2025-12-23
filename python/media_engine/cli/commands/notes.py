@@ -45,9 +45,7 @@ def cmd_notes(args):
 
         if getattr(args, "json", False):
             print(
-                json.dumps(
-                    {"count": len(notes), "notes": [n.to_dict() for n in notes]}, indent=2
-                )
+                json.dumps({"count": len(notes), "notes": [n.to_dict() for n in notes]}, indent=2)
             )
         else:
             table = Table(title=f"Notes ({len(notes)})")
@@ -99,11 +97,7 @@ def cmd_notes(args):
             text=args.text,
             target_id=getattr(args, "target_id", None),
             priority=NotePriority(getattr(args, "priority", "medium")),
-            tags=(
-                [t.strip() for t in args.tags.split(",")]
-                if getattr(args, "tags", None)
-                else []
-            ),
+            tags=([t.strip() for t in args.tags.split(",")] if getattr(args, "tags", None) else []),
         )
         console.print(f"[green]Note added with ID: {note.note_id}[/green]")
 
@@ -162,7 +156,9 @@ def cmd_notes(args):
                     console.print(f"  [{priority_colors.get(p, '')}]{p}[/]: {count}")
 
             if report.pending_notes:
-                console.print(f"\n[bold yellow]Top Pending ({len(report.pending_notes)}):[/bold yellow]")
+                console.print(
+                    f"\n[bold yellow]Top Pending ({len(report.pending_notes)}):[/bold yellow]"
+                )
                 for note in report.pending_notes[:5]:
                     text = note.text[:50] + "..." if len(note.text) > 50 else note.text
                     console.print(f"  [{note.priority.value}] {text}")

@@ -6,11 +6,15 @@ import {
   FileText,
   Film,
   Image,
-  CheckCircle,
-  Package,
-  BarChart3,
+  Shield,
+  Hammer,
   Sparkles,
   Moon,
+  Languages,
+  Clock,
+  BarChart3,
+  Activity,
+  Palette,
 } from 'lucide-react';
 import './CommandPalette.css';
 
@@ -31,16 +35,29 @@ export function CommandPalette() {
   const navigate = useNavigate();
 
   const commands: Command[] = [
-    // Navigation
+    // Main Navigation
     { id: 'nav-home', label: 'Go to Dashboard', icon: <Home size={16} />, action: () => navigate('/'), category: 'Navigation' },
     { id: 'nav-content', label: 'Go to Content', icon: <FileText size={16} />, action: () => navigate('/content'), category: 'Navigation' },
-    { id: 'nav-video', label: 'Go to Video', icon: <Film size={16} />, action: () => navigate('/video'), category: 'Navigation' },
-    { id: 'nav-media', label: 'Go to Media', icon: <Image size={16} />, action: () => navigate('/media'), category: 'Navigation' },
-    { id: 'nav-quality', label: 'Go to Quality', icon: <CheckCircle size={16} />, action: () => navigate('/quality'), category: 'Navigation' },
-    { id: 'nav-build', label: 'Go to Build', icon: <Package size={16} />, action: () => navigate('/build'), category: 'Navigation' },
-    { id: 'nav-insights', label: 'Go to Insights', icon: <BarChart3 size={16} />, action: () => navigate('/insights'), category: 'Navigation' },
+    { id: 'nav-quality', label: 'Go to Quality', icon: <Shield size={16} />, action: () => navigate('/quality'), category: 'Navigation' },
+    { id: 'nav-build', label: 'Go to Build', icon: <Hammer size={16} />, action: () => navigate('/build'), category: 'Navigation' },
     { id: 'nav-ai', label: 'Go to AI Assist', icon: <Sparkles size={16} />, action: () => navigate('/ai-assist'), category: 'Navigation' },
-    { id: 'nav-search', label: 'Go to Search', icon: <Search size={16} />, action: () => navigate('/search'), category: 'Navigation' },
+
+    // Content sub-pages
+    { id: 'nav-documents', label: 'Content → Documents', icon: <FileText size={16} />, action: () => navigate('/content'), category: 'Content' },
+    { id: 'nav-translations', label: 'Content → Translations', icon: <Languages size={16} />, action: () => navigate('/content/translations'), category: 'Content' },
+    { id: 'nav-video', label: 'Content → Video', icon: <Film size={16} />, action: () => navigate('/content/video'), category: 'Content' },
+    { id: 'nav-media', label: 'Content → Media', icon: <Image size={16} />, action: () => navigate('/content/media'), category: 'Content' },
+
+    // Quality sub-pages
+    { id: 'nav-quality-checks', label: 'Quality → Checks', icon: <Shield size={16} />, action: () => navigate('/quality'), category: 'Quality' },
+    { id: 'nav-freshness', label: 'Quality → Freshness', icon: <Clock size={16} />, action: () => navigate('/quality/freshness'), category: 'Quality' },
+    { id: 'nav-analytics', label: 'Quality → Analytics', icon: <BarChart3 size={16} />, action: () => navigate('/quality/analytics'), category: 'Quality' },
+    { id: 'nav-activity', label: 'Quality → Activity', icon: <Activity size={16} />, action: () => navigate('/quality/activity'), category: 'Quality' },
+
+    // Build sub-pages
+    { id: 'nav-build-outputs', label: 'Build → Outputs', icon: <Hammer size={16} />, action: () => navigate('/build'), category: 'Build' },
+    { id: 'nav-brand', label: 'Build → Brand', icon: <Palette size={16} />, action: () => navigate('/build/brand'), category: 'Build' },
+
     // Actions
     {
       id: 'theme-toggle',

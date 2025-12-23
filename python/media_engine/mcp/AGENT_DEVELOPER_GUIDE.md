@@ -362,7 +362,7 @@ Export complete session activity report.
 
 ### 6. Quality & Validation Tools
 
-Check quality and validate content.
+Check quality and validate content with comprehensive analysis.
 
 #### `quality_check()`
 Run comprehensive quality checks.
@@ -380,9 +380,174 @@ Validate entire project against schema.
 - Schema violations
 - Reference integrity
 
+#### `quality_report_comprehensive()`
+Run ALL analysis modules and get unified quality report.
+
+**Returns:**
+- Project health summary
+- Basic quality (readability, links, schema)
+- Semantic analysis (duplicates, terminology)
+- Knowledge graph (concepts, prerequisites)
+- Freshness predictions (staleness risk)
+- Code-doc synchronization issues
+- Advanced analysis (audience, style)
+- Unified recommendations
+
+**Use Case:** Get complete quality picture before major releases or reviews.
+
+```
+Agent: "Give me a complete quality report"
+→ quality_report_comprehensive()
+→ Returns unified report across all 7+ analysis modules
+→ Prioritized recommendations for improvement
+```
+
+#### `quality_report_document(document_path: str)`
+Get detailed quality analysis for a specific document.
+
+**Parameters:**
+- `document_path`: Path to the document to analyze
+
+**Returns:**
+- Document-specific health score
+- Similar documents (semantic analysis)
+- Concepts and prerequisites (knowledge graph)
+- Readability metrics (LIX for Norwegian, Flesch for English)
+- Staleness risk prediction
+- Code-doc sync status
+
+**Use Case:** Deep-dive into a specific document's quality.
+
+```
+Agent: "Analyze the API authentication chapter"
+→ quality_report_document("chapters/08_api_auth.md")
+→ Returns comprehensive analysis for that document
+```
+
+#### `quality_report_module(module: str)`
+Get analysis from a specific module.
+
+**Parameters:**
+- `module`: One of "semantic", "knowledge", "freshness", "codesync", "readability", "advanced"
+
+**Returns:**
+- Module-specific analysis results
+- Issues and recommendations
+
+**Use Case:** Focus on a specific type of analysis.
+
+```
+Agent: "Show me semantic duplicates"
+→ quality_report_module("semantic")
+→ Returns near-duplicates, terminology drift, content clusters
+```
+
+#### `quality_report_issues(priority: str = "all")`
+Get prioritized list of all quality issues.
+
+**Parameters:**
+- `priority`: "high", "medium", "low", or "all"
+
+**Returns:**
+- Issues sorted by priority
+- Source module for each issue
+- Specific recommendations
+
 ---
 
-### 7. Webhook & Event Tools
+### 7. Advanced Analysis Tools
+
+Deep analysis capabilities for content quality and maintenance.
+
+#### Semantic Analysis
+
+Detect content similarity and terminology consistency.
+
+**Available through `quality_report_module("semantic")`:**
+- **Near-Duplicates**: Documents with >85% content similarity
+- **Terminology Drift**: Inconsistent term usage across documents
+- **Content Clusters**: Automatic topic grouping
+
+**Use Case:** Find redundant content and maintain consistent vocabulary.
+
+```
+Agent: "Are there any duplicate documents?"
+→ natural_language_query("duplicate documents")
+→ Returns semantic similarity analysis
+```
+
+#### Knowledge Graph
+
+Map concepts and relationships across documentation.
+
+**Available through `quality_report_module("knowledge")`:**
+- **Concept Extraction**: Key concepts in each document
+- **Prerequisite Mapping**: What readers should know before each document
+- **Orphan Concepts**: Concepts mentioned but never explained
+- **Coverage Score**: How well concepts are interconnected
+
+**Use Case:** Ensure documentation has proper learning flow.
+
+```
+Agent: "Which concepts are mentioned but never explained?"
+→ natural_language_query("orphan concepts")
+→ Returns list of concepts needing definition
+```
+
+#### Predictive Freshness
+
+Predict which documents will become stale.
+
+**Available through `quality_report_module("freshness")`:**
+- **Staleness Risk Score**: 0-1 probability of becoming stale
+- **Days Until Stale**: Predicted time before review needed
+- **Risk Factors**: Why document is at risk (references volatile content, etc.)
+
+**Use Case:** Proactive content maintenance planning.
+
+```
+Agent: "What content is at risk of becoming outdated?"
+→ natural_language_query("staleness risk")
+→ Returns high-risk documents with predicted timeframes
+```
+
+#### Code-Doc Sync
+
+Detect mismatches between code references and documentation.
+
+**Available through `quality_report_module("codesync")`:**
+- **Syntax Errors**: Invalid code examples
+- **API Mismatches**: Deprecated or changed API references
+- **Version Drift**: Documentation doesn't match code version
+
+**Use Case:** Keep code examples accurate.
+
+```
+Agent: "Are the code examples up to date?"
+→ natural_language_query("code sync")
+→ Returns list of outdated code references
+```
+
+#### Norwegian Readability (LIX)
+
+Specific readability analysis for Norwegian content.
+
+**Available through `quality_report_module("readability")`:**
+- **LIX Score**: Standard Norwegian readability metric
+- **Difficulty Level**: "easy", "medium", "difficult", "very_difficult"
+- **Recommendations**: How to simplify complex content
+
+**Use Case:** Ensure Norwegian content is accessible.
+
+```
+Agent: "How readable is our Norwegian content?"
+→ natural_language_query("norwegian readability")
+→ Returns LIX scores and difficulty assessments
+```
+
+---
+
+### 8. Webhook & Event Tools
 
 Subscribe to and receive notifications about project changes.
 
@@ -429,7 +594,7 @@ Receive and handle an event notification.
 
 ---
 
-### 8. Claude Code Specific Tools
+### 9. Claude Code Specific Tools
 
 Integration with Claude Code (CLI tool).
 
@@ -590,6 +755,95 @@ log_agent_action(
     "Created chapter and Norwegian translation",
     "chapters/XX_new_feature.md"
 )
+```
+
+### Workflow 4: Advanced Quality Analysis & Maintenance
+
+```python
+# 1. Get comprehensive quality report
+report = quality_report_comprehensive()
+# Returns unified analysis from all modules
+
+# 2. Review high-priority issues
+issues = quality_report_issues(priority="high")
+# "3 near-duplicate documents found"
+# "5 documents at high staleness risk"
+# "2 critical code-doc sync issues"
+
+# 3. Deep-dive into semantic duplicates
+semantic = quality_report_module("semantic")
+for dup in semantic["near_duplicates"]:
+    # Analyze each duplicate pair
+    doc1_context = get_document_context(dup["doc1"])
+    doc2_context = get_document_context(dup["doc2"])
+    # Decide: consolidate, differentiate, or leave as-is
+
+# 4. Check freshness predictions
+freshness = quality_report_module("freshness")
+high_risk = [p for p in freshness["predictions"] if p["risk_score"] > 0.7]
+# Schedule reviews for high-risk documents
+
+# 5. Fix code-doc sync issues
+codesync = quality_report_module("codesync")
+for issue in codesync["critical_issues"]:
+    # Update code examples to match current API
+    doc = read_document(issue["document"])
+    # Fix the issue
+    update_document_content(issue["document"], fixed_content)
+    log_agent_action(
+        "codesync_fix",
+        f"Fixed {issue['type']} in {issue['document']}",
+        "Updated code example to match API v2.5",
+        issue["document"]
+    )
+
+# 6. Check Norwegian readability
+readability = quality_report_module("readability")
+difficult = [r for r in readability["norwegian"] if r["level"] == "very_difficult"]
+# Flag documents needing simplification
+
+# 7. Export session report
+report = export_session_report()
+# Summary of all quality improvements made
+```
+
+### Workflow 5: Pre-Release Quality Gate
+
+```python
+# 1. Run comprehensive quality check
+report = quality_report_comprehensive()
+
+# 2. Check if project passes quality gates
+gates = {
+    "health_score": report["health"]["score"] >= 80,
+    "no_critical_issues": len(report["issues"]["critical"]) == 0,
+    "translations_current": len(report["translation"]["outdated"]) == 0,
+    "no_high_risk_staleness": len([p for p in report["freshness"]["predictions"]
+                                   if p["risk_score"] > 0.8]) == 0,
+    "code_examples_valid": len(report["codesync"]["critical"]) == 0,
+}
+
+# 3. Report gate status
+all_passed = all(gates.values())
+if all_passed:
+    log_agent_action(
+        "quality_gate_passed",
+        "Pre-release quality check",
+        "All quality gates passed",
+        "project"
+    )
+else:
+    failed_gates = [g for g, passed in gates.items() if not passed]
+    log_agent_action(
+        "quality_gate_failed",
+        "Pre-release quality check",
+        f"Failed gates: {', '.join(failed_gates)}",
+        "project"
+    )
+    # Get specific issues for each failed gate
+    for gate in failed_gates:
+        issues = quality_report_issues(priority="high")
+        # Help fix each issue
 ```
 
 ---

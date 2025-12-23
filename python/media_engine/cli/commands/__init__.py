@@ -1,5 +1,7 @@
 """CLI command modules."""
 
+from .analyze import cmd_analyze
+from .brand import cmd_brand
 from .build import cmd_build
 from .cache import cmd_cache
 from .content import cmd_changelog, cmd_gaps, cmd_links, cmd_readability, cmd_security
@@ -32,7 +34,9 @@ from .translation import cmd_translation
 from .validate import cmd_validate
 
 __all__ = [
+    "cmd_analyze",
     "cmd_status",
+    "cmd_brand",
     "cmd_build",
     "cmd_publish",
     "cmd_release",

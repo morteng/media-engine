@@ -87,14 +87,10 @@ class TrackedItem:
             content_type=ContentType(data["type"]),
             depends_on=[Path(p) for p in data.get("depends_on", [])],
             last_modified=(
-                datetime.fromisoformat(data["last_modified"])
-                if data.get("last_modified")
-                else None
+                datetime.fromisoformat(data["last_modified"]) if data.get("last_modified") else None
             ),
             last_checked=(
-                datetime.fromisoformat(data["last_checked"])
-                if data.get("last_checked")
-                else None
+                datetime.fromisoformat(data["last_checked"]) if data.get("last_checked") else None
             ),
             content_hash=data.get("content_hash", ""),
             freshness_status=FreshnessStatus(data.get("freshness_status", "fresh")),

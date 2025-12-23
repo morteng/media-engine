@@ -115,10 +115,7 @@ class TestFindSourceScript:
         config.paths.content = "content"
         theme = Theme()
 
-        lang_configs = {
-            lang: LanguageConfig(code=lang, name=lang.upper())
-            for lang in languages
-        }
+        lang_configs = {lang: LanguageConfig(code=lang, name=lang.upper()) for lang in languages}
 
         project = Project(
             root=root_dir,
@@ -209,10 +206,7 @@ class TestFindSourceDemo:
         config.paths.content = "content"
         theme = Theme()
 
-        lang_configs = {
-            lang: LanguageConfig(code=lang, name=lang.upper())
-            for lang in languages
-        }
+        lang_configs = {lang: LanguageConfig(code=lang, name=lang.upper()) for lang in languages}
 
         project = Project(
             root=root_dir,
@@ -239,8 +233,10 @@ class TestGenerateSceneNotesExport:
 
         app = FastAPI()
         manager = ConnectionManager()
+
         def get_project():
             return project
+
         static_dir = temp_dir / "static"
         static_dir.mkdir()
 
@@ -293,22 +289,24 @@ scenes:
                 "scene1": {
                     "text": "Improve the voiceover pacing",
                     "created": "2024-01-15T10:00:00",
-                    "scene_id": "scene1"
+                    "scene_id": "scene1",
                 },
                 "scene2": {
                     "text": "Add background music",
                     "created": "2024-01-15T11:00:00",
-                    "scene_id": "scene2"
-                }
+                    "scene_id": "scene2",
+                },
             },
-            "updated": "2024-01-15T11:00:00"
+            "updated": "2024-01-15T11:00:00",
         }
         notes_file.write_text(json.dumps(notes_data))
 
         app = FastAPI()
         manager = ConnectionManager()
+
         def get_project():
             return project
+
         static_dir = temp_dir / "static"
         static_dir.mkdir()
 
@@ -342,8 +340,10 @@ scenes:
 
         app = FastAPI()
         manager = ConnectionManager()
+
         def get_project():
             return project
+
         static_dir = temp_dir / "static"
         static_dir.mkdir()
 
@@ -365,9 +365,7 @@ scenes:
         config.paths.content = "content"
         theme = Theme()
 
-        lang_configs = {
-            "en": LanguageConfig(code="en", name="English")
-        }
+        lang_configs = {"en": LanguageConfig(code="en", name="English")}
 
         project = Project(
             root=root_dir,
@@ -398,8 +396,10 @@ class TestUpdateSceneNotesExport:
 
         app = FastAPI()
         manager = ConnectionManager()
+
         def get_project():
             return project
+
         static_dir = temp_dir / "static"
         static_dir.mkdir()
 
@@ -410,10 +410,7 @@ class TestUpdateSceneNotesExport:
         # Save a scene note via the API
         response = client.post(
             "/api/scene-notes/content_en_scripts_test.yaml",
-            params={
-                "scene_id": "scene1",
-                "note": "Test note"
-            }
+            json={"scene_id": "scene1", "note": "Test note"},
         )
 
         assert response.status_code == 200
@@ -461,8 +458,10 @@ scenes:
 
         app = FastAPI()
         manager = ConnectionManager()
+
         def get_project():
             return project
+
         static_dir = temp_dir / "static"
         static_dir.mkdir()
 
@@ -473,10 +472,7 @@ scenes:
         # Save a scene note via the API
         response = client.post(
             "/api/scene-notes/content/en/scripts/demo.yaml",
-            params={
-                "scene_id": "intro",
-                "note": "Needs improvement"
-            }
+            json={"scene_id": "intro", "note": "Needs improvement"},
         )
 
         assert response.status_code == 200
@@ -496,9 +492,7 @@ scenes:
         config.paths.content = "content"
         theme = Theme()
 
-        lang_configs = {
-            "en": LanguageConfig(code="en", name="English")
-        }
+        lang_configs = {"en": LanguageConfig(code="en", name="English")}
 
         project = Project(
             root=root_dir,
@@ -523,8 +517,10 @@ class TestRegisterRoutes:
         manager = ConnectionManager()
 
         project = self._create_mock_project(temp_dir)
+
         def get_project():
             return project
+
         static_dir = temp_dir / "static"
         static_dir.mkdir()
 
@@ -547,8 +543,10 @@ class TestRegisterRoutes:
         manager = ConnectionManager()
 
         project = self._create_mock_project(temp_dir)
+
         def get_project():
             return project
+
         static_dir = temp_dir / "static"
         static_dir.mkdir()
 
@@ -599,8 +597,10 @@ class TestRegisterRoutes:
         manager = ConnectionManager()
 
         project = self._create_mock_project(temp_dir)
+
         def get_project():
             return project
+
         static_dir = temp_dir / "static"
         static_dir.mkdir()
 
@@ -667,9 +667,7 @@ class TestRegisterRoutes:
         config.paths.publish = "publish"
         theme = Theme()
 
-        lang_configs = {
-            "en": LanguageConfig(code="en", name="English", locale="en-US")
-        }
+        lang_configs = {"en": LanguageConfig(code="en", name="English", locale="en-US")}
 
         project = Project(
             root=root_dir,
@@ -696,7 +694,7 @@ class TestDocumentListing:
         chapters_dir.mkdir(parents=True)
 
         for i in range(3):
-            chapter = chapters_dir / f"0{i+1}_chapter.md"
+            chapter = chapters_dir / f"0{i + 1}_chapter.md"
             chapter_num = i + 1
             content = f"""---
 title: Chapter {chapter_num}
@@ -720,13 +718,15 @@ Content here.
         documents = []
         for chapter in project.list_chapters("en"):
             doc = Document.load(chapter)
-            documents.append({
-                "path": str(chapter),
-                "filename": chapter.name,
-                "title": doc.title,
-                "type": "chapter",
-                "metadata": doc.metadata,
-            })
+            documents.append(
+                {
+                    "path": str(chapter),
+                    "filename": chapter.name,
+                    "title": doc.title,
+                    "type": "chapter",
+                    "metadata": doc.metadata,
+                }
+            )
 
         assert len(documents) == 3
         assert all(d["type"] == "chapter" for d in documents)
@@ -802,14 +802,16 @@ version: 1.0.0
             if folder_dir.exists():
                 for md_file in folder_dir.glob("*.md"):
                     doc = Document.load(md_file)
-                    documents.append({
-                        "path": str(md_file),
-                        "filename": md_file.name,
-                        "title": doc.title,
-                        "type": "deliverable",
-                        "category": category,
-                        "metadata": doc.metadata,
-                    })
+                    documents.append(
+                        {
+                            "path": str(md_file),
+                            "filename": md_file.name,
+                            "title": doc.title,
+                            "type": "deliverable",
+                            "category": category,
+                            "metadata": doc.metadata,
+                        }
+                    )
 
         assert len(documents) == 3
         assert all(d["type"] == "deliverable" for d in documents)
@@ -824,9 +826,7 @@ version: 1.0.0
         config.paths.content = "content"
         theme = Theme()
 
-        lang_configs = {
-            "en": LanguageConfig(code="en", name="English")
-        }
+        lang_configs = {"en": LanguageConfig(code="en", name="English")}
 
         project = Project(
             root=root_dir,
@@ -1021,10 +1021,7 @@ Welcome to the project documentation. This chapter covers the basics.
         config.paths.content = "content"
         theme = Theme()
 
-        lang_configs = {
-            lang: LanguageConfig(code=lang, name=lang.upper())
-            for lang in languages
-        }
+        lang_configs = {lang: LanguageConfig(code=lang, name=lang.upper()) for lang in languages}
 
         project = Project(
             root=root_dir,
@@ -1052,7 +1049,9 @@ class TestInsightsRoutes:
         # Create some content for insights
         chapters_dir = temp_dir / "content" / "en" / "chapters"
         chapters_dir.mkdir(parents=True)
-        (chapters_dir / "intro.md").write_text("---\ntitle: Introduction\n---\n# Introduction\n\nContent here.")
+        (chapters_dir / "intro.md").write_text(
+            "---\ntitle: Introduction\n---\n# Introduction\n\nContent here."
+        )
 
         app = FastAPI()
         manager = ConnectionManager()
@@ -1349,10 +1348,7 @@ class TestInsightsRoutes:
         config.paths.content = "content"
         theme = Theme()
 
-        lang_configs = {
-            lang: LanguageConfig(code=lang, name=lang.upper())
-            for lang in languages
-        }
+        lang_configs = {lang: LanguageConfig(code=lang, name=lang.upper()) for lang in languages}
 
         project = Project(
             root=root_dir,
@@ -1508,9 +1504,7 @@ class TestFreshnessRoutes:
         config.paths.content = "content"
         theme = Theme()
 
-        lang_configs = {
-            "en": LanguageConfig(code="en", name="English")
-        }
+        lang_configs = {"en": LanguageConfig(code="en", name="English")}
 
         project = Project(
             root=root_dir,
@@ -1590,9 +1584,7 @@ class TestDependenciesRoutes:
         config.paths.content = "content"
         theme = Theme()
 
-        lang_configs = {
-            "en": LanguageConfig(code="en", name="English")
-        }
+        lang_configs = {"en": LanguageConfig(code="en", name="English")}
 
         project = Project(
             root=root_dir,
@@ -1682,6 +1674,7 @@ class TestBuildRoutes:
     async def test_start_build(self, temp_dir):
         """Test starting a build endpoint exists and accepts parameters."""
         from unittest.mock import patch
+
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
         from media_engine.web.websocket import ConnectionManager
@@ -1719,6 +1712,7 @@ class TestBuildRoutes:
     async def test_start_build_default_params(self, temp_dir):
         """Test starting a build with default parameters."""
         from unittest.mock import patch
+
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
         from media_engine.web.websocket import ConnectionManager
@@ -1847,6 +1841,7 @@ class TestBuildRoutes:
     async def test_start_build_multiple_formats(self, temp_dir):
         """Test starting a build with multiple formats."""
         from unittest.mock import patch
+
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
         from media_engine.web.websocket import ConnectionManager
@@ -1877,6 +1872,7 @@ class TestBuildRoutes:
     async def test_start_build_with_force(self, temp_dir):
         """Test starting a forced build."""
         from unittest.mock import patch
+
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
         from media_engine.web.websocket import ConnectionManager
@@ -1911,9 +1907,7 @@ class TestBuildRoutes:
         config.paths.output = "output"
         theme = Theme()
 
-        lang_configs = {
-            "en": LanguageConfig(code="en", name="English")
-        }
+        lang_configs = {"en": LanguageConfig(code="en", name="English")}
 
         project = Project(
             root=root_dir,
@@ -2247,7 +2241,7 @@ class TestProvenanceRoutes:
                 "claim_type": "fact",
                 "claim_text": "Test claim",
                 "source": "test source",
-            }
+            },
         )
 
         assert response.status_code == 200
@@ -2284,7 +2278,7 @@ class TestProvenanceRoutes:
             json={
                 "document_path": "content/en/chapters/intro.md",
                 "user": "test@example.com",
-            }
+            },
         )
 
         assert response.status_code == 200
@@ -2325,9 +2319,7 @@ class TestProvenanceRoutes:
         config.paths.output = "output"
         theme = Theme()
 
-        lang_configs = {
-            "en": LanguageConfig(code="en", name="English")
-        }
+        lang_configs = {"en": LanguageConfig(code="en", name="English")}
 
         project = Project(
             root=root_dir,

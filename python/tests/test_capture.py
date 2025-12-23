@@ -2,13 +2,10 @@
 Tests for media_engine.video.capture module.
 """
 
-import asyncio
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, mock_open, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
-import yaml
-
 from media_engine.video.capture import (
     MANIFEST_SEARCH_PATHS,
     SceneAction,
@@ -268,9 +265,7 @@ class TestFindManifest:
         manifest_path.write_text("videos: {}")
 
         # Mock MANIFEST_SEARCH_PATHS to contain our temp path first
-        with patch(
-            "media_engine.video.capture.MANIFEST_SEARCH_PATHS", [manifest_path]
-        ):
+        with patch("media_engine.video.capture.MANIFEST_SEARCH_PATHS", [manifest_path]):
             found = find_manifest()
             assert found == manifest_path
 
@@ -410,8 +405,6 @@ class TestConvertToMp4:
         output_path = temp_dir / "video.mp4"
         input_path.touch()
 
-        import subprocess
-
         with patch("subprocess.run") as mock_run:
             mock_run.side_effect = FileNotFoundError("ffmpeg not found")
 
@@ -481,9 +474,7 @@ languages:
         manifest_path = temp_dir / "video_manifest.yaml"
         manifest_path.write_text(manifest_content)
 
-        with patch(
-            "media_engine.video.capture.MANIFEST_SEARCH_PATHS", [manifest_path]
-        ):
+        with patch("media_engine.video.capture.MANIFEST_SEARCH_PATHS", [manifest_path]):
             list_videos()
 
         captured = capsys.readouterr()
@@ -502,9 +493,7 @@ languages:
         manifest_path = temp_dir / "video_manifest.yaml"
         manifest_path.write_text(manifest_content)
 
-        with patch(
-            "media_engine.video.capture.MANIFEST_SEARCH_PATHS", [manifest_path]
-        ):
+        with patch("media_engine.video.capture.MANIFEST_SEARCH_PATHS", [manifest_path]):
             list_videos()
 
         captured = capsys.readouterr()
@@ -632,9 +621,7 @@ languages:
         manifest_path = temp_dir / "video_manifest.yaml"
         manifest_path.write_text(manifest_content)
 
-        with patch(
-            "media_engine.video.capture.MANIFEST_SEARCH_PATHS", [manifest_path]
-        ):
+        with patch("media_engine.video.capture.MANIFEST_SEARCH_PATHS", [manifest_path]):
             results = await capture_all_videos()
 
         assert len(results) == 0
@@ -655,9 +642,7 @@ scripts_dir: scripts
         manifest_path = temp_dir / "video_manifest.yaml"
         manifest_path.write_text(manifest_content)
 
-        with patch(
-            "media_engine.video.capture.MANIFEST_SEARCH_PATHS", [manifest_path]
-        ):
+        with patch("media_engine.video.capture.MANIFEST_SEARCH_PATHS", [manifest_path]):
             results = await capture_all_videos(use_scripts=True)
 
         assert len(results) == 0
@@ -686,9 +671,7 @@ languages:
 
         # Mock sys.argv for --list
         with patch("sys.argv", ["capture.py", "--list"]):
-            with patch(
-                "media_engine.video.capture.MANIFEST_SEARCH_PATHS", [manifest_path]
-            ):
+            with patch("media_engine.video.capture.MANIFEST_SEARCH_PATHS", [manifest_path]):
                 result = main()
 
         assert result is None  # list_videos returns None
@@ -706,9 +689,7 @@ languages:
         manifest_path.write_text(manifest_content)
 
         with patch("sys.argv", ["capture.py"]):
-            with patch(
-                "media_engine.video.capture.MANIFEST_SEARCH_PATHS", [manifest_path]
-            ):
+            with patch("media_engine.video.capture.MANIFEST_SEARCH_PATHS", [manifest_path]):
                 result = main()
 
         assert result == 0  # Success (no videos to fail)

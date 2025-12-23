@@ -14,15 +14,11 @@ Tests cover:
 - macOS fallback generation
 """
 
-import hashlib
-import json
 import os
-import shutil
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, Mock, patch, mock_open
+from unittest.mock import MagicMock, patch
 
 import pytest
-
 from media_engine.video.voiceover import (
     AudioSegment,
     VoiceoverResult,
@@ -589,6 +585,7 @@ class TestGenerateVoiceover:
         self, mock_gen_seg, mock_measure, mock_concat, temp_dir
     ):
         """Test successful voiceover generation."""
+
         # Setup mocks
         async def mock_generate(text, voice_id, output_path, **kwargs):
             output_path.touch()
@@ -632,6 +629,7 @@ class TestGenerateVoiceover:
         self, mock_gen_seg, mock_measure, mock_concat, temp_dir
     ):
         """Test voiceover generation using cache."""
+
         async def mock_generate(text, voice_id, output_path, **kwargs):
             output_path.touch()
             # All segments cached
@@ -662,6 +660,7 @@ class TestGenerateVoiceover:
         self, mock_gen_seg, mock_measure, mock_concat, temp_dir
     ):
         """Test progress callback is called correctly."""
+
         async def mock_generate(text, voice_id, output_path, **kwargs):
             output_path.touch()
             return output_path, False
@@ -701,6 +700,7 @@ class TestGenerateVoiceover:
         self, mock_gen_seg, mock_measure, mock_concat, temp_dir
     ):
         """Test that temporary files are cleaned up."""
+
         async def mock_generate(text, voice_id, output_path, **kwargs):
             output_path.touch()
             return output_path, False
@@ -730,6 +730,7 @@ class TestGenerateVoiceover:
         self, mock_gen_seg, mock_measure, mock_concat, temp_dir
     ):
         """Test that temp files are cleaned up even on error."""
+
         async def mock_generate(text, voice_id, output_path, **kwargs):
             raise Exception("Test error")
 
@@ -1036,7 +1037,9 @@ class TestGenerateVoiceoverMacos:
     @patch("media_engine.video.voiceover.concatenate_segments")
     @patch("media_engine.video.voiceover.measure_duration")
     @patch("subprocess.run")
-    async def test_macos_voiceover_custom_voice(self, mock_run, mock_measure, mock_concat, temp_dir):
+    async def test_macos_voiceover_custom_voice(
+        self, mock_run, mock_measure, mock_concat, temp_dir
+    ):
         """Test using custom voice."""
         mock_measure.return_value = 1.0
         mock_concat.return_value = 1.0

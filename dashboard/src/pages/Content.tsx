@@ -21,13 +21,19 @@ import {
   Save,
   X,
   Code,
+  ChevronRight,
+  ChevronDown,
 } from 'lucide-react';
 import clsx from 'clsx';
 import './Content.css';
+import { Video as VideoView } from './Video';
+import { Media as MediaView } from './Media';
 
 const tabs = [
   { path: '', label: 'Documents' },
   { path: 'translations', label: 'Translations' },
+  { path: 'video', label: 'Video' },
+  { path: 'media', label: 'Media' },
 ];
 
 // Documents Sub-page
@@ -38,6 +44,7 @@ function DocumentsView() {
   const [viewMode, setViewMode] = useState<'preview' | 'source' | 'edit'>('preview');
   const [editContent, setEditContent] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
   const { data: documents, isLoading: docsLoading } = useDocuments(selectedLang);
   const { data: docData, isLoading: docLoading, refetch } = useDocument(selectedDoc ?? '');
@@ -45,6 +52,14 @@ function DocumentsView() {
   const contentRef = useRef<HTMLDivElement>(null);
 
   const languages = project?.languages ? Object.keys(project.languages) : ['en'];
+
+  // Auto-expand all categories when documents load
+  useEffect(() => {
+    if (documents?.categories) {
+      const categoryKeys = Object.keys(documents.categories);
+      setExpandedCategories(new Set(categoryKeys));
+    }
+  }, [documents?.categories]);
 
   // Update edit content when document changes
   useEffect(() => {
@@ -81,6 +96,27 @@ function DocumentsView() {
     setViewMode('preview');
   };
 
+  const toggleCategory = (category: string) => {
+    setExpandedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(category)) {
+        next.delete(category);
+      } else {
+        next.add(category);
+      }
+      return next;
+    });
+  };
+
+  const handleDocSelect = (docPath: string, category: string) => {
+    setSelectedDoc(docPath);
+    setViewMode('preview');
+    // Auto-expand the category when selecting a document
+    if (!expandedCategories.has(category)) {
+      setExpandedCategories(prev => new Set(prev).add(category));
+    }
+  };
+
   if (docsLoading) {
     return <LoadingState message="Loading documents..." />;
   }
@@ -89,57 +125,66 @@ function DocumentsView() {
   const isMarkdown = selectedDoc?.endsWith('.md');
 
   return (
-    <div className="content-layout">
-      {/* Document Tree */}
-      <Card className="document-tree">
-        <CardHeader
-          title="Documents"
-          subtitle={
-            <div className="lang-pills">
-              {languages.map(lang => (
-                <button
-                  key={lang}
-                  className={clsx('lang-pill', { active: selectedLang === lang })}
-                  onClick={() => { setSelectedLang(lang); setSelectedDoc(null); }}
-                >
-                  {lang.toUpperCase()}
-                </button>
-              ))}
-            </div>
-          }
-        />
-        <CardContent className="tree-content">
-          {Object.entries(categories).map(([category, docs]) => (
-            <div key={category} className="category-group">
-              <div className="category-header">
-                <FolderOpen size={14} />
-                <span>{category}</span>
-                <Badge variant="default" size="sm">{(docs as unknown[]).length}</Badge>
-              </div>
-              <div className="category-docs">
-                {(docs as Array<{ path: string; title: string }>).map(doc => (
-                  <button
-                    key={doc.path}
-                    className={clsx('doc-item', { active: selectedDoc === doc.path })}
-                    onClick={() => {
-                      setSelectedDoc(doc.path);
-                      setViewMode('preview');
-                    }}
-                  >
-                    <FileText size={12} />
-                    <span className="doc-title">{doc.title}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+    <div className="documents-layout">
+      {/* Sidebar - Document Tree */}
+      <aside className="documents-sidebar">
+        <div className="documents-sidebar-header">
+          <h3>Documents</h3>
+          <div className="lang-pills">
+            {languages.map(lang => (
+              <button
+                key={lang}
+                className={clsx('lang-pill', { active: selectedLang === lang })}
+                onClick={() => { setSelectedLang(lang); setSelectedDoc(null); }}
+              >
+                {lang.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
 
-      {/* Document Viewer */}
-      <Card className="document-viewer">
+        <nav className="documents-tree">
+          {Object.entries(categories).map(([category, docs]) => {
+            const isExpanded = expandedCategories.has(category);
+            const docsList = docs as Array<{ path: string; title: string }>;
+            const hasActiveDoc = docsList.some(d => d.path === selectedDoc);
+
+            return (
+              <div key={category} className="category-group">
+                <button
+                  className={clsx('category-header', { expanded: isExpanded, 'has-active': hasActiveDoc })}
+                  onClick={() => toggleCategory(category)}
+                >
+                  {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                  <FolderOpen size={14} />
+                  <span className="category-name">{category}</span>
+                  <Badge variant="default" size="sm">{docsList.length}</Badge>
+                </button>
+
+                {isExpanded && (
+                  <div className="category-docs">
+                    {docsList.map(doc => (
+                      <button
+                        key={doc.path}
+                        className={clsx('doc-item', { active: selectedDoc === doc.path })}
+                        onClick={() => handleDocSelect(doc.path, category)}
+                      >
+                        <FileText size={12} />
+                        <span className="doc-title">{doc.title}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </nav>
+      </aside>
+
+      {/* Main Content - Document Viewer */}
+      <main className="documents-main">
         {selectedDoc ? (
-          <>
+          <Card className="document-viewer-card">
             <CardHeader
               title={docData?.title ?? 'Loading...'}
               subtitle={selectedDoc}
@@ -234,7 +279,6 @@ function DocumentsView() {
                       documentTitle={docData?.title ?? 'Document'}
                       contentRef={contentRef}
                       onAnnotationSubmitted={() => {
-                        // Could show a toast notification here
                         console.log('Annotation queued for AI');
                       }}
                     />
@@ -242,14 +286,15 @@ function DocumentsView() {
                 </div>
               )}
             </CardContent>
-          </>
+          </Card>
         ) : (
-          <CardContent className="empty-state">
-            <FileText size={48} className="text-muted" />
-            <p>Select a document</p>
-          </CardContent>
+          <div className="empty-state-panel">
+            <FileText size={48} />
+            <p>Select a document to view</p>
+            <span className="text-muted">Choose a category and document from the sidebar</span>
+          </div>
         )}
-      </Card>
+      </main>
     </div>
   );
 }
@@ -374,6 +419,8 @@ export function Content() {
       <Routes>
         <Route index element={<DocumentsView />} />
         <Route path="translations" element={<TranslationsView />} />
+        <Route path="video/*" element={<VideoView />} />
+        <Route path="media" element={<MediaView />} />
       </Routes>
     </div>
   );

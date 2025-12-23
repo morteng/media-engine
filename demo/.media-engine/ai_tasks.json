@@ -1,34 +1,38 @@
 [
   {
-    "id": "6f7a8b1b",
-    "operation": "general",
-    "instructions": "go through and fix all flagged issues",
-    "selections": [],
-    "status": "completed",
+    "id": "37319079",
+    "operation": "analyze",
+    "instructions": "Review and analyze the following selection from \"Introduction to Media Engine\" (lines 2-3):\n\n\"Media Engine is a powerful, agent-operated media production framework designed to transform structured content into professional outputs. Whether you need documents, presentations, videos, or data exports, Media Engine provides a unified workflow that AI assistants like Claude Code can operate autonomously\u2014turning your Markdown source files into polished deliverables with minimal manual intervention.\"\n\nUser comment: don'r claim it's powerfull. show, don't tell.",
+    "selections": [
+      {
+        "path": "/Users/Morten/media-engine/demo/content/en/chapters/01_introduction.md",
+        "title": "Introduction to Media Engine",
+        "content": "Media Engine is a powerful, agent-operated media production framework designed to transform structured content into professional outputs. Whether you need documents, presentations, videos, or data exports, Media Engine provides a unified workflow that AI assistants like Claude Code can operate autonomously\u2014turning your Markdown source files into polished deliverables with minimal manual intervention.",
+        "content_type": "document",
+        "target_id": "lines-2-3",
+        "notes": [
+          {
+            "text": "don'r claim it's powerfull. show, don't tell.",
+            "priority": "normal"
+          }
+        ],
+        "metadata": {
+          "startLine": 2,
+          "endLine": 3,
+          "selectedText": "Media Engine is a powerful, agent-operated media production framework designed to transform structured content into professional outputs. Whether you need documents, presentations, videos, or data exports, Media Engine provides a unified workflow that AI assistants like Claude Code can operate autonomously\u2014turning your Markdown source files into polished deliverables with minimal manual intervention."
+        }
+      }
+    ],
+    "status": "pending",
     "priority": "normal",
     "target_language": null,
-    "created_at": "2025-12-20T13:59:50.759003",
-    "claimed_at": "2025-12-20T14:30:00.000000",
-    "completed_at": "2025-12-20T14:31:00.000000",
-    "claimed_by": "claude_code",
-    "summary": "Fixed 1 flagged scene note: Added dramatic pause after 'forever' in walkthrough.yaml hook scene by changing voiceover to include '... until now.' for emphasis. Cleared all scene notes as addressed.",
-    "result": {
-      "issues_found": 1,
-      "issues_fixed": 1,
-      "details": [
-        {
-          "file": "content/en/scripts/walkthrough.yaml",
-          "scene": "hook",
-          "fix": "Added dramatic pause with '... until now.' after 'forever'"
-        }
-      ]
-    },
-    "files_modified": [
-      "demo/content/en/scripts/walkthrough.yaml",
-      "demo/.media-engine/scene-notes/_Users_Morten_media-engine_demo_content_en_scripts_walkthrough.yaml.json",
-      "demo/.media-engine/scene-notes-todo.json",
-      "demo/.media-engine/scene-notes-todo.md"
-    ],
+    "created_at": "2025-12-23T09:46:57.289677",
+    "claimed_at": null,
+    "completed_at": null,
+    "claimed_by": null,
+    "summary": null,
+    "result": null,
+    "files_modified": [],
     "error": null
   }
 ]

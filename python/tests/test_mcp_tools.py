@@ -120,10 +120,7 @@ class TestContextTools:
 
         project = Project.load(sample_project)
         impact = _analyze_impact(
-            project,
-            "en/chapters/01_intro.md",
-            "update",
-            "Adding more content"
+            project, "en/chapters/01_intro.md", "update", "Adding more content"
         )
 
         assert impact["target"] == "en/chapters/01_intro.md"
@@ -151,12 +148,7 @@ class TestSuggestionTools:
         from media_engine.mcp.tools.suggestions import _validate_action
 
         project = Project.load(sample_project)
-        result = _validate_action(
-            project,
-            "update_document",
-            "en/chapters/01_intro.md",
-            {}
-        )
+        result = _validate_action(project, "update_document", "en/chapters/01_intro.md", {})
 
         assert result["valid"] is True
         assert result["action"] == "update_document"
@@ -167,12 +159,7 @@ class TestSuggestionTools:
         from media_engine.mcp.tools.suggestions import _validate_action
 
         project = Project.load(sample_project)
-        result = _validate_action(
-            project,
-            "update_document",
-            "en/chapters/nonexistent.md",
-            {}
-        )
+        result = _validate_action(project, "update_document", "en/chapters/nonexistent.md", {})
 
         assert result["valid"] is False
         assert len(result["errors"]) > 0
@@ -219,7 +206,7 @@ class TestBatchTools:
             {
                 "action": "update_status",
                 "target": "en/chapters/01_intro.md",
-                "params": {"status": "in_review"}
+                "params": {"status": "in_review"},
             }
         ]
 
@@ -257,7 +244,7 @@ class TestBatchTools:
             {
                 "action": "update_status",
                 "target": "en/chapters/01_intro.md",
-                "params": {"status": "final"}
+                "params": {"status": "final"},
             }
         ]
 
@@ -282,10 +269,7 @@ class TestSessionTools:
         reset_session()
 
         # Store value
-        _session_store["test_key"] = {
-            "value": "test_value",
-            "set_at": "2024-01-01T00:00:00"
-        }
+        _session_store["test_key"] = {"value": "test_value", "set_at": "2024-01-01T00:00:00"}
 
         assert "test_key" in _session_store
         assert _session_store["test_key"]["value"] == "test_value"
@@ -304,13 +288,15 @@ class TestSessionTools:
         reset_session()
 
         # Add action
-        _agent_actions.append({
-            "id": 1,
-            "action": "test_action",
-            "reasoning": "testing",
-            "result": "success",
-            "target": None,
-        })
+        _agent_actions.append(
+            {
+                "id": 1,
+                "action": "test_action",
+                "reasoning": "testing",
+                "result": "success",
+                "target": None,
+            }
+        )
 
         assert len(_agent_actions) == 1
         assert _agent_actions[0]["action"] == "test_action"
@@ -422,15 +408,14 @@ class TestDocumentLifecycleTools:
                 def decorator(func):
                     self.tools[func.__name__] = func
                     return func
+
                 return decorator
 
         mock = MockMCP()
         documents.register_document_tools(mock, mock_server)
 
         result = await mock.tools["scaffold_document"](
-            doc_type="chapter",
-            language="en",
-            title="Test Chapter"
+            doc_type="chapter", language="en", title="Test Chapter"
         )
 
         data = json.loads(result)
@@ -456,15 +441,14 @@ class TestDocumentLifecycleTools:
                 def decorator(func):
                     self.tools[func.__name__] = func
                     return func
+
                 return decorator
 
         mock = MockMCP()
         documents.register_document_tools(mock, mock_server)
 
         result = await mock.tools["scaffold_document"](
-            doc_type="script",
-            language="en",
-            title="Demo Video"
+            doc_type="script", language="en", title="Demo Video"
         )
 
         data = json.loads(result)
@@ -487,6 +471,7 @@ class TestDocumentLifecycleTools:
                 def decorator(func):
                     self.tools[func.__name__] = func
                     return func
+
                 return decorator
 
         mock = MockMCP()
@@ -498,7 +483,7 @@ class TestDocumentLifecycleTools:
             doc_type="chapter",
             content="# Test\n\nThis is test content.",
             status="draft",
-            tags="test,automation"
+            tags="test,automation",
         )
 
         data = json.loads(result)
@@ -529,15 +514,14 @@ class TestDocumentLifecycleTools:
                 def decorator(func):
                     self.tools[func.__name__] = func
                     return func
+
                 return decorator
 
         mock = MockMCP()
         documents.register_document_tools(mock, mock_server)
 
         result = await mock.tools["create_document"](
-            path="content/en/chapters/01_intro.md",
-            title="Already Exists",
-            doc_type="chapter"
+            path="content/en/chapters/01_intro.md", title="Already Exists", doc_type="chapter"
         )
 
         data = json.loads(result)
@@ -559,6 +543,7 @@ class TestDocumentLifecycleTools:
                 def decorator(func):
                     self.tools[func.__name__] = func
                     return func
+
                 return decorator
 
         mock = MockMCP()
@@ -569,7 +554,7 @@ class TestDocumentLifecycleTools:
             path="content/en/chapters/01_intro.md",
             content=new_content,
             update_modified=True,
-            increment_version="minor"
+            increment_version="minor",
         )
 
         data = json.loads(result)
@@ -596,6 +581,7 @@ class TestDocumentLifecycleTools:
                 def decorator(func):
                     self.tools[func.__name__] = func
                     return func
+
                 return decorator
 
         mock = MockMCP()
@@ -603,16 +589,12 @@ class TestDocumentLifecycleTools:
 
         # First create a document to delete
         await mock.tools["create_document"](
-            path="content/en/chapters/98_to_delete.md",
-            title="To Delete",
-            doc_type="chapter"
+            path="content/en/chapters/98_to_delete.md", title="To Delete", doc_type="chapter"
         )
 
         # Now archive it
         result = await mock.tools["delete_document"](
-            path="content/en/chapters/98_to_delete.md",
-            archive=True,
-            check_dependencies=True
+            path="content/en/chapters/98_to_delete.md", archive=True, check_dependencies=True
         )
 
         data = json.loads(result)
@@ -642,6 +624,7 @@ class TestDocumentLifecycleTools:
                 def decorator(func):
                     self.tools[func.__name__] = func
                     return func
+
                 return decorator
 
         mock = MockMCP()
@@ -651,14 +634,12 @@ class TestDocumentLifecycleTools:
         await mock.tools["create_document"](
             path="content/en/chapters/97_to_delete.md",
             title="To Delete Permanently",
-            doc_type="chapter"
+            doc_type="chapter",
         )
 
         # Now permanently delete it
         result = await mock.tools["delete_document"](
-            path="content/en/chapters/97_to_delete.md",
-            archive=False,
-            check_dependencies=False
+            path="content/en/chapters/97_to_delete.md", archive=False, check_dependencies=False
         )
 
         data = json.loads(result)
@@ -683,6 +664,7 @@ class TestDocumentLifecycleTools:
                 def decorator(func):
                     self.tools[func.__name__] = func
                     return func
+
                 return decorator
 
         mock = MockMCP()
@@ -690,16 +672,14 @@ class TestDocumentLifecycleTools:
 
         # First create a document to move
         await mock.tools["create_document"](
-            path="content/en/chapters/96_original.md",
-            title="Original Location",
-            doc_type="chapter"
+            path="content/en/chapters/96_original.md", title="Original Location", doc_type="chapter"
         )
 
         # Now move it
         result = await mock.tools["move_document"](
             source_path="content/en/chapters/96_original.md",
             dest_path="content/en/chapters/96_moved.md",
-            update_references=True
+            update_references=True,
         )
 
         data = json.loads(result)
@@ -728,6 +708,7 @@ class TestDocumentLifecycleTools:
                 def decorator(func):
                     self.tools[func.__name__] = func
                     return func
+
                 return decorator
 
         mock = MockMCP()
@@ -735,7 +716,7 @@ class TestDocumentLifecycleTools:
 
         result = await mock.tools["move_document"](
             source_path="content/en/chapters/nonexistent.md",
-            dest_path="content/en/chapters/moved.md"
+            dest_path="content/en/chapters/moved.md",
         )
 
         data = json.loads(result)
@@ -773,6 +754,7 @@ class TestSessionPersistence:
                 def decorator(func):
                     self.tools[func.__name__] = func
                     return func
+
                 return decorator
 
         mock = MockMCP()
@@ -803,16 +785,14 @@ class TestSessionPersistence:
                 def decorator(func):
                     self.tools[func.__name__] = func
                     return func
+
                 return decorator
 
         mock = MockMCP()
         session.register_session_tools(mock, mock_server)
 
         # Set a value
-        await mock.tools["set_session_context"](
-            key="test_key",
-            value="test_value"
-        )
+        await mock.tools["set_session_context"](key="test_key", value="test_value")
 
         # Get it back
         result = await mock.tools["get_session_context"](key="test_key")
@@ -843,6 +823,7 @@ class TestSessionPersistence:
                 def decorator(func):
                     self.tools[func.__name__] = func
                     return func
+
                 return decorator
 
         mock = MockMCP()

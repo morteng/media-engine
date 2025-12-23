@@ -41,20 +41,48 @@ class IncompleteItem:
         }
 
 
-# Detection patterns for incomplete content
-INCOMPLETE_PATTERNS: dict[str, re.Pattern] = {
-    "todo": re.compile(r"\bTODO\b:?\s*(.{0,100})", re.IGNORECASE),
-    "tbd": re.compile(r"\bTBD\b:?\s*(.{0,100})", re.IGNORECASE),
-    "fixme": re.compile(r"\bFIXME\b:?\s*(.{0,100})", re.IGNORECASE),
-    "hack": re.compile(r"\bHACK\b:?\s*(.{0,100})", re.IGNORECASE),
-    "xxx": re.compile(r"\bXXX\b:?\s*(.{0,100})", re.IGNORECASE),
-    "placeholder": re.compile(
+# Import base patterns from centralized settings
+from ..settings.defaults import QUALITY as QUALITY_SETTINGS
+
+
+def _build_incomplete_patterns() -> dict[str, re.Pattern]:
+    """Build incomplete patterns from settings with capture groups for content."""
+    # Base marker patterns derived from centralized settings
+    # These capture the marker and up to 100 chars of context
+    patterns: dict[str, re.Pattern] = {}
+
+    # Map settings patterns to named pattern types
+    marker_names = {
+        r"\bTODO\b": "todo",
+        r"\bTBD\b": "tbd",
+        r"\bFIXME\b": "fixme",
+        r"\bXXX\b": "xxx",
+    }
+
+    for base_pattern in QUALITY_SETTINGS.placeholder_patterns:
+        name = marker_names.get(base_pattern)
+        if name:
+            # Add capture group for context
+            patterns[name] = re.compile(f"{base_pattern}:?\\s*(.{{0,100}})", re.IGNORECASE)
+
+    # Add HACK pattern (not in settings but commonly used)
+    patterns["hack"] = re.compile(r"\bHACK\b:?\s*(.{0,100})", re.IGNORECASE)
+
+    # Extended patterns for natural language placeholders
+    patterns["placeholder"] = re.compile(
         r"(coming soon|placeholder|\[insert\s+.+?\]|\[add\s+.+?\]|"
         r"to be (determined|decided|written|added|completed))",
         re.IGNORECASE,
-    ),
-    "truncated": re.compile(r"```[\s\S]*?\.\.\.[^\w][\s\S]*?```"),
-}
+    )
+
+    # Pattern for truncated code blocks
+    patterns["truncated"] = re.compile(r"```[\s\S]*?\.\.\.[^\w][\s\S]*?```")
+
+    return patterns
+
+
+# Detection patterns for incomplete content
+INCOMPLETE_PATTERNS: dict[str, re.Pattern] = _build_incomplete_patterns()
 
 # Pattern for detecting empty sections (heading followed by another heading or EOF)
 HEADING_PATTERN = re.compile(r"^(#{1,6})\s+(.+)$", re.MULTILINE)
@@ -113,7 +141,6 @@ class IncompleteTracker:
         # Track code block state and frontmatter state
         in_code_block = False
         in_frontmatter = False
-        past_frontmatter = False
 
         # Scan for pattern-based markers
         for line_num, line in enumerate(lines, start=1):
@@ -124,7 +151,6 @@ class IncompleteTracker:
                     continue
                 elif in_frontmatter:
                     in_frontmatter = False
-                    past_frontmatter = True
                     continue
 
             # Skip frontmatter content
@@ -214,7 +240,9 @@ class IncompleteTracker:
 
         # Sort by priority (high first) then by document
         priority_order = {"high": 0, "medium": 1, "low": 2}
-        items.sort(key=lambda x: (priority_order.get(x.priority, 2), str(x.document), x.line_number))
+        items.sort(
+            key=lambda x: (priority_order.get(x.priority, 2), str(x.document), x.line_number)
+        )
 
         return items
 
@@ -326,7 +354,9 @@ class IncompleteTracker:
                         marker_type="truncated",
                         content="Truncated code example (...)",
                         priority=self._calculate_priority("truncated", doc_status),
-                        context=code_content[:200] + "..." if len(code_content) > 200 else code_content,
+                        context=code_content[:200] + "..."
+                        if len(code_content) > 200
+                        else code_content,
                     )
                 )
 
@@ -348,10 +378,7 @@ class IncompleteTracker:
                 in_code_positions.add(pos)
 
         # Filter headings to only those outside code blocks
-        headings = [
-            h for h in all_headings
-            if h.start() not in in_code_positions
-        ]
+        headings = [h for h in all_headings if h.start() not in in_code_positions]
 
         for i, match in enumerate(headings):
             heading_level = len(match.group(1))
@@ -380,14 +407,12 @@ class IncompleteTracker:
 
             # Skip if section contains any real text content (more than just whitespace)
             # Remove blank lines and check for actual content
-            section_lines = [
-                line for line in section_content.split("\n") if line.strip()
-            ]
+            section_lines = [line for line in section_content.split("\n") if line.strip()]
             if section_lines:
                 continue
 
             # Section is truly empty
-            line_num = content[:match.start()].count("\n") + 1
+            line_num = content[: match.start()].count("\n") + 1
 
             items.append(
                 IncompleteItem(

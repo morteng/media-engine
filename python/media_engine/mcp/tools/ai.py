@@ -60,9 +60,7 @@ def register_ai_tools(mcp, server_instance: "MediaEngineMCPServer"):
             op = AIOperation(operation)
         except ValueError:
             valid_ops = [o.value for o in AIOperation]
-            return json.dumps(
-                {"error": f"Invalid operation. Valid: {valid_ops}"}, indent=2
-            )
+            return json.dumps({"error": f"Invalid operation. Valid: {valid_ops}"}, indent=2)
 
         # Parse paths
         path_list = [p.strip() for p in paths.split(",")]
@@ -98,9 +96,7 @@ def register_ai_tools(mcp, server_instance: "MediaEngineMCPServer"):
                 notes_registry = NotesRegistry(project)
                 rel_path = str(doc_path.relative_to(project.content_dir))
                 notes = notes_registry.get_for_target(rel_path)
-                notes_dicts = [
-                    {"text": n.text, "priority": n.priority.value} for n in notes
-                ]
+                notes_dicts = [{"text": n.text, "priority": n.priority.value} for n in notes]
             except Exception:
                 pass
 
@@ -115,9 +111,7 @@ def register_ai_tools(mcp, server_instance: "MediaEngineMCPServer"):
             )
 
         if not selections:
-            return json.dumps(
-                {"error": f"No valid documents found for paths: {paths}"}, indent=2
-            )
+            return json.dumps({"error": f"No valid documents found for paths: {paths}"}, indent=2)
 
         # Create request
         request = AIProcessRequest(
@@ -254,6 +248,7 @@ def register_ai_tools(mcp, server_instance: "MediaEngineMCPServer"):
 
             if not doc_path.exists():
                 from pathlib import Path
+
                 abs_path = Path(path)
                 if abs_path.exists():
                     doc_path = abs_path
@@ -268,27 +263,26 @@ def register_ai_tools(mcp, server_instance: "MediaEngineMCPServer"):
             notes_dicts = []
             try:
                 from ...notes import NotesRegistry
+
                 notes_registry = NotesRegistry(project)
                 rel_path = str(doc_path.relative_to(project.content_dir))
                 notes = notes_registry.get_for_target(rel_path)
-                notes_dicts = [
-                    {"text": n.text, "priority": n.priority.value} for n in notes
-                ]
+                notes_dicts = [{"text": n.text, "priority": n.priority.value} for n in notes]
             except Exception:
                 pass
 
-            selections.append({
-                "path": str(doc_path.relative_to(project.root)),
-                "title": title,
-                "content": content,
-                "content_type": "document",
-                "notes": notes_dicts,
-            })
+            selections.append(
+                {
+                    "path": str(doc_path.relative_to(project.root)),
+                    "title": title,
+                    "content": content,
+                    "content_type": "document",
+                    "notes": notes_dicts,
+                }
+            )
 
         if not selections:
-            return json.dumps(
-                {"error": f"No valid documents found for paths: {paths}"}, indent=2
-            )
+            return json.dumps({"error": f"No valid documents found for paths: {paths}"}, indent=2)
 
         # Submit to queue
         queue = TaskQueue(project.root)
@@ -344,9 +338,7 @@ def register_ai_tools(mcp, server_instance: "MediaEngineMCPServer"):
                 status_filter = TaskStatus(status)
             except ValueError:
                 valid = [s.value for s in TaskStatus]
-                return json.dumps(
-                    {"error": f"Invalid status. Valid: {valid}"}, indent=2
-                )
+                return json.dumps({"error": f"Invalid status. Valid: {valid}"}, indent=2)
 
         tasks = queue.list_tasks(status=status_filter, limit=limit)
 
@@ -358,7 +350,9 @@ def register_ai_tools(mcp, server_instance: "MediaEngineMCPServer"):
                         "operation": t.operation,
                         "status": t.status.value,
                         "priority": t.priority.value,
-                        "instructions": t.instructions[:100] + "..." if len(t.instructions) > 100 else t.instructions,
+                        "instructions": t.instructions[:100] + "..."
+                        if len(t.instructions) > 100
+                        else t.instructions,
                         "selections": [
                             {"path": s.path, "title": s.title, "notes_count": len(s.notes)}
                             for s in t.selections
@@ -427,9 +421,7 @@ def register_ai_tools(mcp, server_instance: "MediaEngineMCPServer"):
         task = queue.claim(task_id, claimed_by="claude_code")
 
         if not task:
-            return json.dumps(
-                {"error": f"Task {task_id} not found or already claimed"}, indent=2
-            )
+            return json.dumps({"error": f"Task {task_id} not found or already claimed"}, indent=2)
 
         # Mark as processing
         queue.start_processing(task_id)

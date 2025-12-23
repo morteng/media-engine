@@ -62,7 +62,7 @@ def register_notes_tools(mcp, server_instance):
         if not server_instance.project:
             return json.dumps({"error": "No project found"}, indent=2)
 
-        from ...notes import NotesRegistry, NoteStatus
+        from ...notes import NotesRegistry
 
         registry = NotesRegistry(server_instance.project)
         notes = registry.get_pending()

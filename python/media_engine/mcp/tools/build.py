@@ -8,9 +8,7 @@ def register_build_tools(mcp, server_instance):
     """Register build-related MCP tools."""
 
     @mcp.tool()
-    async def build_html(
-        language: str = None, chapter: str = None, output_dir: str = None
-    ) -> str:
+    async def build_html(language: str = None, chapter: str = None, output_dir: str = None) -> str:
         """
         Build HTML output from markdown chapters.
 
@@ -36,9 +34,7 @@ def register_build_tools(mcp, server_instance):
         if not chapters:
             return json.dumps({"error": f"No chapters found for '{lang}'"}, indent=2)
 
-        output_path = (
-            Path(output_dir) if output_dir else server_instance.project.output_dir / lang
-        )
+        output_path = Path(output_dir) if output_dir else server_instance.project.output_dir / lang
         output_path.mkdir(parents=True, exist_ok=True)
 
         built = []

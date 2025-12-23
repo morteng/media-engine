@@ -22,8 +22,8 @@ const tabs = [
   { path: 'activity', label: 'Activity' },
 ];
 
-// Analytics View
-function AnalyticsView() {
+// Analytics View - exported for use in Quality page
+export function AnalyticsView() {
   const { data: insights, isLoading } = useInsights();
 
   if (isLoading) {
@@ -168,8 +168,8 @@ function AnalyticsView() {
   );
 }
 
-// Activity View
-function ActivityView() {
+// Activity View - exported for use in Quality page
+export function ActivityView() {
   const { data: auditLog, isLoading: auditLoading } = useAuditLog();
   const { data: insights, isLoading: insightsLoading } = useInsights();
 

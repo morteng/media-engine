@@ -1,7 +1,6 @@
 """Tests for the general notes system."""
 
 import json
-from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -306,8 +305,8 @@ class TestNotesRegistry:
 
         registry = NotesRegistry(project)
 
-        note1 = registry.add(NoteType.DOCUMENT, "doc1.md", "Pending 1")
-        note2 = registry.add(NoteType.DOCUMENT, "doc2.md", "Pending 2")
+        registry.add(NoteType.DOCUMENT, "doc1.md", "Pending 1")
+        registry.add(NoteType.DOCUMENT, "doc2.md", "Pending 2")
         note3 = registry.add(NoteType.DOCUMENT, "doc3.md", "To complete")
 
         registry.complete(note3.note_id)
@@ -434,7 +433,7 @@ class TestNotesExport:
         return MockProject(root=tmp_path, config=MockConfig())
 
     def test_generate_export(self, project):
-        from media_engine.notes import NotePriority, NotesRegistry, NoteType, generate_export
+        from media_engine.notes import NotesRegistry, NoteType, generate_export
 
         registry = NotesRegistry(project)
         registry.add(NoteType.DOCUMENT, "doc1.md", "Note 1")

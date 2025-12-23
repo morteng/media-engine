@@ -101,7 +101,10 @@ class SceneCaptureEngine:
                 browser = await p.chromium.launch(headless=self.config.headless)
 
                 # Create context with video recording
-                viewport = demo.viewport or {"width": self.config.width, "height": self.config.height}
+                viewport = demo.viewport or {
+                    "width": self.config.width,
+                    "height": self.config.height,
+                }
                 context = await browser.new_context(
                     viewport=viewport,
                     record_video_dir=str(temp_dir),
@@ -273,15 +276,24 @@ class SceneCaptureEngine:
             subprocess.run(
                 [
                     "ffmpeg",
-                    "-i", str(input_path),
-                    "-c:v", "libx264",
-                    "-preset", "slow",
-                    "-crf", str(self.config.crf),
-                    "-profile:v", "high",
-                    "-level", "4.2",
-                    "-r", str(self.config.fps),
-                    "-pix_fmt", "yuv420p",
-                    "-movflags", "+faststart",
+                    "-i",
+                    str(input_path),
+                    "-c:v",
+                    "libx264",
+                    "-preset",
+                    "slow",
+                    "-crf",
+                    str(self.config.crf),
+                    "-profile:v",
+                    "high",
+                    "-level",
+                    "4.2",
+                    "-r",
+                    str(self.config.fps),
+                    "-pix_fmt",
+                    "yuv420p",
+                    "-movflags",
+                    "+faststart",
                     "-y",
                     str(output_path),
                 ],

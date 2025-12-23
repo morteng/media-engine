@@ -196,20 +196,24 @@ def register_scene_notes_routes(
                 script_notes = []
                 for scene_id, note_data in notes.items():
                     scene_info = scenes_by_id.get(scene_id, {})
-                    script_notes.append({
-                        "scene_id": scene_id,
-                        "scene_name": scene_info.get("name", ""),
-                        "scene_type": scene_info.get("scene_type", ""),
-                        "text": note_data.get("text", ""),
-                        "created": note_data.get("created", ""),
-                    })
+                    script_notes.append(
+                        {
+                            "scene_id": scene_id,
+                            "scene_name": scene_info.get("name", ""),
+                            "scene_type": scene_info.get("scene_type", ""),
+                            "text": note_data.get("text", ""),
+                            "created": note_data.get("created", ""),
+                        }
+                    )
 
                 if script_notes:
-                    export["scripts"].append({
-                        "script_path": script_path,
-                        "script_name": script_data.get("title", Path(script_path).stem),
-                        "notes": script_notes,
-                    })
+                    export["scripts"].append(
+                        {
+                            "script_path": script_path,
+                            "script_name": script_data.get("title", Path(script_path).stem),
+                            "notes": script_notes,
+                        }
+                    )
                     export["total_notes"] += len(script_notes)
 
             except Exception:

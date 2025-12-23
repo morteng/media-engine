@@ -1,0 +1,101 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - button "Collapse sidebar" [expanded] [ref=e6] [cursor=pointer]:
+        - img [ref=e7]
+      - button "ME Media Engine Demo" [ref=e11] [cursor=pointer]:
+        - generic [ref=e12]: ME
+        - generic [ref=e13]: Media Engine Demo
+        - img [ref=e14]
+    - button "Search... ⌘K" [ref=e16] [cursor=pointer]:
+      - img [ref=e17]
+      - generic [ref=e20]: Search...
+      - generic [ref=e21]: ⌘K
+    - generic [ref=e22]:
+      - generic "Disconnected" [ref=e24]:
+        - img [ref=e25]
+      - button "Toggle theme" [ref=e32] [cursor=pointer]:
+        - img [ref=e33]
+  - generic [ref=e39]:
+    - complementary [ref=e40]:
+      - navigation [ref=e41]:
+        - link "Dashboard" [ref=e43] [cursor=pointer]:
+          - /url: /
+          - img [ref=e44]
+          - generic [ref=e49]: Dashboard
+        - link "Content" [ref=e51] [cursor=pointer]:
+          - /url: /content
+          - img [ref=e52]
+          - generic [ref=e55]: Content
+        - link "Quality" [ref=e57] [cursor=pointer]:
+          - /url: /quality
+          - img [ref=e58]
+          - generic [ref=e60]: Quality
+        - link "Build" [ref=e62] [cursor=pointer]:
+          - /url: /build
+          - img [ref=e63]
+          - generic [ref=e67]: Build
+        - link "AI Assist" [ref=e69] [cursor=pointer]:
+          - /url: /ai-assist
+          - img [ref=e70]
+          - generic [ref=e73]: AI Assist
+    - main [ref=e74]:
+      - generic [ref=e75]:
+        - generic [ref=e76]:
+          - heading "Content" [level=1] [ref=e77]
+          - generic [ref=e78]:
+            - link "Documents" [ref=e79] [cursor=pointer]:
+              - /url: /content
+            - link "Translations" [ref=e80] [cursor=pointer]:
+              - /url: /content/translations
+            - link "Video" [ref=e81] [cursor=pointer]:
+              - /url: /content/video
+            - link "Media" [ref=e82] [cursor=pointer]:
+              - /url: /content/media
+        - generic [ref=e83]:
+          - complementary [ref=e84]:
+            - generic [ref=e85]:
+              - heading "Documents" [level=3] [ref=e86]
+              - generic [ref=e87]:
+                - button "EN" [ref=e88] [cursor=pointer]
+                - button "NO" [ref=e89] [cursor=pointer]
+            - navigation [ref=e90]:
+              - button "chapter 17" [ref=e92] [cursor=pointer]:
+                - img [ref=e93]
+                - img [ref=e95]
+                - generic [ref=e97]: chapter
+                - generic [ref=e98]: "17"
+              - button "script 1" [ref=e100] [cursor=pointer]:
+                - img [ref=e101]
+                - img [ref=e103]
+                - generic [ref=e105]: script
+                - generic [ref=e106]: "1"
+              - button "diagram 3" [ref=e108] [cursor=pointer]:
+                - img [ref=e109]
+                - img [ref=e111]
+                - generic [ref=e113]: diagram
+                - generic [ref=e114]: "3"
+              - button "slides 2" [ref=e116] [cursor=pointer]:
+                - img [ref=e117]
+                - img [ref=e119]
+                - generic [ref=e121]: slides
+                - generic [ref=e122]: "2"
+              - button "data 2" [ref=e124] [cursor=pointer]:
+                - img [ref=e125]
+                - img [ref=e127]
+                - generic [ref=e129]: data
+                - generic [ref=e130]: "2"
+              - button "demo 12" [ref=e132] [cursor=pointer]:
+                - img [ref=e133]
+                - img [ref=e135]
+                - generic [ref=e137]: demo
+                - generic [ref=e138]: "12"
+          - main [ref=e139]:
+            - generic [ref=e140]:
+              - img [ref=e141]
+              - paragraph [ref=e144]: Select a document to view
+              - generic [ref=e145]: Choose a category and document from the sidebar
+```

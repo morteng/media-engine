@@ -151,6 +151,7 @@ class MediaEngineMCPServer:
             project,
             provenance,
             quality,
+            reports,
             search,
             session,
             suggestions,
@@ -163,6 +164,7 @@ class MediaEngineMCPServer:
         documents.register_document_tools(self.mcp, self)
         translation.register_translation_tools(self.mcp, self)
         quality.register_quality_tools(self.mcp, self)
+        reports.register_report_tools(self.mcp, self)  # Comprehensive quality reports
         search.register_search_tools(self.mcp, self)
         build.register_build_tools(self.mcp, self)
         cache.register_cache_tools(self.mcp, self)

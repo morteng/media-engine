@@ -132,11 +132,11 @@ def bundle_project_assets(
 
         # Look for logos with common naming patterns (dark mode version first)
         logo_patterns = [
-            "*-full.svg",      # e.g., pikkolo-hub-full.svg (dark bg/light text)
-            "*-icon.svg",      # e.g., pikkolo-hub-icon.svg
+            "*-full.svg",  # e.g., pikkolo-hub-full.svg (dark bg/light text)
+            "*-icon.svg",  # e.g., pikkolo-hub-icon.svg
             "logo.svg",
             "logo.png",
-            "*logo*.svg",      # Any file with 'logo' in name
+            "*logo*.svg",  # Any file with 'logo' in name
             "*logo*.png",
         ]
 

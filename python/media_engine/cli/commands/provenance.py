@@ -84,20 +84,27 @@ def cmd_provenance(args):
         total_claims = sum(len(claims) for claims in results.values())
 
         if args.json:
-            print(json.dumps({
-                "documents_scanned": len(results),
-                "total_claims_found": total_claims,
-                "by_document": results,
-            }, indent=2))
+            print(
+                json.dumps(
+                    {
+                        "documents_scanned": len(results),
+                        "total_claims_found": total_claims,
+                        "by_document": results,
+                    },
+                    indent=2,
+                )
+            )
         else:
             if total_claims == 0:
                 console.print("[green]No potential claims found[/green]")
             else:
-                console.print(f"Found [yellow]{total_claims}[/yellow] potential claims in [cyan]{len(results)}[/cyan] documents:\n")
+                console.print(
+                    f"Found [yellow]{total_claims}[/yellow] potential claims in [cyan]{len(results)}[/cyan] documents:\n"
+                )
                 for doc_path, claims in list(results.items())[:10]:
                     console.print(f"[bold]{doc_path}[/bold]")
                     for claim in claims[:5]:
-                        console.print(f"  [{claim['type']}] \"{claim['match']}\"")
+                        console.print(f'  [{claim["type"]}] "{claim["match"]}"')
                     if len(claims) > 5:
                         console.print(f"  ... and {len(claims) - 5} more")
                     console.print()
@@ -118,7 +125,7 @@ def cmd_provenance(args):
             console.print(f"[green]Valid: {results['valid']}[/green]")
             console.print(f"[red]Invalid: {results['invalid']}[/red]")
 
-            invalid_results = [r for r in results['results'] if not r['valid']]
+            invalid_results = [r for r in results["results"] if not r["valid"]]
             if invalid_results:
                 console.print("\n[bold red]Invalid URLs:[/bold red]")
                 for result in invalid_results[:10]:
@@ -126,8 +133,10 @@ def cmd_provenance(args):
                     console.print(f"    Error: {result.get('error', 'Unknown')}")
 
     elif args.provenance_command == "add":
-        if not hasattr(args, 'document') or not args.document:
-            console.print("[red]Usage: media-engine provenance add --document <path> --claim <text> --source <source>[/red]")
+        if not hasattr(args, "document") or not args.document:
+            console.print(
+                "[red]Usage: media-engine provenance add --document <path> --claim <text> --source <source>[/red]"
+            )
             sys.exit(1)
 
         from pathlib import Path
@@ -136,15 +145,22 @@ def cmd_provenance(args):
             document_path=Path(args.document),
             claim_text=args.claim,
             source=args.source,
-            source_url=getattr(args, 'url', None),
-            source_type=getattr(args, 'type', 'internal'),
+            source_url=getattr(args, "url", None),
+            source_type=getattr(args, "type", "internal"),
         )
 
         console.print(f"[green]Claim added with ID: {claim.claim_id}[/green]")
 
     elif args.provenance_command == "verify":
-        if not hasattr(args, 'document') or not args.document or not hasattr(args, 'claim_id') or not args.claim_id:
-            console.print("[red]Usage: media-engine provenance verify --document <path> --claim-id <id> --verifier <name>[/red]")
+        if (
+            not hasattr(args, "document")
+            or not args.document
+            or not hasattr(args, "claim_id")
+            or not args.claim_id
+        ):
+            console.print(
+                "[red]Usage: media-engine provenance verify --document <path> --claim-id <id> --verifier <name>[/red]"
+            )
             sys.exit(1)
 
         from pathlib import Path
@@ -153,7 +169,7 @@ def cmd_provenance(args):
             document_path=Path(args.document),
             claim_id=args.claim_id,
             verifier=args.verifier,
-            expiry_days=getattr(args, 'expiry_days', 365),
+            expiry_days=getattr(args, "expiry_days", 365),
         )
 
         if result:
@@ -162,4 +178,6 @@ def cmd_provenance(args):
             console.print(f"[red]Claim {args.claim_id} not found[/red]")
 
     else:
-        console.print("[yellow]Usage: media-engine provenance <report|claims|queue|scan|validate-urls|add|verify>[/yellow]")
+        console.print(
+            "[yellow]Usage: media-engine provenance <report|claims|queue|scan|validate-urls|add|verify>[/yellow]"
+        )

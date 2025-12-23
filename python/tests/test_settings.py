@@ -3,10 +3,7 @@ Tests for media_engine.settings module.
 """
 
 import os
-from pathlib import Path
 from unittest.mock import patch
-
-import pytest
 
 
 class TestVideoDefaults:
@@ -499,7 +496,7 @@ class TestFileExtensions:
 
         doc_exts = EXTENSIONS.documents
         # Should be a collection (frozenset, tuple, or set)
-        assert hasattr(doc_exts, '__iter__')
+        assert hasattr(doc_exts, "__iter__")
         # Should include markdown
         assert ".md" in doc_exts
 
@@ -509,7 +506,7 @@ class TestFileExtensions:
 
         config_exts = EXTENSIONS.configs
         # Should be a collection
-        assert hasattr(config_exts, '__iter__')
+        assert hasattr(config_exts, "__iter__")
         # Should include yaml
         assert ".yaml" in config_exts or ".yml" in config_exts
 

@@ -312,7 +312,9 @@ class DemoRenderer:
             label = html.escape(form_field.get("label", name))
             field_type = form_field.get("type", "text")
             required = "required" if form_field.get("required", False) else ""
-            pattern = f'pattern="{form_field.get("pattern", "")}"' if form_field.get("pattern") else ""
+            pattern = (
+                f'pattern="{form_field.get("pattern", "")}"' if form_field.get("pattern") else ""
+            )
 
             fields_html += f"""
             <div style="margin-bottom: 1em;">

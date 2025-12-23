@@ -205,10 +205,16 @@ class PathGenerator:
                 # Simple complexity score based on word/sentence length
                 score = self._calculate_complexity(body)
 
-                scored.append((doc_path, {
-                    "title": fm.get("title", doc_path.stem),
-                    "word_count": len(body.split()),
-                }, score))
+                scored.append(
+                    (
+                        doc_path,
+                        {
+                            "title": fm.get("title", doc_path.stem),
+                            "word_count": len(body.split()),
+                        },
+                        score,
+                    )
+                )
 
             except (OSError, UnicodeDecodeError, ValueError):
                 pass
@@ -236,8 +242,18 @@ class PathGenerator:
             )
 
         total_time = sum(n.estimated_time for n in nodes)
-        avg_difficulty = sum(1 if n.difficulty == "easy" else 3 if n.difficulty == "hard" else 2 for n in nodes)
-        overall_difficulty = "easy" if avg_difficulty / len(nodes) < 1.5 else "hard" if avg_difficulty / len(nodes) > 2.5 else "medium" if nodes else "medium"
+        avg_difficulty = sum(
+            1 if n.difficulty == "easy" else 3 if n.difficulty == "hard" else 2 for n in nodes
+        )
+        overall_difficulty = (
+            "easy"
+            if avg_difficulty / len(nodes) < 1.5
+            else "hard"
+            if avg_difficulty / len(nodes) > 2.5
+            else "medium"
+            if nodes
+            else "medium"
+        )
 
         return ReadingPath(
             name="Complexity-Based Reading Path",
@@ -279,10 +295,15 @@ class PathGenerator:
                 content = doc_path.read_text(encoding="utf-8")
                 fm, body = self._parse_frontmatter(content)
 
-                clusters[topic].append((rel_path, {
-                    "title": fm.get("title", doc_path.stem),
-                    "word_count": len(body.split()),
-                }))
+                clusters[topic].append(
+                    (
+                        rel_path,
+                        {
+                            "title": fm.get("title", doc_path.stem),
+                            "word_count": len(body.split()),
+                        },
+                    )
+                )
 
             except (OSError, UnicodeDecodeError, ValueError):
                 pass
@@ -368,10 +389,16 @@ class PathGenerator:
                     if topic in body_lower[:500]:
                         score += 0.5
 
-                scored.append((rel_path, {
-                    "title": fm.get("title", doc_path.stem),
-                    "word_count": len(body.split()),
-                }, score))
+                scored.append(
+                    (
+                        rel_path,
+                        {
+                            "title": fm.get("title", doc_path.stem),
+                            "word_count": len(body.split()),
+                        },
+                        score,
+                    )
+                )
 
             except (OSError, UnicodeDecodeError, ValueError):
                 pass
@@ -480,7 +507,7 @@ class PathGenerator:
         try:
             end_idx = content.index("---", 3)
             frontmatter = yaml.safe_load(content[3:end_idx]) or {}
-            body = content[end_idx + 3:].strip()
+            body = content[end_idx + 3 :].strip()
             return frontmatter, body
         except (ValueError, yaml.YAMLError):
             return {}, content

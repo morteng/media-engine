@@ -230,25 +230,19 @@ class ContentRegistry:
     def get_stale(self) -> List[TrackedItem]:
         """Get all stale items."""
         return [
-            item
-            for item in self.items.values()
-            if item.freshness_status == FreshnessStatus.STALE
+            item for item in self.items.values() if item.freshness_status == FreshnessStatus.STALE
         ]
 
     def get_expired(self) -> List[TrackedItem]:
         """Get all expired items."""
         return [
-            item
-            for item in self.items.values()
-            if item.freshness_status == FreshnessStatus.EXPIRED
+            item for item in self.items.values() if item.freshness_status == FreshnessStatus.EXPIRED
         ]
 
     def get_missing(self) -> List[TrackedItem]:
         """Get all missing items (registered but file gone)."""
         return [
-            item
-            for item in self.items.values()
-            if item.freshness_status == FreshnessStatus.MISSING
+            item for item in self.items.values() if item.freshness_status == FreshnessStatus.MISSING
         ]
 
     def find_untracked(

@@ -212,7 +212,9 @@ def _build_presentation_html(project: Project, lang: str, output_dir: Path) -> P
     # Find logo paths
     logo_path = None
     logo_path_light = None
-    shared_dir = project.output_dir.parent / "shared" if project.output_dir.parent.exists() else None
+    shared_dir = (
+        project.output_dir.parent / "shared" if project.output_dir.parent.exists() else None
+    )
 
     # Check for logo in shared directory (relative path for HTML)
     if shared_dir and (shared_dir / "logo.svg").exists():
@@ -342,7 +344,9 @@ def _build_video(project: Project, lang: str, output_dir: Path, args) -> Path | 
 
     # Show quality info
     if quality == VideoQuality.PREVIEW:
-        console.print(f"    [yellow]Preview mode: {config.width}x{config.height} @ {config.fps}fps[/yellow]")
+        console.print(
+            f"    [yellow]Preview mode: {config.width}x{config.height} @ {config.fps}fps[/yellow]"
+        )
 
     builder = VideoBuilder(project=project, config=config)
     videos_output = output_dir / "videos"
@@ -476,7 +480,9 @@ def _check_provenance_warnings(project: Project) -> None:
         console.print("[yellow bold]Provenance Warnings:[/yellow bold]")
 
         if unverified_count > 0:
-            console.print(f"  [yellow]! {unverified_count} unverified claim(s) in {len(affected_docs)} document(s)[/yellow]")
+            console.print(
+                f"  [yellow]! {unverified_count} unverified claim(s) in {len(affected_docs)} document(s)[/yellow]"
+            )
 
         if expired_count > 0:
             console.print(f"  [red]! {expired_count} expired claim(s) need re-verification[/red]")

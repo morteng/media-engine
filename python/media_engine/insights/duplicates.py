@@ -154,9 +154,7 @@ class DuplicateDetector:
 
         return duplicates
 
-    def find_similar_content(
-        self, threshold: Optional[float] = None
-    ) -> list[DuplicateMatch]:
+    def find_similar_content(self, threshold: Optional[float] = None) -> list[DuplicateMatch]:
         """
         Find semantically similar paragraphs.
 
@@ -199,13 +197,15 @@ class DuplicateDetector:
         seen_pairs: set[frozenset] = set()
 
         for i, (loc1, words1) in enumerate(paragraphs):
-            for j, (loc2, words2) in enumerate(paragraphs[i + 1:], i + 1):
+            for j, (loc2, words2) in enumerate(paragraphs[i + 1 :], i + 1):
                 # Skip if same document
                 if loc1.document == loc2.document:
                     continue
 
                 # Skip if already compared
-                pair_key = frozenset([f"{loc1.document}:{loc1.start_line}", f"{loc2.document}:{loc2.start_line}"])
+                pair_key = frozenset(
+                    [f"{loc1.document}:{loc1.start_line}", f"{loc2.document}:{loc2.start_line}"]
+                )
                 if pair_key in seen_pairs:
                     continue
                 seen_pairs.add(pair_key)
@@ -344,31 +344,37 @@ class DuplicateDetector:
 
             if not stripped:
                 if current_para:
-                    paragraphs.append({
-                        "text": " ".join(current_para),
-                        "start_line": start_line,
-                        "end_line": i - 1,
-                    })
+                    paragraphs.append(
+                        {
+                            "text": " ".join(current_para),
+                            "start_line": start_line,
+                            "end_line": i - 1,
+                        }
+                    )
                     current_para = []
                 start_line = i + 1
             elif stripped.startswith("#"):
                 # Heading - start new paragraph
                 if current_para:
-                    paragraphs.append({
-                        "text": " ".join(current_para),
-                        "start_line": start_line,
-                        "end_line": i - 1,
-                    })
+                    paragraphs.append(
+                        {
+                            "text": " ".join(current_para),
+                            "start_line": start_line,
+                            "end_line": i - 1,
+                        }
+                    )
                     current_para = []
                 start_line = i + 1
             elif stripped.startswith("```"):
                 # Code block - skip
                 if current_para:
-                    paragraphs.append({
-                        "text": " ".join(current_para),
-                        "start_line": start_line,
-                        "end_line": i - 1,
-                    })
+                    paragraphs.append(
+                        {
+                            "text": " ".join(current_para),
+                            "start_line": start_line,
+                            "end_line": i - 1,
+                        }
+                    )
                     current_para = []
                 start_line = i + 1
             else:
@@ -376,11 +382,13 @@ class DuplicateDetector:
 
         # Handle last paragraph
         if current_para:
-            paragraphs.append({
-                "text": " ".join(current_para),
-                "start_line": start_line,
-                "end_line": len(lines),
-            })
+            paragraphs.append(
+                {
+                    "text": " ".join(current_para),
+                    "start_line": start_line,
+                    "end_line": len(lines),
+                }
+            )
 
         return paragraphs
 
@@ -394,16 +402,18 @@ class DuplicateDetector:
             start = match.end()
             end = headings[i + 1].start() if i + 1 < len(headings) else len(content)
 
-            start_line = content[:match.start()].count("\n") + 1
+            start_line = content[: match.start()].count("\n") + 1
             end_line = content[:end].count("\n") + 1
 
-            sections.append({
-                "title": match.group(2).strip(),
-                "level": len(match.group(1)),
-                "body": content[start:end].strip(),
-                "start_line": start_line,
-                "end_line": end_line,
-            })
+            sections.append(
+                {
+                    "title": match.group(2).strip(),
+                    "level": len(match.group(1)),
+                    "body": content[start:end].strip(),
+                    "start_line": start_line,
+                    "end_line": end_line,
+                }
+            )
 
         return sections
 

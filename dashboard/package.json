@@ -5,12 +5,21 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:api": "concurrently \"vite\" \"cd ../demo && uv run media-engine dashboard --port 8081\"",
     "build": "tsc -b && vite build",
+    "postbuild": "npm run deploy:static",
+    "deploy:static": "rm -rf ../python/media_engine/web/static/* && cp -r dist/* ../python/media_engine/web/static/",
+    "watch": "concurrently \"vite build --watch\" \"npm run watch:deploy\"",
+    "watch:deploy": "chokidar 'dist/**/*' -c 'npm run deploy:static'",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.12",
@@ -23,6 +32,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@playwright/test": "^1.57.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
     "@testing-library/user-event": "^14.6.1",
@@ -30,6 +40,8 @@
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
+    "chokidar-cli": "^3.0.0",
+    "concurrently": "^9.2.1",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",

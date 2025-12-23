@@ -18,7 +18,9 @@ describe('Dashboard', () => {
   it('renders statistics cards', async () => {
     render(<Dashboard />);
     await waitFor(() => {
-      expect(screen.getByText(/documents/i)).toBeInTheDocument();
+      // There are multiple elements with "documents" text, use getAllByText
+      const elements = screen.getAllByText(/documents/i);
+      expect(elements.length).toBeGreaterThan(0);
     });
   });
 

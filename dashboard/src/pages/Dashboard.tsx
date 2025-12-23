@@ -1,9 +1,11 @@
-import { useStatus, useInsights, useFreshness } from '@/hooks/useApi';
+import { useStatus, useInsights, useFreshness, useQualitySummary } from '@/hooks/useApi';
 import { StatCard } from '@/components/ui/StatCard';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { LoadingState } from '@/components/ui/Spinner';
 import { Badge } from '@/components/ui/Badge';
+import { InfoTooltip, METRIC_EXPLANATIONS } from '@/components/ui/InfoTooltip';
+import { Link } from 'react-router-dom';
 import {
   FileText,
   Languages,
@@ -12,13 +14,23 @@ import {
   TrendingUp,
   CheckCircle,
   XCircle,
-  Award
+  Award,
+  Brain,
+  Network,
+  Code,
+  Target,
+  RefreshCw,
+  BookOpen,
+  ArrowRight,
+  Sparkles,
+  Zap,
 } from 'lucide-react';
 
 export function Dashboard() {
   const { data: status, isLoading: statusLoading } = useStatus();
   const { data: insights, isLoading: insightsLoading } = useInsights();
   const { data: freshness } = useFreshness();
+  const { data: qualitySummary } = useQualitySummary();
 
   if (statusLoading || insightsLoading) {
     return <LoadingState message="Loading project overview..." />;
@@ -39,11 +51,15 @@ export function Dashboard() {
   // Component scores
   const components = insights?.health?.components;
 
+  // Advanced analysis availability
+  const advancedAvailable = qualitySummary?.advanced_available;
+  const advancedHighlights = qualitySummary?.advanced_highlights;
+  const hasAdvancedModules = advancedAvailable && Object.values(advancedAvailable).some(v => v);
+
   return (
     <div className="page overview-page">
       <div className="page-header">
         <h1>Project Overview</h1>
-        <p className="text-muted">Real-time status of your media engine project</p>
       </div>
 
       {/* Health Score Hero */}
@@ -74,7 +90,10 @@ export function Dashboard() {
               </svg>
               <div className="health-score-value">
                 <span className="score">{healthScore}</span>
-                <span className="label">Health</span>
+                <span className="label">
+                  Health
+                  <InfoTooltip {...METRIC_EXPLANATIONS.healthScore} />
+                </span>
               </div>
             </div>
             <div className="health-metrics">
@@ -84,19 +103,31 @@ export function Dashboard() {
                 <Badge variant={healthVariant}>{insights?.health?.status ?? 'unknown'}</Badge>
               </div>
               <div className="metric">
-                <span className="metric-label">Freshness</span>
+                <span className="metric-label">
+                  Freshness
+                  <InfoTooltip {...METRIC_EXPLANATIONS.freshness} />
+                </span>
                 <ProgressBar value={components?.freshness ?? 0} variant="accent" />
               </div>
               <div className="metric">
-                <span className="metric-label">Translation</span>
+                <span className="metric-label">
+                  Translation
+                  <InfoTooltip {...METRIC_EXPLANATIONS.translation} />
+                </span>
                 <ProgressBar value={components?.translation ?? 0} variant="success" />
               </div>
               <div className="metric">
-                <span className="metric-label">Consistency</span>
+                <span className="metric-label">
+                  Consistency
+                  <InfoTooltip {...METRIC_EXPLANATIONS.consistency} />
+                </span>
                 <ProgressBar value={components?.consistency ?? 0} variant="warning" />
               </div>
               <div className="metric">
-                <span className="metric-label">Readability</span>
+                <span className="metric-label">
+                  Readability
+                  <InfoTooltip {...METRIC_EXPLANATIONS.readability} />
+                </span>
                 <ProgressBar value={components?.readability ?? 0} variant="info" />
               </div>
             </div>
@@ -111,26 +142,152 @@ export function Dashboard() {
           value={totalDocs}
           icon={<FileText size={24} />}
           variant="default"
+          tooltip={METRIC_EXPLANATIONS.documentCount}
         />
         <StatCard
           label="Languages"
           value={languageCount}
           icon={<Languages size={24} />}
           variant="accent"
+          tooltip={METRIC_EXPLANATIONS.languageCount}
         />
         <StatCard
           label="Issues"
           value={issueCount}
           icon={<AlertTriangle size={24} />}
           variant={issueCount > 0 ? 'warning' : 'success'}
+          tooltip={METRIC_EXPLANATIONS.issueCount}
         />
         <StatCard
           label="Stale Content"
           value={staleCount}
           icon={<Clock size={24} />}
           variant={staleCount > 0 ? 'error' : 'success'}
+          tooltip={METRIC_EXPLANATIONS.staleCount}
         />
       </div>
+
+      {/* Advanced Analysis Summary */}
+      {hasAdvancedModules && (
+        <Card className="advanced-summary-card">
+          <CardHeader
+            title="Advanced Analysis"
+            action={
+              <Link to="/quality" className="see-all-link">
+                View All <ArrowRight size={14} />
+              </Link>
+            }
+          />
+          <CardContent>
+            <div className="advanced-modules-grid">
+              {advancedAvailable?.semantic && (
+                <Link to="/quality/semantic" className="module-card">
+                  <Brain size={24} className="text-accent" />
+                  <div className="module-info">
+                    <span className="module-name">Semantic Analysis</span>
+                    {advancedHighlights?.semantic ? (
+                      <span className="module-highlight text-warning">
+                        {advancedHighlights.semantic.message}
+                      </span>
+                    ) : (
+                      <span className="module-status text-success">Active</span>
+                    )}
+                  </div>
+                  <ArrowRight size={16} className="module-arrow" />
+                </Link>
+              )}
+
+              {advancedAvailable?.knowledge_graph && (
+                <Link to="/quality/knowledge" className="module-card">
+                  <Network size={24} className="text-info" />
+                  <div className="module-info">
+                    <span className="module-name">Knowledge Graph</span>
+                    {advancedHighlights?.knowledge_graph ? (
+                      <span className="module-highlight text-warning">
+                        {advancedHighlights.knowledge_graph.message}
+                      </span>
+                    ) : (
+                      <span className="module-status text-success">Active</span>
+                    )}
+                  </div>
+                  <ArrowRight size={16} className="module-arrow" />
+                </Link>
+              )}
+
+              {advancedAvailable?.predictive_freshness && (
+                <Link to="/quality/freshness" className="module-card">
+                  <RefreshCw size={24} className="text-warning" />
+                  <div className="module-info">
+                    <span className="module-name">Predictive Freshness</span>
+                    {advancedHighlights?.predictive_freshness ? (
+                      <span className="module-highlight text-error">
+                        {advancedHighlights.predictive_freshness.message}
+                      </span>
+                    ) : (
+                      <span className="module-status text-success">Active</span>
+                    )}
+                  </div>
+                  <ArrowRight size={16} className="module-arrow" />
+                </Link>
+              )}
+
+              {advancedAvailable?.enhanced_codesync && (
+                <Link to="/quality/codesync" className="module-card">
+                  <Code size={24} className="text-success" />
+                  <div className="module-info">
+                    <span className="module-name">Code Sync</span>
+                    {advancedHighlights?.enhanced_codesync ? (
+                      <span className="module-highlight text-warning">
+                        {advancedHighlights.enhanced_codesync.message}
+                      </span>
+                    ) : (
+                      <span className="module-status text-success">Active</span>
+                    )}
+                  </div>
+                  <ArrowRight size={16} className="module-arrow" />
+                </Link>
+              )}
+
+              {advancedAvailable?.norwegian_readability && (
+                <Link to="/quality/readability" className="module-card">
+                  <BookOpen size={24} className="text-accent" />
+                  <div className="module-info">
+                    <span className="module-name">Norwegian LIX</span>
+                    <span className="module-status text-success">Active</span>
+                  </div>
+                  <ArrowRight size={16} className="module-arrow" />
+                </Link>
+              )}
+
+              {advancedAvailable?.advanced_analysis && (
+                <Link to="/quality/advanced" className="module-card">
+                  <Target size={24} className="text-error" />
+                  <div className="module-info">
+                    <span className="module-name">Advanced Analysis</span>
+                    <span className="module-status text-success">Active</span>
+                  </div>
+                  <ArrowRight size={16} className="module-arrow" />
+                </Link>
+              )}
+            </div>
+
+            {/* Quick Highlights */}
+            {Object.keys(advancedHighlights || {}).length > 0 && (
+              <div className="analysis-highlights">
+                <h4><Sparkles size={16} /> Key Findings</h4>
+                <div className="highlights-list">
+                  {Object.entries(advancedHighlights || {}).map(([key, highlight]) => (
+                    <div key={key} className="highlight-item">
+                      <Zap size={14} className="text-warning" />
+                      <span>{highlight.message}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quick Status Cards */}
       <div className="status-grid">
@@ -208,12 +365,17 @@ export function Dashboard() {
         </Card>
       </div>
 
-      {/* Issues Section */}
+      {/* Critical Issues Section */}
       {issueCount > 0 && (
         <Card className="issues-card">
           <CardHeader
             title={`${issueCount} Issues to Address`}
             subtitle="Critical items affecting project health"
+            action={
+              <Link to="/quality" className="see-all-link">
+                View All <ArrowRight size={14} />
+              </Link>
+            }
           />
           <CardContent>
             <div className="issues-list">
@@ -229,6 +391,26 @@ export function Dashboard() {
               {issueCount > 5 && (
                 <p className="text-muted">...and {issueCount - 5} more</p>
               )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Recommendations */}
+      {qualitySummary?.recommendations && qualitySummary.recommendations.length > 0 && (
+        <Card className="recommendations-card">
+          <CardHeader
+            title="Recommendations"
+            subtitle="Suggested improvements"
+          />
+          <CardContent>
+            <div className="recommendations-list">
+              {qualitySummary.recommendations.slice(0, 5).map((rec, idx) => (
+                <div key={idx} className="recommendation-item">
+                  <Sparkles size={14} className="text-accent" />
+                  <span>{rec}</span>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>

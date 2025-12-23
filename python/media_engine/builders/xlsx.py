@@ -23,13 +23,11 @@ from openpyxl.styles import Alignment, Border, Font, NamedStyle, PatternFill, Si
 from openpyxl.utils import get_column_letter
 
 if TYPE_CHECKING:
+    from ..brand import BrandContext
     from ..core.theme import Theme
 
-
-def hex_to_argb(hex_color: str) -> str:
-    """Convert hex color to ARGB format for openpyxl."""
-    hex_color = hex_color.lstrip("#")
-    return f"FF{hex_color.upper()}"
+# Import centralized color utility
+from ..brand.colors import hex_to_argb
 
 
 @dataclass
@@ -59,23 +57,40 @@ class SheetData:
 class XLSXBuilder:
     """Builds Excel spreadsheets with theme styling."""
 
-    def __init__(self, theme: "Theme" = None):
+    def __init__(self, theme: "Theme" = None, brand: "BrandContext" = None):
         """
         Initialize XLSX builder.
 
         Args:
-            theme: Theme for styling (uses defaults if not provided)
+            theme: Legacy Theme for styling (deprecated, use brand instead)
+            brand: BrandContext for unified brand access (recommended)
         """
-        from ..core.theme import COPPER_AND_CREAM
+        self.brand = brand
 
-        self.theme = theme or COPPER_AND_CREAM
+        if brand:
+            # Use BrandContext
+            self.color_primary = brand.hex_to_argb(brand.get_brand_color("primary"))
+            self.color_secondary = brand.hex_to_argb(brand.get_brand_color("secondary"))
+            self.color_accent = brand.hex_to_argb(brand.get_brand_color("accent"))
+            self.color_bg = brand.hex_to_argb(brand.get_color("background.primary") or "#ffffff")
+            self.color_muted = brand.hex_to_argb(brand.get_color("text.muted") or "#666666")
 
-        # Colors (ARGB format)
-        self.color_primary = hex_to_argb(self.theme.colors.primary)
-        self.color_secondary = hex_to_argb(self.theme.colors.secondary)
-        self.color_accent = hex_to_argb(self.theme.colors.accent)
-        self.color_bg = hex_to_argb(self.theme.colors.background)
-        self.color_muted = hex_to_argb(self.theme.colors.muted)
+            self.font_heading = brand.get_system_font("heading")
+            self.font_body = brand.get_system_font("body")
+        else:
+            from ..core.theme import COPPER_AND_CREAM
+
+            self.theme = theme or COPPER_AND_CREAM
+
+            self.color_primary = hex_to_argb(self.theme.colors.primary)
+            self.color_secondary = hex_to_argb(self.theme.colors.secondary)
+            self.color_accent = hex_to_argb(self.theme.colors.accent)
+            self.color_bg = hex_to_argb(self.theme.colors.background)
+            self.color_muted = hex_to_argb(self.theme.colors.muted)
+
+            # Default to Helvetica Neue for legacy mode
+            self.font_heading = "Helvetica Neue"
+            self.font_body = "Helvetica Neue"
 
         # Create workbook
         self.wb = Workbook()
@@ -88,7 +103,7 @@ class XLSXBuilder:
         """Setup named styles for consistent formatting."""
         # Header style
         header_style = NamedStyle(name="header")
-        header_style.font = Font(name="Helvetica Neue", size=11, bold=True, color="FFFFFF")
+        header_style.font = Font(name=self.font_heading, size=11, bold=True, color="FFFFFF")
         header_style.fill = PatternFill(
             start_color=self.color_primary, end_color=self.color_primary, fill_type="solid"
         )
@@ -98,40 +113,42 @@ class XLSXBuilder:
 
         # Title style
         title_style = NamedStyle(name="title")
-        title_style.font = Font(name="Helvetica Neue", size=16, bold=True, color=self.color_primary)
+        title_style.font = Font(
+            name=self.font_heading, size=16, bold=True, color=self.color_primary
+        )
         title_style.alignment = Alignment(horizontal="left", vertical="center")
         self.wb.add_named_style(title_style)
 
         # Data style
         data_style = NamedStyle(name="data")
-        data_style.font = Font(name="Helvetica Neue", size=10, color=self.color_primary)
+        data_style.font = Font(name=self.font_body, size=10, color=self.color_primary)
         data_style.alignment = Alignment(horizontal="left", vertical="center")
         self.wb.add_named_style(data_style)
 
         # Number style
         number_style = NamedStyle(name="number")
-        number_style.font = Font(name="Helvetica Neue", size=10, color=self.color_primary)
+        number_style.font = Font(name=self.font_body, size=10, color=self.color_primary)
         number_style.alignment = Alignment(horizontal="right")
         number_style.number_format = "#,##0"
         self.wb.add_named_style(number_style)
 
         # Currency style
         currency_style = NamedStyle(name="currency")
-        currency_style.font = Font(name="Helvetica Neue", size=10, color=self.color_primary)
+        currency_style.font = Font(name=self.font_body, size=10, color=self.color_primary)
         currency_style.alignment = Alignment(horizontal="right")
         currency_style.number_format = '#,##0.00 "USD"'
         self.wb.add_named_style(currency_style)
 
         # Percent style
         percent_style = NamedStyle(name="percent")
-        percent_style.font = Font(name="Helvetica Neue", size=10, color=self.color_primary)
+        percent_style.font = Font(name=self.font_body, size=10, color=self.color_primary)
         percent_style.alignment = Alignment(horizontal="right")
         percent_style.number_format = "0.0%"
         self.wb.add_named_style(percent_style)
 
         # Input style (editable cells)
         input_style = NamedStyle(name="input")
-        input_style.font = Font(name="Helvetica Neue", size=10, color=self.color_primary)
+        input_style.font = Font(name=self.font_body, size=10, color=self.color_primary)
         input_style.fill = PatternFill(start_color="FFFEF9", end_color="FFFEF9", fill_type="solid")
         input_style.border = Border(
             left=Side(style="thin", color=self.color_accent),
@@ -144,7 +161,7 @@ class XLSXBuilder:
 
         # Highlight style (key results)
         highlight_style = NamedStyle(name="highlight")
-        highlight_style.font = Font(name="Helvetica Neue", size=11, bold=True, color="FFFFFF")
+        highlight_style.font = Font(name=self.font_heading, size=11, bold=True, color="FFFFFF")
         highlight_style.fill = PatternFill(
             start_color=self.color_accent, end_color=self.color_accent, fill_type="solid"
         )
@@ -153,7 +170,7 @@ class XLSXBuilder:
 
         # Alternating row style
         alt_row_style = NamedStyle(name="alt_row")
-        alt_row_style.font = Font(name="Helvetica Neue", size=10, color=self.color_primary)
+        alt_row_style.font = Font(name=self.font_body, size=10, color=self.color_primary)
         alt_row_style.fill = PatternFill(
             start_color="FFF7F4F1", end_color="FFF7F4F1", fill_type="solid"
         )

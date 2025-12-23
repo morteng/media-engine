@@ -54,7 +54,9 @@ def _scan_source_documents(project: "Project", registry: ContentRegistry) -> int
                 registry.register(
                     path=md_file.relative_to(project.root),
                     content_type=ContentType.SOURCE_DOCUMENT,
-                    depends_on=[project.root / "theme.yaml"] if (project.root / "theme.yaml").exists() else [],
+                    depends_on=[project.root / "theme.yaml"]
+                    if (project.root / "theme.yaml").exists()
+                    else [],
                 )
                 registered += 1
 

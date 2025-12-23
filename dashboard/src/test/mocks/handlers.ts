@@ -43,6 +43,33 @@ export const mockDocuments = {
   ],
 };
 
+export const mockQualitySummary = {
+  health_score: 85,
+  grade: 'B',
+  status: 'Good',
+  core_metrics: {
+    freshness: 90,
+    translation: 75,
+    consistency: 88,
+    links: 95,
+    readability: 82,
+    dependencies: 85,
+    metadata: 80,
+  },
+  critical_issues_count: 1,
+  warning_count: 2,
+  recommendations: ['Update stale documents', 'Complete translations'],
+  advanced_available: {
+    semantic: true,
+    knowledge_graph: true,
+    predictive_freshness: false,
+    enhanced_codesync: true,
+    norwegian_readability: false,
+    advanced_analysis: false,
+  },
+  advanced_highlights: {},
+};
+
 export const mockInsights = {
   health: {
     overall: 85,
@@ -181,6 +208,7 @@ export const handlers = [
 
   // Insights
   http.get('/api/insights', () => HttpResponse.json(mockInsights)),
+  http.get('/api/insights/quality-summary', () => HttpResponse.json(mockQualitySummary)),
 
   // Quality
   http.get('/api/quality', () => HttpResponse.json(mockQuality)),

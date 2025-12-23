@@ -24,6 +24,7 @@ def temp_home(temp_dir, monkeypatch):
 def user_config_module(temp_home):
     """Import user_config module with mocked home directory."""
     from media_engine.config import user_config
+
     return user_config
 
 
@@ -60,7 +61,9 @@ class TestRecentProjects:
         # Resolve to handle macOS /var -> /private/var symlink
         resolved_path = str(Path(project_path).resolve())
 
-        project = user_config_module.add_recent_project(project_path, "Test Project", allow_temp=True)
+        project = user_config_module.add_recent_project(
+            project_path, "Test Project", allow_temp=True
+        )
 
         assert project.path == resolved_path
         assert project.name == "Test Project"
@@ -80,7 +83,7 @@ class TestRecentProjects:
         ]
 
         for i, path in enumerate(paths):
-            user_config_module.add_recent_project(path, f"Project {i+1}", allow_temp=True)
+            user_config_module.add_recent_project(path, f"Project {i + 1}", allow_temp=True)
 
         projects = user_config_module.get_recent_projects(include_temp=True)
         assert len(projects) == 3

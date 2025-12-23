@@ -1,0 +1,202 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - button "Collapse sidebar" [expanded] [ref=e6] [cursor=pointer]:
+        - img [ref=e7]
+      - button "ME Media Engine Demo" [ref=e11] [cursor=pointer]:
+        - generic [ref=e12]: ME
+        - generic [ref=e13]: Media Engine Demo
+        - img [ref=e14]
+    - button "Search... ⌘K" [ref=e16] [cursor=pointer]:
+      - img [ref=e17]
+      - generic [ref=e20]: Search...
+      - generic [ref=e21]: ⌘K
+    - generic [ref=e22]:
+      - generic "Disconnected" [ref=e24]:
+        - img [ref=e25]
+      - button "Toggle theme" [ref=e32] [cursor=pointer]:
+        - img [ref=e33]
+  - generic [ref=e39]:
+    - complementary [ref=e40]:
+      - navigation [ref=e41]:
+        - link "Dashboard" [ref=e43] [cursor=pointer]:
+          - /url: /
+          - img [ref=e44]
+          - generic [ref=e49]: Dashboard
+        - link "Content" [ref=e51] [cursor=pointer]:
+          - /url: /content
+          - img [ref=e52]
+          - generic [ref=e55]: Content
+        - link "Quality" [ref=e57] [cursor=pointer]:
+          - /url: /quality
+          - img [ref=e58]
+          - generic [ref=e60]: Quality
+        - link "Build" [ref=e62] [cursor=pointer]:
+          - /url: /build
+          - img [ref=e63]
+          - generic [ref=e67]: Build
+        - link "AI Assist" [ref=e69] [cursor=pointer]:
+          - /url: /ai-assist
+          - img [ref=e70]
+          - generic [ref=e73]: AI Assist
+    - main [ref=e74]:
+      - generic [ref=e75]:
+        - generic [ref=e76]:
+          - heading "Quality" [level=1] [ref=e77]
+          - generic [ref=e78]:
+            - link "Quality" [ref=e79] [cursor=pointer]:
+              - /url: /quality
+            - link "Semantic" [ref=e80] [cursor=pointer]:
+              - /url: /quality/semantic
+            - link "Knowledge" [ref=e81] [cursor=pointer]:
+              - /url: /quality/knowledge
+            - link "Readability" [ref=e82] [cursor=pointer]:
+              - /url: /quality/readability
+            - link "Freshness" [ref=e83] [cursor=pointer]:
+              - /url: /quality/freshness
+            - link "Code Sync" [ref=e84] [cursor=pointer]:
+              - /url: /quality/codesync
+            - link "Advanced" [ref=e85] [cursor=pointer]:
+              - /url: /quality/advanced
+            - link "Activity" [ref=e86] [cursor=pointer]:
+              - /url: /quality/activity
+        - generic [ref=e87]:
+          - generic [ref=e90]:
+            - img [ref=e91]
+            - generic [ref=e93]:
+              - generic [ref=e94]: "95"
+              - generic [ref=e95]:
+                - text: Quality Score
+                - button "Quality Score" [ref=e97]:
+                  - img [ref=e98]
+            - generic [ref=e100]: excellent
+          - generic [ref=e101]:
+            - generic [ref=e103]:
+              - img [ref=e104]
+              - generic [ref=e106]: "13"
+              - generic [ref=e107]: Critical
+            - generic [ref=e109]:
+              - img [ref=e110]
+              - generic [ref=e112]: "0"
+              - generic [ref=e113]: Warnings
+            - generic [ref=e115]:
+              - img [ref=e116]
+              - generic [ref=e119]: "37"
+              - generic [ref=e120]: Documents
+          - generic [ref=e121]:
+            - generic [ref=e123]:
+              - heading "Component Scores" [level=3] [ref=e124]
+              - generic [ref=e125]: Weighted health factors
+            - generic [ref=e127]:
+              - generic [ref=e128]:
+                - generic [ref=e129]:
+                  - text: freshness
+                  - button "Freshness" [ref=e131]:
+                    - img [ref=e132]
+                - generic [ref=e137]: 100%
+              - generic [ref=e138]:
+                - generic [ref=e139]:
+                  - text: translation
+                  - button "Translation Coverage" [ref=e141]:
+                    - img [ref=e142]
+                - generic [ref=e147]: 100%
+              - generic [ref=e148]:
+                - generic [ref=e149]:
+                  - text: consistency
+                  - button "Consistency" [ref=e151]:
+                    - img [ref=e152]
+                - generic [ref=e157]: 86%
+              - generic [ref=e158]:
+                - generic [ref=e159]:
+                  - text: links
+                  - button "Link Health" [ref=e161]:
+                    - img [ref=e162]
+                - generic [ref=e167]: 95%
+              - generic [ref=e168]:
+                - generic [ref=e169]:
+                  - text: readability
+                  - button "Readability" [ref=e171]:
+                    - img [ref=e172]
+                - generic [ref=e177]: 96%
+              - generic [ref=e178]:
+                - generic [ref=e179]:
+                  - text: dependencies
+                  - button "Dependencies" [ref=e181]:
+                    - img [ref=e182]
+                - generic [ref=e187]: 87%
+              - generic [ref=e188]:
+                - generic [ref=e189]:
+                  - text: metadata
+                  - button "Metadata Completeness" [ref=e191]:
+                    - img [ref=e192]
+                - generic [ref=e197]: 90%
+          - generic [ref=e198]:
+            - generic [ref=e200]:
+              - heading "Issues" [level=3] [ref=e201]
+              - generic [ref=e202]: 13 to address
+            - generic [ref=e204]:
+              - generic [ref=e205]:
+                - img [ref=e206]
+                - generic [ref=e208]:
+                  - generic [ref=e209]: consistency
+                  - text: no/chapters/02_innholdsstyring.md
+                  - paragraph [ref=e210]: Document marked 'final' has 1 incomplete markers
+              - generic [ref=e211]:
+                - img [ref=e212]
+                - generic [ref=e214]:
+                  - generic [ref=e215]: consistency
+                  - text: no/chapters/12_cli_referanse.md
+                  - paragraph [ref=e216]: Document marked 'final' has 1 incomplete markers
+              - generic [ref=e217]:
+                - img [ref=e218]
+                - generic [ref=e220]:
+                  - generic [ref=e221]: consistency
+                  - text: no/chapters/09_publisering.md
+                  - paragraph [ref=e222]: Document marked 'final' has 1 incomplete markers
+              - generic [ref=e223]:
+                - img [ref=e224]
+                - generic [ref=e226]:
+                  - generic [ref=e227]: consistency
+                  - text: no/chapters/16_github_utstillingsvindu.md
+                  - paragraph [ref=e228]: Document marked 'final' has 1 incomplete markers
+              - generic [ref=e229]:
+                - img [ref=e230]
+                - generic [ref=e232]:
+                  - generic [ref=e233]: consistency
+                  - text: no/chapters/13_sikkerhet.md
+                  - paragraph [ref=e234]: Document marked 'final' has 2 incomplete markers
+              - generic [ref=e235]:
+                - img [ref=e236]
+                - generic [ref=e238]:
+                  - generic [ref=e239]: consistency
+                  - text: no/chapters/04_kvalitetssjekker.md
+                  - paragraph [ref=e240]: Document marked 'final' has 7 incomplete markers
+              - generic [ref=e241]:
+                - img [ref=e242]
+                - generic [ref=e244]:
+                  - generic [ref=e245]: consistency
+                  - text: en/chapters/04_quality_checks.md
+                  - paragraph [ref=e246]: Document marked 'final' has 16 incomplete markers
+              - generic [ref=e247]:
+                - img [ref=e248]
+                - generic [ref=e250]:
+                  - generic [ref=e251]: consistency
+                  - text: en/chapters/12_cli_reference.md
+                  - paragraph [ref=e252]: Document marked 'final' has 4 incomplete markers
+              - generic [ref=e253]:
+                - img [ref=e254]
+                - generic [ref=e256]:
+                  - generic [ref=e257]: consistency
+                  - text: en/chapters/13_security.md
+                  - paragraph [ref=e258]: Document marked 'final' has 3 incomplete markers
+              - generic [ref=e259]:
+                - img [ref=e260]
+                - generic [ref=e262]:
+                  - generic [ref=e263]: consistency
+                  - text: en/chapters/16_github_showcase.md
+                  - paragraph [ref=e264]: Document marked 'final' has 1 incomplete markers
+              - paragraph [ref=e265]: ...and 3 more
+```

@@ -161,8 +161,12 @@ class ProvenanceTracker:
         return record
 
     def record_review(
-        self, doc: Document, reviewer: str, approved: bool, comments: Optional[str] = None,
-        project=None
+        self,
+        doc: Document,
+        reviewer: str,
+        approved: bool,
+        comments: Optional[str] = None,
+        project=None,
     ) -> None:
         """Record a review of a document.
 

@@ -5,10 +5,9 @@ Tests for the audit logging module.
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
-
 from media_engine.audit import (
     Actions,
     AuditEntry,

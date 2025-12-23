@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useProject, useRecentProjects, useOpenProject, useBrowseProject } from '@/hooks/useApi';
+import { useSidebar } from '@/contexts';
 import { ConnectionStatus } from '@/components/ui';
 import {
   Search,
@@ -8,7 +9,10 @@ import {
   ChevronDown,
   FolderOpen,
   Clock,
-  Check
+  Check,
+  Menu,
+  PanelLeft,
+  PanelLeftClose,
 } from 'lucide-react';
 
 export function Header() {
@@ -16,6 +20,7 @@ export function Header() {
   const { data: recentProjects } = useRecentProjects();
   const openProject = useOpenProject();
   const browseProject = useBrowseProject();
+  const { isMobile, isCollapsed, toggleMobileMenu, toggleSidebar } = useSidebar();
 
   const [isDark, setIsDark] = useState(true);
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
@@ -55,8 +60,26 @@ export function Header() {
 
   return (
     <header className="header">
-      {/* Project Selector */}
-      <div className="project-selector" ref={menuRef}>
+      {/* Unified menu toggle - always in top left */}
+      <div className="header-left">
+        <button
+          className="menu-toggle"
+          onClick={isMobile ? toggleMobileMenu : toggleSidebar}
+          title={isMobile ? "Open menu" : (isCollapsed ? "Expand sidebar" : "Collapse sidebar")}
+          aria-label={isMobile ? "Open navigation menu" : (isCollapsed ? "Expand sidebar" : "Collapse sidebar")}
+          aria-expanded={isMobile ? undefined : !isCollapsed}
+        >
+          {isMobile ? (
+            <Menu size={20} />
+          ) : isCollapsed ? (
+            <PanelLeft size={20} />
+          ) : (
+            <PanelLeftClose size={20} />
+          )}
+        </button>
+
+        {/* Project Selector */}
+        <div className="project-selector" ref={menuRef}>
         <button
           className="project-button"
           onClick={() => setProjectMenuOpen(!projectMenuOpen)}
@@ -104,21 +127,29 @@ export function Header() {
             </button>
           </div>
         )}
+        </div>
       </div>
 
-      {/* Search */}
-      <div className="search-container">
+      {/* Search - triggers Command Palette */}
+      <button
+        className="search-container"
+        onClick={() => {
+          // Trigger Cmd+K to open command palette
+          const event = new KeyboardEvent('keydown', {
+            key: 'k',
+            metaKey: true,
+            bubbles: true,
+          });
+          document.dispatchEvent(event);
+        }}
+      >
         <Search size={16} />
-        <input
-          type="text"
-          placeholder="Search..."
-          className="search-input"
-        />
+        <span className="search-placeholder">Search...</span>
         <kbd>⌘K</kbd>
-      </div>
+      </button>
 
-      {/* Actions */}
-      <div className="header-actions">
+      {/* Right side actions */}
+      <div className="header-right">
         <ConnectionStatus />
         <button className="icon-btn" onClick={toggleTheme} title="Toggle theme">
           {isDark ? <Sun size={18} /> : <Moon size={18} />}

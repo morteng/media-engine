@@ -56,9 +56,7 @@ def register_batch_tools(mcp, server_instance: "MediaEngineMCPServer"):
         return json.dumps(result, indent=2)
 
     @mcp.tool()
-    async def apply_transformation(
-        selector: str, transformation: str, dry_run: bool = True
-    ) -> str:
+    async def apply_transformation(selector: str, transformation: str, dry_run: bool = True) -> str:
         """
         Apply a transformation to multiple documents matching a selector.
 

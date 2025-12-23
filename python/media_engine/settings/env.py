@@ -17,6 +17,7 @@ T = TypeVar("T")
 @dataclass
 class EnvVar:
     """Represents an environment variable with metadata."""
+
     name: str
     description: str
     default: Optional[str] = None
@@ -144,6 +145,7 @@ ALL_ENV_VARS: dict[str, EnvVar] = {
 # UTILITY FUNCTIONS
 # =============================================================================
 
+
 def get_elevenlabs_api_key() -> Optional[str]:
     """Get ElevenLabs API key from either environment variable."""
     return ELEVENLABS_API_KEY.get() or ELEVENLABS_API_KEY_ALT.get()
@@ -197,10 +199,7 @@ def get_env_summary(include_sensitive: bool = False) -> dict[str, dict[str, Any]
             "is_set": var.is_set(),
             "required": var.required,
             "sensitive": var.sensitive,
-            "value": (
-                "[REDACTED]" if var.sensitive and not include_sensitive
-                else value
-            ),
+            "value": ("[REDACTED]" if var.sensitive and not include_sensitive else value),
         }
     return summary
 

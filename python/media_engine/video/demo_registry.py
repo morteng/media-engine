@@ -79,7 +79,9 @@ class DemoDefinition:
         """Get a state by name, raising KeyError if not found."""
         if name not in self.states:
             available = ", ".join(self.states.keys())
-            raise KeyError(f"State '{name}' not found in demo '{self.name}'. Available: {available}")
+            raise KeyError(
+                f"State '{name}' not found in demo '{self.name}'. Available: {available}"
+            )
         return self.states[name]
 
 
@@ -128,7 +130,9 @@ class DemoRegistry:
             project_root = self.project.root
 
             # Language-specific demos
-            search_paths.append(project_root / content_dir / language / "demos" / f"{demo_name}.yaml")
+            search_paths.append(
+                project_root / content_dir / language / "demos" / f"{demo_name}.yaml"
+            )
             # Shared demos
             search_paths.append(project_root / "demos" / f"{demo_name}.yaml")
             search_paths.append(project_root / content_dir / "demos" / f"{demo_name}.yaml")

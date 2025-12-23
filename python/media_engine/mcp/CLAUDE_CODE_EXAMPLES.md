@@ -423,6 +423,396 @@ print(f"\n✓ Session report exported")
 
 ---
 
+## Example 7: Advanced Semantic Analysis
+
+**Goal**: Find duplicate content and terminology inconsistencies.
+
+```python
+# Semantic analysis for content quality
+
+print("🔍 Semantic Content Analysis")
+print("=" * 50)
+
+# Get comprehensive quality report
+report = quality_report_comprehensive()
+
+# 1. Near-Duplicate Detection
+print("\n📄 Near-Duplicate Detection:")
+semantic = quality_report_module("semantic")
+
+if semantic.get("near_duplicates"):
+    print(f"   Found {len(semantic['near_duplicates'])} duplicate pairs:")
+    for dup in semantic["near_duplicates"][:5]:
+        similarity = dup["similarity"] * 100
+        print(f"   • {dup['doc1']}")
+        print(f"     ↔ {dup['doc2']}")
+        print(f"     Similarity: {similarity:.1f}%")
+        print()
+else:
+    print("   ✓ No near-duplicates found")
+
+# 2. Terminology Drift
+print("\n📚 Terminology Consistency:")
+if semantic.get("terminology_drift"):
+    print(f"   Found {len(semantic['terminology_drift'])} inconsistencies:")
+    for drift in semantic["terminology_drift"][:5]:
+        print(f"   • Term: '{drift['term']}'")
+        print(f"     Variants: {', '.join(drift['variants'])}")
+        print(f"     In: {len(drift['documents'])} documents")
+else:
+    print("   ✓ Terminology is consistent")
+
+# 3. Content Clusters
+print(f"\n🗂️ Content Clusters:")
+if semantic.get("content_clusters"):
+    print(f"   Content organized into {len(semantic['content_clusters'])} topic clusters")
+    for i, cluster in enumerate(semantic["content_clusters"][:3], 1):
+        print(f"   Cluster {i}: {cluster['name']} ({len(cluster['documents'])} docs)")
+
+# Recommendations
+print("\n💡 Recommendations:")
+if semantic.get("near_duplicates"):
+    print("   • Review duplicate pairs - consolidate or differentiate")
+if semantic.get("terminology_drift"):
+    print("   • Standardize terminology across all documents")
+
+print("\n✅ Semantic analysis complete!")
+```
+
+---
+
+## Example 8: Knowledge Graph Analysis
+
+**Goal**: Analyze concept coverage and identify learning gaps.
+
+```python
+# Knowledge graph analysis
+
+print("🧠 Knowledge Graph Analysis")
+print("=" * 50)
+
+# Get knowledge graph report
+knowledge = quality_report_module("knowledge")
+
+# 1. Concept Overview
+print("\n📊 Concept Overview:")
+print(f"   Total concepts: {knowledge['total_concepts']}")
+print(f"   Total relationships: {knowledge['total_relationships']}")
+print(f"   Coverage score: {knowledge['coverage_score']}/100")
+
+# 2. Orphan Concepts
+print("\n🚫 Orphan Concepts (mentioned but never explained):")
+if knowledge.get("orphan_concepts"):
+    for orphan in knowledge["orphan_concepts"][:10]:
+        print(f"   • '{orphan['name']}' in {orphan['document']}")
+
+    if len(knowledge["orphan_concepts"]) > 10:
+        remaining = len(knowledge["orphan_concepts"]) - 10
+        print(f"   ... and {remaining} more")
+else:
+    print("   ✓ All concepts are properly explained")
+
+# 3. Prerequisite Issues
+print("\n📋 Prerequisite Issues:")
+if knowledge.get("prerequisite_issues"):
+    for issue in knowledge["prerequisite_issues"][:5]:
+        print(f"   • {issue['document']}")
+        print(f"     Missing prerequisites: {', '.join(issue['missing'])}")
+else:
+    print("   ✓ All documents have proper prerequisite coverage")
+
+# 4. Suggest improvements
+print("\n💡 Recommendations:")
+if knowledge.get("orphan_concepts"):
+    print("   • Add definitions or links for orphan concepts")
+if knowledge.get("prerequisite_issues"):
+    print("   • Add 'Prerequisites' sections to affected documents")
+if knowledge["coverage_score"] < 80:
+    print("   • Increase cross-referencing between related documents")
+
+# Export knowledge map
+print("\n📤 Exporting knowledge map visualization...")
+log_agent_action(
+    "knowledge_analysis",
+    "Analyzed concept coverage and prerequisites",
+    f"Found {len(knowledge.get('orphan_concepts', []))} orphan concepts",
+    "project"
+)
+
+print("\n✅ Knowledge graph analysis complete!")
+```
+
+---
+
+## Example 9: Predictive Freshness Analysis
+
+**Goal**: Identify documents at risk of becoming stale.
+
+```python
+# Predictive freshness analysis
+
+print("⏰ Predictive Freshness Analysis")
+print("=" * 50)
+
+# Get freshness predictions
+freshness = quality_report_module("freshness")
+
+# 1. Overview
+print("\n📊 Freshness Overview:")
+print(f"   Documents analyzed: {freshness['total_analyzed']}")
+print(f"   Average risk score: {freshness['average_risk']:.2f}")
+
+# 2. High-Risk Documents
+print("\n🔴 High-Risk Documents (>70% staleness probability):")
+high_risk = [p for p in freshness.get("predictions", []) if p["risk_score"] > 0.7]
+
+if high_risk:
+    for doc in sorted(high_risk, key=lambda x: x["risk_score"], reverse=True)[:10]:
+        risk_pct = doc["risk_score"] * 100
+        days = doc.get("days_until_stale", "?")
+        print(f"   🔴 {doc['path']}")
+        print(f"      Risk: {risk_pct:.0f}% | Stale in: ~{days} days")
+        if doc.get("risk_factors"):
+            print(f"      Factors: {', '.join(doc['risk_factors'][:3])}")
+else:
+    print("   ✓ No high-risk documents found")
+
+# 3. Medium-Risk Documents
+print("\n🟡 Medium-Risk Documents (40-70%):")
+medium_risk = [p for p in freshness.get("predictions", []) if 0.4 <= p["risk_score"] <= 0.7]
+print(f"   {len(medium_risk)} documents at medium risk")
+
+# 4. Schedule maintenance
+print("\n📅 Recommended Maintenance Schedule:")
+if high_risk:
+    print("   This week:")
+    for doc in high_risk[:3]:
+        print(f"     • Review: {doc['path']}")
+if medium_risk:
+    print("   This month:")
+    for doc in medium_risk[:3]:
+        print(f"     • Check: {doc['path']}")
+
+# Log for tracking
+if high_risk:
+    log_agent_action(
+        "freshness_analysis",
+        "Identified documents at risk of becoming stale",
+        f"Found {len(high_risk)} high-risk, {len(medium_risk)} medium-risk documents",
+        "project"
+    )
+
+print("\n✅ Freshness analysis complete!")
+```
+
+---
+
+## Example 10: Code-Documentation Sync Check
+
+**Goal**: Ensure code examples are accurate and up-to-date.
+
+```python
+# Code-documentation synchronization check
+
+print("🔗 Code-Documentation Sync Check")
+print("=" * 50)
+
+# Get code-doc sync analysis
+codesync = quality_report_module("codesync")
+
+# 1. Overview
+print("\n📊 Sync Status:")
+print(f"   Total issues: {codesync['total_issues']}")
+print(f"   Critical: {codesync['critical_count']}")
+print(f"   Warnings: {codesync['warning_count']}")
+
+if codesync['total_issues'] == 0:
+    print("   ✓ All code examples are synchronized!")
+else:
+    # 2. Critical Issues
+    print("\n🔴 Critical Issues (code examples broken):")
+    for issue in codesync.get("critical_issues", [])[:10]:
+        print(f"   • {issue['document']}")
+        print(f"     Type: {issue['type']}")
+        print(f"     Problem: {issue['message']}")
+        print()
+
+    # 3. Warnings
+    print("\n🟡 Warnings:")
+    warnings = [i for i in codesync.get("issues", []) if i["severity"] == "warning"]
+    for issue in warnings[:5]:
+        print(f"   • {issue['document']}: {issue['message']}")
+
+    # 4. Fix critical issues
+    print("\n🔧 Fixing Critical Issues:")
+    for issue in codesync.get("critical_issues", [])[:3]:
+        doc_path = issue["document"]
+
+        # Validate fix
+        validation = validate_action(
+            "update_code_example",
+            doc_path,
+            {"issue_type": issue["type"]}
+        )
+
+        if validation["valid"]:
+            # Get document
+            doc = read_document(doc_path)
+
+            # Log the fix attempt
+            log_agent_action(
+                "codesync_fix",
+                f"Fixing {issue['type']} in code example",
+                f"Reviewing {doc_path}",
+                doc_path
+            )
+
+            print(f"   ✓ Ready to fix: {doc_path}")
+        else:
+            print(f"   ⚠ Cannot auto-fix: {doc_path} - {validation['message']}")
+
+print("\n✅ Code-doc sync check complete!")
+```
+
+---
+
+## Example 11: Norwegian Readability Analysis
+
+**Goal**: Ensure Norwegian content is accessible to target audience.
+
+```python
+# Norwegian readability analysis
+
+print("📖 Norwegian Readability Analysis (LIX)")
+print("=" * 50)
+
+# Get readability analysis
+readability = quality_report_module("readability")
+
+if "norwegian" not in readability or not readability["norwegian"].get("documents_analyzed"):
+    print("   ℹ No Norwegian documents found")
+else:
+    no_data = readability["norwegian"]
+
+    # 1. Overview
+    print("\n📊 Norwegian Content Overview:")
+    print(f"   Documents analyzed: {no_data['documents_analyzed']}")
+    print(f"   Average LIX score: {no_data['average_lix']}")
+
+    # LIX interpretation
+    avg_lix = no_data['average_lix']
+    if avg_lix < 25:
+        level = "Very Easy (children's books)"
+    elif avg_lix < 35:
+        level = "Easy (simple text)"
+    elif avg_lix < 45:
+        level = "Medium (newspapers)"
+    elif avg_lix < 55:
+        level = "Difficult (official documents)"
+    else:
+        level = "Very Difficult (academic)"
+    print(f"   Average difficulty: {level}")
+
+    # 2. Difficult Documents
+    print(f"\n🔴 Very Difficult Documents (LIX > 55):")
+    for doc in no_data.get("difficult_documents", []):
+        print(f"   • {doc['path']}")
+        print(f"     LIX: {doc['lix']} ({doc['level']})")
+
+    # 3. Distribution
+    print("\n📈 Difficulty Distribution:")
+    # Would show distribution across levels
+    print(f"   Easy: {no_data.get('easy_count', 0)} documents")
+    print(f"   Very Difficult: {no_data.get('very_difficult_count', 0)} documents")
+
+    # 4. Recommendations
+    print("\n💡 Recommendations for Difficult Documents:")
+    if no_data.get("difficult_documents"):
+        print("   • Use shorter sentences (aim for 15-20 words)")
+        print("   • Replace long words with simpler alternatives")
+        print("   • Break complex paragraphs into smaller ones")
+        print("   • Add explanatory subheadings")
+
+print("\n✅ Norwegian readability analysis complete!")
+```
+
+---
+
+## Example 12: Pre-Release Quality Gate
+
+**Goal**: Run comprehensive quality checks before release.
+
+```python
+# Pre-release quality gate check
+
+print("🚦 Pre-Release Quality Gate")
+print("=" * 50)
+
+release_version = "2.5.0"
+print(f"   Checking release v{release_version}\n")
+
+# Get comprehensive report
+report = quality_report_comprehensive()
+
+# Define quality gates
+gates = {
+    "Health Score ≥ 80": report["health"]["score"] >= 80,
+    "No Critical Issues": len(report["issues"]["critical"]) == 0,
+    "Translations Current": len(report["translation"]["outdated"]) == 0,
+    "No High-Risk Staleness": len([p for p in report["freshness"]["predictions"]
+                                    if p["risk_score"] > 0.8]) == 0,
+    "Code Examples Valid": len(report["codesync"]["critical"]) == 0,
+    "No Orphan Concepts": len(report["knowledge"]["orphan_concepts"]) < 5,
+    "Terminology Consistent": len(report["semantic"]["terminology_drift"]) < 3,
+}
+
+# Check each gate
+print("📋 Quality Gate Results:\n")
+all_passed = True
+
+for gate_name, passed in gates.items():
+    status = "✅" if passed else "❌"
+    all_passed = all_passed and passed
+    print(f"   {status} {gate_name}")
+
+# Summary
+print("\n" + "=" * 50)
+if all_passed:
+    print("🎉 ALL GATES PASSED - Ready for release!")
+
+    log_agent_action(
+        "quality_gate_passed",
+        f"Pre-release check for v{release_version}",
+        "All quality gates passed",
+        "project"
+    )
+else:
+    print("⚠️ GATES FAILED - Fix issues before release")
+
+    # Show what needs fixing
+    print("\n📋 Required Fixes:")
+    failed_gates = [name for name, passed in gates.items() if not passed]
+    for gate in failed_gates:
+        print(f"   • {gate}")
+
+    # Get specific issues
+    print("\n🔧 Specific Issues:")
+    issues = quality_report_issues(priority="high")
+    for issue in issues[:5]:
+        print(f"   • [{issue['module']}] {issue['message']}")
+
+    log_agent_action(
+        "quality_gate_failed",
+        f"Pre-release check for v{release_version}",
+        f"Failed gates: {', '.join(failed_gates)}",
+        "project"
+    )
+
+print("\n✅ Quality gate check complete!")
+```
+
+---
+
 ## Best Practices for Claude Code Integration
 
 ### 1. **Always Start with Context**

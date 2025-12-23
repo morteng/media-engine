@@ -60,8 +60,12 @@ class SyncStatus:
             "reference_count": len(self.references),
             "stale_count": len(self.stale_refs),
             "stale_refs": [r.to_dict() for r in self.stale_refs],
-            "last_doc_modified": self.last_doc_modified.isoformat() if self.last_doc_modified else None,
-            "last_code_change": self.last_code_change.isoformat() if self.last_code_change else None,
+            "last_doc_modified": self.last_doc_modified.isoformat()
+            if self.last_doc_modified
+            else None,
+            "last_code_change": self.last_code_change.isoformat()
+            if self.last_code_change
+            else None,
             "needs_review": self.needs_review,
         }
 
@@ -128,7 +132,11 @@ class CodeSyncChecker:
             # Extract references using patterns
             for ref_type, pattern in REFERENCE_PATTERNS.items():
                 for match in pattern.finditer(line):
-                    target = match.group(1) or match.group(2) if len(match.groups()) > 1 else match.group(1)
+                    target = (
+                        match.group(1) or match.group(2)
+                        if len(match.groups()) > 1
+                        else match.group(1)
+                    )
                     if target:
                         references.append(
                             CodeReference(

@@ -245,6 +245,7 @@ def register_document_tools(mcp, server_instance):
 
         # Build frontmatter
         import frontmatter
+
         post = frontmatter.Post(content or f"# {title}\n\n", **metadata)
 
         # Write file
@@ -392,9 +393,7 @@ def register_document_tools(mcp, server_instance):
                         translations.append(pair.get("translation"))
 
                 if translations:
-                    warnings.append(
-                        f"Found {len(translations)} translations of this document"
-                    )
+                    warnings.append(f"Found {len(translations)} translations of this document")
             except Exception:
                 pass
 
@@ -498,7 +497,7 @@ def register_document_tools(mcp, server_instance):
                 "freshness_days": 60,
                 "tags": [],
             }
-            result["content"] = f"""# {title or 'New Chapter'}
+            result["content"] = f"""# {title or "New Chapter"}
 
 ## Overview
 
@@ -548,7 +547,7 @@ def register_document_tools(mcp, server_instance):
                 "source_version": source_doc.version,
                 "freshness_days": 60,
             }
-            result["content"] = f"""# {title or f'[Translate: {source_doc.title}]'}
+            result["content"] = f"""# {title or f"[Translate: {source_doc.title}]"}
 
 <!-- Source document: {source_path} -->
 <!-- Translate the content below -->
@@ -564,8 +563,8 @@ def register_document_tools(mcp, server_instance):
         elif doc_type == "script":
             slug = _slugify(title) if title else "new_script"
             result["suggested_path"] = f"content/{language}/scripts/{slug}.yaml"
-            result["content"] = f"""# Video Script: {title or 'New Script'}
-title: "{title or 'New Script'}"
+            result["content"] = f"""# Video Script: {title or "New Script"}
+title: "{title or "New Script"}"
 description: "[Script description]"
 duration_estimate: "3:00"
 voice_id: null  # ElevenLabs voice ID
@@ -604,14 +603,14 @@ scenes:
         elif doc_type == "slide":
             slug = _slugify(title) if title else "new_slides"
             result["suggested_path"] = f"content/{language}/slides/{slug}.yaml"
-            result["content"] = f"""# Presentation: {title or 'New Presentation'}
-title: "{title or 'New Presentation'}"
+            result["content"] = f"""# Presentation: {title or "New Presentation"}
+title: "{title or "New Presentation"}"
 description: "[Presentation description]"
 author: "[Author name]"
 
 slides:
   - type: title
-    title: "{title or 'New Presentation'}"
+    title: "{title or "New Presentation"}"
     subtitle: "[Subtitle]"
 
   - type: content
@@ -638,8 +637,8 @@ slides:
         elif doc_type == "diagram":
             slug = _slugify(title) if title else "new_diagram"
             result["suggested_path"] = f"content/{language}/diagrams/{slug}.yaml"
-            result["content"] = f"""# Diagram: {title or 'New Diagram'}
-title: "{title or 'New Diagram'}"
+            result["content"] = f"""# Diagram: {title or "New Diagram"}
+title: "{title or "New Diagram"}"
 type: "flowchart"  # flowchart, architecture, timeline, comparison
 
 nodes:
@@ -674,8 +673,8 @@ edges:
         elif doc_type == "data":
             slug = _slugify(title) if title else "new_data"
             result["suggested_path"] = f"content/{language}/data/{slug}.yaml"
-            result["content"] = f"""# Data: {title or 'New Data'}
-title: "{title or 'New Data'}"
+            result["content"] = f"""# Data: {title or "New Data"}
+title: "{title or "New Data"}"
 description: "[Data description]"
 
 sheets:
@@ -803,6 +802,7 @@ sheets:
 def _slugify(text: str) -> str:
     """Convert text to slug format."""
     import re
+
     if not text:
         return "untitled"
     # Lowercase and replace spaces/special chars with underscores

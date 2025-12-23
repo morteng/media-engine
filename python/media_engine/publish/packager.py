@@ -159,13 +159,9 @@ def collect_deliverables(
     proposal_pdf = lang_output / "proposal.pdf"
 
     if proposal_html.exists():
-        proposal_formats.append(
-            FormatLink(file_type="html", path="proposal.html", label="View")
-        )
+        proposal_formats.append(FormatLink(file_type="html", path="proposal.html", label="View"))
     if proposal_pdf.exists():
-        proposal_formats.append(
-            FormatLink(file_type="pdf", path="proposal.pdf", label="PDF")
-        )
+        proposal_formats.append(FormatLink(file_type="pdf", path="proposal.pdf", label="PDF"))
 
     if proposal_formats:
         proposal_items.append(
@@ -197,7 +193,9 @@ def collect_deliverables(
     presentations_dir = lang_output / "presentations"
 
     # Check for HTML presentation
-    html_presentation = presentations_dir / "pitch_deck.html" if presentations_dir.exists() else None
+    html_presentation = (
+        presentations_dir / "pitch_deck.html" if presentations_dir.exists() else None
+    )
     if html_presentation and html_presentation.exists():
         pitch_deck_formats.append(
             FormatLink(file_type="html", path="presentations/pitch_deck.html", label="View")
@@ -205,9 +203,7 @@ def collect_deliverables(
 
     # Check for PDF
     if (lang_output / "pitch_deck.pdf").exists():
-        pitch_deck_formats.append(
-            FormatLink(file_type="pdf", path="pitch_deck.pdf", label="PDF")
-        )
+        pitch_deck_formats.append(FormatLink(file_type="pdf", path="pitch_deck.pdf", label="PDF"))
     elif (lang_output / "ROP_Pitch_Deck.pdf").exists():
         pitch_deck_formats.append(
             FormatLink(file_type="pdf", path="ROP_Pitch_Deck.pdf", label="PDF")
@@ -370,7 +366,9 @@ def collect_deliverables(
                 continue
             demo_items.append(
                 DeliverableItem(
-                    name=DEMO_NAMES.get(demo.name, demo.stem.replace("-", " ").replace("_", " ").title()),
+                    name=DEMO_NAMES.get(
+                        demo.name, demo.stem.replace("-", " ").replace("_", " ").title()
+                    ),
                     path=f"demos/{demo.name}",
                     description="Interactive demo",
                     icon="🎮",

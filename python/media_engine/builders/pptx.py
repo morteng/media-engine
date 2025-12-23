@@ -25,6 +25,7 @@ from pptx.enum.text import PP_ALIGN
 from pptx.util import Inches, Pt
 
 if TYPE_CHECKING:
+    from ..brand import BrandContext
     from ..core.theme import Theme
 
 
@@ -57,29 +58,47 @@ class SlideContent:
 class PPTXBuilder:
     """Builds PowerPoint presentations with theme styling."""
 
-    def __init__(self, theme: "Theme" = None, logo_path: Optional[Path] = None):
+    def __init__(
+        self,
+        theme: "Theme" = None,
+        logo_path: Optional[Path] = None,
+        brand: "BrandContext" = None,
+    ):
         """
         Initialize PPTX builder.
 
         Args:
-            theme: Theme for styling (uses defaults if not provided)
-            logo_path: Optional path to logo image for branding
+            theme: Legacy Theme for styling (deprecated, use brand instead)
+            logo_path: Legacy logo path (deprecated, use brand instead)
+            brand: BrandContext for unified brand access (recommended)
         """
-        from ..core.theme import COPPER_AND_CREAM
+        self.brand = brand
+        self._logo_path = logo_path
 
-        self.theme = theme or COPPER_AND_CREAM
-        self.logo_path = logo_path
+        if brand:
+            # Use BrandContext (recommended)
+            self.color_primary = hex_to_rgb(brand.get_brand_color("primary"))
+            self.color_secondary = hex_to_rgb(brand.get_brand_color("secondary"))
+            self.color_accent = hex_to_rgb(brand.get_brand_color("accent"))
+            self.color_bg = hex_to_rgb(brand.get_color("background.primary") or "#ffffff")
+            self.color_muted = hex_to_rgb(brand.get_color("text.muted") or "#666666")
 
-        # Colors from theme
-        self.color_primary = hex_to_rgb(self.theme.colors.primary)
-        self.color_secondary = hex_to_rgb(self.theme.colors.secondary)
-        self.color_accent = hex_to_rgb(self.theme.colors.accent)
-        self.color_bg = hex_to_rgb(self.theme.colors.background)
-        self.color_muted = hex_to_rgb(self.theme.colors.muted)
+            self.font_heading = brand.get_system_font("heading")
+            self.font_body = brand.get_system_font("body")
+        else:
+            # Legacy Theme support
+            from ..core.theme import COPPER_AND_CREAM
 
-        # Fonts - use system fonts for compatibility
-        self.font_heading = self._get_system_font(self.theme.typography.heading)
-        self.font_body = self._get_system_font(self.theme.typography.body)
+            self.theme = theme or COPPER_AND_CREAM
+
+            self.color_primary = hex_to_rgb(self.theme.colors.primary)
+            self.color_secondary = hex_to_rgb(self.theme.colors.secondary)
+            self.color_accent = hex_to_rgb(self.theme.colors.accent)
+            self.color_bg = hex_to_rgb(self.theme.colors.background)
+            self.color_muted = hex_to_rgb(self.theme.colors.muted)
+
+            self.font_heading = self._get_system_font(self.theme.typography.heading)
+            self.font_body = self._get_system_font(self.theme.typography.body)
 
         # Slide dimensions (16:9)
         self.slide_width = Inches(13.333)
@@ -90,27 +109,40 @@ class PPTXBuilder:
         self.prs.slide_width = self.slide_width
         self.prs.slide_height = self.slide_height
 
+    @property
+    def logo_path(self) -> Optional[Path]:
+        """Get logo path, preferring BrandContext if available."""
+        if self.brand:
+            # Use brand context to get PNG (auto-converts from SVG)
+            return self.brand.get_logo("primary", "png", size=200)
+        return self._logo_path
+
     def _get_logo_for_pptx(self) -> Optional[Path]:
         """Get logo in a format suitable for PPTX (PNG/JPG, not SVG)."""
-        if not self.logo_path or not self.logo_path.exists():
+        # If using BrandContext, it handles conversion
+        if self.brand:
+            return self.brand.get_logo("primary", "png", size=200)
+
+        # Legacy path handling
+        if not self._logo_path or not self._logo_path.exists():
             return None
 
         # If it's already PNG or JPG, use directly
-        if self.logo_path.suffix.lower() in [".png", ".jpg", ".jpeg"]:
-            return self.logo_path
+        if self._logo_path.suffix.lower() in [".png", ".jpg", ".jpeg"]:
+            return self._logo_path
 
         # For SVG, try to convert to PNG
-        if self.logo_path.suffix.lower() == ".svg":
+        if self._logo_path.suffix.lower() == ".svg":
             try:
                 import tempfile
 
                 import cairosvg
 
                 # Create temp PNG file
-                png_path = Path(tempfile.gettempdir()) / f"{self.logo_path.stem}_logo.png"
+                png_path = Path(tempfile.gettempdir()) / f"{self._logo_path.stem}_logo.png"
                 if not png_path.exists():
                     cairosvg.svg2png(
-                        url=str(self.logo_path),
+                        url=str(self._logo_path),
                         write_to=str(png_path),
                         output_height=200,  # High resolution for quality
                     )

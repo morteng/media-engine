@@ -159,7 +159,10 @@ class TestConsistencyChecker:
         # So we shouldn't flag it as needing promotion
         draft_issues = [i for i in issues if i.declared == "draft"]
         # Draft with incomplete markers is consistent
-        assert all(i.issue_type != "status_mismatch" or "incomplete" in str(i.details) for i in draft_issues)
+        assert all(
+            i.issue_type != "status_mismatch" or "incomplete" in str(i.details)
+            for i in draft_issues
+        )
 
     def test_suggest_status(self, project):
         """Test status suggestion."""
@@ -237,7 +240,15 @@ class TestHealthScorer:
         scorer = HealthScorer(project)
         health = scorer.score_project()
 
-        expected_components = ["freshness", "translation", "consistency", "links", "readability", "dependencies", "metadata"]
+        expected_components = [
+            "freshness",
+            "translation",
+            "consistency",
+            "links",
+            "readability",
+            "dependencies",
+            "metadata",
+        ]
         for comp in expected_components:
             assert comp in health.components
 

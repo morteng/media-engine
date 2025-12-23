@@ -147,7 +147,7 @@ class KnowledgeGraph:
                         )
 
                 # Internal links
-                link_pattern = re.compile(r'\[([^\]]+)\]\(([^)]+)\)')
+                link_pattern = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
                 for text, url in link_pattern.findall(body):
                     if not url.startswith(("http://", "https://", "mailto:", "#")):
                         target_id = self._normalize_path(url)
@@ -351,24 +351,28 @@ class KnowledgeGraph:
         elements = []
 
         for node in self.nodes.values():
-            elements.append({
-                "data": {
-                    "id": node.id,
-                    "label": node.title,
-                    "type": node.node_type,
-                    "status": node.status,
-                    "word_count": node.word_count,
+            elements.append(
+                {
+                    "data": {
+                        "id": node.id,
+                        "label": node.title,
+                        "type": node.node_type,
+                        "status": node.status,
+                        "word_count": node.word_count,
+                    }
                 }
-            })
+            )
 
         for edge in self.edges:
-            elements.append({
-                "data": {
-                    "source": edge.source,
-                    "target": edge.target,
-                    "type": edge.edge_type,
+            elements.append(
+                {
+                    "data": {
+                        "source": edge.source,
+                        "target": edge.target,
+                        "type": edge.edge_type,
+                    }
                 }
-            })
+            )
 
         return {"elements": elements}
 
@@ -409,7 +413,7 @@ class KnowledgeGraph:
         try:
             end_idx = content.index("---", 3)
             frontmatter = yaml.safe_load(content[3:end_idx]) or {}
-            body = content[end_idx + 3:].strip()
+            body = content[end_idx + 3 :].strip()
             return frontmatter, body
         except (ValueError, yaml.YAMLError):
             return {}, content

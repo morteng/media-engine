@@ -81,9 +81,7 @@ Return the corrected content with a brief list of changes made.""",
 
 def build_system_prompt(operation: AIOperation, project: "Project" = None) -> str:
     """Build system prompt for AI operation."""
-    base_prompt = OPERATION_PROMPTS.get(
-        operation, OPERATION_PROMPTS[AIOperation.IMPROVE]
-    )
+    base_prompt = OPERATION_PROMPTS.get(operation, OPERATION_PROMPTS[AIOperation.IMPROVE])
 
     context = ""
     if project:
@@ -91,7 +89,7 @@ def build_system_prompt(operation: AIOperation, project: "Project" = None) -> st
 
 Project Context:
 - Project: {project.config.name}
-- Languages: {', '.join(project.languages)}
+- Languages: {", ".join(project.languages)}
 - Source Language: {project.source_language}
 """
 

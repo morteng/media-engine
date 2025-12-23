@@ -12,7 +12,6 @@ from .types import NoteStatus
 
 if TYPE_CHECKING:
     from ..core.project import Project
-
     from .registry import NotesRegistry
 
 

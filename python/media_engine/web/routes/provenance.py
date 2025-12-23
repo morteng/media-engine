@@ -65,20 +65,22 @@ def register_provenance_routes(
         claims = []
         for path, prov in tracker._provenance.items():
             for claim in prov.claims:
-                claims.append({
-                    "document_path": path,
-                    "claim_id": claim.claim_id,
-                    "text": claim.text,
-                    "source": claim.source,
-                    "source_url": claim.source_url,
-                    "source_type": claim.source_type,
-                    "status": claim.status.value,
-                    "verified_by": claim.verified_by,
-                    "verified_date": claim.verified_date,
-                    "expires": claim.expires,
-                    "is_expired": claim.is_expired(),
-                    "days_until_expiry": claim.days_until_expiry(),
-                })
+                claims.append(
+                    {
+                        "document_path": path,
+                        "claim_id": claim.claim_id,
+                        "text": claim.text,
+                        "source": claim.source,
+                        "source_url": claim.source_url,
+                        "source_type": claim.source_type,
+                        "status": claim.status.value,
+                        "verified_by": claim.verified_by,
+                        "verified_date": claim.verified_date,
+                        "expires": claim.expires,
+                        "is_expired": claim.is_expired(),
+                        "days_until_expiry": claim.days_until_expiry(),
+                    }
+                )
 
         return {"claims": claims, "total": len(claims)}
 
@@ -90,14 +92,16 @@ def register_provenance_routes(
 
         claims = []
         for path, claim in tracker.get_all_unverified():
-            claims.append({
-                "document_path": str(path),
-                "claim_id": claim.claim_id,
-                "text": claim.text,
-                "source": claim.source,
-                "source_url": claim.source_url,
-                "source_type": claim.source_type,
-            })
+            claims.append(
+                {
+                    "document_path": str(path),
+                    "claim_id": claim.claim_id,
+                    "text": claim.text,
+                    "source": claim.source,
+                    "source_url": claim.source_url,
+                    "source_type": claim.source_type,
+                }
+            )
 
         return {"claims": claims, "total": len(claims)}
 
@@ -109,14 +113,16 @@ def register_provenance_routes(
 
         claims = []
         for path, claim in tracker.get_all_expired():
-            claims.append({
-                "document_path": str(path),
-                "claim_id": claim.claim_id,
-                "text": claim.text,
-                "source": claim.source,
-                "expires": claim.expires,
-                "verified_by": claim.verified_by,
-            })
+            claims.append(
+                {
+                    "document_path": str(path),
+                    "claim_id": claim.claim_id,
+                    "text": claim.text,
+                    "source": claim.source,
+                    "expires": claim.expires,
+                    "verified_by": claim.verified_by,
+                }
+            )
 
         return {"claims": claims, "total": len(claims)}
 
@@ -128,14 +134,16 @@ def register_provenance_routes(
 
         claims = []
         for path, claim in tracker.get_expiring_soon(days=30):
-            claims.append({
-                "document_path": str(path),
-                "claim_id": claim.claim_id,
-                "text": claim.text,
-                "source": claim.source,
-                "expires": claim.expires,
-                "days_until_expiry": claim.days_until_expiry(),
-            })
+            claims.append(
+                {
+                    "document_path": str(path),
+                    "claim_id": claim.claim_id,
+                    "text": claim.text,
+                    "source": claim.source,
+                    "expires": claim.expires,
+                    "days_until_expiry": claim.days_until_expiry(),
+                }
+            )
 
         return {"claims": claims, "total": len(claims)}
 
@@ -153,12 +161,14 @@ def register_provenance_routes(
             source_type=request.source_type,
         )
 
-        await manager.broadcast({
-            "type": "provenance_updated",
-            "action": "claim_added",
-            "document_path": request.document_path,
-            "claim_id": claim.claim_id,
-        })
+        await manager.broadcast(
+            {
+                "type": "provenance_updated",
+                "action": "claim_added",
+                "document_path": request.document_path,
+                "claim_id": claim.claim_id,
+            }
+        )
 
         return {"success": True, "claim_id": claim.claim_id}
 
@@ -178,12 +188,14 @@ def register_provenance_routes(
         if not result:
             raise HTTPException(status_code=404, detail="Claim not found")
 
-        await manager.broadcast({
-            "type": "provenance_updated",
-            "action": "claim_verified",
-            "document_path": request.document_path,
-            "claim_id": request.claim_id,
-        })
+        await manager.broadcast(
+            {
+                "type": "provenance_updated",
+                "action": "claim_verified",
+                "document_path": request.document_path,
+                "claim_id": request.claim_id,
+            }
+        )
 
         return {"success": True}
 
@@ -213,15 +225,17 @@ def register_provenance_routes(
         for doc_path in tracker.get_review_queue():
             prov = tracker.get(doc_path)
             latest_approval = prov.approvals[-1] if prov.approvals else None
-            queue.append({
-                "document_path": str(doc_path),
-                "status": prov.current_status.value,
-                "requester": latest_approval.approver if latest_approval else None,
-                "requested_at": latest_approval.timestamp if latest_approval else None,
-                "comments": latest_approval.comments if latest_approval else None,
-                "unverified_claims": len(prov.unverified_claims),
-                "expired_claims": len(prov.expired_claims),
-            })
+            queue.append(
+                {
+                    "document_path": str(doc_path),
+                    "status": prov.current_status.value,
+                    "requester": latest_approval.approver if latest_approval else None,
+                    "requested_at": latest_approval.timestamp if latest_approval else None,
+                    "comments": latest_approval.comments if latest_approval else None,
+                    "unverified_claims": len(prov.unverified_claims),
+                    "expired_claims": len(prov.expired_claims),
+                }
+            )
 
         return {"queue": queue, "total": len(queue)}
 
@@ -237,11 +251,13 @@ def register_provenance_routes(
             comments=request.comments,
         )
 
-        await manager.broadcast({
-            "type": "provenance_updated",
-            "action": "approval_requested",
-            "document_path": request.document_path,
-        })
+        await manager.broadcast(
+            {
+                "type": "provenance_updated",
+                "action": "approval_requested",
+                "document_path": request.document_path,
+            }
+        )
 
         return {"success": True}
 
@@ -258,11 +274,13 @@ def register_provenance_routes(
             version=request.version,
         )
 
-        await manager.broadcast({
-            "type": "provenance_updated",
-            "action": "document_approved",
-            "document_path": request.document_path,
-        })
+        await manager.broadcast(
+            {
+                "type": "provenance_updated",
+                "action": "document_approved",
+                "document_path": request.document_path,
+            }
+        )
 
         return {"success": True}
 
@@ -281,11 +299,13 @@ def register_provenance_routes(
             comments=request.comments,
         )
 
-        await manager.broadcast({
-            "type": "provenance_updated",
-            "action": "document_rejected",
-            "document_path": request.document_path,
-        })
+        await manager.broadcast(
+            {
+                "type": "provenance_updated",
+                "action": "document_rejected",
+                "document_path": request.document_path,
+            }
+        )
 
         return {"success": True}
 
@@ -304,11 +324,13 @@ def register_provenance_routes(
             version=request.version,
         )
 
-        await manager.broadcast({
-            "type": "provenance_updated",
-            "action": "document_published",
-            "document_path": request.document_path,
-        })
+        await manager.broadcast(
+            {
+                "type": "provenance_updated",
+                "action": "document_published",
+                "document_path": request.document_path,
+            }
+        )
 
         return {"success": True}
 

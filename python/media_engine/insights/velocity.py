@@ -151,7 +151,14 @@ class VelocityTracker:
 
             # Get modified documents
             result = self._run_git(
-                ["log", "--name-only", "--format=", f"--since={start_date.isoformat()}", "--", "*.md"]
+                [
+                    "log",
+                    "--name-only",
+                    "--format=",
+                    f"--since={start_date.isoformat()}",
+                    "--",
+                    "*.md",
+                ]
             )
             if result:
                 files = set(line.strip() for line in result.split("\n") if line.strip())
@@ -197,10 +204,14 @@ class VelocityTracker:
 
             try:
                 result = self._run_git(
-                    ["log", "--oneline",
-                     f"--since={start_date.isoformat()}",
-                     f"--until={end_date.isoformat()}",
-                     "--", "*.md"]
+                    [
+                        "log",
+                        "--oneline",
+                        f"--since={start_date.isoformat()}",
+                        f"--until={end_date.isoformat()}",
+                        "--",
+                        "*.md",
+                    ]
                 )
                 if result:
                     metrics.commits = len([line for line in result.split("\n") if line.strip()])
@@ -270,9 +281,14 @@ class VelocityTracker:
 
         try:
             result = self._run_git(
-                ["log", "--name-only", "--format=",
-                 f"--since={start_date.isoformat()}",
-                 "--", "*.md"]
+                [
+                    "log",
+                    "--name-only",
+                    "--format=",
+                    f"--since={start_date.isoformat()}",
+                    "--",
+                    "*.md",
+                ]
             )
 
             if result:
@@ -286,8 +302,7 @@ class VelocityTracker:
                             area = f"{parts[0]}/{parts[1]}"
                             area_counts[area] += 1
 
-                active = [area for area, count in area_counts.items()
-                          if count >= threshold_commits]
+                active = [area for area, count in area_counts.items() if count >= threshold_commits]
 
         except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
             pass
@@ -327,9 +342,7 @@ class VelocityTracker:
         stats = {"lines_added": 0, "lines_removed": 0}
 
         result = self._run_git(
-            ["log", "--numstat", "--format=",
-             f"--since={since.isoformat()}",
-             "--", "*.md"]
+            ["log", "--numstat", "--format=", f"--since={since.isoformat()}", "--", "*.md"]
         )
 
         if result:
@@ -352,9 +365,7 @@ class VelocityTracker:
 
         # Get commit counts per author
         result = self._run_git(
-            ["log", "--format=%an|%ae",
-             f"--since={since.isoformat()}",
-             "--", "*.md"]
+            ["log", "--format=%an|%ae", f"--since={since.isoformat()}", "--", "*.md"]
         )
 
         if result:
@@ -384,9 +395,7 @@ class VelocityTracker:
 
         # Get current period stats
         result = self._run_git(
-            ["log", "--name-only", "--format=",
-             f"--since={since.isoformat()}",
-             "--", "*.md"]
+            ["log", "--name-only", "--format=", f"--since={since.isoformat()}", "--", "*.md"]
         )
 
         if result:
@@ -403,10 +412,15 @@ class VelocityTracker:
             # Get previous period for trend
             prev_since = since - timedelta(days=days)
             prev_result = self._run_git(
-                ["log", "--name-only", "--format=",
-                 f"--since={prev_since.isoformat()}",
-                 f"--until={since.isoformat()}",
-                 "--", "*.md"]
+                [
+                    "log",
+                    "--name-only",
+                    "--format=",
+                    f"--since={prev_since.isoformat()}",
+                    f"--until={since.isoformat()}",
+                    "--",
+                    "*.md",
+                ]
             )
 
             prev_counts: dict[str, int] = defaultdict(int)

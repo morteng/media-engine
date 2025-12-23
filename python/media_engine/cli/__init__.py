@@ -10,12 +10,21 @@ Usage:
     media-engine stale [--json]
     media-engine cache status
     media-engine cache clear [--voiceover] [--builds]
+    media-engine analyze semantic [--duplicates] [--drift] [--clusters]
+    media-engine analyze llm [--completeness] [--review]
+    media-engine analyze graph [--build] [--orphans] [--metrics]
+    media-engine analyze norwegian [--target LEVEL]
+    media-engine analyze freshness [--train] [--predict] [--queue]
+    media-engine analyze codesync [--syntax] [--deprecated]
+    media-engine analyze advanced [--full]
 """
 
 import argparse
 import sys
 
 from .commands import (
+    cmd_analyze,
+    cmd_brand,
     cmd_build,
     cmd_cache,
     cmd_changelog,
@@ -72,6 +81,19 @@ def main():
     status_parser.add_argument("--lang", help="Filter by language")
     status_parser.add_argument("--json", action="store_true", help="Output as JSON")
 
+    # brand
+    brand_parser = subparsers.add_parser("brand", help="Brand/design system management")
+    brand_subparsers = brand_parser.add_subparsers(dest="brand_command")
+
+    brand_subparsers.add_parser("status", help="Show brand status")
+    brand_migrate = brand_subparsers.add_parser("migrate", help="Migrate theme.yaml to brand.yaml")
+    brand_migrate.add_argument("--dry-run", action="store_true", help="Show what would be created")
+    brand_subparsers.add_parser("validate", help="Validate brand.yaml")
+    brand_subparsers.add_parser("init", help="Initialize brand.yaml from template")
+    brand_export = brand_subparsers.add_parser("export-css", help="Export CSS variables")
+    brand_export.add_argument("--output", "-o", help="Output file path")
+    brand_export.add_argument("--dark", action="store_true", help="Generate dark mode CSS")
+
     # build
     build_parser = subparsers.add_parser("build", help="Build media outputs")
     build_parser.add_argument("--only", help="Only build specific formats (comma-separated)")
@@ -103,9 +125,7 @@ def main():
     release_parser = subparsers.add_parser(
         "release", help="Copy production videos to deliverables folder"
     )
-    release_parser.add_argument(
-        "--dry-run", action="store_true", help="Show what would be copied"
-    )
+    release_parser.add_argument("--dry-run", action="store_true", help="Show what would be copied")
     release_parser.add_argument(
         "--force", "-f", action="store_true", help="Overwrite existing files"
     )
@@ -275,7 +295,7 @@ def main():
     notes_report = notes_subparsers.add_parser("report", help="Generate notes report")
     notes_report.add_argument("--json", action="store_true", help="Output as JSON")
 
-    notes_export = notes_subparsers.add_parser("export", help="Export notes for agents")
+    notes_subparsers.add_parser("export", help="Export notes for agents")
 
     notes_migrate = notes_subparsers.add_parser("migrate", help="Migrate legacy scene notes")
     notes_migrate.add_argument("--json", action="store_true", help="Output as JSON")
@@ -399,6 +419,100 @@ def main():
     path_parser.add_argument("--export", choices=["md"], help="Export format")
     path_parser.add_argument("--json", action="store_true", help="Output as JSON")
 
+    # ============== ADVANCED ANALYSIS COMMANDS ==============
+
+    # analyze (parent command with subcommands)
+    analyze_parser = subparsers.add_parser(
+        "analyze", help="Advanced content analysis (semantic, LLM, knowledge graph)"
+    )
+    analyze_subparsers = analyze_parser.add_subparsers(dest="analyze_command")
+
+    # analyze semantic
+    sem_parser = analyze_subparsers.add_parser("semantic", help="Semantic similarity analysis")
+    sem_parser.add_argument("--duplicates", action="store_true", help="Find near-duplicates")
+    sem_parser.add_argument("--related", help="Find content related to document path")
+    sem_parser.add_argument("--drift", action="store_true", help="Detect terminology drift")
+    sem_parser.add_argument("--clusters", action="store_true", help="Cluster similar content")
+    sem_parser.add_argument(
+        "--contradictions", action="store_true", help="Find potential contradictions"
+    )
+    sem_parser.add_argument(
+        "--translation-parity", action="store_true", help="Check translation semantic parity"
+    )
+    sem_parser.add_argument(
+        "--threshold", type=float, default=0.85, help="Similarity threshold (0-1)"
+    )
+    sem_parser.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # analyze llm
+    llm_parser = analyze_subparsers.add_parser("llm", help="LLM-powered quality evaluation")
+    llm_parser.add_argument("document", nargs="?", help="Specific document to analyze")
+    llm_parser.add_argument(
+        "--completeness", action="store_true", help="Check content completeness"
+    )
+    llm_parser.add_argument("--prerequisites", action="store_true", help="Validate prerequisites")
+    llm_parser.add_argument("--examples", action="store_true", help="Assess code examples")
+    llm_parser.add_argument("--outdated", action="store_true", help="Detect outdated claims")
+    llm_parser.add_argument("--review", action="store_true", help="Multi-agent review")
+    llm_parser.add_argument(
+        "--perspectives",
+        help="Review perspectives (comma-separated: technical,user,editor,security,accessibility)",
+    )
+    llm_parser.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # analyze graph
+    kg_parser = analyze_subparsers.add_parser("graph", help="Knowledge graph analysis")
+    kg_parser.add_argument("--build", action="store_true", help="Build/refresh knowledge graph")
+    kg_parser.add_argument("--orphans", action="store_true", help="Find orphan concepts")
+    kg_parser.add_argument(
+        "--prerequisites", action="store_true", help="Validate prerequisite chains"
+    )
+    kg_parser.add_argument("--path", help="Generate reading path from concept")
+    kg_parser.add_argument("--metrics", action="store_true", help="Show graph metrics")
+    kg_parser.add_argument("--export", choices=["json", "graphml", "gexf"], help="Export format")
+    kg_parser.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # analyze norwegian (LIX readability)
+    nor_parser = analyze_subparsers.add_parser(
+        "norwegian", help="Norwegian LIX readability analysis"
+    )
+    nor_parser.add_argument("document", nargs="?", help="Specific document to analyze")
+    nor_parser.add_argument(
+        "--target",
+        choices=["very_easy", "easy", "medium", "difficult", "very_difficult"],
+        help="Target difficulty level",
+    )
+    nor_parser.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # analyze freshness (predictive)
+    pred_parser = analyze_subparsers.add_parser("freshness", help="Predictive staleness detection")
+    pred_parser.add_argument("--train", action="store_true", help="Train from git history")
+    pred_parser.add_argument("--predict", action="store_true", help="Predict staleness risk")
+    pred_parser.add_argument("--queue", action="store_true", help="Show prioritized review queue")
+    pred_parser.add_argument("--days", type=int, default=90, help="History days to analyze")
+    pred_parser.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # analyze codesync
+    code_parser = analyze_subparsers.add_parser("codesync", help="Enhanced code-documentation sync")
+    code_parser.add_argument("document", nargs="?", help="Specific document to check")
+    code_parser.add_argument("--syntax", action="store_true", help="Validate code syntax")
+    code_parser.add_argument("--deprecated", action="store_true", help="Find deprecated patterns")
+    code_parser.add_argument("--api-refs", action="store_true", help="Check API references")
+    code_parser.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # analyze advanced
+    adv_parser = analyze_subparsers.add_parser(
+        "advanced", help="Advanced analysis (audience drift, questions, style)"
+    )
+    adv_parser.add_argument("document", nargs="?", help="Specific document to analyze")
+    adv_parser.add_argument("--audience-drift", action="store_true", help="Detect audience drift")
+    adv_parser.add_argument("--questions", action="store_true", help="Question coverage analysis")
+    adv_parser.add_argument("--crossrefs", action="store_true", help="Cross-reference density")
+    adv_parser.add_argument("--structure", action="store_true", help="Document structure analysis")
+    adv_parser.add_argument("--style", action="store_true", help="Style consistency check")
+    adv_parser.add_argument("--full", action="store_true", help="Run all advanced analyses")
+    adv_parser.add_argument("--json", action="store_true", help="Output as JSON")
+
     args = parser.parse_args()
 
     if not args.command:
@@ -407,6 +521,7 @@ def main():
 
     commands = {
         "status": cmd_status,
+        "brand": cmd_brand,
         "build": cmd_build,
         "publish": cmd_publish,
         "release": cmd_release,
@@ -441,6 +556,8 @@ def main():
         "velocity": cmd_velocity,
         "graph": cmd_graph,
         "path": cmd_path,
+        # Advanced analysis
+        "analyze": cmd_analyze,
     }
 
     if args.command in commands:

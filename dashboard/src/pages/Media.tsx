@@ -21,6 +21,13 @@ import {
 import clsx from 'clsx';
 import './Media.css';
 
+interface MediaSource {
+  path: string;
+  name: string;
+  language: string;
+  type: string;
+}
+
 interface MediaFile {
   path: string;
   relative_path: string;
@@ -29,7 +36,7 @@ interface MediaFile {
   format: string;
   size: number;
   modified: string;
-  source: string | null;
+  source: MediaSource | null;
   url: string;
 }
 
@@ -257,7 +264,7 @@ export function Media() {
                     {selectedFile.source && (
                       <>
                         <dt>Source</dt>
-                        <dd>{selectedFile.source}</dd>
+                        <dd>{selectedFile.source.name} ({selectedFile.source.language})</dd>
                       </>
                     )}
                   </dl>

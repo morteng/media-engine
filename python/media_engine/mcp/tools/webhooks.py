@@ -192,9 +192,7 @@ def register_webhook_tools(mcp, server_instance):
         server_instance._webhook_events.append(event)
 
         # In production, would deliver to registered webhooks here
-        matched_hooks = _get_matching_webhooks(
-            server_instance._webhooks, event_type
-        )
+        matched_hooks = _get_matching_webhooks(server_instance._webhooks, event_type)
 
         return json.dumps(
             {

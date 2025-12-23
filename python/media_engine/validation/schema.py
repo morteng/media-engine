@@ -12,8 +12,8 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 import yaml
 
 try:
-    from jsonschema import validate
     from jsonschema import ValidationError as JsonSchemaError
+    from jsonschema import validate
 
     HAS_JSONSCHEMA = True
 except ImportError:

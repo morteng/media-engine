@@ -21,6 +21,7 @@ import markdown
 from jinja2 import Template
 
 if TYPE_CHECKING:
+    from ..brand import BrandContext
     from ..core.theme import Theme
 
 
@@ -350,16 +351,24 @@ class HTMLConfig:
 class HTMLBuilder:
     """Builds HTML documents with theme styling."""
 
-    def __init__(self, theme: "Theme" = None):
+    def __init__(self, theme: "Theme" = None, brand: "BrandContext" = None):
         """
         Initialize HTML builder.
 
         Args:
-            theme: Theme for styling (uses defaults if not provided)
+            theme: Legacy Theme for styling (deprecated, use brand instead)
+            brand: BrandContext for unified brand access (recommended)
         """
-        from ..core.theme import COPPER_AND_CREAM
+        self.brand = brand
 
-        self.theme = theme or COPPER_AND_CREAM
+        if brand:
+            # Convert BrandContext to Theme for template compatibility
+            self.theme = brand.to_legacy_theme()
+        else:
+            from ..core.theme import COPPER_AND_CREAM
+
+            self.theme = theme or COPPER_AND_CREAM
+
         self.template = Template(HTML_TEMPLATE)
 
         # Markdown processor with extensions

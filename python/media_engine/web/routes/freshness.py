@@ -52,7 +52,9 @@ def register_freshness_routes(
                 items = [i for i in items if i.content_type == filter_type]
                 stale_items = [i for i in stale_items if i.content_type == filter_type]
                 expired_items = [i for i in expired_items if i.content_type == filter_type]
-                claims_issue_items = [i for i in claims_issue_items if i.content_type == filter_type]
+                claims_issue_items = [
+                    i for i in claims_issue_items if i.content_type == filter_type
+                ]
             except ValueError:
                 pass  # Invalid type, return all
 

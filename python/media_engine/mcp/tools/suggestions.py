@@ -285,6 +285,325 @@ def _gather_suggestions(project) -> list:
     except Exception:
         pass
 
+    # ============== ADVANCED ANALYSIS MODULES ==============
+
+    # Check for near-duplicate content (semantic)
+    try:
+        from ...semantic import SemanticAnalyzer
+
+        analyzer = SemanticAnalyzer(project)
+        duplicates = analyzer.find_near_duplicates(threshold=0.85)
+
+        if duplicates:
+            suggestions.append(
+                {
+                    "priority": "medium",
+                    "action": "consolidate_duplicates",
+                    "target": str(duplicates[0].doc1_path)
+                    if hasattr(duplicates[0], "doc1_path")
+                    else None,
+                    "description": f"Review {len(duplicates)} near-duplicate content pairs for consolidation",
+                    "details": {
+                        "count": len(duplicates),
+                        "first_pair": {
+                            "doc1": str(duplicates[0].doc1_path)
+                            if hasattr(duplicates[0], "doc1_path")
+                            else None,
+                            "doc2": str(duplicates[0].doc2_path)
+                            if hasattr(duplicates[0], "doc2_path")
+                            else None,
+                            "similarity": round(duplicates[0].similarity * 100)
+                            if hasattr(duplicates[0], "similarity")
+                            else None,
+                        },
+                    },
+                    "module": "semantic",
+                }
+            )
+    except ImportError:
+        pass
+    except Exception:
+        pass
+
+    # Check for terminology drift (semantic)
+    try:
+        from ...semantic import SemanticAnalyzer
+
+        analyzer = SemanticAnalyzer(project)
+        drift = analyzer.detect_terminology_drift()
+
+        if drift:
+            suggestions.append(
+                {
+                    "priority": "medium",
+                    "action": "fix_terminology_drift",
+                    "target": None,
+                    "description": f"Address {len(drift)} terminology inconsistencies across documents",
+                    "details": {
+                        "count": len(drift),
+                        "first_term": {
+                            "term": drift[0].term if hasattr(drift[0], "term") else None,
+                            "drift_score": round(drift[0].drift_score * 100)
+                            if hasattr(drift[0], "drift_score")
+                            else None,
+                        }
+                        if drift
+                        else None,
+                    },
+                    "module": "semantic",
+                }
+            )
+    except ImportError:
+        pass
+    except Exception:
+        pass
+
+    # Check for orphan concepts (knowledge graph)
+    try:
+        from ...knowledge import KnowledgeGraph
+
+        kg = KnowledgeGraph(project)
+        kg.build()
+        orphans = kg.find_orphan_concepts()
+
+        if orphans:
+            suggestions.append(
+                {
+                    "priority": "low",
+                    "action": "connect_orphan_concepts",
+                    "target": None,
+                    "description": f"Connect {len(orphans)} orphan concepts to the knowledge graph",
+                    "details": {
+                        "count": len(orphans),
+                        "concepts": orphans[:5],
+                    },
+                    "module": "knowledge_graph",
+                }
+            )
+    except ImportError:
+        pass
+    except Exception:
+        pass
+
+    # Check for prerequisite issues (knowledge graph)
+    try:
+        from ...knowledge import KnowledgeGraph
+
+        kg = KnowledgeGraph(project)
+        kg.build()
+        prereq_issues = kg.validate_prerequisites()
+
+        if prereq_issues:
+            suggestions.append(
+                {
+                    "priority": "high",
+                    "action": "fix_prerequisites",
+                    "target": str(prereq_issues[0].document)
+                    if hasattr(prereq_issues[0], "document")
+                    else None,
+                    "description": f"Fix {len(prereq_issues)} prerequisite chain issues",
+                    "details": {
+                        "count": len(prereq_issues),
+                    },
+                    "module": "knowledge_graph",
+                }
+            )
+    except ImportError:
+        pass
+    except Exception:
+        pass
+
+    # Check for code syntax errors (codesync)
+    try:
+        from ...codesync import EnhancedCodeSyncChecker
+
+        checker = EnhancedCodeSyncChecker(project)
+        report = checker.generate_summary()
+        syntax_errors = report.get("syntax_errors", [])
+
+        if syntax_errors:
+            suggestions.append(
+                {
+                    "priority": "high",
+                    "action": "fix_code_syntax",
+                    "target": syntax_errors[0].get("document") if syntax_errors else None,
+                    "description": f"Fix {len(syntax_errors)} syntax errors in code examples",
+                    "details": {
+                        "count": len(syntax_errors),
+                        "first_error": syntax_errors[0] if syntax_errors else None,
+                    },
+                    "module": "codesync",
+                }
+            )
+    except ImportError:
+        pass
+    except Exception:
+        pass
+
+    # Check for deprecated patterns (codesync)
+    try:
+        from ...codesync import EnhancedCodeSyncChecker
+
+        checker = EnhancedCodeSyncChecker(project)
+        report = checker.generate_summary()
+        deprecated = report.get("deprecated_patterns", [])
+
+        if deprecated:
+            suggestions.append(
+                {
+                    "priority": "medium",
+                    "action": "update_deprecated_code",
+                    "target": deprecated[0].get("document") if deprecated else None,
+                    "description": f"Update {len(deprecated)} deprecated code patterns in documentation",
+                    "details": {
+                        "count": len(deprecated),
+                    },
+                    "module": "codesync",
+                }
+            )
+    except ImportError:
+        pass
+    except Exception:
+        pass
+
+    # Check for high-risk staleness (predictive freshness)
+    try:
+        from ...freshness.predictive import FreshnessPredictor
+
+        predictor = FreshnessPredictor(project)
+        predictor.train_from_history(days=90)
+        predictions = predictor.predict_all()
+        high_risk = [p for p in predictions if p.risk_level in ("high", "critical")]
+
+        if high_risk:
+            suggestions.append(
+                {
+                    "priority": "high",
+                    "action": "review_at_risk_content",
+                    "target": str(high_risk[0].document_path)
+                    if hasattr(high_risk[0], "document_path")
+                    else None,
+                    "description": f"Review {len(high_risk)} documents predicted to become stale soon",
+                    "details": {
+                        "count": len(high_risk),
+                        "first_doc": {
+                            "path": str(high_risk[0].document_path)
+                            if hasattr(high_risk[0], "document_path")
+                            else None,
+                            "risk_level": high_risk[0].risk_level
+                            if hasattr(high_risk[0], "risk_level")
+                            else None,
+                            "probability": round(high_risk[0].staleness_probability * 100)
+                            if hasattr(high_risk[0], "staleness_probability")
+                            else None,
+                        }
+                        if high_risk
+                        else None,
+                    },
+                    "module": "predictive_freshness",
+                }
+            )
+    except ImportError:
+        pass
+    except Exception:
+        pass
+
+    # Check for difficult documents (Norwegian LIX)
+    try:
+        from ...readability.norwegian import NorwegianReadabilityChecker
+
+        checker = NorwegianReadabilityChecker(project)
+        reports = checker.analyze_all_documents()
+        difficult = [r for r in reports if r.difficulty_level in ("difficult", "very_difficult")]
+
+        if difficult:
+            suggestions.append(
+                {
+                    "priority": "low",
+                    "action": "simplify_difficult_content",
+                    "target": str(difficult[0].document_path)
+                    if hasattr(difficult[0], "document_path")
+                    else None,
+                    "description": f"Simplify {len(difficult)} documents with high readability difficulty (LIX)",
+                    "details": {
+                        "count": len(difficult),
+                        "first_doc": {
+                            "path": str(difficult[0].document_path)
+                            if hasattr(difficult[0], "document_path")
+                            else None,
+                            "lix_score": difficult[0].lix_score
+                            if hasattr(difficult[0], "lix_score")
+                            else None,
+                            "level": difficult[0].difficulty_level
+                            if hasattr(difficult[0], "difficulty_level")
+                            else None,
+                        }
+                        if difficult
+                        else None,
+                    },
+                    "module": "norwegian_readability",
+                }
+            )
+    except ImportError:
+        pass
+    except Exception:
+        pass
+
+    # Check for audience drift (advanced)
+    try:
+        from ...advanced import AdvancedAnalyzer
+
+        analyzer = AdvancedAnalyzer(project)
+        report = analyzer.analyze_project().to_dict()
+        drift = report.get("audience_drift", {})
+
+        if drift.get("trend") in ("increasing", "decreasing"):
+            suggestions.append(
+                {
+                    "priority": "medium",
+                    "action": "address_audience_drift",
+                    "target": None,
+                    "description": f"Address audience drift: complexity is {drift.get('trend')} over time",
+                    "details": {
+                        "trend": drift.get("trend"),
+                        "drift_score": drift.get("drift_score"),
+                        "documents_affected": len(drift.get("documents_with_drift", [])),
+                    },
+                    "module": "advanced",
+                }
+            )
+    except ImportError:
+        pass
+    except Exception:
+        pass
+
+    # Check for style inconsistencies (advanced)
+    try:
+        from ...advanced import AdvancedAnalyzer
+
+        analyzer = AdvancedAnalyzer(project)
+        report = analyzer.analyze_project().to_dict()
+        style = report.get("style", {})
+
+        if style.get("style_score", 100) < 70:
+            suggestions.append(
+                {
+                    "priority": "low",
+                    "action": "improve_style_consistency",
+                    "target": None,
+                    "description": f"Improve style consistency (score: {style.get('style_score', 0)}/100)",
+                    "details": {
+                        "score": style.get("style_score"),
+                        "inconsistencies": len(style.get("inconsistencies", [])),
+                    },
+                    "module": "advanced",
+                }
+            )
+    except ImportError:
+        pass
+    except Exception:
+        pass
+
     # Sort by priority
     priority_order = {"high": 0, "medium": 1, "low": 2}
     suggestions.sort(key=lambda s: priority_order.get(s["priority"], 3))

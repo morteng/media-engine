@@ -114,7 +114,8 @@ def find_manifest() -> Path:
         if path.exists():
             return path
     raise FileNotFoundError(
-        "Video manifest not found. Searched:\n  " + "\n  ".join(str(p) for p in MANIFEST_SEARCH_PATHS)
+        "Video manifest not found. Searched:\n  "
+        + "\n  ".join(str(p) for p in MANIFEST_SEARCH_PATHS)
     )
 
 
@@ -526,7 +527,11 @@ async def capture_all_videos(
 
             # Filter by video_ids if specified
             if video_ids:
-                scripts = [s for s in scripts if s.id in video_ids or s.output_filename.replace(".mp4", "") in video_ids]
+                scripts = [
+                    s
+                    for s in scripts
+                    if s.id in video_ids or s.output_filename.replace(".mp4", "") in video_ids
+                ]
 
             for script in scripts:
                 tasks.append(script)
@@ -649,8 +654,10 @@ def main():
         "--force", "-f", action="store_true", help="Force regeneration even if files exist"
     )
     parser.add_argument(
-        "--script", "-s", action="store_true",
-        help="Use script YAML files with scene actions (from scripts/{lang}/ directory)"
+        "--script",
+        "-s",
+        action="store_true",
+        help="Use script YAML files with scene actions (from scripts/{lang}/ directory)",
     )
 
     args = parser.parse_args()

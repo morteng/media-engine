@@ -8,7 +8,6 @@ Stores data in {project}/.media-engine/notes/
 import hashlib
 import json
 from datetime import datetime
-from pathlib import Path
 from typing import TYPE_CHECKING, Dict, List, Optional
 
 from .types import Note, NotePriority, NotesReport, NoteStatus, NoteType

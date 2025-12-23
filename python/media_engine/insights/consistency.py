@@ -133,7 +133,11 @@ class ConsistencyChecker:
         has_incomplete_markers = len(incomplete_items) > 0
 
         # Check: Draft that appears complete
-        if declared_status == "draft" and completeness["score"] >= 0.8 and not has_incomplete_markers:
+        if (
+            declared_status == "draft"
+            and completeness["score"] >= 0.8
+            and not has_incomplete_markers
+        ):
             issues.append(
                 ConsistencyIssue(
                     document=doc_path,
@@ -315,7 +319,7 @@ class ConsistencyChecker:
         try:
             end_idx = content.index("---", 3)
             frontmatter = yaml.safe_load(content[3:end_idx]) or {}
-            body = content[end_idx + 3:].strip()
+            body = content[end_idx + 3 :].strip()
             return frontmatter, body
         except (ValueError, yaml.YAMLError):
             return {}, content

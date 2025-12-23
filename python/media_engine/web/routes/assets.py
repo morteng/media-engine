@@ -38,15 +38,17 @@ def register_assets_routes(
                 for ext in ["*.svg", "*.png", "*.jpg", "*.jpeg"]:
                     for f in diagrams_dir.glob(ext):
                         rel_path = f.relative_to(project.root)
-                        assets.append({
-                            "path": str(f),
-                            "relative_path": str(rel_path),
-                            "filename": f.name,
-                            "type": "diagram",
-                            "format": f.suffix.lstrip("."),
-                            "size": f.stat().st_size,
-                            "modified": datetime.fromtimestamp(f.stat().st_mtime).isoformat(),
-                        })
+                        assets.append(
+                            {
+                                "path": str(f),
+                                "relative_path": str(rel_path),
+                                "filename": f.name,
+                                "type": "diagram",
+                                "format": f.suffix.lstrip("."),
+                                "size": f.stat().st_size,
+                                "modified": datetime.fromtimestamp(f.stat().st_mtime).isoformat(),
+                            }
+                        )
 
         # Logos
         logo_dirs = [
@@ -59,15 +61,17 @@ def register_assets_routes(
                 for ext in ["*.svg", "*.png"]:
                     for f in logo_dir.glob(ext):
                         rel_path = f.relative_to(project.root)
-                        assets.append({
-                            "path": str(f),
-                            "relative_path": str(rel_path),
-                            "filename": f.name,
-                            "type": "logo",
-                            "format": f.suffix.lstrip("."),
-                            "size": f.stat().st_size,
-                            "modified": datetime.fromtimestamp(f.stat().st_mtime).isoformat(),
-                        })
+                        assets.append(
+                            {
+                                "path": str(f),
+                                "relative_path": str(rel_path),
+                                "filename": f.name,
+                                "type": "logo",
+                                "format": f.suffix.lstrip("."),
+                                "size": f.stat().st_size,
+                                "modified": datetime.fromtimestamp(f.stat().st_mtime).isoformat(),
+                            }
+                        )
 
         # Video thumbnails
         video_assets_dir = project.root / "docs" / "deliverables" / "assets" / "videos"
@@ -75,15 +79,17 @@ def register_assets_routes(
             for f in video_assets_dir.rglob("*"):
                 if f.is_file() and f.suffix in [".mp4", ".webm", ".png", ".jpg"]:
                     rel_path = f.relative_to(project.root)
-                    assets.append({
-                        "path": str(f),
-                        "relative_path": str(rel_path),
-                        "filename": f.name,
-                        "type": "video_asset",
-                        "format": f.suffix.lstrip("."),
-                        "size": f.stat().st_size,
-                        "modified": datetime.fromtimestamp(f.stat().st_mtime).isoformat(),
-                    })
+                    assets.append(
+                        {
+                            "path": str(f),
+                            "relative_path": str(rel_path),
+                            "filename": f.name,
+                            "type": "video_asset",
+                            "format": f.suffix.lstrip("."),
+                            "size": f.stat().st_size,
+                            "modified": datetime.fromtimestamp(f.stat().st_mtime).isoformat(),
+                        }
+                    )
 
         by_type = {}
         for asset in assets:

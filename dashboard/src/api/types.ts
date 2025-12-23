@@ -331,3 +331,232 @@ export interface SceneNote {
 export interface SceneNotesResponse {
   notes: Record<string, SceneNote>;
 }
+
+// ============== ADVANCED ANALYSIS TYPES ==============
+
+// Semantic Analysis
+export interface SemanticMatch {
+  doc1_path: string;
+  doc2_path: string;
+  similarity: number;
+  matching_sections: string[];
+}
+
+export interface TerminologyDrift {
+  term: string;
+  old_usage: string;
+  new_usage: string;
+  documents: string[];
+  drift_score: number;
+}
+
+export interface ContentCluster {
+  id: number;
+  cluster_id: number;
+  theme: string;
+  documents: string[];
+  doc_count: number;
+}
+
+export interface SemanticAnalysisResponse {
+  available: boolean;
+  near_duplicates?: SemanticMatch[];
+  near_duplicate_count?: number;
+  terminology_drift?: TerminologyDrift[];
+  drift_count?: number;
+  clusters?: ContentCluster[];
+  cluster_count?: number;
+  error?: string;
+  reason?: string;
+}
+
+// Knowledge Graph (Enhanced)
+export interface KnowledgeGraphMetrics {
+  node_count: number;
+  edge_count: number;
+  density: number;
+  avg_connections: number;
+  hub_count: number;
+  orphan_count: number;
+}
+
+export interface PrerequisiteIssue {
+  document: string;
+  missing_prerequisites: string[];
+  circular_dependencies: string[];
+}
+
+export interface KnowledgeGraphResponse {
+  available: boolean;
+  metrics?: KnowledgeGraphMetrics;
+  orphan_concepts?: string[];
+  orphan_count?: number;
+  prerequisite_issues?: PrerequisiteIssue[];
+  prereq_issue_count?: number;
+  node_count?: number;
+  edge_count?: number;
+  error?: string;
+  reason?: string;
+}
+
+// Norwegian Readability
+export interface NorwegianReadabilityDoc {
+  path: string;
+  lix: number;
+  lix_score: number;
+  level: 'very_easy' | 'easy' | 'medium' | 'difficult' | 'very_difficult';
+  difficulty_level: 'very_easy' | 'easy' | 'medium' | 'difficult' | 'very_difficult';
+  word_count: number;
+}
+
+export interface NorwegianReadabilityResponse {
+  available: boolean;
+  documents_analyzed?: number;
+  average_lix?: number;
+  difficulty_distribution?: Record<string, number>;
+  difficult_documents?: NorwegianReadabilityDoc[];
+  difficult_count?: number;
+  error?: string;
+  reason?: string;
+}
+
+// Predictive Freshness
+export interface StalenessPrediction {
+  path: string;
+  risk_level: 'low' | 'medium' | 'high' | 'critical';
+  staleness_probability: number;
+  days_until_stale: number;
+  contributing_factors?: string[];
+}
+
+export interface ReviewQueueItem {
+  path: string;
+  priority: number;
+  reason: string;
+}
+
+export interface PredictiveFreshnessResponse {
+  available: boolean;
+  predictions_count?: number;
+  high_risk_count?: number;
+  high_risk_documents?: StalenessPrediction[];
+  review_queue?: ReviewQueueItem[];
+  summary?: {
+    total: number;
+    low_risk: number;
+    medium_risk: number;
+    high_risk: number;
+    critical_risk: number;
+  };
+  error?: string;
+  reason?: string;
+}
+
+// Enhanced CodeSync
+export interface CodeSyncIssue {
+  document: string;
+  line: number;
+  issue_type: string;
+  code_block: string;
+  message: string;
+}
+
+export interface EnhancedCodeSyncResponse {
+  available: boolean;
+  syntax_errors?: CodeSyncIssue[];
+  syntax_error_count?: number;
+  deprecated_patterns?: CodeSyncIssue[];
+  deprecated_count?: number;
+  api_issues?: CodeSyncIssue[];
+  api_issue_count?: number;
+  total_issues?: number;
+  error?: string;
+  reason?: string;
+}
+
+// Advanced Analysis
+export interface AudienceDriftData {
+  trend: 'stable' | 'increasing' | 'decreasing';
+  complexity_over_time: Array<{ date: string; complexity: number }>;
+  documents_with_drift: string[];
+  drift_score: number;
+}
+
+export interface QuestionCoverageData {
+  total_questions: number;
+  answered_questions: number;
+  unanswered_questions: string[];
+  coverage_percent: number;
+}
+
+export interface CrossReferenceData {
+  total_references: number;
+  internal_references: number;
+  external_references: number;
+  orphan_references: string[];
+  density_score: number;
+}
+
+export interface StructureAnalysisData {
+  avg_heading_depth: number;
+  documents_with_issues: string[];
+  heading_consistency_score: number;
+}
+
+export interface StyleConsistencyData {
+  style_score: number;
+  inconsistencies: Array<{
+    document: string;
+    issue: string;
+    expected: string;
+    found: string;
+  }>;
+}
+
+export interface AdvancedAnalysisResponse {
+  available: boolean;
+  audience_drift?: AudienceDriftData;
+  question_coverage?: QuestionCoverageData;
+  cross_references?: CrossReferenceData;
+  structure_analysis?: StructureAnalysisData;
+  style_consistency?: StyleConsistencyData;
+  error?: string;
+  reason?: string;
+}
+
+// Comprehensive Advanced Insights Response
+export interface AdvancedInsightsResponse {
+  semantic: SemanticAnalysisResponse | null;
+  llm_quality: unknown | null;
+  knowledge_graph: KnowledgeGraphResponse | null;
+  norwegian_readability: NorwegianReadabilityResponse | null;
+  predictive_freshness: PredictiveFreshnessResponse | null;
+  enhanced_codesync: EnhancedCodeSyncResponse | null;
+  advanced_analysis: AdvancedAnalysisResponse | null;
+}
+
+// Quality Summary for Dashboard
+export interface QualitySummaryResponse {
+  overall_score: number;
+  grade: string;
+  status: string;
+  key_metrics: Array<{
+    name: string;
+    score: number;
+    weight: number;
+  }>;
+  critical_issues: HealthIssue[];
+  recommendations: string[];
+  advanced_available: {
+    semantic: boolean;
+    knowledge_graph: boolean;
+    norwegian_readability: boolean;
+    predictive_freshness: boolean;
+    enhanced_codesync: boolean;
+    advanced_analysis: boolean;
+  };
+  advanced_highlights: Record<string, {
+    message: string;
+    [key: string]: unknown;
+  }>;
+}

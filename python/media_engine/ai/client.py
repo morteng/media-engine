@@ -197,9 +197,7 @@ class AIClient:
         }
         return prompts.get(operation, "Process the content as requested.")
 
-    def _build_user_prompt(
-        self, request: AIProcessRequest, selection
-    ) -> str:
+    def _build_user_prompt(self, request: AIProcessRequest, selection) -> str:
         """Build user prompt from request and selection."""
         parts = [f"# Content\n\n{selection.content}"]
 
@@ -210,9 +208,7 @@ class AIClient:
             parts.append(f"\n\nTarget language: {request.target_language}")
 
         if selection.notes:
-            notes_text = "\n".join(
-                f"- {n.get('content', n)}" for n in selection.notes
-            )
+            notes_text = "\n".join(f"- {n.get('content', n)}" for n in selection.notes)
             parts.append(f"\n\n# Notes\n\n{notes_text}")
 
         return "\n".join(parts)

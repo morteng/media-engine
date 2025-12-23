@@ -159,6 +159,7 @@ __all__ = [
 # CONVENIENCE FUNCTIONS
 # =============================================================================
 
+
 def get_video_resolution() -> tuple[int, int]:
     """Get default video resolution as (width, height) tuple."""
     return (VIDEO.width, VIDEO.height)

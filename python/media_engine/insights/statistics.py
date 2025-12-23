@@ -185,9 +185,7 @@ class StatisticsCollector:
                 if len(parts) > 0:
                     # First directory is typically language
                     lang = parts[0] if len(parts) > 1 else "default"
-                    stats.documents_by_language[lang] = (
-                        stats.documents_by_language.get(lang, 0) + 1
-                    )
+                    stats.documents_by_language[lang] = stats.documents_by_language.get(lang, 0) + 1
 
                     # Content type from second directory
                     if len(parts) > 1:
@@ -210,9 +208,7 @@ class StatisticsCollector:
                 # Track by language
                 if len(parts) > 0:
                     lang = parts[0] if len(parts) > 1 else "default"
-                    stats.words_by_language[lang] = (
-                        stats.words_by_language.get(lang, 0) + words
-                    )
+                    stats.words_by_language[lang] = stats.words_by_language.get(lang, 0) + words
 
                 doc_sizes.append((str(rel_path), words))
             except (OSError, UnicodeDecodeError):
@@ -268,7 +264,9 @@ class StatisticsCollector:
                 timeout=10,
             )
             if result.returncode == 0:
-                stats.commit_count_week = len(result.stdout.strip().split("\n")) if result.stdout.strip() else 0
+                stats.commit_count_week = (
+                    len(result.stdout.strip().split("\n")) if result.stdout.strip() else 0
+                )
 
             # Get commits in last month
             result = subprocess.run(
@@ -279,7 +277,9 @@ class StatisticsCollector:
                 timeout=10,
             )
             if result.returncode == 0:
-                stats.commit_count_month = len(result.stdout.strip().split("\n")) if result.stdout.strip() else 0
+                stats.commit_count_month = (
+                    len(result.stdout.strip().split("\n")) if result.stdout.strip() else 0
+                )
 
             # Get contributors
             result = subprocess.run(
@@ -305,7 +305,16 @@ class StatisticsCollector:
 
             # Count modified files in last week
             result = subprocess.run(
-                ["git", "diff", "--name-only", f"--since={week_ago.isoformat()}", "HEAD~100", "HEAD", "--", "*.md"],
+                [
+                    "git",
+                    "diff",
+                    "--name-only",
+                    f"--since={week_ago.isoformat()}",
+                    "HEAD~100",
+                    "HEAD",
+                    "--",
+                    "*.md",
+                ],
                 cwd=self.project.root,
                 capture_output=True,
                 text=True,

@@ -32,13 +32,15 @@ media-engine health              # Project health score
 media-engine provenance report   # Approval workflow
 media-engine integrity verify    # Asset integrity
 media-engine release             # Release management
+media-engine brand status        # Brand/design system status
 ```
 
 ## Project Structure
 
 ```
-python/media_engine/     # Main Python package (38 modules, 172 files)
+python/media_engine/     # Main Python package (45+ modules, 200+ files)
   core/                  # Config, Project, Theme (entry points)
+  brand/                 # Brand/design system (8 files)
   settings/              # Centralized configuration (env, paths, defaults)
   config/                # User-level configuration
   cms/                   # Document management (9 files)
@@ -54,9 +56,9 @@ python/media_engine/     # Main Python package (38 modules, 172 files)
   packs/                 # Audience pack generators (investor, pilot)
   publish/               # Deliverable packaging
   insights/              # Comprehensive analytics (11 files)
-  freshness/             # Content freshness tracking (3 files)
-  mcp/                   # MCP server with 16 tool modules
-  web/                   # FastAPI dashboard (16 tabs, 17 API routes)
+  freshness/             # Content freshness tracking + predictive (4 files)
+  mcp/                   # MCP server with 18 tool modules
+  web/                   # FastAPI dashboard (16 tabs, 25 API routes)
   gui/                   # Easy GUI launcher
   audit/                 # Audit logging system
   provenance/            # Claim tracking and approval workflows
@@ -66,10 +68,16 @@ python/media_engine/     # Main Python package (38 modules, 172 files)
   links/                 # External and internal link validation
   variables/             # Content variable interpolation
   changelog/             # Changelog generation from git/docs
-  readability/           # Readability scoring (Flesch, Fog, etc.)
+  readability/           # Readability scoring (Flesch, Fog, LIX for Norwegian)
   gaps/                  # Content gap analysis
   demos/                 # Interactive HTML demo generation
   cli/                   # CLI with 20+ command modules
+  # Advanced Analysis Modules
+  semantic/              # Semantic similarity, duplicate detection, terminology
+  knowledge/             # Knowledge graph, concept mapping, prerequisites
+  codesync/              # Code-documentation synchronization
+  advanced/              # Audience analysis, style checking, engagement
+  llm_quality/           # LLM-ready quality reporting (for MCP integration)
 
 python/tests/            # Pytest test suite (19 test files)
 remotion/src/            # TypeScript/React motion graphics (13 components)
@@ -111,7 +119,8 @@ project = find_project()  # searches up directory tree for project.yaml
 
 **Configuration files**:
 - `project.yaml` - project config, paths, localization
-- `theme.yaml` - colors, typography, design tokens
+- `brand.yaml` - unified brand system (colors, typography, logos, tokens)
+- `theme.yaml` - legacy colors/typography (deprecated, use brand.yaml)
 - `schema.yaml` - frontmatter validation schema
 
 **Module exports**: Public API defined in each module's `__init__.py` and re-exported from top-level `__init__.py`.
@@ -126,6 +135,11 @@ media-engine status              # Project status overview
 media-engine init                # Initialize new project
 media-engine dashboard           # Launch web UI
 media-engine release             # Release management workflow
+media-engine brand status        # Show brand profile (colors, fonts, logos)
+media-engine brand init          # Create brand.yaml from template
+media-engine brand migrate       # Migrate theme.yaml to brand.yaml
+media-engine brand validate      # Validate brand.yaml configuration
+media-engine brand export-css    # Export CSS variables from brand
 ```
 
 **Content Analysis:**
@@ -219,6 +233,142 @@ health = HealthAnalyzer(project)
 score = health.calculate_score()  # 0-100 health score
 ```
 
+## Advanced Analysis Modules
+
+Media Engine includes advanced analysis capabilities for deep content quality assessment:
+
+### Semantic Analysis (`semantic/`)
+
+Detect content similarity and terminology consistency:
+
+```python
+from media_engine.semantic import SemanticAnalyzer
+
+analyzer = SemanticAnalyzer(project)
+
+# Find near-duplicate documents (>85% similarity)
+duplicates = analyzer.find_near_duplicates(threshold=0.85)
+
+# Detect terminology inconsistencies
+drift = analyzer.detect_terminology_drift()
+
+# Cluster content by topic
+clusters = analyzer.cluster_content()
+
+# Find similar documents to a specific one
+similar = analyzer.find_similar_documents(doc_path, top_k=5)
+```
+
+### Knowledge Graph (`knowledge/`)
+
+Map concepts and relationships across documentation:
+
+```python
+from media_engine.knowledge import KnowledgeGraph
+
+kg = KnowledgeGraph(project)
+kg.build()
+
+# Get concept statistics
+stats = kg.get_statistics()  # total_concepts, relationships, coverage_score
+
+# Find orphan concepts (mentioned but never explained)
+orphans = kg.find_orphan_concepts()
+
+# Get document prerequisites
+prereqs = kg.get_prerequisites(doc_path)
+
+# Find prerequisite issues
+issues = kg.find_prerequisite_issues()
+```
+
+### Predictive Freshness (`freshness/predictive.py`)
+
+Predict which documents will become stale:
+
+```python
+from media_engine.freshness.predictive import PredictiveFreshnessModel
+
+model = PredictiveFreshnessModel(project)
+
+# Get staleness predictions for all documents
+predictions = model.predict_staleness()
+
+# Each prediction contains:
+# - document: Path to document
+# - risk_score: 0-1 probability of becoming stale
+# - days_until_stale: Predicted days before review needed
+# - risk_factors: Why document is at risk
+
+high_risk = [p for p in predictions if p.risk_score > 0.7]
+```
+
+### Code-Doc Sync (`codesync/`)
+
+Detect mismatches between code references and documentation:
+
+```python
+from media_engine.codesync import CodeDocSyncChecker
+
+checker = CodeDocSyncChecker(project)
+
+# Check all documents
+issues = checker.check_all()
+
+# Check specific document
+doc_issues = checker.check_document(doc_path)
+
+# Issues include:
+# - Syntax errors in code examples
+# - Deprecated API references
+# - Version mismatches
+```
+
+### Norwegian Readability (`readability/norwegian.py`)
+
+LIX-based readability analysis for Norwegian content:
+
+```python
+from media_engine.readability.norwegian import NorwegianReadabilityAnalyzer
+
+analyzer = NorwegianReadabilityAnalyzer(project)
+
+# Analyze all Norwegian documents
+results = analyzer.analyze_all()
+
+# Each result contains:
+# - lix: LIX score (lower = easier)
+# - difficulty_level: "easy", "medium", "difficult", "very_difficult"
+# - word_count, sentence_count, long_word_count
+
+# LIX interpretation:
+# < 25: Very easy (children's books)
+# 25-35: Easy (simple text)
+# 35-45: Medium (newspapers)
+# 45-55: Difficult (official documents)
+# > 55: Very difficult (academic)
+```
+
+### MCP Integration
+
+All advanced analysis is available through MCP tools for AI agents:
+
+```python
+# Get comprehensive quality report
+quality_report_comprehensive()
+
+# Get report for specific module
+quality_report_module("semantic")  # or "knowledge", "freshness", "codesync", "readability"
+
+# Get document-specific analysis
+quality_report_document("chapters/api.md")
+
+# Get prioritized issues
+quality_report_issues(priority="high")
+```
+
+See `mcp/AGENT_DEVELOPER_GUIDE.md` for detailed tool documentation.
+
 ## Freshness Tracking
 
 Track content freshness with persistent registry in `freshness/`:
@@ -261,6 +411,113 @@ The `demo/` directory is a fully-functional reference project that documents med
 - Scripts, diagrams, slides, and data files in both languages
 - Used for integration testing
 
+## Brand/Design System
+
+Unified visual identity system for consistent styling across all output formats.
+
+**Project structure:**
+```
+project_root/
+├── brand.yaml          # Single source of truth for brand
+├── brand/
+│   ├── logos/          # Logo variants (SVG, PNG)
+│   │   ├── logo.svg
+│   │   ├── logo-dark.svg
+│   │   └── icon.png
+│   └── fonts/          # Local fonts (if source: local)
+└── theme.yaml          # Legacy (deprecated)
+```
+
+**CLI commands:**
+```bash
+media-engine brand status       # View colors, typography, logos
+media-engine brand init         # Create brand.yaml template
+media-engine brand migrate      # Convert theme.yaml to brand.yaml
+media-engine brand validate     # Validate configuration
+media-engine brand export-css   # Export CSS variables
+```
+
+**brand.yaml schema:**
+```yaml
+name: "Project Name"
+
+identity:
+  logos:
+    primary: { path: "brand/logos/logo.svg", alt: "Logo" }
+    dark: { path: "brand/logos/logo-dark.svg" }
+    icon: { path: "brand/logos/icon.png", sizes: [16, 32, 64] }
+  legal:
+    copyright: "2024 Company"
+    tagline: "Your tagline"
+
+colors:
+  brand:
+    primary: "#6366f1"
+    secondary: "#8b5cf6"
+    accent: "#06b6d4"
+  semantic:
+    success: "#10b981"
+    warning: "#f59e0b"
+    error: "#ef4444"
+    info: "#3b82f6"
+  text: { primary: "#1f2937", secondary: "#4b5563", muted: "#9ca3af" }
+  background: { primary: "#ffffff", secondary: "#f9fafb" }
+  dark:  # Dark mode overrides
+    text: { primary: "#f9fafb", muted: "#9ca3af" }
+    background: { primary: "#111827", secondary: "#1f2937" }
+
+typography:
+  fonts:
+    heading: { family: "Inter", weights: [500, 600, 700], source: "google" }
+    body: { family: "Inter", weights: [400, 500], source: "google" }
+    code: { family: "JetBrains Mono", weights: [400], source: "google" }
+  scale: { xs: 12, sm: 14, base: 16, lg: 18, xl: 20, 2xl: 24, display: 72 }
+
+spacing: { unit: 4, scale: { 1: 4, 2: 8, 4: 16, 6: 24, 8: 32 } }
+borders: { radius: { sm: 2, md: 4, lg: 8, full: 9999 } }
+shadows:
+  sm: "0 1px 2px rgba(0,0,0,0.05)"
+  md: "0 4px 6px rgba(0,0,0,0.1)"
+```
+
+**Python API:**
+```python
+from media_engine.brand import BrandContext, load_brand_profile
+
+# Load brand profile
+profile = load_brand_profile(project.root)
+
+# Create context for builders
+brand = BrandContext(profile=profile)
+
+# Access colors (supports dot notation)
+primary = brand.get_color("brand.primary")
+error = brand.get_color("semantic.error")
+dark_bg = brand.get_color("background.primary", dark_mode=True)
+
+# Get logo with format conversion (SVG→PNG for PPTX)
+logo = brand.get_logo("primary", format="png", size=256)
+
+# Get system font (maps web fonts to Office-compatible)
+font = brand.get_system_font("heading")  # "Arial" for Inter
+
+# Generate CSS
+css = brand.generate_complete_css(include_fonts=True)
+```
+
+**Builder integration:**
+```python
+from media_engine.builders import HTMLBuilder, PPTXBuilder, XLSXBuilder
+
+# All builders accept brand parameter
+html = HTMLBuilder(brand=project.brand_context)
+pptx = PPTXBuilder(brand=project.brand_context)
+xlsx = XLSXBuilder(brand=project.brand_context)
+
+# Legacy theme parameter still works (converted internally)
+html = HTMLBuilder(theme=project.theme)
+```
+
 ## MCP Server (Agent Integration)
 
 Media Engine provides a comprehensive MCP server with 16 specialized tool modules:
@@ -281,16 +538,19 @@ media-engine-mcp --project /path/to/project
 | `documents.py` | List, read, update documents |
 | `translation.py` | Translation status, sync, outdated |
 | `quality.py` | Quality checks, validation |
+| `reports.py` | Comprehensive quality reports (semantic, knowledge, freshness, codesync) |
 | `search.py` | Content search |
 | `build.py` | HTML, PPTX, XLSX generation |
 | `cache.py` | Cache status, clearing |
 | `audit.py` | Audit logging |
 | `provenance.py` | Approval workflows |
+| `notes.py` | Scene notes and annotations |
 | `batch.py` | Batch operations |
 | `session.py` | Session management |
-| `suggestions.py` | AI-powered suggestions |
+| `suggestions.py` | AI-powered suggestions with advanced analysis |
 | `claude.py` | Claude-specific integration |
-| `context.py` | Context management |
+| `context.py` | Context management with advanced analysis |
+| `ai.py` | AI task queue management |
 | `webhooks.py` | Webhook integrations |
 
 **Claude Desktop config** (`~/.claude/claude_desktop_config.json`):

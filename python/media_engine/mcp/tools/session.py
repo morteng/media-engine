@@ -364,9 +364,7 @@ def register_session_tools(mcp, server_instance: "MediaEngineMCPServer"):
                 "by_type": by_type,
                 "first_action": first,
                 "last_action": last,
-                "unique_targets": len(
-                    set(a["target"] for a in _agent_actions if a["target"])
-                ),
+                "unique_targets": len(set(a["target"] for a in _agent_actions if a["target"])),
             },
             indent=2,
         )
@@ -388,9 +386,7 @@ def register_session_tools(mcp, server_instance: "MediaEngineMCPServer"):
         """
         report = {
             "generated_at": datetime.now().isoformat(),
-            "session_context": {
-                k: v["value"] for k, v in _session_store.items()
-            },
+            "session_context": {k: v["value"] for k, v in _session_store.items()},
             "actions": {
                 "total": len(_agent_actions),
                 "log": _agent_actions,
@@ -398,9 +394,7 @@ def register_session_tools(mcp, server_instance: "MediaEngineMCPServer"):
             "summary": {
                 "context_keys": list(_session_store.keys()),
                 "action_types": list(set(a["action"] for a in _agent_actions)),
-                "targets_modified": list(
-                    set(a["target"] for a in _agent_actions if a["target"])
-                ),
+                "targets_modified": list(set(a["target"] for a in _agent_actions if a["target"])),
             },
         }
 

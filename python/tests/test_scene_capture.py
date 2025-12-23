@@ -2,11 +2,9 @@
 Tests for media_engine.video.scene_capture module.
 """
 
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 from media_engine.core.config import Config
 from media_engine.core.project import LanguageConfig, Project
 from media_engine.core.theme import Theme
@@ -209,7 +207,7 @@ class TestSceneCaptureEngine:
     @pytest.mark.asyncio
     async def test_capture_scene_no_playwright(self, temp_dir):
         """Test capture_scene fails gracefully without Playwright."""
-        engine = SceneCaptureEngine()
+        SceneCaptureEngine()
 
         demo = DemoDefinition(name="test", url="http://example.com")
         state = DemoState(name="intro", description="Test state")

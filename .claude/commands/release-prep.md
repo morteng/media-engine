@@ -58,7 +58,10 @@ Comprehensive release preparation that runs all quality gates, validates milesto
 
 ## Quality Gates (/quality-check)
 - [ ] content-guardian: PASS
-- [ ] test-guardian: PASS (coverage >80%)
+- [ ] test-guardian: PASS
+  - [ ] Python tests (coverage >80%)
+  - [ ] Dashboard unit tests
+  - [ ] E2E tests (Playwright)
 - [ ] security-scanner: PASS (0 critical)
 
 ## Version Check
@@ -92,8 +95,9 @@ Comprehensive release preparation that runs all quality gates, validates milesto
 - [ ] Dependencies secure
 
 ## Tests
-- [ ] All tests passing
-- [ ] Coverage >80%
+- [ ] Python tests passing (coverage >80%)
+- [ ] Dashboard unit tests passing
+- [ ] E2E tests passing (Playwright)
 ```
 
 ## Execution Commands
@@ -114,6 +118,7 @@ git log --oneline $(git describe --tags --abbrev=0 2>/dev/null || echo HEAD~20).
 
 # Phase 3: Final validation
 uv run pytest --cov=media_engine --cov-fail-under=80
+cd dashboard && npm run test:run && npm run test:e2e
 media-engine security
 ```
 
@@ -146,7 +151,9 @@ media-engine security
 | Gate | Status | Details |
 |------|--------|---------|
 | Content | PASS/FAIL | [summary] |
-| Tests | PASS/FAIL | Coverage: XX% |
+| Python Tests | PASS/FAIL | Coverage: XX% |
+| Dashboard Tests | PASS/FAIL | XX passed |
+| E2E Tests | PASS/FAIL | XX/44 passed |
 | Security | PASS/FAIL | Issues: X |
 
 ### Version Check

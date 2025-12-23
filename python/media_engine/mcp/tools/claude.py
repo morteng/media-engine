@@ -247,16 +247,83 @@ def _generate_claude_md(project) -> str:
         lines.append("- Run `media-engine status` to see current priorities")
     lines.append("")
 
+    # Advanced Analysis
+    lines.append("## Advanced Analysis")
+    lines.append("")
+    lines.append("This project has advanced analysis capabilities:")
+    lines.append("")
+
+    # Check for available modules
+    advanced_modules = []
+    try:
+        from ...semantic import SemanticAnalyzer
+
+        advanced_modules.append("semantic")
+        analyzer = SemanticAnalyzer(project)
+        dups = analyzer.find_near_duplicates(threshold=0.85)
+        if dups:
+            lines.append(f"- **Semantic**: {len(dups)} near-duplicate pairs detected")
+    except Exception:
+        pass
+
+    try:
+        from ...knowledge import KnowledgeGraph
+
+        advanced_modules.append("knowledge")
+        kg = KnowledgeGraph(project)
+        kg.build()
+        stats = kg.get_statistics()
+        lines.append(f"- **Knowledge Graph**: {stats.get('total_concepts', 0)} concepts mapped")
+    except Exception:
+        pass
+
+    try:
+        from ...freshness.predictive import PredictiveFreshnessModel
+
+        advanced_modules.append("freshness")
+        model = PredictiveFreshnessModel(project)
+        predictions = model.predict_staleness()
+        high_risk = [p for p in predictions if p.risk_score > 0.7]
+        if high_risk:
+            lines.append(f"- **Freshness Risk**: {len(high_risk)} documents at high staleness risk")
+    except Exception:
+        pass
+
+    try:
+        from ...codesync import EnhancedCodeSyncChecker
+
+        advanced_modules.append("codesync")
+        checker = EnhancedCodeSyncChecker(project)
+        issues = checker.get_all_issues()
+        if issues:
+            lines.append(f"- **Code-Doc Sync**: {len(issues)} synchronization issues")
+    except Exception:
+        pass
+
+    try:
+        advanced_modules.append("norwegian_readability")
+    except Exception:
+        pass
+
+    if advanced_modules:
+        lines.append("")
+        lines.append(f"Available modules: {', '.join(advanced_modules)}")
+    lines.append("")
+
     # MCP integration note
     lines.append("## AI Agent Integration")
     lines.append("")
     lines.append("This project supports MCP (Model Context Protocol) for AI agent integration.")
     lines.append("")
     lines.append("Key MCP tools:")
-    lines.append("- `get_project_context` - Get comprehensive project overview")
+    lines.append(
+        "- `get_project_context` - Get comprehensive project overview with advanced analysis"
+    )
     lines.append("- `get_suggested_actions` - Get prioritized task recommendations")
     lines.append("- `find_relevant_documents` - Search for documents by topic")
     lines.append("- `validate_action` - Check if an action is safe before executing")
+    lines.append("- `quality_report_comprehensive` - Full quality report across all modules")
+    lines.append("- `quality_report_document` - Detailed analysis for a specific document")
     lines.append("")
 
     return "\n".join(lines)
@@ -269,6 +336,7 @@ def _get_quick_status(project) -> dict:
         "health": None,
         "issues": 0,
         "summary": "",
+        "advanced": {},
     }
 
     try:
@@ -304,13 +372,51 @@ def _get_quick_status(project) -> dict:
     except Exception:
         pass
 
+    # Advanced analysis issues
+    try:
+        from ...semantic import SemanticAnalyzer
+
+        analyzer = SemanticAnalyzer(project)
+        duplicates = analyzer.find_near_duplicates(threshold=0.85)
+        if duplicates:
+            issues.append(f"{len(duplicates)} duplicates")
+            status["advanced"]["semantic_duplicates"] = len(duplicates)
+    except Exception:
+        pass
+
+    try:
+        from ...freshness.predictive import PredictiveFreshnessModel
+
+        model = PredictiveFreshnessModel(project)
+        predictions = model.predict_staleness()
+        high_risk = [p for p in predictions if p.risk_score > 0.7]
+        if high_risk:
+            issues.append(f"{len(high_risk)} high-risk staleness")
+            status["advanced"]["freshness_risk"] = len(high_risk)
+    except Exception:
+        pass
+
+    try:
+        from ...codesync import EnhancedCodeSyncChecker
+
+        checker = EnhancedCodeSyncChecker(project)
+        sync_issues = checker.get_all_issues()
+        critical = [i for i in sync_issues if i.severity == "critical"]
+        if critical:
+            issues.append(f"{len(critical)} code-doc sync")
+            status["advanced"]["codesync_critical"] = len(critical)
+    except Exception:
+        pass
+
     status["issues"] = len(issues)
 
     # Build summary line
     if status["health"]:
         summary = f"Health: {status['health']}/100"
         if issues:
-            summary += f" | Issues: {', '.join(issues)}"
+            summary += f" | Issues: {', '.join(issues[:3])}"
+            if len(issues) > 3:
+                summary += f" (+{len(issues) - 3} more)"
         else:
             summary += " | No issues"
     else:
@@ -332,6 +438,7 @@ Use the MCP tool `get_project_context` to get a comprehensive overview including
 - Project health score
 - Pending issues
 - Translation status
+- Advanced analysis (semantic, knowledge graph, freshness, codesync)
 - Recommended actions
 
 Then summarize the key findings for the user.""",
@@ -367,16 +474,21 @@ For translation work:
 Ask the user which language and documents to focus on.""",
         },
         "media-quality": {
-            "description": "Run quality checks",
-            "content": """Run quality checks on this media-engine project.
+            "description": "Run comprehensive quality checks",
+            "content": """Run comprehensive quality checks on this media-engine project.
 
-1. Use `quality_check` to run comprehensive quality validation
-2. Review the results and categorize by severity
-3. Use `get_suggested_actions` for prioritized fixes
+1. Use `quality_report_comprehensive` to get a full quality report including:
+   - Basic quality (readability, links, schema)
+   - Semantic analysis (duplicates, terminology)
+   - Knowledge graph (concepts, prerequisites)
+   - Freshness predictions (staleness risk)
+   - Code-doc synchronization
+2. Review the results categorized by module and severity
+3. Use `quality_report_issues` to get prioritized action items
 4. Help the user fix issues one at a time
 
 For each issue:
-- Explain what the problem is
+- Explain what the problem is and which analysis detected it
 - Suggest how to fix it
 - Offer to make the fix if appropriate""",
         },
@@ -392,6 +504,50 @@ context documentation, then:
 3. Save to CLAUDE.md in the project root
 
 This helps future Claude Code sessions understand the project better.""",
+        },
+        "media-analyze": {
+            "description": "Run advanced content analysis",
+            "content": """Run advanced analysis on this media-engine project.
+
+Use `quality_report_comprehensive` to run all analysis modules:
+
+1. **Semantic Analysis**: Find near-duplicates, terminology drift, content clusters
+2. **Knowledge Graph**: Map concepts, find orphans, check prerequisites
+3. **Freshness Prediction**: Identify documents at risk of becoming stale
+4. **Code-Doc Sync**: Check documentation matches code references
+5. **Readability**: Analyze Norwegian LIX scores and English readability
+
+For document-specific analysis, use `quality_report_document` with the document path.
+
+Present findings organized by category with specific recommendations.""",
+        },
+        "media-semantic": {
+            "description": "Analyze semantic similarity",
+            "content": """Analyze semantic similarity in this media-engine project.
+
+Use `quality_report_module` with module='semantic' to get:
+- Near-duplicate document pairs
+- Terminology drift across documents
+- Content clusters by topic
+
+Help identify:
+- Redundant content that could be consolidated
+- Inconsistent terminology usage
+- Topic organization opportunities""",
+        },
+        "media-freshness": {
+            "description": "Check content freshness risk",
+            "content": """Analyze content freshness risk in this media-engine project.
+
+Use `quality_report_module` with module='freshness' to get:
+- Documents at high risk of becoming stale
+- Predicted days until staleness
+- Risk factors for each document
+
+Help the user prioritize:
+- Which documents to refresh first
+- Understanding staleness patterns
+- Planning content maintenance schedules""",
         },
     }
 
@@ -432,6 +588,28 @@ def _process_natural_query(project, query: str) -> dict:
     if "status" in query_lower:
         return _get_status_info(project)
 
+    # Semantic analysis queries
+    if any(word in query_lower for word in ["duplicate", "similar", "semantic", "terminology"]):
+        return _get_semantic_info(project, query)
+
+    # Knowledge graph queries
+    if any(word in query_lower for word in ["concept", "knowledge", "prerequisite", "orphan"]):
+        return _get_knowledge_info(project, query)
+
+    # Freshness queries
+    if any(
+        word in query_lower for word in ["fresh", "stale", "staleness", "risk", "outdated content"]
+    ):
+        return _get_freshness_info(project, query)
+
+    # Code-doc sync queries
+    if any(word in query_lower for word in ["sync", "code", "documentation sync", "codesync"]):
+        return _get_codesync_info(project, query)
+
+    # Readability queries
+    if any(word in query_lower for word in ["readability", "lix", "difficulty", "readable"]):
+        return _get_readability_info(project, query)
+
     # Default: try document search
     return _search_documents(project, query)
 
@@ -440,8 +618,20 @@ def _extract_topic(query: str) -> str:
     """Extract the topic/subject from a query."""
     # Remove common question words
     words_to_remove = [
-        "what", "which", "where", "how", "documents", "mention",
-        "about", "contains", "discuss", "the", "a", "an", "do", "does"
+        "what",
+        "which",
+        "where",
+        "how",
+        "documents",
+        "mention",
+        "about",
+        "contains",
+        "discuss",
+        "the",
+        "a",
+        "an",
+        "do",
+        "does",
     ]
     words = query.lower().split()
     topic_words = [w for w in words if w not in words_to_remove and len(w) > 2]
@@ -463,18 +653,22 @@ def _search_documents(project, topic: str) -> dict:
         path = doc.get("path", "").lower()
 
         if any(term in title or term in path for term in topic_terms):
-            matches.append({
-                "path": doc.get("path"),
-                "title": doc.get("title"),
-                "language": doc.get("language"),
-            })
+            matches.append(
+                {
+                    "path": doc.get("path"),
+                    "title": doc.get("title"),
+                    "language": doc.get("language"),
+                }
+            )
 
     return {
         "query_type": "document_search",
         "topic": topic,
         "results": matches[:10],
         "total_matches": len(matches),
-        "answer": f"Found {len(matches)} documents mentioning '{topic}'" if matches else f"No documents found mentioning '{topic}'",
+        "answer": f"Found {len(matches)} documents mentioning '{topic}'"
+        if matches
+        else f"No documents found mentioning '{topic}'",
     }
 
 
@@ -647,3 +841,250 @@ def _get_status_info(project) -> dict:
         "languages": list(project.languages.keys()),
         "answer": f"Project has {len(docs)} documents across {len(project.languages)} languages",
     }
+
+
+def _get_semantic_info(project, query: str) -> dict:
+    """Get semantic analysis info."""
+    try:
+        from ...semantic import SemanticAnalyzer
+
+        analyzer = SemanticAnalyzer(project)
+
+        result = {
+            "query_type": "semantic_analysis",
+            "near_duplicates": [],
+            "terminology_drift": [],
+            "content_clusters": [],
+        }
+
+        # Get near-duplicates
+        duplicates = analyzer.find_near_duplicates(threshold=0.85)
+        result["near_duplicates"] = [
+            {
+                "doc1": str(d.doc1),
+                "doc2": str(d.doc2),
+                "similarity": d.similarity,
+            }
+            for d in duplicates[:10]
+        ]
+
+        # Get terminology drift
+        if "terminology" in query.lower():
+            drift = analyzer.detect_terminology_drift()
+            result["terminology_drift"] = [
+                {"term": d.term, "variants": d.variants, "documents": d.documents[:3]}
+                for d in (drift or [])[:10]
+            ]
+
+        # Get content clusters
+        clusters = analyzer.cluster_content()
+        result["content_clusters"] = len(clusters) if clusters else 0
+
+        # Build answer
+        answer_parts = []
+        if result["near_duplicates"]:
+            answer_parts.append(f"{len(duplicates)} near-duplicate pairs found")
+        if result["terminology_drift"]:
+            answer_parts.append(f"{len(result['terminology_drift'])} terminology inconsistencies")
+
+        result["answer"] = "; ".join(answer_parts) if answer_parts else "No semantic issues found"
+
+        return result
+    except ImportError:
+        return {
+            "error": "Semantic analysis module not installed",
+            "query_type": "semantic_analysis",
+        }
+    except Exception as e:
+        return {"error": str(e), "query_type": "semantic_analysis"}
+
+
+def _get_knowledge_info(project, query: str) -> dict:
+    """Get knowledge graph info."""
+    try:
+        from ...knowledge import KnowledgeGraph
+
+        kg = KnowledgeGraph(project)
+        kg.build()
+
+        stats = kg.get_statistics()
+        orphans = kg.find_orphan_concepts()
+
+        result = {
+            "query_type": "knowledge_graph",
+            "total_concepts": stats.get("total_concepts", 0),
+            "total_relationships": stats.get("total_relationships", 0),
+            "orphan_concepts": [
+                {"name": c.name, "document": str(c.document)} for c in orphans[:10]
+            ],
+            "coverage_score": stats.get("coverage_score", 0),
+        }
+
+        # Check for prerequisite issues if asked
+        if "prerequisite" in query.lower():
+            prereq_issues = kg.find_prerequisite_issues()
+            result["prerequisite_issues"] = [
+                {"document": str(p.document), "missing": p.missing_prerequisites}
+                for p in (prereq_issues or [])[:10]
+            ]
+
+        result["answer"] = (
+            f"Knowledge graph: {result['total_concepts']} concepts, "
+            f"{result['total_relationships']} relationships, "
+            f"{len(orphans)} orphan concepts"
+        )
+
+        return result
+    except ImportError:
+        return {"error": "Knowledge graph module not installed", "query_type": "knowledge_graph"}
+    except Exception as e:
+        return {"error": str(e), "query_type": "knowledge_graph"}
+
+
+def _get_freshness_info(project, query: str) -> dict:
+    """Get freshness prediction info."""
+    try:
+        from ...freshness.predictive import PredictiveFreshnessModel
+
+        model = PredictiveFreshnessModel(project)
+        predictions = model.predict_staleness()
+
+        high_risk = [p for p in predictions if p.risk_score > 0.7]
+        medium_risk = [p for p in predictions if 0.4 <= p.risk_score <= 0.7]
+
+        result = {
+            "query_type": "freshness_prediction",
+            "total_analyzed": len(predictions),
+            "high_risk_count": len(high_risk),
+            "medium_risk_count": len(medium_risk),
+            "high_risk_documents": [
+                {
+                    "path": str(p.document),
+                    "risk_score": p.risk_score,
+                    "days_until_stale": p.days_until_stale,
+                }
+                for p in high_risk[:10]
+            ],
+            "average_risk": round(sum(p.risk_score for p in predictions) / len(predictions), 2)
+            if predictions
+            else 0,
+        }
+
+        result["answer"] = (
+            f"Freshness analysis: {len(high_risk)} high-risk, {len(medium_risk)} medium-risk "
+            f"documents out of {len(predictions)} analyzed"
+        )
+
+        return result
+    except ImportError:
+        return {
+            "error": "Predictive freshness module not installed",
+            "query_type": "freshness_prediction",
+        }
+    except Exception as e:
+        return {"error": str(e), "query_type": "freshness_prediction"}
+
+
+def _get_codesync_info(project, query: str) -> dict:
+    """Get code-doc synchronization info."""
+    try:
+        from ...codesync import EnhancedCodeSyncChecker
+
+        checker = EnhancedCodeSyncChecker(project)
+        issues = checker.get_all_issues()
+
+        critical = [i for i in issues if i.severity == "critical"]
+        warnings = [i for i in issues if i.severity == "warning"]
+
+        result = {
+            "query_type": "codesync",
+            "total_issues": len(issues),
+            "critical_count": len(critical),
+            "warning_count": len(warnings),
+            "critical_issues": [
+                {
+                    "document": str(i.document),
+                    "type": i.issue_type,
+                    "message": i.message,
+                }
+                for i in critical[:10]
+            ],
+            "is_synced": len(issues) == 0,
+        }
+
+        if result["is_synced"]:
+            result["answer"] = "Code and documentation are fully synchronized"
+        else:
+            result["answer"] = (
+                f"Code-doc sync: {len(critical)} critical, {len(warnings)} warning issues"
+            )
+
+        return result
+    except ImportError:
+        return {"error": "Code-doc sync module not installed", "query_type": "codesync"}
+    except Exception as e:
+        return {"error": str(e), "query_type": "codesync"}
+
+
+def _get_readability_info(project, query: str) -> dict:
+    """Get readability analysis info."""
+    result = {
+        "query_type": "readability",
+        "norwegian": {},
+        "english": {},
+    }
+
+    # Norwegian LIX analysis
+    try:
+        from ...readability.norwegian import NorwegianReadabilityAnalyzer
+
+        analyzer = NorwegianReadabilityAnalyzer(project)
+        no_results = analyzer.analyze_all()
+
+        if no_results:
+            avg_lix = sum(r.lix for r in no_results) / len(no_results)
+            difficult = [r for r in no_results if r.difficulty_level == "very_difficult"]
+
+            result["norwegian"] = {
+                "documents_analyzed": len(no_results),
+                "average_lix": round(avg_lix, 1),
+                "very_difficult_count": len(difficult),
+                "difficult_documents": [
+                    {"path": str(r.document), "lix": r.lix, "level": r.difficulty_level}
+                    for r in difficult[:5]
+                ],
+            }
+    except ImportError:
+        result["norwegian"] = {"error": "Norwegian readability module not installed"}
+    except Exception as e:
+        result["norwegian"] = {"error": str(e)}
+
+    # English readability
+    try:
+        from ...readability import ReadabilityScorer
+
+        scorer = ReadabilityScorer(project)
+        en_results = scorer.score_all()
+
+        if en_results:
+            avg_grade = sum(r.flesch_kincaid_grade for r in en_results) / len(en_results)
+            result["english"] = {
+                "documents_analyzed": len(en_results),
+                "average_grade_level": round(avg_grade, 1),
+            }
+    except Exception:
+        pass
+
+    # Build answer
+    answers = []
+    if result["norwegian"].get("documents_analyzed"):
+        answers.append(
+            f"Norwegian: avg LIX {result['norwegian']['average_lix']}, "
+            f"{result['norwegian']['very_difficult_count']} very difficult"
+        )
+    if result["english"].get("documents_analyzed"):
+        answers.append(f"English: avg grade level {result['english']['average_grade_level']}")
+
+    result["answer"] = "; ".join(answers) if answers else "No readability data available"
+
+    return result

@@ -356,6 +356,7 @@ class TestVideoTimelineAdvanced:
         )
 
         import pytest
+
         with pytest.raises(ValueError) as exc_info:
             timeline.add_clip("nonexistent", clip)
 
@@ -369,13 +370,15 @@ class TestVideoTimelineAdvanced:
             duration=60.0,  # Nominal duration
         )
         track = timeline.add_track("video", TrackType.VIDEO)
-        track.add_clip(TimelineClip(
-            id="clip-1",
-            track=TrackType.VIDEO,
-            source_path=Path("test.mp4"),
-            start_time=0.0,
-            end_time=90.0,  # Longer than nominal
-        ))
+        track.add_clip(
+            TimelineClip(
+                id="clip-1",
+                track=TrackType.VIDEO,
+                source_path=Path("test.mp4"),
+                start_time=0.0,
+                end_time=90.0,  # Longer than nominal
+            )
+        )
 
         assert timeline.calculated_duration == 90.0
 
@@ -402,13 +405,15 @@ class TestVideoTimelineAdvanced:
             output_path=Path("/tmp/output.mp4"),
         )
         track = timeline.add_track("video", TrackType.VIDEO)
-        track.add_clip(TimelineClip(
-            id="clip-1",
-            track=TrackType.VIDEO,
-            source_path=Path("test.mp4"),
-            start_time=0.0,
-            end_time=30.0,
-        ))
+        track.add_clip(
+            TimelineClip(
+                id="clip-1",
+                track=TrackType.VIDEO,
+                source_path=Path("test.mp4"),
+                start_time=0.0,
+                end_time=30.0,
+            )
+        )
 
         data = timeline.to_dict()
 
@@ -430,13 +435,15 @@ class TestVideoTimelineAdvanced:
             output_path=Path("/tmp/output.mp4"),
         )
         track = timeline.add_track("video", TrackType.VIDEO)
-        track.add_clip(TimelineClip(
-            id="clip-1",
-            track=TrackType.VIDEO,
-            source_path=Path("/tmp/source.mp4"),
-            start_time=0.0,
-            end_time=60.0,
-        ))
+        track.add_clip(
+            TimelineClip(
+                id="clip-1",
+                track=TrackType.VIDEO,
+                source_path=Path("/tmp/source.mp4"),
+                start_time=0.0,
+                end_time=60.0,
+            )
+        )
 
         script = timeline.to_ffmpeg_script()
 
@@ -456,20 +463,24 @@ class TestVideoTimelineAdvanced:
         )
 
         video_track = timeline.add_track("video", TrackType.VIDEO)
-        video_track.add_clip(TimelineClip(
-            id="clip-1",
-            track=TrackType.VIDEO,
-            source_path=Path("/tmp/source1.mp4"),
-            start_time=0.0,
-            end_time=30.0,
-        ))
-        video_track.add_clip(TimelineClip(
-            id="clip-2",
-            track=TrackType.VIDEO,
-            source_path=Path("/tmp/source2.mp4"),
-            start_time=30.0,
-            end_time=60.0,
-        ))
+        video_track.add_clip(
+            TimelineClip(
+                id="clip-1",
+                track=TrackType.VIDEO,
+                source_path=Path("/tmp/source1.mp4"),
+                start_time=0.0,
+                end_time=30.0,
+            )
+        )
+        video_track.add_clip(
+            TimelineClip(
+                id="clip-2",
+                track=TrackType.VIDEO,
+                source_path=Path("/tmp/source2.mp4"),
+                start_time=30.0,
+                end_time=60.0,
+            )
+        )
 
         script = timeline.to_ffmpeg_script()
 
@@ -556,27 +567,33 @@ class TestTimelineTrackAdvanced:
         track = TimelineTrack(name="main", type=TrackType.VIDEO)
 
         # Add clips in non-chronological order
-        track.add_clip(TimelineClip(
-            id="clip-3",
-            track=TrackType.VIDEO,
-            source_path=Path("c.mp4"),
-            start_time=20.0,
-            end_time=30.0,
-        ))
-        track.add_clip(TimelineClip(
-            id="clip-1",
-            track=TrackType.VIDEO,
-            source_path=Path("a.mp4"),
-            start_time=0.0,
-            end_time=10.0,
-        ))
-        track.add_clip(TimelineClip(
-            id="clip-2",
-            track=TrackType.VIDEO,
-            source_path=Path("b.mp4"),
-            start_time=10.0,
-            end_time=20.0,
-        ))
+        track.add_clip(
+            TimelineClip(
+                id="clip-3",
+                track=TrackType.VIDEO,
+                source_path=Path("c.mp4"),
+                start_time=20.0,
+                end_time=30.0,
+            )
+        )
+        track.add_clip(
+            TimelineClip(
+                id="clip-1",
+                track=TrackType.VIDEO,
+                source_path=Path("a.mp4"),
+                start_time=0.0,
+                end_time=10.0,
+            )
+        )
+        track.add_clip(
+            TimelineClip(
+                id="clip-2",
+                track=TrackType.VIDEO,
+                source_path=Path("b.mp4"),
+                start_time=10.0,
+                end_time=20.0,
+            )
+        )
 
         # Should be sorted by start_time
         assert track.clips[0].id == "clip-1"
@@ -586,13 +603,15 @@ class TestTimelineTrackAdvanced:
     def test_get_clip_at_boundary(self):
         """Test get_clip_at at exact clip boundaries."""
         track = TimelineTrack(name="main", type=TrackType.VIDEO)
-        track.add_clip(TimelineClip(
-            id="clip-1",
-            track=TrackType.VIDEO,
-            source_path=Path("a.mp4"),
-            start_time=0.0,
-            end_time=10.0,
-        ))
+        track.add_clip(
+            TimelineClip(
+                id="clip-1",
+                track=TrackType.VIDEO,
+                source_path=Path("a.mp4"),
+                start_time=0.0,
+                end_time=10.0,
+            )
+        )
 
         # At start_time, should find clip
         assert track.get_clip_at(0.0).id == "clip-1"
@@ -603,13 +622,15 @@ class TestTimelineTrackAdvanced:
     def test_get_clip_at_no_clip(self):
         """Test get_clip_at when no clip exists at time."""
         track = TimelineTrack(name="main", type=TrackType.VIDEO)
-        track.add_clip(TimelineClip(
-            id="clip-1",
-            track=TrackType.VIDEO,
-            source_path=Path("a.mp4"),
-            start_time=10.0,
-            end_time=20.0,
-        ))
+        track.add_clip(
+            TimelineClip(
+                id="clip-1",
+                track=TrackType.VIDEO,
+                source_path=Path("a.mp4"),
+                start_time=10.0,
+                end_time=20.0,
+            )
+        )
 
         # Before any clip
         assert track.get_clip_at(5.0) is None

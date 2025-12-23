@@ -63,14 +63,16 @@ def register_build_routes(
             if output_dir.exists():
                 for f in output_dir.iterdir():
                     if f.is_file() and f.suffix in [".html", ".pdf", ".pptx", ".xlsx"]:
-                        outputs.append({
-                            "path": str(f.relative_to(project.root)),
-                            "name": f.name,
-                            "format": f.suffix[1:].upper(),
-                            "language": lang,
-                            "size": f.stat().st_size,
-                            "modified": datetime.fromtimestamp(f.stat().st_mtime).isoformat(),
-                        })
+                        outputs.append(
+                            {
+                                "path": str(f.relative_to(project.root)),
+                                "name": f.name,
+                                "format": f.suffix[1:].upper(),
+                                "language": lang,
+                                "size": f.stat().st_size,
+                                "modified": datetime.fromtimestamp(f.stat().st_mtime).isoformat(),
+                            }
+                        )
 
         return {
             "active": build_state["active"],
@@ -94,7 +96,11 @@ def register_build_routes(
 
         project = get_project()
         format_list = [f.strip() for f in formats.split(",") if f.strip()]
-        lang_list = [lang.strip() for lang in languages.split(",")] if languages else list(project.languages.keys())
+        lang_list = (
+            [lang.strip() for lang in languages.split(",")]
+            if languages
+            else list(project.languages.keys())
+        )
 
         async def run_build():
             build_state["active"] = True
@@ -109,10 +115,14 @@ def register_build_routes(
                 }
                 build_state["logs"].append(entry)
                 # Broadcast to connected clients
-                asyncio.create_task(manager.broadcast({
-                    "type": "build_log",
-                    "entry": entry,
-                }))
+                asyncio.create_task(
+                    manager.broadcast(
+                        {
+                            "type": "build_log",
+                            "entry": entry,
+                        }
+                    )
+                )
 
             log(f"Starting build: formats={format_list}, languages={lang_list}, force={force}")
 
@@ -130,12 +140,15 @@ def register_build_routes(
                         try:
                             if fmt == "html":
                                 from ...builders.html import HTMLBuilder
+
                                 builder = HTMLBuilder(project.theme)
                                 # Build chapters
                                 content_dir = project.content_dir / lang / "chapters"
                                 if content_dir.exists():
                                     for md_file in sorted(content_dir.glob("*.md")):
-                                        output_path = project.output_dir / lang / f"{md_file.stem}.html"
+                                        output_path = (
+                                            project.output_dir / lang / f"{md_file.stem}.html"
+                                        )
                                         output_path.parent.mkdir(parents=True, exist_ok=True)
                                         with open(md_file) as f:
                                             content = f.read()
@@ -144,22 +157,28 @@ def register_build_routes(
 
                             elif fmt == "pptx":
                                 from ...builders.pptx import PPTXBuilder
+
                                 builder = PPTXBuilder(theme=project.theme)
                                 slides_dir = project.content_dir / lang / "slides"
                                 if slides_dir.exists():
                                     for yaml_file in sorted(slides_dir.glob("*.yaml")):
-                                        output_path = project.output_dir / lang / f"{yaml_file.stem}.pptx"
+                                        output_path = (
+                                            project.output_dir / lang / f"{yaml_file.stem}.pptx"
+                                        )
                                         output_path.parent.mkdir(parents=True, exist_ok=True)
                                         builder.build_from_yaml(yaml_file, output_path)
                                         log(f"  Built {output_path.name}", "success")
 
                             elif fmt == "xlsx":
                                 from ...builders.xlsx import XLSXBuilder
+
                                 builder = XLSXBuilder()
                                 data_dir = project.content_dir / lang / "data"
                                 if data_dir.exists():
                                     for yaml_file in sorted(data_dir.glob("*.yaml")):
-                                        output_path = project.output_dir / lang / f"{yaml_file.stem}.xlsx"
+                                        output_path = (
+                                            project.output_dir / lang / f"{yaml_file.stem}.xlsx"
+                                        )
                                         output_path.parent.mkdir(parents=True, exist_ok=True)
                                         builder.build_from_yaml(yaml_file, output_path)
                                         log(f"  Built {output_path.name}", "success")
@@ -181,11 +200,13 @@ def register_build_routes(
                 build_state["progress"] = 100
 
                 # Notify completion
-                await manager.broadcast({
-                    "type": "build_complete",
-                    "success": True,
-                    "timestamp": datetime.now().isoformat(),
-                })
+                await manager.broadcast(
+                    {
+                        "type": "build_complete",
+                        "success": True,
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
 
         background_tasks.add_task(asyncio.create_task, run_build())
 
@@ -216,14 +237,16 @@ def register_build_routes(
             if output_dir.exists():
                 for f in output_dir.rglob("*"):
                     if f.is_file() and f.suffix in [".html", ".pdf", ".pptx", ".xlsx"]:
-                        outputs.append({
-                            "path": str(f.relative_to(project.root)),
-                            "name": f.name,
-                            "format": f.suffix[1:].upper(),
-                            "language": lang,
-                            "size": f.stat().st_size,
-                            "modified": datetime.fromtimestamp(f.stat().st_mtime).isoformat(),
-                        })
+                        outputs.append(
+                            {
+                                "path": str(f.relative_to(project.root)),
+                                "name": f.name,
+                                "format": f.suffix[1:].upper(),
+                                "language": lang,
+                                "size": f.stat().st_size,
+                                "modified": datetime.fromtimestamp(f.stat().st_mtime).isoformat(),
+                            }
+                        )
 
         return {
             "outputs": sorted(outputs, key=lambda x: x["modified"], reverse=True),

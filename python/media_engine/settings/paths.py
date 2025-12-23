@@ -13,9 +13,11 @@ from typing import Optional
 # DIRECTORY NAMES
 # =============================================================================
 
+
 @dataclass(frozen=True)
 class DirectoryNames:
     """Standard directory names used throughout the project."""
+
     # Project structure
     content: str = "content"
     assets: str = "assets"
@@ -49,9 +51,11 @@ DIRS = DirectoryNames()
 # FILE NAMES
 # =============================================================================
 
+
 @dataclass(frozen=True)
 class FileNames:
     """Standard file names used throughout the project."""
+
     # Project config files
     project_config: str = "project.yaml"
     theme_config: str = "theme.yaml"
@@ -82,9 +86,11 @@ FILES = FileNames()
 # ENVIRONMENT VARIABLES
 # =============================================================================
 
+
 @dataclass(frozen=True)
 class EnvVars:
     """Environment variable names."""
+
     # Paths
     publish_dir: str = "MEDIA_ENGINE_PUBLISH_DIR"
     project_dir: str = "MEDIA_ENGINE_PROJECT_DIR"
@@ -126,6 +132,7 @@ DEFAULT_IGNORE_PATTERNS: tuple[str, ...] = (
 # =============================================================================
 # PATH RESOLUTION
 # =============================================================================
+
 
 class PathResolver:
     """Resolves paths relative to project root."""

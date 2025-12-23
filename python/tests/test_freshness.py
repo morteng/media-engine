@@ -8,7 +8,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
-
 from media_engine.core.project import Project
 from media_engine.freshness import (
     ContentRegistry,
@@ -523,10 +522,11 @@ class TestContentRegistry:
         # Manually set the file's mtime to 3 days ago
         old_time = (datetime.now() - timedelta(days=3)).timestamp()
         import os
+
         os.utime(old_file, (old_time, old_time))
 
         # Refresh to recompute
-        report = registry.refresh(check_provenance=False)
+        registry.refresh(check_provenance=False)
 
         item = registry.get(Path("old_content.md"))
         assert item.freshness_status == FreshnessStatus.EXPIRED
@@ -835,7 +835,7 @@ class TestEdgeCases:
                     "type": "source_document",
                     # Missing optional fields
                 }
-            }
+            },
         }
         registry._registry_path.write_text(json.dumps(data))
 
@@ -1024,7 +1024,10 @@ class TestIntegration:
         # Refresh freshness
         report = registry.refresh(check_provenance=False)
         assert report.total_items == count
-        assert report.fresh_count + report.stale_count + report.expired_count + report.missing_count == count
+        assert (
+            report.fresh_count + report.stale_count + report.expired_count + report.missing_count
+            == count
+        )
 
         # Save for later use
         registry.save()

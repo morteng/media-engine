@@ -16,23 +16,20 @@ dependencies = [
     "pyyaml>=6.0",
     "jsonschema>=4.0",
     "markdown>=3.5",
-
     # Video production
     "elevenlabs>=1.0",
     "pydub>=0.25",
-
     # Diagrams
     "matplotlib>=3.7",
     "pillow>=10.0",
-
     # Slides
     "python-pptx>=0.6",
     "openpyxl>=3.1",
-
     # Utilities
     "jinja2>=3.1",
     "python-dotenv>=1.0",
     "rich>=13.0",
+    "networkx>=3.6.1",
 ]
 
 [project.scripts]

@@ -27,6 +27,7 @@ def register_context_tools(mcp, server_instance: "MediaEngineMCPServer"):
         - Current health status
         - Recent activity summary
         - Pending issues and recommendations
+        - Advanced analysis insights (semantic, knowledge graph, freshness, etc.)
 
         This is the recommended first call when starting work on a project.
         """
@@ -41,6 +42,7 @@ def register_context_tools(mcp, server_instance: "MediaEngineMCPServer"):
             "activity": _get_activity_summary(project),
             "issues": _get_pending_issues(project),
             "recommendations": _get_recommendations(project),
+            "advanced_analysis": _get_advanced_context(project),
         }
 
         return json.dumps(context, indent=2)
@@ -227,7 +229,16 @@ def _get_activity_summary(project) -> dict:
 
 def _get_pending_issues(project) -> dict:
     """Build pending issues summary."""
-    issues = {"incomplete": [], "consistency": [], "stale_translations": []}
+    issues = {
+        "incomplete": [],
+        "consistency": [],
+        "stale_translations": [],
+        "semantic": [],
+        "knowledge": [],
+        "freshness": [],
+        "codesync": [],
+        "readability": [],
+    }
 
     # Incomplete content
     try:
@@ -263,6 +274,83 @@ def _get_pending_issues(project) -> dict:
         outdated = tracker.get_outdated_translations()
         issues["stale_translations"] = [
             {"path": str(t["path"]), "source_changed": True} for t in outdated[:5]
+        ]
+    except Exception:
+        pass
+
+    # Semantic issues (near-duplicates, terminology drift)
+    try:
+        from ...semantic import SemanticAnalyzer
+
+        analyzer = SemanticAnalyzer(project)
+        duplicates = analyzer.find_near_duplicates(threshold=0.85)
+        issues["semantic"] = [
+            {
+                "type": "near_duplicate",
+                "doc1": str(d.doc1),
+                "doc2": str(d.doc2),
+                "similarity": d.similarity,
+            }
+            for d in duplicates[:3]
+        ]
+    except Exception:
+        pass
+
+    # Knowledge graph issues (orphan concepts, missing prerequisites)
+    try:
+        from ...knowledge import KnowledgeGraph
+
+        kg = KnowledgeGraph(project)
+        kg.build()
+        orphans = kg.find_orphan_concepts()
+        issues["knowledge"] = [
+            {"type": "orphan_concept", "concept": c.name, "document": str(c.document)}
+            for c in orphans[:5]
+        ]
+    except Exception:
+        pass
+
+    # Predictive freshness (high-risk documents)
+    try:
+        from ...freshness.predictive import PredictiveFreshnessModel
+
+        model = PredictiveFreshnessModel(project)
+        predictions = model.predict_staleness()
+        high_risk = [p for p in predictions if p.risk_score > 0.7]
+        issues["freshness"] = [
+            {
+                "path": str(p.document),
+                "risk_score": p.risk_score,
+                "days_until_stale": p.days_until_stale,
+            }
+            for p in high_risk[:5]
+        ]
+    except Exception:
+        pass
+
+    # Code-doc sync issues
+    try:
+        from ...codesync import EnhancedCodeSyncChecker
+
+        checker = EnhancedCodeSyncChecker(project)
+        sync_issues = checker.get_all_issues()
+        issues["codesync"] = [
+            {"path": str(i.document), "type": i.issue_type.value, "severity": i.severity}
+            for i in sync_issues[:5]
+        ]
+    except Exception:
+        pass
+
+    # Readability issues (Norwegian LIX, difficulty)
+    try:
+        from ...readability.norwegian import NorwegianReadabilityAnalyzer
+
+        analyzer = NorwegianReadabilityAnalyzer(project)
+        results = analyzer.analyze_all()
+        difficult = [r for r in results if r.difficulty_level == "very_difficult"]
+        issues["readability"] = [
+            {"path": str(r.document), "lix_score": r.lix, "level": r.difficulty_level}
+            for r in difficult[:5]
         ]
     except Exception:
         pass
@@ -334,6 +422,142 @@ def _get_recommendations(project) -> list:
                     "action": "update_translations",
                     "message": f"{len(outdated)} translations need updating",
                     "count": len(outdated),
+                }
+            )
+    except Exception:
+        pass
+
+    # Check for semantic duplicates
+    try:
+        from ...semantic import SemanticAnalyzer
+
+        analyzer = SemanticAnalyzer(project)
+        duplicates = analyzer.find_near_duplicates(threshold=0.85)
+        if duplicates:
+            recommendations.append(
+                {
+                    "priority": "medium",
+                    "action": "consolidate_duplicates",
+                    "message": f"{len(duplicates)} near-duplicate document pairs detected",
+                    "count": len(duplicates),
+                    "module": "semantic",
+                }
+            )
+    except Exception:
+        pass
+
+    # Check for terminology drift
+    try:
+        from ...semantic import SemanticAnalyzer
+
+        analyzer = SemanticAnalyzer(project)
+        drift = analyzer.detect_terminology_drift()
+        if drift and len(drift) > 3:
+            recommendations.append(
+                {
+                    "priority": "low",
+                    "action": "standardize_terminology",
+                    "message": f"{len(drift)} terminology inconsistencies found",
+                    "count": len(drift),
+                    "module": "semantic",
+                }
+            )
+    except Exception:
+        pass
+
+    # Check for orphan concepts in knowledge graph
+    try:
+        from ...knowledge import KnowledgeGraph
+
+        kg = KnowledgeGraph(project)
+        kg.build()
+        orphans = kg.find_orphan_concepts()
+        if orphans:
+            recommendations.append(
+                {
+                    "priority": "low",
+                    "action": "link_concepts",
+                    "message": f"{len(orphans)} concepts not linked to others",
+                    "count": len(orphans),
+                    "module": "knowledge",
+                }
+            )
+    except Exception:
+        pass
+
+    # Check for high staleness risk
+    try:
+        from ...freshness.predictive import PredictiveFreshnessModel
+
+        model = PredictiveFreshnessModel(project)
+        predictions = model.predict_staleness()
+        high_risk = [p for p in predictions if p.risk_score > 0.7]
+        if high_risk:
+            recommendations.append(
+                {
+                    "priority": "medium",
+                    "action": "refresh_content",
+                    "message": f"{len(high_risk)} documents at high risk of becoming stale",
+                    "count": len(high_risk),
+                    "module": "freshness",
+                }
+            )
+    except Exception:
+        pass
+
+    # Check for code-doc sync issues
+    try:
+        from ...codesync import EnhancedCodeSyncChecker
+
+        checker = EnhancedCodeSyncChecker(project)
+        issues = checker.get_all_issues()
+        critical = [i for i in issues if i.severity == "critical"]
+        if critical:
+            recommendations.append(
+                {
+                    "priority": "high",
+                    "action": "sync_code_docs",
+                    "message": f"{len(critical)} critical code-documentation sync issues",
+                    "count": len(critical),
+                    "module": "codesync",
+                }
+            )
+    except Exception:
+        pass
+
+    # Check Norwegian readability
+    try:
+        from ...readability.norwegian import NorwegianReadabilityAnalyzer
+
+        analyzer = NorwegianReadabilityAnalyzer(project)
+        results = analyzer.analyze_all()
+        difficult = [r for r in results if r.difficulty_level == "very_difficult"]
+        if difficult:
+            recommendations.append(
+                {
+                    "priority": "low",
+                    "action": "simplify_content",
+                    "message": f"{len(difficult)} Norwegian documents are very difficult to read",
+                    "count": len(difficult),
+                    "module": "readability",
+                }
+            )
+    except Exception:
+        pass
+
+    # Check for audience drift
+    try:
+        from ...advanced import AudienceAnalyzer
+
+        analyzer = AudienceAnalyzer(project)
+        drift = analyzer.detect_audience_drift()
+        if drift and drift.severity == "high":
+            recommendations.append(
+                {
+                    "priority": "medium",
+                    "action": "align_audience",
+                    "message": "Significant audience drift detected across documents",
+                    "module": "advanced",
                 }
             )
     except Exception:
@@ -459,7 +683,9 @@ def _analyze_impact(project, target: str, change_type: str, description: str) ->
                     {
                         "translation": str(pair.get("translation", "")),
                         "language": pair.get("language", ""),
-                        "action_needed": "update_translation" if change_type == "update" else change_type,
+                        "action_needed": "update_translation"
+                        if change_type == "update"
+                        else change_type,
                     }
                 )
     except Exception:
@@ -560,8 +786,12 @@ def _get_document_context(project, document_path: str) -> dict:
         graph = DependencyGraph(project)
         graph.refresh()
 
-        context["dependencies"]["depends_on"] = [str(p) for p in graph.get_dependencies(Path(document_path))]
-        context["dependencies"]["dependents"] = [str(p) for p in graph.get_dependents(Path(document_path))]
+        context["dependencies"]["depends_on"] = [
+            str(p) for p in graph.get_dependencies(Path(document_path))
+        ]
+        context["dependencies"]["dependents"] = [
+            str(p) for p in graph.get_dependents(Path(document_path))
+        ]
     except Exception:
         pass
 
@@ -573,7 +803,9 @@ def _get_document_context(project, document_path: str) -> dict:
         doc_health = scorer.score_document(Path(document_path))
         context["quality"] = {
             "score": doc_health.overall if hasattr(doc_health, "overall") else None,
-            "issues": [i.to_dict() for i in doc_health.issues[:5]] if hasattr(doc_health, "issues") else [],
+            "issues": [i.to_dict() for i in doc_health.issues[:5]]
+            if hasattr(doc_health, "issues")
+            else [],
         }
     except Exception:
         pass
@@ -581,12 +813,281 @@ def _get_document_context(project, document_path: str) -> dict:
     # Suggested actions for this document
     if context.get("translation", {}).get("needs_update"):
         context["suggested_actions"].append(
-            {"action": "update_translation", "priority": "high", "message": "Translation is outdated"}
+            {
+                "action": "update_translation",
+                "priority": "high",
+                "message": "Translation is outdated",
+            }
         )
 
     if context.get("quality", {}).get("score", 100) < 70:
         context["suggested_actions"].append(
-            {"action": "improve_quality", "priority": "medium", "message": "Document has quality issues"}
+            {
+                "action": "improve_quality",
+                "priority": "medium",
+                "message": "Document has quality issues",
+            }
         )
 
+    # Add advanced analysis for this document
+    context["advanced"] = _get_document_advanced_context(project, document_path, doc)
+
     return context
+
+
+def _get_document_advanced_context(project, document_path: str, doc: dict) -> dict:
+    """Get advanced analysis context for a specific document."""
+    advanced = {
+        "semantic": {},
+        "knowledge": {},
+        "readability": {},
+        "freshness": {},
+        "codesync": {},
+    }
+
+    doc_path = Path(document_path)
+
+    # Semantic analysis - find similar documents
+    try:
+        from ...semantic import SemanticAnalyzer
+
+        analyzer = SemanticAnalyzer(project)
+        similar = analyzer.find_similar_documents(doc_path, top_k=5)
+        advanced["semantic"] = {
+            "similar_documents": [
+                {"path": str(s.path), "similarity": s.similarity} for s in similar
+            ]
+        }
+    except Exception:
+        pass
+
+    # Knowledge graph - concepts in this document
+    try:
+        from ...knowledge import KnowledgeGraph
+
+        kg = KnowledgeGraph(project)
+        kg.build()
+        concepts = kg.get_document_concepts(doc_path)
+        advanced["knowledge"] = {
+            "concepts": [c.name for c in concepts[:10]],
+            "prerequisites": [str(p) for p in kg.get_prerequisites(doc_path)],
+        }
+    except Exception:
+        pass
+
+    # Readability (Norwegian-specific if applicable)
+    language = doc.get("language", "en")
+    try:
+        if language == "no":
+            from ...readability.norwegian import NorwegianReadabilityAnalyzer
+
+            analyzer = NorwegianReadabilityAnalyzer(project)
+            result = analyzer.analyze_document(doc_path)
+            if result:
+                advanced["readability"] = {
+                    "lix_score": result.lix,
+                    "difficulty_level": result.difficulty_level,
+                    "word_count": result.word_count,
+                    "sentence_count": result.sentence_count,
+                }
+        else:
+            from ...readability import ReadabilityScorer
+
+            scorer = ReadabilityScorer(project)
+            result = scorer.score_document(doc_path)
+            if result:
+                advanced["readability"] = {
+                    "flesch_reading_ease": result.flesch_reading_ease,
+                    "flesch_kincaid_grade": result.flesch_kincaid_grade,
+                    "gunning_fog": result.gunning_fog,
+                }
+    except Exception:
+        pass
+
+    # Predictive freshness
+    try:
+        from ...freshness.predictive import PredictiveFreshnessModel
+
+        model = PredictiveFreshnessModel(project)
+        prediction = model.predict_for_document(doc_path)
+        if prediction:
+            advanced["freshness"] = {
+                "risk_score": prediction.risk_score,
+                "days_until_stale": prediction.days_until_stale,
+                "risk_factors": prediction.risk_factors,
+            }
+    except Exception:
+        pass
+
+    # Code-doc sync status
+    try:
+        from ...codesync import EnhancedCodeSyncChecker
+
+        checker = EnhancedCodeSyncChecker(project)
+        report = checker.check_document(doc_path)
+        advanced["codesync"] = {
+            "issues": [
+                {"type": i.issue_type.value, "severity": i.severity, "message": i.message}
+                for i in report.issues
+            ],
+            "is_synced": len(report.issues) == 0,
+        }
+    except Exception:
+        pass
+
+    return advanced
+
+
+def _get_advanced_context(project) -> dict:
+    """Get comprehensive advanced analysis context for the project."""
+    advanced = {
+        "semantic": {},
+        "knowledge": {},
+        "readability": {},
+        "freshness": {},
+        "codesync": {},
+        "advanced": {},
+        "modules_available": [],
+    }
+
+    # Check which modules are available
+    modules = []
+
+    # Semantic analysis summary
+    try:
+        from ...semantic import SemanticAnalyzer
+
+        analyzer = SemanticAnalyzer(project)
+        duplicates = analyzer.find_near_duplicates(threshold=0.85)
+        clusters = analyzer.cluster_content()
+        drift = analyzer.detect_terminology_drift()
+
+        advanced["semantic"] = {
+            "near_duplicates": len(duplicates),
+            "content_clusters": len(clusters) if clusters else 0,
+            "terminology_drift_items": len(drift) if drift else 0,
+            "summary": f"{len(duplicates)} near-duplicates, {len(clusters) if clusters else 0} content clusters",
+        }
+        modules.append("semantic")
+    except ImportError:
+        advanced["semantic"] = {"error": "Module not installed"}
+    except Exception as e:
+        advanced["semantic"] = {"error": str(e)}
+
+    # Knowledge graph summary
+    try:
+        from ...knowledge import KnowledgeGraph
+
+        kg = KnowledgeGraph(project)
+        kg.build()
+        stats = kg.get_statistics()
+        orphans = kg.find_orphan_concepts()
+
+        advanced["knowledge"] = {
+            "total_concepts": stats.get("total_concepts", 0),
+            "total_relationships": stats.get("total_relationships", 0),
+            "orphan_concepts": len(orphans),
+            "coverage_score": stats.get("coverage_score", 0),
+            "summary": f"{stats.get('total_concepts', 0)} concepts, {len(orphans)} orphans",
+        }
+        modules.append("knowledge")
+    except ImportError:
+        advanced["knowledge"] = {"error": "Module not installed"}
+    except Exception as e:
+        advanced["knowledge"] = {"error": str(e)}
+
+    # Norwegian readability summary
+    try:
+        from ...readability.norwegian import NorwegianReadabilityAnalyzer
+
+        analyzer = NorwegianReadabilityAnalyzer(project)
+        results = analyzer.analyze_all()
+
+        if results:
+            avg_lix = sum(r.lix for r in results) / len(results)
+            difficult = len([r for r in results if r.difficulty_level == "very_difficult"])
+            easy = len([r for r in results if r.difficulty_level in ["easy", "very_easy"]])
+
+            advanced["readability"] = {
+                "norwegian_documents": len(results),
+                "average_lix": round(avg_lix, 1),
+                "very_difficult_count": difficult,
+                "easy_count": easy,
+                "summary": f"Avg LIX: {avg_lix:.1f}, {difficult} difficult docs",
+            }
+            modules.append("norwegian_readability")
+    except ImportError:
+        pass
+    except Exception:
+        pass
+
+    # Predictive freshness summary
+    try:
+        from ...freshness.predictive import PredictiveFreshnessModel
+
+        model = PredictiveFreshnessModel(project)
+        predictions = model.predict_staleness()
+
+        if predictions:
+            high_risk = [p for p in predictions if p.risk_score > 0.7]
+            medium_risk = [p for p in predictions if 0.4 <= p.risk_score <= 0.7]
+
+            advanced["freshness"] = {
+                "total_analyzed": len(predictions),
+                "high_risk_count": len(high_risk),
+                "medium_risk_count": len(medium_risk),
+                "average_risk": round(sum(p.risk_score for p in predictions) / len(predictions), 2),
+                "summary": f"{len(high_risk)} high-risk, {len(medium_risk)} medium-risk documents",
+            }
+            modules.append("predictive_freshness")
+    except ImportError:
+        advanced["freshness"] = {"error": "Module not installed"}
+    except Exception as e:
+        advanced["freshness"] = {"error": str(e)}
+
+    # Code-doc sync summary
+    try:
+        from ...codesync import EnhancedCodeSyncChecker
+
+        checker = EnhancedCodeSyncChecker(project)
+        issues = checker.get_all_issues()
+
+        critical = len([i for i in issues if i.severity == "critical"])
+        warnings = len([i for i in issues if i.severity == "warning"])
+
+        advanced["codesync"] = {
+            "total_issues": len(issues),
+            "critical_issues": critical,
+            "warning_issues": warnings,
+            "summary": f"{critical} critical, {warnings} warning sync issues",
+        }
+        modules.append("codesync")
+    except ImportError:
+        advanced["codesync"] = {"error": "Module not installed"}
+    except Exception as e:
+        advanced["codesync"] = {"error": str(e)}
+
+    # Advanced analysis (audience, style, engagement)
+    try:
+        from ...advanced import AudienceAnalyzer, StyleAnalyzer
+
+        audience_analyzer = AudienceAnalyzer(project)
+        drift = audience_analyzer.detect_audience_drift()
+
+        style_analyzer = StyleAnalyzer(project)
+        style_issues = style_analyzer.check_consistency()
+
+        advanced["advanced"] = {
+            "audience_drift_severity": drift.severity if drift else "none",
+            "style_inconsistencies": len(style_issues) if style_issues else 0,
+            "summary": f"Audience drift: {drift.severity if drift else 'none'}, {len(style_issues) if style_issues else 0} style issues",
+        }
+        modules.append("advanced")
+    except ImportError:
+        advanced["advanced"] = {"error": "Module not installed"}
+    except Exception as e:
+        advanced["advanced"] = {"error": str(e)}
+
+    advanced["modules_available"] = modules
+
+    return advanced

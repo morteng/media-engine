@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "media-engine": {
+      "type": "stdio",
+      "command": "/Library/Frameworks/Python.framework/Versions/3.11/bin/media-engine-mcp",
+      "args": [
+        "-p",
+        "/Users/Morten/media-engine/demo"
+      ],
+      "env": {}
+    }
+  }
+}

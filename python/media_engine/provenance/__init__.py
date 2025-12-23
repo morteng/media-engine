@@ -286,6 +286,7 @@ class ProvenanceTracker:
         """Log provenance action to audit log."""
         try:
             from ..audit import log_action
+
             log_action(self.project, action, details=details, user=user)
         except Exception:
             pass  # Audit logging is optional
@@ -341,7 +342,9 @@ class ProvenanceTracker:
         result = prov.verify_claim(claim_id, verifier, expiry_days)
         self._save()
         if result:
-            self._log_action("claim_verified", f"Claim {claim_id} verified in {document_path}", user=verifier)
+            self._log_action(
+                "claim_verified", f"Claim {claim_id} verified in {document_path}", user=verifier
+            )
         return result
 
     def get_all_unverified(self) -> list[tuple[Path, Claim]]:
@@ -396,7 +399,9 @@ class ProvenanceTracker:
         prov = self.get(document_path)
         prov.request_approval(requester, comments)
         self._save()
-        self._log_action("approval_requested", f"Approval requested for {document_path}", user=requester)
+        self._log_action(
+            "approval_requested", f"Approval requested for {document_path}", user=requester
+        )
 
     def approve_document(
         self,
@@ -416,14 +421,18 @@ class ProvenanceTracker:
         prov = self.get(document_path)
         prov.reject(reviewer, comments)
         self._save()
-        self._log_action("approval_rejected", f"Changes requested for {document_path}: {comments}", user=reviewer)
+        self._log_action(
+            "approval_rejected", f"Changes requested for {document_path}: {comments}", user=reviewer
+        )
 
     def publish_document(self, document_path: Path, publisher: str, version: str):
         """Mark a document as published."""
         prov = self.get(document_path)
         prov.publish(publisher, version)
         self._save()
-        self._log_action("document_published", f"Document {document_path} published as {version}", user=publisher)
+        self._log_action(
+            "document_published", f"Document {document_path} published as {version}", user=publisher
+        )
 
     def get_documents_by_status(self, status: ApprovalStatus) -> list[Path]:
         """Get all documents with a specific approval status."""

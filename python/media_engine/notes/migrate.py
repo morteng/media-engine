@@ -4,7 +4,6 @@ Migrate existing scene notes to the general notes system.
 
 import json
 from datetime import datetime
-from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List
 
 from .types import NoteType
@@ -51,10 +50,9 @@ def migrate_scene_notes(project: "Project") -> Dict[str, Any]:
                     continue
 
                 # Parse created date
-                created = None
                 if note_data.get("created"):
                     try:
-                        created = datetime.fromisoformat(note_data["created"])
+                        datetime.fromisoformat(note_data["created"])
                     except (ValueError, TypeError):
                         pass
 

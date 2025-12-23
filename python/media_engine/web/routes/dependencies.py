@@ -36,13 +36,15 @@ def register_dependencies_routes(
             # Build dependency data
             items = []
             for path, item in registry.items.items():
-                items.append({
-                    "path": str(item.path),
-                    "type": item.content_type.value,
-                    "status": item.freshness_status.value,
-                    "depends_on": [str(d) for d in item.depends_on],
-                    "dependents": [],  # Will be populated below
-                })
+                items.append(
+                    {
+                        "path": str(item.path),
+                        "type": item.content_type.value,
+                        "status": item.freshness_status.value,
+                        "depends_on": [str(d) for d in item.depends_on],
+                        "dependents": [],  # Will be populated below
+                    }
+                )
 
             # Build reverse dependency map (what depends on this item)
             path_to_idx = {item["path"]: i for i, item in enumerate(items)}
@@ -128,11 +130,13 @@ def register_dependencies_routes(
                 for f in base_dir.rglob(ext):
                     if ".git" in str(f) or "node_modules" in str(f):
                         continue
-                    files.append({
-                        "path": str(f.relative_to(project.root)),
-                        "name": f.name,
-                        "category": category,
-                    })
+                    files.append(
+                        {
+                            "path": str(f.relative_to(project.root)),
+                            "name": f.name,
+                            "category": category,
+                        }
+                    )
 
         # Sort by category and name
         files.sort(key=lambda x: (x["category"], x["name"]))
@@ -155,21 +159,23 @@ def build_dependency_tree(items):
 
     tree = []
     for type_name, type_items in sorted(by_type.items()):
-        tree.append({
-            "type": "group",
-            "name": type_name.replace("_", " ").title(),
-            "count": len(type_items),
-            "children": [
-                {
-                    "type": "item",
-                    "path": i["path"],
-                    "item_type": i["type"],
-                    "status": i["status"],
-                    "deps_count": len(i["depends_on"]),
-                    "dependents_count": len(i["dependents"]),
-                }
-                for i in sorted(type_items, key=lambda x: x["path"])
-            ],
-        })
+        tree.append(
+            {
+                "type": "group",
+                "name": type_name.replace("_", " ").title(),
+                "count": len(type_items),
+                "children": [
+                    {
+                        "type": "item",
+                        "path": i["path"],
+                        "item_type": i["type"],
+                        "status": i["status"],
+                        "deps_count": len(i["depends_on"]),
+                        "dependents_count": len(i["dependents"]),
+                    }
+                    for i in sorted(type_items, key=lambda x: x["path"])
+                ],
+            }
+        )
 
     return tree

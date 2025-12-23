@@ -217,7 +217,7 @@ class TestSceneNotesAPI:
         # Save a note for the "hook" scene
         response = client.post(
             f"/api/scene-notes/{sample_script_path}",
-            params={
+            json={
                 "scene_id": "hook",
                 "note": "Consider adding more visual emphasis on the problem statement.",
             },
@@ -234,7 +234,7 @@ class TestSceneNotesAPI:
         note_text = "Test note for intro scene"
         client.post(
             f"/api/scene-notes/{sample_script_path}",
-            params={"scene_id": "intro", "note": note_text},
+            json={"scene_id": "intro", "note": note_text},
         )
 
         # Then retrieve it
@@ -260,7 +260,7 @@ class TestSceneNotesAPI:
         for scene_id, note_text in scenes:
             response = client.post(
                 f"/api/scene-notes/{sample_script_path}",
-                params={"scene_id": scene_id, "note": note_text},
+                json={"scene_id": scene_id, "note": note_text},
             )
             assert response.status_code == 200
 
@@ -285,13 +285,13 @@ class TestSceneNotesAPI:
         # Save original note
         client.post(
             f"/api/scene-notes/{sample_script_path}",
-            params={"scene_id": scene_id, "note": original_note},
+            json={"scene_id": scene_id, "note": original_note},
         )
 
         # Update the note
         response = client.post(
             f"/api/scene-notes/{sample_script_path}",
-            params={"scene_id": scene_id, "note": updated_note},
+            json={"scene_id": scene_id, "note": updated_note},
         )
         assert response.status_code == 200
 
@@ -307,7 +307,7 @@ class TestSceneNotesAPI:
         # First, save a note
         client.post(
             f"/api/scene-notes/{sample_script_path}",
-            params={"scene_id": scene_id, "note": "This will be deleted"},
+            json={"scene_id": scene_id, "note": "This will be deleted"},
         )
 
         # Verify it was saved
@@ -336,13 +336,13 @@ class TestSceneNotesAPI:
         # Save a note
         client.post(
             f"/api/scene-notes/{sample_script_path}",
-            params={"scene_id": scene_id, "note": "To be deleted"},
+            json={"scene_id": scene_id, "note": "To be deleted"},
         )
 
         # Save empty note (should delete)
         response = client.post(
             f"/api/scene-notes/{sample_script_path}",
-            params={"scene_id": scene_id, "note": "   "},  # Whitespace only
+            json={"scene_id": scene_id, "note": "   "},  # Whitespace only
         )
         assert response.status_code == 200
 
@@ -361,7 +361,7 @@ class TestSceneNotesAPI:
         for scene_id, note_text in notes:
             client.post(
                 f"/api/scene-notes/{sample_script_path}",
-                params={"scene_id": scene_id, "note": note_text},
+                json={"scene_id": scene_id, "note": note_text},
             )
 
         # Get export
@@ -393,25 +393,32 @@ class TestSceneNotesAPI:
     def test_scene_notes_export_includes_scene_metadata(self, client, sample_script_path):
         """Test that scene notes export includes scene metadata from YAML."""
         # Save a note
-        client.post(
+        response = client.post(
             f"/api/scene-notes/{sample_script_path}",
-            params={"scene_id": "hook", "note": "Test metadata"},
+            json={"scene_id": "hook", "note": "Test metadata"},
         )
+        assert response.status_code == 200
 
         # Get export
         response = client.get("/api/scene-notes-export")
+        assert response.status_code == 200
         data = response.json()
 
-        # Find our note
+        # Find our script in the export
+        our_script = None
         for script in data["scripts"]:
             if sample_script_path in script["script_path"]:
-                notes = script["notes"]
-                hook_note = next((n for n in notes if n["scene_id"] == "hook"), None)
-                assert hook_note is not None
-                # Should include scene metadata if available
-                assert "scene_id" in hook_note
-                assert "text" in hook_note
-                assert "created" in hook_note
+                our_script = script
+                break
+
+        assert our_script is not None, f"Script {sample_script_path} not found in export"
+        notes = our_script["notes"]
+        hook_note = next((n for n in notes if n["scene_id"] == "hook"), None)
+        assert hook_note is not None, "hook note not found in export"
+        # Should include scene metadata if available
+        assert "scene_id" in hook_note
+        assert "text" in hook_note
+        assert "created" in hook_note
 
     def test_scene_notes_with_special_characters_in_path(self, client):
         """Test scene notes with special characters in script path."""
@@ -424,7 +431,7 @@ class TestSceneNotesAPI:
         # Save a note
         response = client.post(
             f"/api/scene-notes/{script_path}",
-            params={"scene_id": "test", "note": "Test note"},
+            json={"scene_id": "test", "note": "Test note"},
         )
         assert response.status_code == 200
 
@@ -604,10 +611,7 @@ class TestProjectSwitcherAPI:
 
     def test_open_project_nonexistent(self, client):
         """Test POST /api/open-project with nonexistent path."""
-        response = client.post(
-            "/api/open-project",
-            params={"path": "/nonexistent/path/to/project"}
-        )
+        response = client.post("/api/open-project", params={"path": "/nonexistent/path/to/project"})
         assert response.status_code == 404
         assert "not exist" in response.json()["detail"].lower()
 
@@ -617,19 +621,13 @@ class TestProjectSwitcherAPI:
         empty_dir = temp_dir / "empty_project"
         empty_dir.mkdir()
 
-        response = client.post(
-            "/api/open-project",
-            params={"path": str(empty_dir)}
-        )
+        response = client.post("/api/open-project", params={"path": str(empty_dir)})
         assert response.status_code == 400
         assert "project.yaml" in response.json()["detail"].lower()
 
     def test_open_project_valid(self, client, demo_project_web):
         """Test POST /api/open-project with valid project path."""
-        response = client.post(
-            "/api/open-project",
-            params={"path": str(demo_project_web)}
-        )
+        response = client.post("/api/open-project", params={"path": str(demo_project_web)})
         assert response.status_code == 200
 
         data = response.json()
@@ -646,8 +644,7 @@ class TestProjectSwitcherAPI:
 
         # Try to remove a nonexistent project
         response = client.delete(
-            "/api/recent-projects",
-            params={"path": "/some/fake/path/that/doesnt/exist"}
+            "/api/recent-projects", params={"path": "/some/fake/path/that/doesnt/exist"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -656,10 +653,7 @@ class TestProjectSwitcherAPI:
     def test_open_and_verify_recent(self, client, demo_project_web):
         """Test that opening a project works (temp dirs not added to recent)."""
         # Open the project first
-        response = client.post(
-            "/api/open-project",
-            params={"path": str(demo_project_web)}
-        )
+        response = client.post("/api/open-project", params={"path": str(demo_project_web)})
         assert response.status_code == 200
 
         # Now check recent projects

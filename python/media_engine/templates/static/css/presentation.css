@@ -1,0 +1,554 @@
+/* ===========================================
+   HTML Presentation Template - Base Styles
+   =========================================== */
+
+/* Base Styles */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+    font-family: var(--font-body);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+/* ===========================================
+   Presentation Container
+   =========================================== */
+.presentation {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+}
+
+/* ===========================================
+   Slides
+   =========================================== */
+.slides {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 80px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(100px);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--bg-primary);
+}
+
+.slide.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+    z-index: 10;
+}
+
+.slide.prev {
+    transform: translateX(-100px);
+}
+
+/* ===========================================
+   Slide Content
+   =========================================== */
+.slide-content {
+    max-width: 1200px;
+    width: 100%;
+    text-align: left;
+}
+
+.slide-title {
+    font-family: var(--font-heading);
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    margin-bottom: 0.5em;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+}
+
+.slide-subtitle {
+    font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+    color: var(--text-muted);
+    margin-bottom: 1.5em;
+    font-weight: 400;
+}
+
+.accent-bar {
+    width: 80px;
+    height: 4px;
+    background: var(--accent-color);
+    margin-bottom: 2em;
+    border-radius: 2px;
+}
+
+/* ===========================================
+   Title Slide
+   =========================================== */
+.slide--title {
+    text-align: center;
+}
+
+.slide--title .slide-content {
+    text-align: center;
+}
+
+.slide--title .slide-title {
+    font-size: clamp(3rem, 8vw, 5rem);
+    margin-bottom: 0.3em;
+}
+
+.slide--title .slide-subtitle {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.slide--title .accent-bar {
+    width: 120px;
+    margin: 1.5em auto;
+}
+
+.slide--title .logo {
+    max-height: 100px;
+    margin-bottom: 2em;
+}
+
+/* ===========================================
+   Content Slide (Bullets)
+   =========================================== */
+.bullets {
+    list-style: none;
+    font-size: clamp(1.1rem, 2vw, 1.5rem);
+    line-height: 1.6;
+}
+
+.bullets li {
+    margin-bottom: 0.8em;
+    padding-left: 1.5em;
+    position: relative;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+.slide.active .bullets li {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.bullets li:nth-child(1) { animation-delay: 0.1s; }
+.bullets li:nth-child(2) { animation-delay: 0.2s; }
+.bullets li:nth-child(3) { animation-delay: 0.3s; }
+.bullets li:nth-child(4) { animation-delay: 0.4s; }
+.bullets li:nth-child(5) { animation-delay: 0.5s; }
+.bullets li:nth-child(6) { animation-delay: 0.6s; }
+.bullets li:nth-child(7) { animation-delay: 0.7s; }
+.bullets li:nth-child(8) { animation-delay: 0.8s; }
+
+.bullets li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.5em;
+    width: 8px;
+    height: 8px;
+    background: var(--accent-color);
+    border-radius: 50%;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===========================================
+   Section Slide
+   =========================================== */
+.slide--section {
+    background: var(--accent-color);
+    text-align: center;
+}
+
+.slide--section .slide-content {
+    text-align: center;
+}
+
+.slide--section .slide-title {
+    color: white;
+    font-size: clamp(2.5rem, 6vw, 4rem);
+}
+
+.slide--section .slide-subtitle {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* ===========================================
+   Quote Slide
+   =========================================== */
+.slide--quote {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+    text-align: center;
+}
+
+.slide--quote .slide-content {
+    text-align: center;
+    max-width: 900px;
+}
+
+.quote-text {
+    font-family: var(--font-heading);
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-style: italic;
+    line-height: 1.4;
+    margin-bottom: 1.5em;
+    position: relative;
+}
+
+.quote-text::before {
+    content: '"';
+    font-size: 4em;
+    color: var(--accent-color);
+    position: absolute;
+    top: -0.3em;
+    left: -0.3em;
+    opacity: 0.3;
+    font-family: Georgia, serif;
+}
+
+.quote-author {
+    font-size: 1.25rem;
+    color: var(--accent-color);
+    font-weight: 500;
+}
+
+/* ===========================================
+   Two Column Slide
+   =========================================== */
+.two-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    width: 100%;
+}
+
+.column-title {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    color: var(--accent-color);
+    margin-bottom: 1em;
+    font-weight: 600;
+}
+
+.column .bullets {
+    font-size: 1.1rem;
+}
+
+/* ===========================================
+   Image Slide
+   =========================================== */
+.slide--image .slide-image {
+    max-width: 100%;
+    max-height: 60vh;
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    margin: 1.5em 0;
+}
+
+.image-caption {
+    font-size: 1rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+/* ===========================================
+   Navigation Controls
+   =========================================== */
+.nav-controls {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.presentation:hover .nav-controls {
+    opacity: 1;
+}
+
+.nav-btn {
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    transition: all 0.2s ease;
+    border: 1px solid var(--border-color);
+}
+
+.nav-btn:hover {
+    background: var(--accent-color);
+    color: white;
+    transform: scale(1.1);
+}
+
+.nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.nav-btn:disabled:hover {
+    transform: none;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+/* ===========================================
+   Progress Bar
+   =========================================== */
+.progress-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    height: 4px;
+    background: var(--accent-color);
+    transition: width 0.3s ease;
+    z-index: 100;
+}
+
+/* ===========================================
+   Slide Counter
+   =========================================== */
+.slide-counter {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    z-index: 100;
+}
+
+/* ===========================================
+   Top Bar
+   =========================================== */
+.top-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 20px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.presentation:hover .top-bar {
+    opacity: 1;
+}
+
+.top-bar .logo {
+    height: 36px;
+}
+
+.logo-dark { display: block; }
+.logo-light { display: none; }
+[data-theme="light"] .logo-dark { display: none; }
+[data-theme="light"] .logo-light { display: block; }
+
+.toolbar {
+    display: flex;
+    gap: 8px;
+}
+
+.toolbar-btn {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-secondary);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.toolbar-btn:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+/* ===========================================
+   Speaker Notes (Hidden by default)
+   =========================================== */
+.speaker-notes {
+    display: none;
+    position: fixed;
+    bottom: 80px;
+    left: 30px;
+    right: 30px;
+    max-height: 200px;
+    overflow-y: auto;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--text-muted);
+    z-index: 100;
+}
+
+.speaker-notes.visible {
+    display: block;
+}
+
+.speaker-notes h4 {
+    color: var(--text-primary);
+    margin-bottom: 0.5em;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ===========================================
+   Keyboard Shortcuts Help
+   =========================================== */
+.help-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 200;
+    justify-content: center;
+    align-items: center;
+}
+
+.help-overlay.visible {
+    display: flex;
+}
+
+.help-content {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 40px;
+    max-width: 500px;
+}
+
+.help-content h3 {
+    font-family: var(--font-heading);
+    margin-bottom: 1.5em;
+    font-size: 1.5rem;
+}
+
+.shortcut {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5em 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.shortcut:last-child {
+    border-bottom: none;
+}
+
+.shortcut kbd {
+    background: var(--bg-tertiary);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+}
+
+/* ===========================================
+   Fullscreen Mode
+   =========================================== */
+.presentation:fullscreen {
+    background: var(--bg-primary);
+}
+
+.presentation:fullscreen .top-bar,
+.presentation:fullscreen .nav-controls {
+    opacity: 0;
+}
+
+.presentation:fullscreen:hover .top-bar,
+.presentation:fullscreen:hover .nav-controls {
+    opacity: 1;
+}
+
+/* ===========================================
+   Print Styles
+   =========================================== */
+@media print {
+    .slide {
+        position: relative;
+        page-break-after: always;
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .top-bar, .nav-controls, .progress-bar,
+    .slide-counter, .speaker-notes, .help-overlay {
+        display: none !important;
+    }
+}
+
+/* ===========================================
+   Responsive
+   =========================================== */
+@media (max-width: 768px) {
+    .slide {
+        padding: 40px 30px;
+    }
+
+    .two-columns {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+
+    .nav-controls {
+        bottom: 20px;
+    }
+
+    .toolbar {
+        display: none;
+    }
+}

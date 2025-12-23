@@ -278,4 +278,80 @@ export const deleteAITask = (taskId: string) =>
 export const getAIQueueStats = () =>
   api.get<AITasksResponse['stats']>('/ai/queue/stats').then(r => r.data);
 
+// ============== ADVANCED ANALYSIS API ==============
+
+import type {
+  AdvancedInsightsResponse,
+  QualitySummaryResponse,
+  SemanticAnalysisResponse,
+  KnowledgeGraphResponse,
+  NorwegianReadabilityResponse,
+  PredictiveFreshnessResponse,
+  EnhancedCodeSyncResponse,
+  AdvancedAnalysisResponse,
+} from './types';
+
+// Comprehensive advanced insights
+export const getAdvancedInsights = () =>
+  api.get<AdvancedInsightsResponse>('/insights/advanced').then(r => r.data);
+
+// Quality summary for dashboard
+export const getQualitySummary = () =>
+  api.get<QualitySummaryResponse>('/insights/quality-summary').then(r => r.data);
+
+// Semantic analysis
+export const getSemanticAnalysis = (options?: {
+  duplicates?: boolean;
+  drift?: boolean;
+  clusters?: boolean;
+  contradictions?: boolean;
+  threshold?: number;
+}) =>
+  api.get<SemanticAnalysisResponse>('/insights/semantic', { params: options }).then(r => r.data);
+
+// Knowledge graph
+export const getKnowledgeGraph = (options?: {
+  build?: boolean;
+  orphans?: boolean;
+  prerequisites?: boolean;
+  metrics?: boolean;
+  path_from?: string;
+}) =>
+  api.get<KnowledgeGraphResponse>('/insights/knowledge-graph', { params: options }).then(r => r.data);
+
+// Norwegian readability
+export const getNorwegianReadability = (options?: {
+  document?: string;
+  target?: string;
+}) =>
+  api.get<NorwegianReadabilityResponse>('/insights/norwegian-readability', { params: options }).then(r => r.data);
+
+// Predictive freshness
+export const getPredictiveFreshness = (options?: {
+  train?: boolean;
+  days?: number;
+}) =>
+  api.get<PredictiveFreshnessResponse>('/insights/predictive-freshness', { params: options }).then(r => r.data);
+
+// Enhanced codesync
+export const getEnhancedCodeSync = (options?: {
+  syntax?: boolean;
+  deprecated?: boolean;
+  api_refs?: boolean;
+  document?: string;
+}) =>
+  api.get<EnhancedCodeSyncResponse>('/insights/enhanced-codesync', { params: options }).then(r => r.data);
+
+// Advanced analysis
+export const getAdvancedAnalysis = (options?: {
+  audience_drift?: boolean;
+  questions?: boolean;
+  crossrefs?: boolean;
+  structure?: boolean;
+  style?: boolean;
+  full?: boolean;
+  document?: string;
+}) =>
+  api.get<AdvancedAnalysisResponse>('/insights/advanced-analysis', { params: options }).then(r => r.data);
+
 export default api;

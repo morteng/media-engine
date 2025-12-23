@@ -188,9 +188,7 @@ class TestGenerateVttContent:
 
     def test_generate_single_entry(self):
         """Test generating VTT with single entry."""
-        entries = [
-            CaptionEntry(start_time=0.0, end_time=3.0, text="Hello world")
-        ]
+        entries = [CaptionEntry(start_time=0.0, end_time=3.0, text="Hello world")]
         result = generate_vtt_content(entries)
 
         assert "WEBVTT" in result
@@ -238,9 +236,7 @@ class TestGenerateVttContent:
 
     def test_generate_default_style_no_tags(self):
         """Test that default style doesn't add tags."""
-        entries = [
-            CaptionEntry(start_time=0.0, end_time=1.0, text="Test", style="default")
-        ]
+        entries = [CaptionEntry(start_time=0.0, end_time=1.0, text="Test", style="default")]
         result = generate_vtt_content(entries)
 
         assert "<c.default>" not in result

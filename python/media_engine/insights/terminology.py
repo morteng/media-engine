@@ -52,8 +52,7 @@ class TermInconsistency:
         return {
             "term_group": self.term_group,
             "occurrences": {
-                term: [loc.to_dict() for loc in locs]
-                for term, locs in self.occurrences.items()
+                term: [loc.to_dict() for loc in locs] for term, locs in self.occurrences.items()
             },
             "recommended": self.recommended,
             "severity": self.severity,
@@ -397,9 +396,7 @@ class TerminologyChecker:
 
             # Report if used in documents where not defined
             if usage[abbrev]:
-                docs_with_usage = set(
-                    str(loc.document) for loc in usage[abbrev]
-                )
+                docs_with_usage = set(str(loc.document) for loc in usage[abbrev])
                 undefined_docs = docs_with_usage - defined_in
 
                 if undefined_docs and len(undefined_docs) > len(docs_with_usage) * 0.5:

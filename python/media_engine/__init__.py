@@ -16,6 +16,16 @@ Modules:
     packs: Curated deliverable packages (investor, pilot)
     core: Configuration and theming utilities
     settings: Centralized configuration and defaults
+
+Advanced Analysis Modules:
+    semantic: Semantic similarity, duplicate detection, terminology drift
+    llm_quality: LLM-powered quality evaluation and multi-agent review
+    knowledge: Knowledge graph with concept extraction and prerequisite validation
+    codesync: Enhanced code-documentation synchronization checking
+    engagement: User engagement metrics integration
+    advanced: Audience drift, question coverage, style consistency
+    freshness.predictive: Predictive staleness detection
+    readability.norwegian: Norwegian LIX readability analysis
 """
 
 __version__ = "0.1.0"
@@ -44,6 +54,52 @@ from .settings import (
 from .status import get_project_dashboard, print_dashboard
 from .templates import DocumentTemplate, render_document
 from .validation import ValidationReport, validate_project
+
+# Advanced analysis modules (lazy imports to avoid heavy dependencies)
+# These are imported on-demand when used
+try:
+    from .semantic import SemanticAnalyzer, SemanticMatch, TerminologyDrift
+except ImportError:
+    SemanticAnalyzer = None  # type: ignore
+    SemanticMatch = None  # type: ignore
+    TerminologyDrift = None  # type: ignore
+
+try:
+    from .llm_quality import LLMQualityEvaluator, ReviewPerspective
+except ImportError:
+    LLMQualityEvaluator = None  # type: ignore
+    ReviewPerspective = None  # type: ignore
+
+try:
+    from .knowledge import ConceptExtractor, KnowledgeGraph
+except ImportError:
+    KnowledgeGraph = None  # type: ignore
+    ConceptExtractor = None  # type: ignore
+
+try:
+    from .codesync import EnhancedCodeSyncChecker
+except ImportError:
+    EnhancedCodeSyncChecker = None  # type: ignore
+
+try:
+    from .engagement import EngagementAnalyzer
+except ImportError:
+    EngagementAnalyzer = None  # type: ignore
+
+try:
+    from .advanced import AdvancedAnalyzer
+except ImportError:
+    AdvancedAnalyzer = None  # type: ignore
+
+try:
+    from .freshness.predictive import FreshnessPredictor
+except ImportError:
+    FreshnessPredictor = None  # type: ignore
+
+try:
+    from .readability.norwegian import NorwegianReadabilityChecker
+except ImportError:
+    NorwegianReadabilityChecker = None  # type: ignore
 
 __all__ = [
     "__version__",
@@ -93,4 +149,17 @@ __all__ = [
     "generate_investor_pack",
     "generate_pilot_pack",
     "PackResult",
+    # Advanced Analysis (optional imports)
+    "SemanticAnalyzer",
+    "SemanticMatch",
+    "TerminologyDrift",
+    "LLMQualityEvaluator",
+    "ReviewPerspective",
+    "KnowledgeGraph",
+    "ConceptExtractor",
+    "EnhancedCodeSyncChecker",
+    "EngagementAnalyzer",
+    "AdvancedAnalyzer",
+    "FreshnessPredictor",
+    "NorwegianReadabilityChecker",
 ]

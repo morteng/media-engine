@@ -244,10 +244,7 @@ class ParityAnalyzer:
         missing_keys = report.missing.get(lang, [])
 
         # Convert to full paths
-        return [
-            self.project.content_dir / self.primary_language / key
-            for key in missing_keys
-        ]
+        return [self.project.content_dir / self.primary_language / key for key in missing_keys]
 
     def estimate_effort(self, lang: str) -> TranslationEffort:
         """

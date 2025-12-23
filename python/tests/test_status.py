@@ -3,10 +3,6 @@ Tests for media_engine.status module.
 """
 
 from datetime import datetime
-from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
 
 from media_engine.core.config import Config
 from media_engine.core.project import LanguageConfig, Project

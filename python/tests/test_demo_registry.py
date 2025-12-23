@@ -2,10 +2,7 @@
 Tests for media_engine.video.demo_registry module.
 """
 
-from pathlib import Path
-
 import pytest
-
 from media_engine.core.config import Config
 from media_engine.core.project import LanguageConfig, Project
 from media_engine.core.theme import Theme

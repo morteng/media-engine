@@ -51,6 +51,7 @@ def register_routes(
 
     from .ai import register_ai_routes
     from .assets import register_assets_routes
+    from .brand import register_brand_routes
     from .build import register_build_routes
     from .core import register_core_routes, register_spa_catch_all
     from .dependencies import register_dependencies_routes
@@ -73,6 +74,7 @@ def register_routes(
     # Register all route modules
     register_core_routes(router, get_project, manager, static_dir, set_project)
     register_ai_routes(router, get_project, manager)
+    register_brand_routes(router, get_project, manager)
     register_translation_routes(router, get_project, manager)
     register_quality_routes(router, get_project, manager)
     register_freshness_routes(router, get_project, manager)

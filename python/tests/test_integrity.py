@@ -2,13 +2,10 @@
 Tests for the integrity module (asset checksums and terminology).
 """
 
-import hashlib
 import json
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from media_engine.integrity import (
     AssetChecksum,
     AssetIntegrityChecker,

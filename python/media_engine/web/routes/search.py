@@ -81,7 +81,7 @@ def register_search_routes(
                                 title = line[2:].strip()
                                 break
                             if line.startswith("title:"):
-                                title = line[6:].strip().strip('"\'')
+                                title = line[6:].strip().strip("\"'")
                                 break
 
                     # Generate snippet with context
@@ -99,20 +99,20 @@ def register_search_routes(
                             snippet = snippet + "..."
 
                         # Highlight matches in snippet
-                        snippet = query_pattern.sub(
-                            lambda m: f"<mark>{m.group()}</mark>",
-                            snippet
-                        )
+                        snippet = query_pattern.sub(lambda m: f"<mark>{m.group()}</mark>", snippet)
 
-                    results.append({
-                        "path": str(file_path.relative_to(project.root)),
-                        "title": title,
-                        "type": doc_type,
-                        "language": search_lang,
-                        "snippet": snippet,
-                        "match_count": len(matches),
-                        "score": len(matches) + (10 if query_lower in file_path.name.lower() else 0),
-                    })
+                    results.append(
+                        {
+                            "path": str(file_path.relative_to(project.root)),
+                            "title": title,
+                            "type": doc_type,
+                            "language": search_lang,
+                            "snippet": snippet,
+                            "match_count": len(matches),
+                            "score": len(matches)
+                            + (10 if query_lower in file_path.name.lower() else 0),
+                        }
+                    )
 
         # Sort by relevance score
         results.sort(key=lambda x: x["score"], reverse=True)

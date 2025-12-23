@@ -43,9 +43,11 @@ Run all quality gates in sequence and generate a unified GO/NO-GO report for rel
 - [ ] Translations up to date
 
 ### Gate 2: Tests
-- [ ] All tests passing
-- [ ] Coverage >80%
-- [ ] No linting errors (ruff)
+- [ ] Python tests passing (pytest)
+- [ ] Python coverage >80%
+- [ ] Dashboard unit tests passing (vitest)
+- [ ] E2E tests passing (playwright)
+- [ ] No linting errors (ruff, eslint)
 
 ### Gate 3: Security
 - [ ] No secrets detected
@@ -68,11 +70,20 @@ echo "=== LINKS ==="
 media-engine links --internal-only
 
 # Step 2: Tests
-echo "=== LINTING ==="
+echo "=== PYTHON LINTING ==="
 uv run ruff check python/
 
-echo "=== TESTS ==="
+echo "=== PYTHON TESTS ==="
 uv run pytest --cov=media_engine --cov-fail-under=80
+
+echo "=== DASHBOARD LINTING ==="
+cd dashboard && npm run lint
+
+echo "=== DASHBOARD UNIT TESTS ==="
+npm run test:run
+
+echo "=== E2E TESTS ==="
+npm run test:e2e
 
 # Step 3: Security
 echo "=== SECURITY ==="
@@ -93,7 +104,9 @@ media-engine security
 |------|--------|---------|
 | Content Quality | PASS/FAIL | [summary] |
 | Translations | PASS/WARN | X outdated |
-| Tests | PASS/FAIL | Coverage: XX% |
+| Python Tests | PASS/FAIL | Coverage: XX% |
+| Dashboard Tests | PASS/FAIL | XX passed |
+| E2E Tests | PASS/FAIL | XX/44 passed |
 | Linting | PASS/FAIL | X errors |
 | Security | PASS/FAIL | X issues |
 
