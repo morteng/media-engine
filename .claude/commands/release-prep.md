@@ -1,6 +1,8 @@
 ---
 name: release-prep
 description: Full release preparation workflow with quality gates and version management
+version: 2.0.0
+last_updated: 2025-12-23
 ---
 
 # Release Preparation - Complete Pre-Release Workflow
@@ -58,6 +60,8 @@ Comprehensive release preparation that runs all quality gates, validates milesto
 
 ## Quality Gates (/quality-check)
 - [ ] content-guardian: PASS
+  - [ ] All translations using hash-based tracking
+  - [ ] No outdated translations (content or version)
 - [ ] test-guardian: PASS
   - [ ] Python tests (coverage >80%)
   - [ ] Dashboard unit tests

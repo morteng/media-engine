@@ -1,12 +1,12 @@
 ---
 name: content-guardian
-description: Content quality analysis for Media Engine projects. Runs readability checks, gap analysis, quality validation, and translation status. Use for content review, pre-release validation, or when content quality concerns arise.
+description: Content quality analysis for Media Engine projects. Runs readability checks, gap analysis, quality validation, and translation status with hash-based change detection. Use for content review, pre-release validation, or when content quality concerns arise.
 model: sonnet
 tier: 1
 category: content-quality
-version: 1.0.0
-tags: [content, quality, readability, translations, tier1]
-last_updated: 2025-12-16
+version: 2.0.0
+tags: [content, quality, readability, translations, hash-tracking, tier1]
+last_updated: 2025-12-23
 related_agents:
   - test-guardian
   - security-scanner
@@ -92,19 +92,37 @@ media-engine validate                   # Validate against schema
 - Orphan documents (not linked from anywhere)
 - Missing expected topics based on configuration
 
-### 3. Translation Tracking
+### 3. Translation Tracking (Hash-Based)
+
+**Tracking Modes**:
+| Mode | Detection | Requires Manual Action |
+|------|-----------|----------------------|
+| **Hash** (preferred) | Automatic via content hash | No - detects any change |
+| **Version** (fallback) | Semantic version comparison | Yes - must bump version |
 
 **Tracks**:
-- Source document versions
+- Source content hash for automatic change detection
+- Source document versions (fallback)
 - Translation staleness (source updated after translation)
 - Missing translations per language
 - Translation completeness percentage
 
-**Frontmatter Pattern**:
+**Frontmatter Pattern (Hash-Based)**:
 ```yaml
 language: "no"
 source_document: "en/chapters/01_intro.md"
 source_version: "1.0.0"
+source_content_hash: "a1b2c3d4e5f6g7h8"  # Auto-generated
+```
+
+**Enable Hash Tracking**:
+```bash
+# Sync all current translations to enable hash tracking
+media-engine translation sync --enable-hash
+
+# Or via MCP tool
+sync_all_translations(dry_run=True)  # Preview
+sync_all_translations()               # Execute
 ```
 
 ### 4. Quality Validation

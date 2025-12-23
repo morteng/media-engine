@@ -1,6 +1,8 @@
 ---
 name: quality-check
 description: Run comprehensive quality checks across all guardians with unified GO/NO-GO report
+version: 2.0.0
+last_updated: 2025-12-23
 ---
 
 # Quality Check - Full Guardian Orchestration
@@ -14,7 +16,7 @@ Run all quality gates in sequence and generate a unified GO/NO-GO report for rel
 |                    QUALITY GATE PIPELINE                          |
 |                                                                   |
 |   1. content-guardian   (quality, readability, translations)      |
-|            |                                                      |
+|            |            + hash-based change detection             |
 |   2. test-guardian      (coverage >80%, all tests pass)           |
 |            |                                                      |
 |   3. security-scanner   (secrets, PII detection)                  |
@@ -40,7 +42,8 @@ Run all quality gates in sequence and generate a unified GO/NO-GO report for rel
 - [ ] Quality checks passing (media-engine quality)
 - [ ] Readability scores acceptable (Flesch >50)
 - [ ] No broken links
-- [ ] Translations up to date
+- [ ] Translations up to date (hash-based detection)
+- [ ] All translations using hash tracking mode
 
 ### Gate 2: Tests
 - [ ] Python tests passing (pytest)
@@ -63,8 +66,13 @@ Run these checks in order:
 echo "=== CONTENT QUALITY ==="
 cd demo && media-engine quality
 
-echo "=== TRANSLATIONS ==="
+echo "=== TRANSLATION STATUS (Hash-Based) ==="
+media-engine translation status
+# Check tracking_stats in output - all should be hash_tracked
+
+echo "=== OUTDATED TRANSLATIONS ==="
 media-engine translation outdated
+# Shows content_changed: true for automatic detection
 
 echo "=== LINKS ==="
 media-engine links --internal-only
@@ -88,6 +96,21 @@ npm run test:e2e
 # Step 3: Security
 echo "=== SECURITY ==="
 media-engine security
+```
+
+## Translation Tracking Setup
+
+If translations are using version-based tracking (legacy), upgrade to hash-based:
+
+```bash
+# Check current tracking mode
+media-engine translation status --json | jq '.tracking_stats'
+
+# Enable hash-based tracking for all current translations
+# MCP tool: sync_all_translations(dry_run=True) to preview
+# MCP tool: sync_all_translations() to execute
+
+# After sync, any source content change is automatically detected
 ```
 
 ## Output Report Template
