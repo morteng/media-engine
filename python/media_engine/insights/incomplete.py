@@ -333,7 +333,13 @@ class IncompleteTracker:
     def _find_truncated_code(
         self, doc_path: Path, content: str, lines: list[str], doc_status: str
     ) -> list[IncompleteItem]:
-        """Find truncated code blocks with ellipsis."""
+        """Find truncated code blocks with ellipsis.
+
+        Excludes legitimate documentation patterns:
+        - Directory trees with `└── ...` or `├── ...`
+        - CLI output excerpts with `"...text..."` patterns
+        - JSON string values with `...` in excerpts
+        """
         items: list[IncompleteItem] = []
 
         # Pattern for code blocks with truncation indicators
@@ -341,8 +347,26 @@ class IncompleteTracker:
 
         for match in code_block_pattern.finditer(content):
             code_content = match.group(1)
-            # Check for truncation indicators
-            if re.search(r"\.\.\.[^\w\.]|^\s*\.\.\.\s*$", code_content, re.MULTILINE):
+
+            # Skip directory tree structures (common documentation pattern)
+            # These use `├──`, `└──`, `│` characters and often have `...` for "more items"
+            if re.search(r"[├└│]", code_content):
+                continue
+
+            # Skip CLI output examples with excerpts
+            # Pattern: text followed by `...` at end of line (e.g., "Media Engine integrates with...")
+            # Or text with `...` in the middle showing truncated output
+            if re.search(r"\w+\.\.\.$", code_content, re.MULTILINE):
+                continue
+
+            # Skip JSON examples with truncated string values
+            # Pattern: `"...<text>..."` or `"<text>..."`
+            if re.search(r'"\.\.\.[^"]*"', code_content) or re.search(r'"[^"]*\.\.\."', code_content):
+                continue
+
+            # Check for truncation indicators that suggest actual incomplete code
+            # Only flag standalone `...` lines or `...` not part of excerpts
+            if re.search(r"^\s*\.\.\.\s*$", code_content, re.MULTILINE):
                 # Find line number
                 start_pos = match.start()
                 line_num = content[:start_pos].count("\n") + 1
