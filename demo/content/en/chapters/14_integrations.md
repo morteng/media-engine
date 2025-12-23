@@ -1,6 +1,6 @@
 ---
 title: "Integrations"
-version: "1.0.0"
+version: "1.1.0"
 status: "final"
 last_modified: "2025-12-23"
 freshness_days: 60
