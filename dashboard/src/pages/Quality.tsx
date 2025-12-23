@@ -1,12 +1,20 @@
 import { Routes, Route } from 'react-router-dom';
+import { useState, useMemo } from 'react';
 import {
   useInsights,
   useFreshness,
   useAdvancedInsights,
   useAuditLog,
 } from '@/hooks/useApi';
+import { useSettings } from '@/contexts';
 import { SubTabs } from '@/components/ui/SubTabs';
 import { InfoTooltip, METRIC_EXPLANATIONS } from '@/components/ui/InfoTooltip';
+import {
+  GraphCanvas,
+  toReagraphNodesFromKnowledgeGraph,
+  toReagraphEdgesFromKnowledgeGraph,
+  knowledgeGraphLegend,
+} from '@/components/graphs';
 import {
   Shield,
   AlertTriangle,
@@ -31,6 +39,8 @@ import {
   HelpCircle,
   BarChart3,
   RefreshCw,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 
 const tabs = [
@@ -359,13 +369,17 @@ function SemanticView() {
 
 // Knowledge Graph View
 function KnowledgeView() {
-  const { data: advanced, isLoading } = useAdvancedInsights();
+  const { data: advanced, isLoading: advancedLoading } = useAdvancedInsights();
+  const { data: insights, isLoading: insightsLoading } = useInsights();
+  const { isDark } = useSettings();
+  const [showGraph, setShowGraph] = useState(true);
 
-  if (isLoading) {
+  if (advancedLoading || insightsLoading) {
     return <Loading message="Loading knowledge graph..." />;
   }
 
   const kg = advanced?.knowledge_graph;
+  const graphData = insights?.graph;
 
   if (!kg?.available) {
     return <ModuleUnavailable name="Knowledge Graph" reason={kg?.reason} />;
@@ -376,6 +390,24 @@ function KnowledgeView() {
   }
 
   const metrics = kg.metrics;
+  // API returns total_nodes/total_edges, fallback to node_count/edge_count for compatibility
+  const nodeCount = metrics?.total_nodes ?? metrics?.node_count ?? kg.node_count ?? 0;
+  const edgeCount = metrics?.total_edges ?? metrics?.edge_count ?? kg.edge_count ?? 0;
+  // API returns clustering_coefficient, fallback to density
+  const density = metrics?.clustering_coefficient ?? metrics?.density ?? 0;
+  // API returns avg_connections_per_doc, fallback to avg_connections
+  const avgConnections = metrics?.avg_connections_per_doc ?? metrics?.avg_connections ?? 0;
+
+  // Convert graph data to Reagraph format
+  const reagraphNodes = useMemo(() => {
+    if (!graphData?.nodes) return [];
+    return toReagraphNodesFromKnowledgeGraph(graphData.nodes, isDark);
+  }, [graphData?.nodes, isDark]);
+
+  const reagraphEdges = useMemo(() => {
+    if (!graphData?.links) return [];
+    return toReagraphEdgesFromKnowledgeGraph(graphData.links);
+  }, [graphData?.links]);
 
   return (
     <div className="space-y-6">
@@ -384,14 +416,14 @@ function KnowledgeView() {
         <div className="card bg-base-200">
           <div className="card-body p-4 items-center text-center">
             <Network size={24} className="text-primary" />
-            <span className="text-2xl font-bold">{metrics?.node_count ?? kg.node_count ?? 0}</span>
+            <span className="text-2xl font-bold">{nodeCount}</span>
             <span className="text-sm text-base-content/60">Nodes</span>
           </div>
         </div>
         <div className="card bg-base-200">
           <div className="card-body p-4 items-center text-center">
             <Link2 size={24} className="text-success" />
-            <span className="text-2xl font-bold">{metrics?.edge_count ?? kg.edge_count ?? 0}</span>
+            <span className="text-2xl font-bold">{edgeCount}</span>
             <span className="text-sm text-base-content/60">Edges</span>
           </div>
         </div>
@@ -417,6 +449,44 @@ function KnowledgeView() {
         </div>
       </div>
 
+      {/* Interactive Knowledge Graph */}
+      {reagraphNodes.length > 0 && (
+        <div className="card bg-base-200">
+          <div className="card-body p-0">
+            <button
+              className="flex items-center justify-between w-full p-4 hover:bg-base-300/50 transition-colors"
+              onClick={() => setShowGraph(!showGraph)}
+            >
+              <div className="flex items-center gap-2">
+                <Network size={20} className="text-primary" />
+                <h3 className="card-title text-lg m-0">Interactive Knowledge Graph</h3>
+                <span className="badge badge-ghost badge-sm">{reagraphNodes.length} nodes</span>
+              </div>
+              {showGraph ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+            </button>
+            {showGraph && (
+              <div className="px-4 pb-4">
+                <p className="text-sm text-base-content/60 mb-3">
+                  Explore document relationships. Drag to pan, scroll to zoom, click nodes for details.
+                </p>
+                <GraphCanvas
+                  nodes={reagraphNodes}
+                  edges={reagraphEdges}
+                  height={450}
+                  showToolbar={true}
+                  showLegend={true}
+                  legendItems={knowledgeGraphLegend}
+                  layoutType="forceDirected2d"
+                  onNodeClick={(node) => {
+                    console.log('Node clicked:', node);
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Graph Metrics Detail */}
       {metrics && (
         <div className="card bg-base-200">
@@ -425,16 +495,16 @@ function KnowledgeView() {
             <p className="text-sm text-base-content/60 mb-4">Knowledge structure analysis</p>
             <div className="grid grid-cols-3 gap-4">
               <div className="text-center">
-                <div className="text-2xl font-bold">{(metrics.density * 100).toFixed(1)}%</div>
-                <div className="text-sm text-base-content/60">Density</div>
+                <div className="text-2xl font-bold">{(density * 100).toFixed(1)}%</div>
+                <div className="text-sm text-base-content/60">Clustering</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold">{metrics.avg_connections?.toFixed(1) ?? 'N/A'}</div>
+                <div className="text-2xl font-bold">{avgConnections.toFixed(1)}</div>
                 <div className="text-sm text-base-content/60">Avg Connections</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold">{metrics.hub_count ?? 0}</div>
-                <div className="text-sm text-base-content/60">Hub Documents</div>
+                <div className="text-2xl font-bold">{metrics.document_count ?? metrics.hub_count ?? 0}</div>
+                <div className="text-sm text-base-content/60">Documents</div>
               </div>
             </div>
           </div>
@@ -448,12 +518,16 @@ function KnowledgeView() {
           <p className="text-sm text-base-content/60 mb-4">Concepts without connections to other content</p>
           {kg.orphan_concepts && kg.orphan_concepts.length > 0 ? (
             <div className="flex flex-wrap gap-2">
-              {kg.orphan_concepts.slice(0, 10).map((orphan, idx) => (
-                <div key={idx} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-base-300 text-sm">
-                  <Brain size={14} className="text-warning" />
-                  <span>{orphan}</span>
-                </div>
-              ))}
+              {kg.orphan_concepts.slice(0, 10).map((orphan, idx) => {
+                // Handle both string and object formats from API
+                const conceptName = typeof orphan === 'string' ? orphan : (orphan as { concept?: string })?.concept ?? 'Unknown';
+                return (
+                  <div key={idx} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-base-300 text-sm">
+                    <Brain size={14} className="text-warning" />
+                    <span>{conceptName}</span>
+                  </div>
+                );
+              })}
               {kg.orphan_concepts.length > 10 && (
                 <span className="text-sm text-base-content/60 self-center">+{kg.orphan_concepts.length - 10} more</span>
               )}
@@ -474,18 +548,25 @@ function KnowledgeView() {
           <p className="text-sm text-base-content/60 mb-4">Missing or circular prerequisites</p>
           {kg.prerequisite_issues && kg.prerequisite_issues.length > 0 ? (
             <div className="space-y-2">
-              {kg.prerequisite_issues.slice(0, 10).map((issue, idx) => (
-                <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-base-300">
-                  <AlertCircle size={14} className="text-error flex-shrink-0" />
-                  <span className="text-sm truncate flex-1">{issue.document}</span>
-                  {issue.missing_prerequisites?.length > 0 && (
-                    <div className="badge badge-warning badge-sm">{issue.missing_prerequisites.length} missing</div>
-                  )}
-                  {issue.circular_dependencies?.length > 0 && (
-                    <div className="badge badge-error badge-sm">circular</div>
-                  )}
-                </div>
-              ))}
+              {kg.prerequisite_issues.slice(0, 10).map((issue, idx) => {
+                // Handle both API formats: missing_prereq (string) or missing_prerequisites (array)
+                const missingPrereq = issue.missing_prereq ?? issue.missing_prerequisites;
+                const hasMissing = missingPrereq && (Array.isArray(missingPrereq) ? missingPrereq.length > 0 : true);
+                const missingCount = Array.isArray(missingPrereq) ? missingPrereq.length : (missingPrereq ? 1 : 0);
+                const hasCircular = (issue.circular_dependencies?.length ?? 0) > 0;
+                return (
+                  <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-base-300">
+                    <AlertCircle size={14} className="text-error flex-shrink-0" />
+                    <span className="text-sm truncate flex-1">{issue.document}</span>
+                    {hasMissing && (
+                      <div className="badge badge-warning badge-sm">{missingCount} missing</div>
+                    )}
+                    {hasCircular && (
+                      <div className="badge badge-error badge-sm">circular</div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-6">

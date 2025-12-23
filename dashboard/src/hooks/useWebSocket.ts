@@ -8,7 +8,8 @@ export type WebSocketMessageType =
   | 'document_updated'
   | 'ai_task_update'
   | 'build_status'
-  | 'refresh';
+  | 'refresh'
+  | 'file_change';
 
 export interface WebSocketMessage {
   type: WebSocketMessageType;

@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { useProject, useDocuments, useDocument, useInsights, useSaveDocument, useHierarchyTree, useBreadcrumbs, useHierarchyNode, useFlowGraph } from '@/hooks/useApi';
 import { SubTabs } from '@/components/ui/SubTabs';
 import { MarkdownPreview } from '@/components/ui/MarkdownPreview';
 import { SelectionAnnotation } from '@/components/ui/SelectionAnnotation';
-import { HierarchyTree, Breadcrumbs, FlowDiagram } from '@/components/hierarchy';
+import { HierarchyTree, Breadcrumbs, FlowDiagram, ReagraphFlow } from '@/components/hierarchy';
 import {
   FileText,
   FolderOpen,
@@ -305,78 +305,212 @@ function DocumentsView() {
   );
 }
 
+// Helper to create a fallback graph from documents when no hierarchy data exists
+function createFallbackGraph(documents: Record<string, Array<{ path: string; title: string }>>) {
+  const nodes: Array<{
+    id: string;
+    title: string;
+    doc_type: string;
+    lifecycle: string;
+    is_stale: boolean;
+    level: number;
+    sequence_order: number;
+    position: { x: number; y: number };
+  }> = [];
+  const edges: Array<{
+    source: string;
+    target: string;
+    type: string;
+    is_stale: boolean;
+    version: string | null;
+  }> = [];
+
+  // Create root node
+  nodes.push({
+    id: 'root',
+    title: 'Project Root',
+    doc_type: 'root',
+    lifecycle: 'living',
+    is_stale: false,
+    level: 0,
+    sequence_order: 0,
+    position: { x: 400, y: 50 },
+  });
+
+  let yOffset = 150;
+
+  // Add category nodes and document nodes
+  Object.entries(documents).forEach(([category, docs], catIndex) => {
+    const categoryId = `category-${category}`;
+    const xBase = 100 + catIndex * 300;
+
+    // Category node
+    nodes.push({
+      id: categoryId,
+      title: category.charAt(0).toUpperCase() + category.slice(1),
+      doc_type: 'category',
+      lifecycle: 'living',
+      is_stale: false,
+      level: 1,
+      sequence_order: catIndex,
+      position: { x: xBase, y: yOffset },
+    });
+
+    edges.push({
+      source: 'root',
+      target: categoryId,
+      type: 'contains',
+      is_stale: false,
+      version: null,
+    });
+
+    // Document nodes
+    docs.forEach((doc, docIndex) => {
+      nodes.push({
+        id: doc.path,
+        title: doc.title,
+        doc_type: category,
+        lifecycle: 'living',
+        is_stale: false,
+        level: 2,
+        sequence_order: docIndex,
+        position: { x: xBase, y: yOffset + 100 + docIndex * 60 },
+      });
+
+      edges.push({
+        source: categoryId,
+        target: doc.path,
+        type: 'contains',
+        is_stale: false,
+        version: null,
+      });
+    });
+  });
+
+  return {
+    nodes,
+    edges,
+    staleness_summary: {
+      total_nodes: nodes.length,
+      stale_nodes: 0,
+      stale_percentage: 0,
+      stale_edges: 0,
+    },
+  };
+}
+
 // Hierarchy Sub-page
 function HierarchyView() {
   const { data: project } = useProject();
   const [selectedLang, setSelectedLang] = useState('en');
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'tree' | 'flow'>('tree');
+  const [viewMode, setViewMode] = useState<'tree' | 'flow' | 'graph'>('tree');
 
   const { data: hierarchyTree, isLoading: treeLoading } = useHierarchyTree(selectedLang);
   const { data: nodeDetail, isLoading: nodeLoading } = useHierarchyNode(selectedPath ?? '');
   const { data: breadcrumbs } = useBreadcrumbs(selectedPath ?? '');
   const { data: flowGraph, isLoading: flowLoading } = useFlowGraph({ language: selectedLang });
+  const { data: documents, isLoading: docsLoading } = useDocuments(selectedLang);
 
   const languages = project?.languages ? Object.keys(project.languages) : ['en'];
 
-  if (viewMode === 'tree' && treeLoading) {
+  // Use flowGraph if it has nodes, otherwise create fallback from documents
+  const graphData = useMemo(() => {
+    if (flowGraph?.nodes && flowGraph.nodes.length > 0) {
+      return flowGraph;
+    }
+    // Fallback to documents-based graph
+    if (documents?.categories && Object.keys(documents.categories).length > 0) {
+      return createFallbackGraph(documents.categories);
+    }
+    return { nodes: [], edges: [], staleness_summary: undefined };
+  }, [flowGraph, documents]);
+
+  const isLoading = (viewMode === 'tree' && treeLoading) ||
+    ((viewMode === 'flow' || viewMode === 'graph') && flowLoading && docsLoading);
+
+  // Shared header with language selector and view mode toggle
+  const renderHeader = () => (
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex gap-1">
+        {languages.map(lang => (
+          <button
+            key={lang}
+            className={`btn btn-xs ${selectedLang === lang ? 'btn-primary' : 'btn-ghost'}`}
+            onClick={() => { setSelectedLang(lang); setSelectedPath(null); }}
+          >
+            {lang.toUpperCase()}
+          </button>
+        ))}
+      </div>
+      <div className="flex gap-1">
+        <button
+          className={`btn btn-xs gap-1 ${viewMode === 'tree' ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() => setViewMode('tree')}
+        >
+          <List size={14} /> Tree
+        </button>
+        <button
+          className={`btn btn-xs gap-1 ${viewMode === 'flow' ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() => setViewMode('flow')}
+        >
+          <Network size={14} /> Flow
+        </button>
+        <button
+          className={`btn btn-xs gap-1 ${viewMode === 'graph' ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() => setViewMode('graph')}
+        >
+          <Network size={14} /> Graph
+        </button>
+      </div>
+    </div>
+  );
+
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <span className="loading loading-spinner loading-lg text-primary"></span>
-          <p className="mt-4 text-base-content/60">Loading hierarchy...</p>
+      <div className="space-y-4">
+        {renderHeader()}
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <span className="loading loading-spinner loading-lg text-primary"></span>
+            <p className="mt-4 text-base-content/60">
+              {viewMode === 'tree' ? 'Loading hierarchy...' : 'Loading flow graph...'}
+            </p>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (viewMode === 'flow' && flowLoading) {
+  // Interactive Reagraph view
+  if (viewMode === 'graph') {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <span className="loading loading-spinner loading-lg text-primary"></span>
-          <p className="mt-4 text-base-content/60">Loading flow graph...</p>
+      <div className="space-y-4">
+        {renderHeader()}
+        <div className="h-[calc(100vh-280px)] bg-base-200 rounded-lg overflow-hidden">
+          <ReagraphFlow
+            nodes={graphData.nodes}
+            edges={graphData.edges}
+            stalenessSummary={graphData.staleness_summary}
+            selectedNode={selectedPath ?? undefined}
+            onNodeClick={setSelectedPath}
+            height="100%"
+          />
         </div>
       </div>
     );
   }
 
-  // Flow view
+  // SVG Flow view (original)
   if (viewMode === 'flow') {
     return (
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex gap-1">
-            {languages.map(lang => (
-              <button
-                key={lang}
-                className={`btn btn-xs ${selectedLang === lang ? 'btn-primary' : 'btn-ghost'}`}
-                onClick={() => { setSelectedLang(lang); setSelectedPath(null); }}
-              >
-                {lang.toUpperCase()}
-              </button>
-            ))}
-          </div>
-          <div className="flex gap-1">
-            <button
-              className="btn btn-xs btn-ghost gap-1"
-              onClick={() => setViewMode('tree')}
-            >
-              <List size={14} /> Tree
-            </button>
-            <button
-              className="btn btn-xs btn-primary gap-1"
-              onClick={() => setViewMode('flow')}
-            >
-              <Network size={14} /> Flow
-            </button>
-          </div>
-        </div>
+        {renderHeader()}
         <div className="h-[calc(100vh-280px)] bg-base-200 rounded-lg overflow-hidden">
           <FlowDiagram
-            nodes={flowGraph?.nodes ?? []}
-            edges={flowGraph?.edges ?? []}
-            stalenessSummary={flowGraph?.staleness_summary}
+            nodes={graphData.nodes}
+            edges={graphData.edges}
+            stalenessSummary={graphData.staleness_summary}
             selectedNode={selectedPath ?? undefined}
             onNodeClick={setSelectedPath}
           />
@@ -385,289 +519,264 @@ function HierarchyView() {
     );
   }
 
+  // Tree view
   return (
-    <div className="flex gap-6 h-[calc(100vh-200px)]">
-      {/* Sidebar - Hierarchy Tree */}
-      <aside className="w-80 flex-shrink-0 flex flex-col bg-base-200 rounded-lg overflow-hidden">
-        <div className="p-4 border-b border-base-300 space-y-3">
-          <h3 className="font-semibold">Document Hierarchy</h3>
-          <div className="flex gap-1">
-            {languages.map(lang => (
-              <button
-                key={lang}
-                className={`btn btn-xs ${selectedLang === lang ? 'btn-primary' : 'btn-ghost'}`}
-                onClick={() => { setSelectedLang(lang); setSelectedPath(null); }}
-              >
-                {lang.toUpperCase()}
-              </button>
-            ))}
+    <div className="space-y-4">
+      {renderHeader()}
+      <div className="flex gap-6 h-[calc(100vh-260px)]">
+        {/* Sidebar - Hierarchy Tree */}
+        <aside className="w-80 flex-shrink-0 flex flex-col bg-base-200 rounded-lg overflow-hidden">
+          <div className="flex-1 overflow-y-auto">
+            <HierarchyTree
+              nodes={hierarchyTree?.nodes ?? []}
+              selectedPath={selectedPath ?? undefined}
+              onSelect={setSelectedPath}
+              showLegend={true}
+            />
           </div>
-          <div className="flex gap-1">
-            <button
-              className="btn btn-xs btn-primary gap-1"
-              onClick={() => setViewMode('tree')}
-            >
-              <List size={14} /> Tree
-            </button>
-            <button
-              className="btn btn-xs btn-ghost gap-1"
-              onClick={() => setViewMode('flow')}
-            >
-              <Network size={14} /> Flow
-            </button>
-          </div>
-        </div>
 
-        <div className="flex-1 overflow-y-auto">
-          <HierarchyTree
-            nodes={hierarchyTree?.nodes ?? []}
-            selectedPath={selectedPath ?? undefined}
-            onSelect={setSelectedPath}
-            showLegend={true}
-          />
-        </div>
+          {hierarchyTree && (
+            <div className="p-3 border-t border-base-300 flex gap-4 text-xs text-base-content/60">
+              <span>{hierarchyTree.total_count} documents</span>
+              <span>{hierarchyTree.root_count} root nodes</span>
+            </div>
+          )}
+        </aside>
 
-        {hierarchyTree && (
-          <div className="p-3 border-t border-base-300 flex gap-4 text-xs text-base-content/60">
-            <span>{hierarchyTree.total_count} documents</span>
-            <span>{hierarchyTree.root_count} root nodes</span>
-          </div>
-        )}
-      </aside>
-
-      {/* Main Content - Node Detail */}
-      <main className="flex-1 min-w-0">
-        {selectedPath ? (
-          <div className="card bg-base-200 h-full flex flex-col">
-            {/* Breadcrumbs */}
-            {breadcrumbs?.breadcrumbs && breadcrumbs.breadcrumbs.length > 0 && (
-              <div className="px-4 pt-4">
-                <Breadcrumbs
-                  items={breadcrumbs.breadcrumbs}
-                  onNavigate={setSelectedPath}
-                  showHome={true}
-                />
-              </div>
-            )}
-
-            <div className="p-4 border-b border-base-300 flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <h3 className="font-semibold truncate">{nodeDetail?.title ?? 'Loading...'}</h3>
-                <p className="text-sm text-base-content/60 truncate">{selectedPath}</p>
-              </div>
-              {nodeDetail && (
-                <div className="flex gap-2 flex-shrink-0">
-                  <div className="badge badge-info">{nodeDetail.doc_type}</div>
-                  <div className={`badge ${nodeDetail.lifecycle === 'living' ? 'badge-success' : 'badge-warning'}`}>
-                    {nodeDetail.lifecycle}
-                  </div>
-                  {nodeDetail.is_stale && (
-                    <div className="badge badge-warning gap-1">
-                      <AlertTriangle size={12} /> Stale
-                    </div>
-                  )}
+        {/* Main Content - Node Detail */}
+        <main className="flex-1 min-w-0">
+          {selectedPath ? (
+            <div className="card bg-base-200 h-full flex flex-col">
+              {/* Breadcrumbs */}
+              {breadcrumbs?.breadcrumbs && breadcrumbs.breadcrumbs.length > 0 && (
+                <div className="px-4 pt-4">
+                  <Breadcrumbs
+                    items={breadcrumbs.breadcrumbs}
+                    onNavigate={setSelectedPath}
+                    showHome={true}
+                  />
                 </div>
               )}
-            </div>
 
-            <div className="flex-1 overflow-y-auto p-4">
-              {nodeLoading ? (
-                <div className="flex items-center justify-center h-full">
-                  <span className="loading loading-spinner loading-md text-primary"></span>
+              <div className="p-4 border-b border-base-300 flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <h3 className="font-semibold truncate">{nodeDetail?.title ?? 'Loading...'}</h3>
+                  <p className="text-sm text-base-content/60 truncate">{selectedPath}</p>
                 </div>
-              ) : nodeDetail ? (
-                <div className="space-y-6">
-                  {/* Relationships */}
-                  <div>
-                    <h4 className="font-medium mb-3">Relationships</h4>
-                    <div className="space-y-3">
-                      {nodeDetail.parent && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-base-content/60 w-20">Parent:</span>
-                          <button
-                            className="btn btn-ghost btn-xs"
-                            onClick={() => setSelectedPath(nodeDetail.parent!)}
-                          >
-                            {nodeDetail.parent.split('/').pop()}
-                          </button>
-                        </div>
-                      )}
-
-                      {nodeDetail.children.length > 0 && (
-                        <div>
-                          <span className="text-sm text-base-content/60">Children ({nodeDetail.children.length}):</span>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {nodeDetail.children.map(child => (
-                              <button
-                                key={child}
-                                className="btn btn-ghost btn-xs"
-                                onClick={() => setSelectedPath(child)}
-                              >
-                                {child.split('/').pop()}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {nodeDetail.siblings.length > 0 && (
-                        <div>
-                          <span className="text-sm text-base-content/60">Siblings ({nodeDetail.siblings.length}):</span>
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {nodeDetail.siblings.slice(0, 5).map(sibling => (
-                              <button
-                                key={sibling}
-                                className="btn btn-ghost btn-xs"
-                                onClick={() => setSelectedPath(sibling)}
-                              >
-                                {sibling.split('/').pop()}
-                              </button>
-                            ))}
-                            {nodeDetail.siblings.length > 5 && (
-                              <span className="text-xs text-base-content/50">+{nodeDetail.siblings.length - 5} more</span>
-                            )}
-                          </div>
-                        </div>
-                      )}
+                {nodeDetail && (
+                  <div className="flex gap-2 flex-shrink-0">
+                    <div className="badge badge-info">{nodeDetail.doc_type}</div>
+                    <div className={`badge ${nodeDetail.lifecycle === 'living' ? 'badge-success' : 'badge-warning'}`}>
+                      {nodeDetail.lifecycle}
                     </div>
+                    {nodeDetail.is_stale && (
+                      <div className="badge badge-warning gap-1">
+                        <AlertTriangle size={12} /> Stale
+                      </div>
+                    )}
                   </div>
+                )}
+              </div>
 
-                  {/* Derivations */}
-                  {(nodeDetail.derived_from.length > 0 || nodeDetail.derivatives.length > 0) && (
+              <div className="flex-1 overflow-y-auto p-4">
+                {nodeLoading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <span className="loading loading-spinner loading-md text-primary"></span>
+                  </div>
+                ) : nodeDetail ? (
+                  <div className="space-y-6">
+                    {/* Relationships */}
                     <div>
-                      <h4 className="font-medium mb-3 flex items-center gap-2">
-                        <GitBranch size={14} /> Derivations
-                      </h4>
+                      <h4 className="font-medium mb-3">Relationships</h4>
                       <div className="space-y-3">
-                        {nodeDetail.derived_from.length > 0 && (
-                          <div>
-                            <span className="text-sm text-base-content/60">Derived from:</span>
-                            <div className="space-y-1 mt-1">
-                              {nodeDetail.derived_from.map(source => (
-                                <div key={source.path} className="flex items-center gap-2">
-                                  <button
-                                    className="btn btn-ghost btn-xs"
-                                    onClick={() => setSelectedPath(source.path)}
-                                  >
-                                    {source.path.split('/').pop()}
-                                  </button>
-                                  <div className="badge badge-ghost badge-sm">{source.relationship}</div>
-                                  {source.version && (
-                                    <span className="text-xs text-base-content/50">v{source.version}</span>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
+                        {nodeDetail.parent && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-base-content/60 w-20">Parent:</span>
+                            <button
+                              className="btn btn-ghost btn-xs"
+                              onClick={() => setSelectedPath(nodeDetail.parent!)}
+                            >
+                              {nodeDetail.parent.split('/').pop()}
+                            </button>
                           </div>
                         )}
 
-                        {nodeDetail.derivatives.length > 0 && (
+                        {nodeDetail.children.length > 0 && (
                           <div>
-                            <span className="text-sm text-base-content/60">Derivatives:</span>
+                            <span className="text-sm text-base-content/60">Children ({nodeDetail.children.length}):</span>
                             <div className="flex flex-wrap gap-1 mt-1">
-                              {nodeDetail.derivatives.map(derivative => (
+                              {nodeDetail.children.map(child => (
                                 <button
-                                  key={derivative}
+                                  key={child}
                                   className="btn btn-ghost btn-xs"
-                                  onClick={() => setSelectedPath(derivative)}
+                                  onClick={() => setSelectedPath(child)}
                                 >
-                                  {derivative.split('/').pop()}
+                                  {child.split('/').pop()}
                                 </button>
                               ))}
                             </div>
                           </div>
                         )}
-                      </div>
-                    </div>
-                  )}
 
-                  {/* Anchors */}
-                  {(nodeDetail.defined_anchors.length > 0 || nodeDetail.anchor_refs.length > 0) && (
-                    <div>
-                      <h4 className="font-medium mb-3 flex items-center gap-2">
-                        <Anchor size={14} /> Consistency Anchors
-                      </h4>
-                      <div className="space-y-3">
-                        {nodeDetail.defined_anchors.length > 0 && (
+                        {nodeDetail.siblings.length > 0 && (
                           <div>
-                            <span className="text-sm text-base-content/60">Defined anchors:</span>
-                            <div className="space-y-1 mt-1">
-                              {nodeDetail.defined_anchors.map(anchor => (
-                                <div key={anchor.id} className="flex items-center gap-2 text-sm">
-                                  <code className="bg-base-300 px-2 py-0.5 rounded text-xs">{anchor.id}</code>
-                                  <span className="text-base-content/70 truncate">
-                                    {typeof anchor.value === 'object'
-                                      ? JSON.stringify(anchor.value)
-                                      : String(anchor.value)}
-                                  </span>
-                                </div>
+                            <span className="text-sm text-base-content/60">Siblings ({nodeDetail.siblings.length}):</span>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {nodeDetail.siblings.slice(0, 5).map(sibling => (
+                                <button
+                                  key={sibling}
+                                  className="btn btn-ghost btn-xs"
+                                  onClick={() => setSelectedPath(sibling)}
+                                >
+                                  {sibling.split('/').pop()}
+                                </button>
                               ))}
+                              {nodeDetail.siblings.length > 5 && (
+                                <span className="text-xs text-base-content/50">+{nodeDetail.siblings.length - 5} more</span>
+                              )}
                             </div>
                           </div>
                         )}
+                      </div>
+                    </div>
 
-                        {nodeDetail.anchor_refs.length > 0 && (
-                          <div>
-                            <span className="text-sm text-base-content/60">References:</span>
-                            <div className="space-y-1 mt-1">
-                              {nodeDetail.anchor_refs.map((ref, idx) => (
-                                <div key={idx} className="flex items-center gap-2 text-sm">
+                    {/* Derivations */}
+                    {(nodeDetail.derived_from.length > 0 || nodeDetail.derivatives.length > 0) && (
+                      <div>
+                        <h4 className="font-medium mb-3 flex items-center gap-2">
+                          <GitBranch size={14} /> Derivations
+                        </h4>
+                        <div className="space-y-3">
+                          {nodeDetail.derived_from.length > 0 && (
+                            <div>
+                              <span className="text-sm text-base-content/60">Derived from:</span>
+                              <div className="space-y-1 mt-1">
+                                {nodeDetail.derived_from.map(source => (
+                                  <div key={source.path} className="flex items-center gap-2">
+                                    <button
+                                      className="btn btn-ghost btn-xs"
+                                      onClick={() => setSelectedPath(source.path)}
+                                    >
+                                      {source.path.split('/').pop()}
+                                    </button>
+                                    <div className="badge badge-ghost badge-sm">{source.relationship}</div>
+                                    {source.version && (
+                                      <span className="text-xs text-base-content/50">v{source.version}</span>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {nodeDetail.derivatives.length > 0 && (
+                            <div>
+                              <span className="text-sm text-base-content/60">Derivatives:</span>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {nodeDetail.derivatives.map(derivative => (
                                   <button
+                                    key={derivative}
                                     className="btn btn-ghost btn-xs"
-                                    onClick={() => setSelectedPath(ref.source)}
+                                    onClick={() => setSelectedPath(derivative)}
                                   >
-                                    {ref.source.split('/').pop()}
+                                    {derivative.split('/').pop()}
                                   </button>
-                                  <span className="text-base-content/50">#</span>
-                                  <code className="bg-base-300 px-2 py-0.5 rounded text-xs">{ref.anchor}</code>
-                                </div>
-                              ))}
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Ownership */}
-                  {(nodeDetail.owner || nodeDetail.approvers.length > 0) && (
-                    <div>
-                      <h4 className="font-medium mb-3 flex items-center gap-2">
-                        <Users size={14} /> Ownership
-                      </h4>
-                      <div className="space-y-2 text-sm">
-                        {nodeDetail.owner && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-base-content/60">Owner:</span>
-                            <span>{nodeDetail.owner}</span>
-                          </div>
-                        )}
-                        {nodeDetail.approvers.length > 0 && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-base-content/60">Approvers:</span>
-                            <span>{nodeDetail.approvers.join(', ')}</span>
-                          </div>
-                        )}
+                    {/* Anchors */}
+                    {(nodeDetail.defined_anchors.length > 0 || nodeDetail.anchor_refs.length > 0) && (
+                      <div>
+                        <h4 className="font-medium mb-3 flex items-center gap-2">
+                          <Anchor size={14} /> Consistency Anchors
+                        </h4>
+                        <div className="space-y-3">
+                          {nodeDetail.defined_anchors.length > 0 && (
+                            <div>
+                              <span className="text-sm text-base-content/60">Defined anchors:</span>
+                              <div className="space-y-1 mt-1">
+                                {nodeDetail.defined_anchors.map(anchor => (
+                                  <div key={anchor.id} className="flex items-center gap-2 text-sm">
+                                    <code className="bg-base-300 px-2 py-0.5 rounded text-xs">{anchor.id}</code>
+                                    <span className="text-base-content/70 truncate">
+                                      {typeof anchor.value === 'object'
+                                        ? JSON.stringify(anchor.value)
+                                        : String(anchor.value)}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {nodeDetail.anchor_refs.length > 0 && (
+                            <div>
+                              <span className="text-sm text-base-content/60">References:</span>
+                              <div className="space-y-1 mt-1">
+                                {nodeDetail.anchor_refs.map((ref, idx) => (
+                                  <div key={idx} className="flex items-center gap-2 text-sm">
+                                    <button
+                                      className="btn btn-ghost btn-xs"
+                                      onClick={() => setSelectedPath(ref.source)}
+                                    >
+                                      {ref.source.split('/').pop()}
+                                    </button>
+                                    <span className="text-base-content/50">#</span>
+                                    <code className="bg-base-300 px-2 py-0.5 rounded text-xs">{ref.anchor}</code>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full text-center">
-                  <AlertTriangle size={32} className="text-warning mb-4" />
-                  <p>Could not load document details</p>
-                </div>
-              )}
+                    )}
+
+                    {/* Ownership */}
+                    {(nodeDetail.owner || nodeDetail.approvers.length > 0) && (
+                      <div>
+                        <h4 className="font-medium mb-3 flex items-center gap-2">
+                          <Users size={14} /> Ownership
+                        </h4>
+                        <div className="space-y-2 text-sm">
+                          {nodeDetail.owner && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-base-content/60">Owner:</span>
+                              <span>{nodeDetail.owner}</span>
+                            </div>
+                          )}
+                          {nodeDetail.approvers.length > 0 && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-base-content/60">Approvers:</span>
+                              <span>{nodeDetail.approvers.join(', ')}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-center">
+                    <AlertTriangle size={32} className="text-warning mb-4" />
+                    <p>Could not load document details</p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <GitBranch size={48} className="text-base-content/30 mb-4" />
-            <p className="text-lg">Select a document to view its hierarchy</p>
-            <span className="text-sm text-base-content/60">Click on any node in the tree to see relationships, derivations, and anchors</span>
-          </div>
-        )}
-      </main>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-center">
+              <GitBranch size={48} className="text-base-content/30 mb-4" />
+              <p className="text-lg">Select a document to view its hierarchy</p>
+              <span className="text-sm text-base-content/60">Click on any node in the tree to see relationships, derivations, and anchors</span>
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   );
 }

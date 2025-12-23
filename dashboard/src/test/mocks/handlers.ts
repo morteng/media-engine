@@ -74,7 +74,7 @@ export const mockInsights = {
   health: {
     overall: 85,
     grade: 'B',
-    status: 'Good',
+    status: 'good',
     components: {
       freshness: 90,
       translation: 75,
@@ -86,7 +86,10 @@ export const mockInsights = {
     },
     document_count: 10,
     critical_count: 1,
-    issues: [],
+    issues: [
+      { severity: 'warning', category: 'links', message: 'Broken link found', document: 'intro.md' },
+      { severity: 'warning', category: 'readability', message: 'Consider simplifying sentence', document: 'setup.md' },
+    ],
     recommendations: ['Update stale documents', 'Complete translations'],
   },
   statistics: {
@@ -132,9 +135,109 @@ export const mockInsights = {
 
 export const mockQuality = {
   issues: [
-    { type: 'warning', category: 'Links', message: 'Broken link found', file: 'intro.md', line: 42 },
-    { type: 'info', category: 'Readability', message: 'Consider simplifying sentence', file: 'setup.md', line: 15 },
+    { severity: 'warning', category: 'links', message: 'Broken link found', document: 'intro.md', line: 42 },
+    { severity: 'warning', category: 'readability', message: 'Consider simplifying sentence', document: 'setup.md', line: 15 },
   ],
+};
+
+export const mockAdvancedInsights = {
+  semantic: {
+    available: true,
+    near_duplicate_count: 2,
+    drift_count: 1,
+    cluster_count: 3,
+    near_duplicates: [
+      { doc1_path: 'intro.md', doc2_path: 'overview.md', similarity: 0.87 },
+    ],
+    terminology_drift: [
+      { term: 'API', drift_score: 0.15, old_usage: 'Application Programming Interface', new_usage: 'API' },
+    ],
+    clusters: [
+      { cluster_id: 1, theme: 'Getting Started', doc_count: 3 },
+    ],
+  },
+  knowledge_graph: {
+    available: true,
+    node_count: 15,
+    edge_count: 22,
+    orphan_count: 2,
+    prereq_issue_count: 1,
+    metrics: {
+      node_count: 15,
+      edge_count: 22,
+      density: 0.2,
+      avg_connections: 2.9,
+      hub_count: 3,
+    },
+    orphan_concepts: ['orphan-concept-1', 'orphan-concept-2'],
+    prerequisite_issues: [
+      { document: 'advanced.md', missing_prerequisites: ['basics.md'], circular_dependencies: [] },
+    ],
+  },
+  predictive_freshness: {
+    available: true,
+    high_risk_count: 2,
+    summary: {
+      low_risk: 5,
+      medium_risk: 3,
+      high_risk: 2,
+      critical_risk: 0,
+    },
+    high_risk_documents: [
+      { path: 'old-doc.md', risk_level: 'high', staleness_probability: 0.75, days_until_stale: 10 },
+    ],
+  },
+  enhanced_codesync: {
+    available: true,
+    syntax_error_count: 1,
+    deprecated_count: 2,
+    api_issue_count: 1,
+    syntax_errors: [
+      { document: 'code-example.md', line: 15, message: 'Syntax error in code block' },
+    ],
+    deprecated_patterns: [
+      { document: 'old-api.md', message: 'Using deprecated componentDidMount' },
+    ],
+    api_issues: [
+      { document: 'api-docs.md', message: 'Reference to removed endpoint' },
+    ],
+  },
+  norwegian_readability: {
+    available: true,
+    average_lix: 42.5,
+    documents_analyzed: 4,
+    difficult_count: 1,
+    difficult_documents: [
+      { path: 'no/complex.md', lix_score: 52, difficulty_level: 'difficult' },
+    ],
+  },
+  advanced_analysis: {
+    available: true,
+    audience_drift: {
+      drift_score: 0.2,
+      trend: 'stable',
+      documents_with_drift: ['doc1.md'],
+    },
+    question_coverage: {
+      coverage_percent: 75,
+      total_questions: 20,
+      answered_questions: 15,
+      unanswered_questions: ['How to configure X?', 'What is Y?'],
+    },
+    cross_references: {
+      total_references: 45,
+      internal_references: 30,
+      external_references: 15,
+      density_score: 3.5,
+      orphan_references: ['broken-link.md'],
+    },
+    style_consistency: {
+      style_score: 82,
+      inconsistencies: [
+        { document: 'intro.md', issue: 'Inconsistent heading style' },
+      ],
+    },
+  },
 };
 
 export const mockFreshness = {
@@ -209,6 +312,7 @@ export const handlers = [
   // Insights
   http.get('/api/insights', () => HttpResponse.json(mockInsights)),
   http.get('/api/insights/quality-summary', () => HttpResponse.json(mockQualitySummary)),
+  http.get('/api/insights/advanced', () => HttpResponse.json(mockAdvancedInsights)),
 
   // Quality
   http.get('/api/quality', () => HttpResponse.json(mockQuality)),

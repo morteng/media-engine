@@ -372,24 +372,48 @@ export interface SemanticAnalysisResponse {
 
 // Knowledge Graph (Enhanced)
 export interface KnowledgeGraphMetrics {
-  node_count: number;
-  edge_count: number;
-  density: number;
-  avg_connections: number;
-  hub_count: number;
-  orphan_count: number;
+  // API returns these field names
+  total_nodes?: number;
+  total_edges?: number;
+  document_count?: number;
+  concept_count?: number;
+  avg_connections_per_doc?: number;
+  orphan_concepts?: number;
+  circular_dependencies?: number;
+  clustering_coefficient?: number;
+  connected_components?: number;
+  // Legacy field names for compatibility
+  node_count?: number;
+  edge_count?: number;
+  density?: number;
+  avg_connections?: number;
+  hub_count?: number;
+  orphan_count?: number;
+}
+
+export interface OrphanConcept {
+  concept: string;
+  mentions: Array<{ doc: string; line: number }>;
+  mention_count: number;
+  importance: number;
 }
 
 export interface PrerequisiteIssue {
   document: string;
-  missing_prerequisites: string[];
-  circular_dependencies: string[];
+  // API returns single string
+  missing_prereq?: string;
+  explanation?: string;
+  suggested_order?: string[];
+  // Legacy format (array)
+  missing_prerequisites?: string[];
+  circular_dependencies?: string[];
 }
 
 export interface KnowledgeGraphResponse {
   available: boolean;
   metrics?: KnowledgeGraphMetrics;
-  orphan_concepts?: string[];
+  // API returns objects, not strings
+  orphan_concepts?: Array<OrphanConcept | string>;
   orphan_count?: number;
   prerequisite_issues?: PrerequisiteIssue[];
   prereq_issue_count?: number;
