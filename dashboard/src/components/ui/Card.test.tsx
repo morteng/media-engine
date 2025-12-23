@@ -8,22 +8,23 @@ describe('Card', () => {
     expect(screen.getByText('Card content')).toBeInTheDocument();
   });
 
-  it('applies default variant class', () => {
+  it('renders with default styling', () => {
     render(<Card data-testid="card">Default Card</Card>);
     const card = screen.getByTestId('card');
-    expect(card).toHaveClass('card', 'card-default');
+    // Check for essential Tailwind classes
+    expect(card).toHaveClass('rounded-lg', 'border', 'bg-card');
   });
 
-  it('applies glow variant class', () => {
+  it('renders with glow variant', () => {
     render(<Card variant="glow" data-testid="card">Glow Card</Card>);
     const card = screen.getByTestId('card');
-    expect(card).toHaveClass('card-glow');
+    expect(card).toHaveClass('border-primary/30', 'shadow-lg');
   });
 
-  it('applies gradient variant class', () => {
+  it('renders with gradient variant', () => {
     render(<Card variant="gradient" data-testid="card">Gradient Card</Card>);
     const card = screen.getByTestId('card');
-    expect(card).toHaveClass('card-gradient');
+    expect(card).toHaveClass('bg-gradient-to-br');
   });
 
   it('applies custom className', () => {
@@ -54,10 +55,10 @@ describe('CardHeader', () => {
     expect(screen.getByRole('button', { name: 'Action' })).toBeInTheDocument();
   });
 
-  it('applies correct classes', () => {
+  it('renders title with proper styling', () => {
     render(<CardHeader title="Test" />);
-    expect(screen.getByText('Test').closest('.card-header')).toBeInTheDocument();
-    expect(screen.getByText('Test')).toHaveClass('card-title');
+    const title = screen.getByText('Test');
+    expect(title).toHaveClass('text-lg', 'font-semibold');
   });
 });
 
@@ -67,13 +68,15 @@ describe('CardContent', () => {
     expect(screen.getByText('Content here')).toBeInTheDocument();
   });
 
-  it('applies card-content class', () => {
-    render(<CardContent>Content</CardContent>);
-    expect(screen.getByText('Content')).toHaveClass('card-content');
+  it('renders with proper padding', () => {
+    render(<CardContent data-testid="content">Content</CardContent>);
+    const content = screen.getByTestId('content');
+    expect(content).toHaveClass('p-6', 'pt-0');
   });
 
   it('applies custom className', () => {
-    render(<CardContent className="custom-content">Content</CardContent>);
-    expect(screen.getByText('Content')).toHaveClass('card-content', 'custom-content');
+    render(<CardContent className="custom-content" data-testid="content">Content</CardContent>);
+    const content = screen.getByTestId('content');
+    expect(content).toHaveClass('custom-content');
   });
 });

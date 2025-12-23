@@ -8,51 +8,60 @@ describe('Badge', () => {
     expect(screen.getByText('Test Badge')).toBeInTheDocument();
   });
 
-  it('applies default variant class', () => {
+  it('renders with default styling', () => {
     render(<Badge>Default</Badge>);
     const badge = screen.getByText('Default');
-    expect(badge).toHaveClass('badge', 'badge-default', 'badge-md');
+    expect(badge).toBeInTheDocument();
+    // Check that it has essential Tailwind classes
+    expect(badge).toHaveClass('inline-flex', 'items-center', 'rounded-full');
   });
 
-  it('applies success variant class', () => {
+  it('renders with success variant', () => {
     render(<Badge variant="success">Success</Badge>);
     const badge = screen.getByText('Success');
-    expect(badge).toHaveClass('badge-success');
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveClass('bg-success/15', 'text-success');
   });
 
-  it('applies warning variant class', () => {
+  it('renders with warning variant', () => {
     render(<Badge variant="warning">Warning</Badge>);
     const badge = screen.getByText('Warning');
-    expect(badge).toHaveClass('badge-warning');
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveClass('bg-warning/15', 'text-warning');
   });
 
-  it('applies error variant class', () => {
+  it('renders with error variant', () => {
     render(<Badge variant="error">Error</Badge>);
     const badge = screen.getByText('Error');
-    expect(badge).toHaveClass('badge-error');
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveClass('bg-destructive/15', 'text-destructive');
   });
 
-  it('applies info variant class', () => {
+  it('renders with info variant', () => {
     render(<Badge variant="info">Info</Badge>);
     const badge = screen.getByText('Info');
-    expect(badge).toHaveClass('badge-info');
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveClass('bg-info/15', 'text-info');
   });
 
-  it('applies small size class', () => {
+  it('renders with small size', () => {
     render(<Badge size="sm">Small</Badge>);
     const badge = screen.getByText('Small');
-    expect(badge).toHaveClass('badge-sm');
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveClass('text-[10px]', 'px-2', 'py-0');
   });
 
-  it('applies large size class', () => {
+  it('renders with large size', () => {
     render(<Badge size="lg">Large</Badge>);
     const badge = screen.getByText('Large');
-    expect(badge).toHaveClass('badge-lg');
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveClass('text-sm', 'px-3', 'py-1');
   });
 
   it('renders with both variant and size', () => {
     render(<Badge variant="success" size="sm">Combined</Badge>);
     const badge = screen.getByText('Combined');
-    expect(badge).toHaveClass('badge', 'badge-success', 'badge-sm');
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveClass('bg-success/15', 'text-[10px]');
   });
 });

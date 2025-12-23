@@ -8,36 +8,38 @@ describe('Button', () => {
     expect(screen.getByRole('button', { name: 'Click Me' })).toBeInTheDocument();
   });
 
-  it('applies default variant and size classes', () => {
+  it('renders with default styling', () => {
     render(<Button>Default</Button>);
     const button = screen.getByRole('button');
-    expect(button).toHaveClass('btn', 'btn-primary', 'btn-md');
+    // Check that it has essential Tailwind classes
+    expect(button).toHaveClass('inline-flex', 'items-center', 'justify-center');
+    expect(button).toHaveClass('bg-primary', 'text-primary-foreground');
   });
 
-  it('applies secondary variant class', () => {
+  it('renders with secondary variant', () => {
     render(<Button variant="secondary">Secondary</Button>);
     const button = screen.getByRole('button');
-    expect(button).toHaveClass('btn-secondary');
+    expect(button).toHaveClass('bg-secondary', 'text-secondary-foreground');
   });
 
-  it('applies ghost variant class', () => {
+  it('renders with ghost variant', () => {
     render(<Button variant="ghost">Ghost</Button>);
     const button = screen.getByRole('button');
-    expect(button).toHaveClass('btn-ghost');
+    expect(button).toHaveClass('hover:bg-muted');
   });
 
-  it('applies danger variant class', () => {
+  it('renders with danger variant', () => {
     render(<Button variant="danger">Danger</Button>);
     const button = screen.getByRole('button');
-    expect(button).toHaveClass('btn-danger');
+    expect(button).toHaveClass('bg-destructive', 'text-destructive-foreground');
   });
 
-  it('applies size classes', () => {
+  it('renders with different sizes', () => {
     const { rerender } = render(<Button size="sm">Small</Button>);
-    expect(screen.getByRole('button')).toHaveClass('btn-sm');
+    expect(screen.getByRole('button')).toHaveClass('h-8', 'px-3', 'text-xs');
 
     rerender(<Button size="lg">Large</Button>);
-    expect(screen.getByRole('button')).toHaveClass('btn-lg');
+    expect(screen.getByRole('button')).toHaveClass('h-10', 'px-6', 'text-base');
   });
 
   it('handles click events', async () => {
@@ -59,12 +61,13 @@ describe('Button', () => {
     render(<Button loading>Loading</Button>);
     const button = screen.getByRole('button');
     expect(button).toBeDisabled();
-    expect(button).toHaveClass('btn-loading');
   });
 
   it('shows spinner when loading', () => {
     render(<Button loading>Loading</Button>);
-    expect(screen.getByRole('button').querySelector('.btn-spinner')).toBeInTheDocument();
+    // Check for the SVG spinner
+    expect(screen.getByRole('button').querySelector('svg')).toBeInTheDocument();
+    expect(screen.getByRole('button').querySelector('.animate-spin')).toBeInTheDocument();
   });
 
   it('does not trigger click when disabled', async () => {

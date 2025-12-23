@@ -1,33 +1,68 @@
-import clsx from 'clsx';
+import * as React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '@/utils/cn';
 
-interface ProgressBarProps {
+const progressVariants = cva('', {
+  variants: {
+    variant: {
+      default: 'bg-primary',
+      success: 'bg-success',
+      warning: 'bg-warning',
+      error: 'bg-destructive',
+      accent: 'bg-accent',
+      info: 'bg-info',
+    },
+    size: {
+      sm: 'h-1',
+      md: 'h-2',
+      lg: 'h-3',
+    },
+  },
+  defaultVariants: {
+    variant: 'default',
+    size: 'md',
+  },
+});
+
+export interface ProgressBarProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof progressVariants> {
   value: number;
   max?: number;
-  variant?: 'default' | 'success' | 'warning' | 'error' | 'accent' | 'info';
-  size?: 'sm' | 'md' | 'lg';
   showLabel?: boolean;
 }
 
-export function ProgressBar({
-  value,
-  max = 100,
-  variant = 'default',
-  size = 'md',
-  showLabel = false
-}: ProgressBarProps) {
-  const percentage = Math.min(100, Math.max(0, (value / max) * 100));
+const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
+  ({ className, variant, size, value, max = 100, showLabel = false, ...props }, ref) => {
+    const percentage = Math.min(100, Math.max(0, (value / max) * 100));
 
-  return (
-    <div className={clsx('progress-bar', `progress-${size}`)}>
-      <div className="progress-track">
+    return (
+      <div className={cn('flex items-center gap-3', className)} ref={ref} {...props}>
         <div
-          className={clsx('progress-fill', `progress-${variant}`)}
-          style={{ width: `${percentage}%` }}
-        />
+          className={cn(
+            'relative w-full overflow-hidden rounded-full bg-muted',
+            size === 'sm' && 'h-1',
+            size === 'md' && 'h-2',
+            size === 'lg' && 'h-3'
+          )}
+        >
+          <div
+            className={cn(
+              'h-full transition-all duration-300 ease-out rounded-full',
+              progressVariants({ variant })
+            )}
+            style={{ width: `${percentage}%` }}
+          />
+        </div>
+        {showLabel && (
+          <span className="text-sm font-medium text-muted-foreground tabular-nums min-w-[3ch]">
+            {Math.round(percentage)}%
+          </span>
+        )}
       </div>
-      {showLabel && (
-        <span className="progress-label">{Math.round(percentage)}%</span>
-      )}
-    </div>
-  );
-}
+    );
+  }
+);
+ProgressBar.displayName = 'ProgressBar';
+
+export { ProgressBar, progressVariants };
