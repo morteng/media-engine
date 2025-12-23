@@ -497,4 +497,126 @@ export const checkTerminology = () =>
 export const getVoiceContext = (documentPath: string) =>
   api.get<VoiceContextResponse>(`/brand/voice/context/${encodeURIComponent(documentPath)}`).then(r => r.data);
 
+// ============== BRAND ASSETS API ==============
+
+export interface BrandAssetsResponse {
+  name: string;
+  version: string;
+  identity: {
+    taglines?: { primary?: string; short?: string; technical?: string };
+    legal?: { copyright?: string; license?: string };
+  };
+  colors: {
+    brand: { primary: string; secondary: string; accent: string; muted?: string };
+    semantic: { success: string; warning: string; error: string; info: string };
+    text?: { primary: string; secondary: string; muted: string };
+    background?: { primary: string; secondary: string };
+    dark?: Record<string, unknown>;
+  };
+  typography: {
+    fonts: {
+      heading: { family: string; fallback?: string; weights: number[]; source: string };
+      body: { family: string; fallback?: string; weights: number[]; source: string };
+      code: { family: string; fallback?: string; weights: number[]; source: string };
+    };
+    scale?: Record<string, number>;
+  };
+  logos: Record<string, { path: string; alt: string; exists: boolean; url: string }>;
+  spacing?: Record<string, unknown>;
+  borders?: Record<string, unknown>;
+  shadows?: Record<string, string>;
+}
+
+export interface BrandFile {
+  path: string;
+  type: string;
+  category: string;
+  size: number;
+  modified: string;
+  legacy?: boolean;
+}
+
+export interface BrandFilesResponse {
+  files: BrandFile[];
+  total: number;
+  categories: Record<string, number>;
+}
+
+export interface BrandFileContent {
+  path: string;
+  name: string;
+  type: string;
+  mime_type: string;
+  size: number;
+  modified: string;
+  content: string;
+  encoding: 'text' | 'base64';
+}
+
+export interface BrandNote {
+  id: string;
+  category: string;
+  target?: string;
+  text: string;
+  priority: string;
+  status: string;
+  created: string;
+  updated: string;
+}
+
+export interface BrandNotesResponse {
+  notes: BrandNote[];
+  categories: string[];
+}
+
+export interface BrandGuideResponse {
+  project: string;
+  generated: string;
+  identity: Record<string, unknown>;
+  visual_identity: Record<string, unknown>;
+  voice_guidelines: Record<string, unknown> | null;
+  notes: BrandNote[];
+}
+
+// Get comprehensive brand assets
+export const getBrandAssets = () =>
+  api.get<BrandAssetsResponse>('/brand/assets').then(r => r.data);
+
+// List all brand files
+export const getBrandFiles = () =>
+  api.get<BrandFilesResponse>('/brand/files').then(r => r.data);
+
+// Get specific brand file content
+export const getBrandFile = (path: string) =>
+  api.get<BrandFileContent>(`/brand/file/${encodeURIComponent(path)}`).then(r => r.data);
+
+// Get brand notes
+export const getBrandNotes = () =>
+  api.get<BrandNotesResponse>('/brand/notes').then(r => r.data);
+
+// Add brand note
+export const addBrandNote = (params: {
+  category: string;
+  text: string;
+  target?: string;
+  priority?: string;
+}) =>
+  api.post<{ status: string; note: BrandNote }>('/brand/notes', null, { params }).then(r => r.data);
+
+// Update brand note
+export const updateBrandNote = (noteId: string, params: {
+  text?: string;
+  status?: string;
+  priority?: string;
+}) =>
+  api.put<{ status: string; note: BrandNote }>(`/brand/notes/${noteId}`, null, { params }).then(r => r.data);
+
+// Delete brand note
+export const deleteBrandNote = (noteId: string) =>
+  api.delete<{ status: string; note_id: string }>(`/brand/notes/${noteId}`).then(r => r.data);
+
+// Get complete brand guide
+export const getBrandGuide = () =>
+  api.get<BrandGuideResponse>('/brand/guide').then(r => r.data);
+
 export default api;

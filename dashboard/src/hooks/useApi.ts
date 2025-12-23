@@ -320,3 +320,71 @@ export const useVoiceContext = (documentPath: string) =>
     queryFn: () => api.getVoiceContext(documentPath),
     enabled: !!documentPath,
   });
+
+// ============== BRAND ASSETS HOOKS ==============
+
+export const useBrandAssets = () =>
+  useQuery({
+    queryKey: ['brandAssets'] as const,
+    queryFn: api.getBrandAssets,
+    staleTime: 1000 * 60 * 5,
+  });
+
+export const useBrandFiles = () =>
+  useQuery({
+    queryKey: ['brandFiles'] as const,
+    queryFn: api.getBrandFiles,
+    staleTime: 1000 * 60 * 2,
+  });
+
+export const useBrandFile = (path: string) =>
+  useQuery({
+    queryKey: ['brandFile', path] as const,
+    queryFn: () => api.getBrandFile(path),
+    enabled: !!path,
+  });
+
+export const useBrandNotes = () =>
+  useQuery({
+    queryKey: ['brandNotes'] as const,
+    queryFn: api.getBrandNotes,
+    staleTime: 1000 * 60,
+  });
+
+export const useAddBrandNote = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: api.addBrandNote,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['brandNotes'] });
+    },
+  });
+};
+
+export const useUpdateBrandNote = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ noteId, ...params }: { noteId: string; text?: string; status?: string; priority?: string }) =>
+      api.updateBrandNote(noteId, params),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['brandNotes'] });
+    },
+  });
+};
+
+export const useDeleteBrandNote = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: api.deleteBrandNote,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['brandNotes'] });
+    },
+  });
+};
+
+export const useBrandGuide = () =>
+  useQuery({
+    queryKey: ['brandGuide'] as const,
+    queryFn: api.getBrandGuide,
+    staleTime: 1000 * 60 * 5,
+  });
