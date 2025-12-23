@@ -29,10 +29,13 @@ except ImportError:
     HAS_FASTAPI = False
     FastAPI = None
 
+import asyncio
+
 from ..config.user_config import add_recent_project
 from ..core.project import Project, find_project
 from ..settings import WEB
 from .routes import register_routes
+from .watcher import start_watcher, stop_watcher
 from .websocket import ConnectionManager
 
 
@@ -103,6 +106,22 @@ def create_app(project_path: Optional[Path] = None) -> "FastAPI":
 
     # Register all routes
     register_routes(app, get_project, manager, static_dir, set_project)
+
+    # File watcher for live updates
+    @app.on_event("startup")
+    async def startup_watcher():
+        """Start file watcher on server startup."""
+        try:
+            project = get_project()
+            loop = asyncio.get_event_loop()
+            start_watcher(project.root, manager, loop)
+        except Exception:
+            pass  # Watcher is optional
+
+    @app.on_event("shutdown")
+    async def shutdown_watcher():
+        """Stop file watcher on server shutdown."""
+        stop_watcher()
 
     return app
 

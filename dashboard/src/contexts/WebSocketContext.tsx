@@ -46,6 +46,40 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
         queryClient.invalidateQueries();
         break;
 
+      case 'file_change':
+        // File system change detected - invalidate based on refresh hints
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const refresh = (message as any).refresh as string[] | undefined;
+        if (refresh?.includes('all')) {
+          queryClient.invalidateQueries();
+        } else {
+          if (refresh?.includes('documents')) {
+            queryClient.invalidateQueries({ queryKey: ['documents'] });
+            queryClient.invalidateQueries({ queryKey: ['document'] });
+          }
+          if (refresh?.includes('translations')) {
+            queryClient.invalidateQueries({ queryKey: ['translations'] });
+          }
+          if (refresh?.includes('quality')) {
+            queryClient.invalidateQueries({ queryKey: ['quality'] });
+            queryClient.invalidateQueries({ queryKey: ['health'] });
+          }
+          if (refresh?.includes('project')) {
+            queryClient.invalidateQueries({ queryKey: ['project'] });
+            queryClient.invalidateQueries({ queryKey: ['status'] });
+          }
+          if (refresh?.includes('brand')) {
+            queryClient.invalidateQueries({ queryKey: ['brand'] });
+          }
+          if (refresh?.includes('freshness')) {
+            queryClient.invalidateQueries({ queryKey: ['freshness'] });
+          }
+          if (refresh?.includes('media')) {
+            queryClient.invalidateQueries({ queryKey: ['media'] });
+          }
+        }
+        break;
+
       case 'edit':
         // Could show a toast notification about remote edits
         break;
