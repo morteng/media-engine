@@ -82,6 +82,13 @@ python/media_engine/     # Main Python package (45+ modules, 200+ files)
 
 python/tests/            # Pytest test suite (19 test files)
 remotion/src/            # TypeScript/React motion graphics (13 components)
+dashboard/src/           # React dashboard (Vite + React 19 + DaisyUI)
+  components/graphs/     # Reagraph visualizations (6 components, 35 tests)
+  components/hierarchy/  # Hierarchy tree and flow components
+  components/ui/         # Reusable UI components (Button, Card, Badge, etc.)
+  pages/                 # Dashboard pages (Content, Quality, Build, etc.)
+  hooks/                 # Custom React hooks (useApi, useWebSocket, etc.)
+  contexts/              # React contexts (Settings, Sidebar)
 ```
 
 ## Code Conventions
@@ -671,6 +678,60 @@ from media_engine.web.incremental import IncrementalUpdater
 ```
 
 Cache stats endpoint: `GET /api/cache-stats`
+
+### Graph Visualizations
+
+The dashboard includes interactive WebGL graph visualizations using Reagraph:
+
+**Hierarchy Page** (`/content/hierarchy`):
+- **Tree View**: Collapsible document tree with sidebar
+- **Flow View**: SVG-based flow diagram
+- **Graph View**: Interactive WebGL force-directed graph
+
+**Quality Page** (`/quality/knowledge`):
+- Interactive knowledge graph visualization
+- Shows document relationships, orphan concepts, hub nodes
+
+**Graph Components** (`dashboard/src/components/graphs/`):
+- `GraphCanvas.tsx` - Main Reagraph wrapper with zoom/pan/layout controls
+- `GraphToolbar.tsx` - Toolbar with zoom, layout selection, 3D toggle
+- `GraphLegend.tsx` - Color legend for node/edge types
+- `graphTheme.ts` - Dark/light theme matching Electric Aurora design
+- `adapters.ts` - Convert API data to Reagraph format
+
+**Layout Options**:
+- Force-directed (default for multi-root graphs)
+- Circular
+- Hierarchical Tree (requires single root)
+- Radial
+- 3D mode toggle
+
+**Node Type Colors**:
+| Type | Dark Mode | Light Mode |
+|------|-----------|------------|
+| Document/Chapter | `#00d4ff` (cyan) | `#6366f1` (indigo) |
+| Concept | `#a855f7` (purple) | `#8b5cf6` (violet) |
+| Orphan | `#f59e0b` (warning) | `#f59e0b` |
+| Stale | `#ef4444` (error) | `#ef4444` |
+| Hub | `#22c55e` (success) | `#22c55e` |
+
+**Usage in React**:
+```tsx
+import { GraphCanvas, toReagraphFormat } from '@/components/graphs';
+
+// Convert API data to Reagraph format
+const { nodes, edges } = toReagraphFormat(apiData, isDark);
+
+// Render graph
+<GraphCanvas
+  nodes={nodes}
+  edges={edges}
+  layoutType="forceDirected2d"
+  onNodeClick={(node) => console.log(node.id)}
+  showToolbar={true}
+  showLegend={true}
+/>
+```
 
 ## Remotion (Motion Graphics)
 

@@ -545,6 +545,30 @@ Agent: "How readable is our Norwegian content?"
 → Returns LIX scores and difficulty assessments
 ```
 
+#### Document Hierarchy
+
+Manage document relationships, derivations, and staleness propagation.
+
+**Key Tools:**
+- `hierarchy_status()` - Get overview (total docs, roots, stale count)
+- `hierarchy_tree(root_path)` - ASCII tree visualization
+- `hierarchy_stale()` - Find stale documents and propagation chains
+- `hierarchy_impact(document_path)` - Analyze change impact
+- `hierarchy_anchors(validate)` - Manage consistency anchors
+- `hierarchy_coverage(languages)` - Documentation completeness analysis
+
+**Use Case:** Understand document relationships and change impact.
+
+```
+Agent: "What would be affected if I update the API docs?"
+→ hierarchy_impact("chapters/api.md", change_type="content")
+→ Returns affected documents, translations, derivatives
+
+Agent: "Show me stale documents"
+→ hierarchy_stale()
+→ Returns documents needing update with staleness reasons
+```
+
 ---
 
 ### 8. Webhook & Event Tools

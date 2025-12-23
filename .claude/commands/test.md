@@ -141,12 +141,13 @@ python/tests/
 └── ...
 ```
 
-### Dashboard Unit Tests (13 files)
+### Dashboard Unit Tests (16 files, 157+ tests)
 ```
 dashboard/src/
-├── components/**/*.test.tsx
-├── pages/*.test.tsx
-└── contexts/*.test.tsx
+├── components/graphs/*.test.ts    # Graph visualization (35 tests)
+├── components/ui/*.test.tsx       # UI components
+├── pages/*.test.tsx               # Page components
+└── contexts/*.test.tsx            # Context tests
 ```
 
 ### E2E Tests (5 files, 44 tests)
