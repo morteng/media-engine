@@ -147,6 +147,7 @@ class MediaEngineMCPServer:
             cache,
             claude,
             context,
+            dependencies,
             documents,
             hierarchy,
             notes,
@@ -175,6 +176,7 @@ class MediaEngineMCPServer:
         provenance.register_provenance_tools(self.mcp, self)
         notes.register_notes_tools(self.mcp, self)
         hierarchy.register_hierarchy_tools(self.mcp, self)  # Document hierarchy & info flow
+        dependencies.register_dependency_tools(self.mcp, self)  # Hash-based dependency tracking
 
         # Enhanced AI agent tools
         context.register_context_tools(self.mcp, self)

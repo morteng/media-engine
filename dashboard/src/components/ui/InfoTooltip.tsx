@@ -36,7 +36,6 @@ export function InfoTooltip({
 
     let top = 0;
     let left = 0;
-    let actualPosition = position;
 
     // Calculate initial position
     switch (position) {
@@ -64,16 +63,12 @@ export function InfoTooltip({
 
     // Flip if necessary
     if (position === 'top' && top < 0) {
-      actualPosition = 'bottom';
       top = triggerRect.bottom + padding;
     } else if (position === 'bottom' && top + tooltipHeight > viewportHeight) {
-      actualPosition = 'top';
       top = triggerRect.top - tooltipHeight - padding;
     } else if (position === 'left' && left < 0) {
-      actualPosition = 'right';
       left = triggerRect.right + padding;
     } else if (position === 'right' && left + tooltipWidth > viewportWidth) {
-      actualPosition = 'left';
       left = triggerRect.left - tooltipWidth - padding;
     }
 
@@ -87,7 +82,6 @@ export function InfoTooltip({
       top: `${top}px`,
       left: `${left}px`,
       width: `${tooltipWidth}px`,
-      ['--tooltip-position' as string]: actualPosition,
     });
   }, [position]);
 
@@ -105,21 +99,27 @@ export function InfoTooltip({
 
   const tooltipContent = isVisible ? (
     <div
-      className="info-tooltip-portal"
+      className="z-[9999] p-3 rounded-lg shadow-lg bg-base-300 text-base-content border border-base-content/10"
       style={tooltipStyle}
       role="tooltip"
     >
-      {title && <strong className="tooltip-title">{title}</strong>}
-      <span className="tooltip-text">{content}</span>
+      {title && (
+        <div className="font-semibold text-sm mb-1 text-base-content">
+          {title}
+        </div>
+      )}
+      <div className="text-xs text-base-content/80 leading-relaxed">
+        {content}
+      </div>
     </div>
   ) : null;
 
   return (
-    <span className="info-tooltip-wrapper">
+    <span className="inline-flex items-center ml-1">
       <button
         ref={triggerRef}
         type="button"
-        className={clsx('info-tooltip-trigger', `info-tooltip-${size}`)}
+        className="inline-flex items-center justify-center text-base-content/50 hover:text-info transition-colors cursor-help"
         onMouseEnter={() => setIsVisible(true)}
         onMouseLeave={() => setIsVisible(false)}
         onFocus={() => setIsVisible(true)}
@@ -266,7 +266,7 @@ interface MetricLabelProps {
 export function MetricLabel({ label, metric, className }: MetricLabelProps) {
   const explanation = METRIC_EXPLANATIONS[metric];
   return (
-    <span className={clsx('metric-label-with-info', className)}>
+    <span className={clsx('inline-flex items-center gap-1', className)}>
       {label}
       <InfoTooltip
         title={explanation.title}
@@ -317,7 +317,7 @@ export function NavTooltip({ label, children, show = true }: NavTooltipProps) {
   // Only render tooltip when we have a valid position
   const tooltipContent = isHovered && show && position ? (
     <div
-      className="nav-tooltip-portal"
+      className="z-[9999] px-3 py-1.5 rounded-md shadow-lg bg-base-300 text-base-content text-sm font-medium whitespace-nowrap border border-base-content/10"
       style={{
         position: 'fixed',
         top: `${position.top}px`,
@@ -333,7 +333,7 @@ export function NavTooltip({ label, children, show = true }: NavTooltipProps) {
   return (
     <div
       ref={triggerRef}
-      className="nav-tooltip-wrapper"
+      className="relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

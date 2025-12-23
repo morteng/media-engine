@@ -31,6 +31,7 @@ from .commands import (
     cmd_consistency,
     cmd_dashboard,
     cmd_demos,
+    cmd_deps,
     cmd_duplicates,
     cmd_freshness,
     cmd_gaps,
@@ -223,6 +224,27 @@ def main():
 
     trans_sync = trans_subparsers.add_parser("sync", help="Sync translation hashes")
     trans_sync.add_argument("--dry-run", action="store_true", help="Show what would be synced")
+
+    # deps (dependency hash tracking)
+    deps_parser = subparsers.add_parser("deps", help="Dependency tracking with hash detection")
+    deps_subparsers = deps_parser.add_subparsers(dest="deps_command")
+
+    deps_status = deps_subparsers.add_parser("status", help="Show dependency status")
+    deps_status.add_argument("--json", action="store_true", help="Output as JSON")
+
+    deps_stale = deps_subparsers.add_parser("stale", help="Show stale dependencies")
+    deps_stale.add_argument("--json", action="store_true", help="Output as JSON")
+
+    deps_sync = deps_subparsers.add_parser("sync", help="Sync dependency hashes")
+    deps_sync.add_argument("--refresh", action="store_true", help="Refresh graph first")
+    deps_sync.add_argument("--dry-run", action="store_true", help="Show what would be synced")
+
+    deps_check = deps_subparsers.add_parser("check", help="Check specific document")
+    deps_check.add_argument("document", help="Path to document to check")
+    deps_check.add_argument("--json", action="store_true", help="Output as JSON")
+
+    deps_refresh = deps_subparsers.add_parser("refresh", help="Refresh dependency graph")
+    deps_refresh.add_argument("--no-sync", action="store_true", help="Don't sync hashes after")
 
     # dashboard
     dash_parser = subparsers.add_parser("dashboard", help="Launch web dashboard")
@@ -610,6 +632,7 @@ def main():
         "pack": cmd_pack,
         "index": cmd_index,
         "translation": cmd_translation,
+        "deps": cmd_deps,
         "dashboard": cmd_dashboard,
         "provenance": cmd_provenance,
         "integrity": cmd_integrity,

@@ -328,7 +328,20 @@ class DependencyGraph:
         return "\n".join(lines)
 
 
+from .hashes import (
+    DependencyHashInfo,
+    DependencyHashTracker,
+    DocumentDependencyStatus,
+    compute_document_hash,
+    compute_file_hash,
+)
+
 __all__ = [
     "DependencyInfo",
     "DependencyGraph",
+    "DependencyHashInfo",
+    "DependencyHashTracker",
+    "DocumentDependencyStatus",
+    "compute_document_hash",
+    "compute_file_hash",
 ]

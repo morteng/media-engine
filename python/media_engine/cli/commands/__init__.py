@@ -32,6 +32,7 @@ from .release import cmd_release
 from .search import cmd_index, cmd_search
 from .status import cmd_status
 from .translation import cmd_translation
+from .deps import cmd_deps
 from .validate import cmd_validate
 
 __all__ = [
@@ -49,6 +50,7 @@ __all__ = [
     "cmd_validate",
     "cmd_pack",
     "cmd_translation",
+    "cmd_deps",
     "cmd_init",
     "cmd_dashboard",
     "cmd_provenance",

@@ -1,0 +1,314 @@
+{
+  "hashes": {
+    "/Users/Morten/media-engine/demo/content/en/chapters/02_content_management.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/chapters/01_introduction": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.357665"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/03_video_production.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/chapters/02_content_management": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.358156"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/04_quality_checks.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/chapters/02_content_management": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.359522"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/05_builders.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/chapters/02_content_management": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.359938"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/06_diagrams.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/chapters/05_builders": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.360337"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/07_search_indexing.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/chapters/02_content_management": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.360740"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/08_validation.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/chapters/02_content_management": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.361152"
+      },
+      "/Users/Morten/media-engine/demo/content/en/chapters/chapters/04_quality_checks": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.361821"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/09_publishing.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/chapters/05_builders": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.363282"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/10_packs.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/chapters/09_publishing": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.363850"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/11_assets.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/chapters/05_builders": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.365479"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/12_cli_reference.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/chapters/01_introduction": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.367002"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/13_security.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/chapters/04_quality_checks": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.367578"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/14_integrations.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/chapters/01_introduction": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.368041"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/15_analysis.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/chapters/04_quality_checks": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.369610"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/17_capybara_facts.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/research/capybara_research": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.370296"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/no/chapters/01_introduksjon.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/01_introduction.md": {
+        "type": "translation",
+        "hash": "1e2e6d53afdf6e17",
+        "recorded_at": "2025-12-23T21:13:10.375683"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/no/chapters/02_innholdsstyring.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/02_content_management.md": {
+        "type": "translation",
+        "hash": "478bc57f0eee40a8",
+        "recorded_at": "2025-12-23T21:13:10.378341"
+      },
+      "/Users/Morten/media-engine/demo/content/no/chapters/chapters/01_introduksjon": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.380194"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/no/chapters/03_videoproduksjon.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/03_video_production.md": {
+        "type": "translation",
+        "hash": "81dd41a16ae8b361",
+        "recorded_at": "2025-12-23T21:13:10.381991"
+      },
+      "/Users/Morten/media-engine/demo/content/no/chapters/chapters/02_innholdsstyring": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.383420"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/no/chapters/04_kvalitetssjekker.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/04_quality_checks.md": {
+        "type": "translation",
+        "hash": "6b2acb90b01fd85e",
+        "recorded_at": "2025-12-23T21:13:10.385370"
+      },
+      "/Users/Morten/media-engine/demo/content/no/chapters/chapters/02_innholdsstyring": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.386814"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/no/chapters/05_byggere.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/05_builders.md": {
+        "type": "translation",
+        "hash": "93b5f2abb1241061",
+        "recorded_at": "2025-12-23T21:13:10.388760"
+      },
+      "/Users/Morten/media-engine/demo/content/no/chapters/chapters/02_innholdsstyring": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.390114"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/no/chapters/06_diagrammer.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/06_diagrams.md": {
+        "type": "translation",
+        "hash": "00388163f9211742",
+        "recorded_at": "2025-12-23T21:13:10.392115"
+      },
+      "/Users/Morten/media-engine/demo/content/no/chapters/chapters/05_byggere": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.393443"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/no/chapters/07_sokindeksering.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/07_search_indexing.md": {
+        "type": "translation",
+        "hash": "07abcad283d1114e",
+        "recorded_at": "2025-12-23T21:13:10.395157"
+      },
+      "/Users/Morten/media-engine/demo/content/no/chapters/chapters/02_innholdsstyring": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.396292"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/no/chapters/08_validering.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/08_validation.md": {
+        "type": "translation",
+        "hash": "c43de03e9f15751f",
+        "recorded_at": "2025-12-23T21:13:10.398263"
+      },
+      "/Users/Morten/media-engine/demo/content/no/chapters/chapters/02_innholdsstyring": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.399696"
+      },
+      "/Users/Morten/media-engine/demo/content/no/chapters/chapters/04_kvalitetssjekker": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.401484"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/no/chapters/09_publisering.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/09_publishing.md": {
+        "type": "translation",
+        "hash": "a037318f08851c0d",
+        "recorded_at": "2025-12-23T21:13:10.403479"
+      },
+      "/Users/Morten/media-engine/demo/content/no/chapters/chapters/05_byggere": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.404435"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/no/chapters/10_pakker.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/10_packs.md": {
+        "type": "translation",
+        "hash": "d984193534d4a251",
+        "recorded_at": "2025-12-23T21:13:10.406118"
+      },
+      "/Users/Morten/media-engine/demo/content/no/chapters/chapters/09_publisering": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.407271"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/no/chapters/11_ressurser.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/11_assets.md": {
+        "type": "translation",
+        "hash": "be98807030fd0945",
+        "recorded_at": "2025-12-23T21:13:10.411248"
+      },
+      "/Users/Morten/media-engine/demo/content/no/chapters/chapters/05_byggere": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.413329"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/no/chapters/12_cli_referanse.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/12_cli_reference.md": {
+        "type": "translation",
+        "hash": "655503e732b072c5",
+        "recorded_at": "2025-12-23T21:13:10.415360"
+      },
+      "/Users/Morten/media-engine/demo/content/no/chapters/chapters/01_introduksjon": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.416502"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/no/chapters/13_sikkerhet.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/13_security.md": {
+        "type": "translation",
+        "hash": "9db0b03da8107a8c",
+        "recorded_at": "2025-12-23T21:13:10.418006"
+      },
+      "/Users/Morten/media-engine/demo/content/no/chapters/chapters/04_kvalitetssjekker": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.419332"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/no/chapters/14_integrasjoner.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/14_integrations.md": {
+        "type": "translation",
+        "hash": "11af4172562869c6",
+        "recorded_at": "2025-12-23T21:13:10.421740"
+      },
+      "/Users/Morten/media-engine/demo/content/no/chapters/chapters/01_introduksjon": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.424640"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/no/chapters/15_analyse.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/15_analysis.md": {
+        "type": "translation",
+        "hash": "6224ebc28194f87c",
+        "recorded_at": "2025-12-23T21:13:10.425906"
+      },
+      "/Users/Morten/media-engine/demo/content/no/chapters/chapters/04_kvalitetssjekker": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.427228"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/no/chapters/16_github_utstillingsvindu.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/16_github_showcase.md": {
+        "type": "translation",
+        "hash": "e550d47e06c988c1",
+        "recorded_at": "2025-12-23T21:13:10.429322"
+      }
+    },
+    "/Users/Morten/media-engine/demo/content/no/chapters/17_capybara_fakta.md": {
+      "/Users/Morten/media-engine/demo/content/en/chapters/17_capybara_facts.md": {
+        "type": "translation",
+        "hash": "3586d6c2f496fc73",
+        "recorded_at": "2025-12-23T21:13:10.430741"
+      },
+      "/Users/Morten/media-engine/demo/content/no/chapters/research/capybara_research": {
+        "type": "explicit",
+        "hash": "",
+        "recorded_at": "2025-12-23T21:13:10.432368"
+      }
+    }
+  },
+  "last_updated": "2025-12-23T21:13:10.432438"
+}

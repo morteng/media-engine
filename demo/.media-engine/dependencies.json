@@ -50,18 +50,6 @@
     ],
     "/Users/Morten/media-engine/demo/content/en/chapters/08_validation.md": [
       {
-        "target": "/Users/Morten/media-engine/demo/content/en/chapters/path/to/chapter.md",
-        "type": "reference",
-        "line": null,
-        "context": "Link: text"
-      },
-      {
-        "target": "/Users/Morten/media-engine/demo/content/en/chapters/path/to/image.png",
-        "type": "asset",
-        "line": null,
-        "context": "Image: alt"
-      },
-      {
         "target": "/Users/Morten/media-engine/demo/content/en/chapters/chapters/02_content_management",
         "type": "explicit",
         "line": null,
@@ -91,12 +79,6 @@
       }
     ],
     "/Users/Morten/media-engine/demo/content/en/chapters/11_assets.md": [
-      {
-        "target": "/Users/Morten/media-engine/demo/content/en/chapters/assets/images/diagram.png",
-        "type": "asset",
-        "line": null,
-        "context": "Image: Architecture Diagram"
-      },
       {
         "target": "/Users/Morten/media-engine/demo/content/en/chapters/chapters/05_builders",
         "type": "explicit",
@@ -131,6 +113,14 @@
     "/Users/Morten/media-engine/demo/content/en/chapters/15_analysis.md": [
       {
         "target": "/Users/Morten/media-engine/demo/content/en/chapters/chapters/04_quality_checks",
+        "type": "explicit",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/en/chapters/17_capybara_facts.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/research/capybara_research",
         "type": "explicit",
         "line": null,
         "context": null
@@ -229,18 +219,6 @@
       }
     ],
     "/Users/Morten/media-engine/demo/content/no/chapters/08_validering.md": [
-      {
-        "target": "/Users/Morten/media-engine/demo/content/no/chapters/path/to/chapter.md",
-        "type": "reference",
-        "line": null,
-        "context": "Link: tekst"
-      },
-      {
-        "target": "/Users/Morten/media-engine/demo/content/no/chapters/path/to/image.png",
-        "type": "asset",
-        "line": null,
-        "context": "Image: alt"
-      },
       {
         "target": "/Users/Morten/media-engine/demo/content/en/chapters/08_validation.md",
         "type": "translation",
@@ -362,6 +340,20 @@
       {
         "target": "/Users/Morten/media-engine/demo/content/en/chapters/16_github_showcase.md",
         "type": "translation",
+        "line": null,
+        "context": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/no/chapters/17_capybara_fakta.md": [
+      {
+        "target": "/Users/Morten/media-engine/demo/content/en/chapters/17_capybara_facts.md",
+        "type": "translation",
+        "line": null,
+        "context": null
+      },
+      {
+        "target": "/Users/Morten/media-engine/demo/content/no/chapters/research/capybara_research",
+        "type": "explicit",
         "line": null,
         "context": null
       }
