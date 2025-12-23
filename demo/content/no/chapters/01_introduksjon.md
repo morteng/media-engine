@@ -6,7 +6,7 @@ last_modified: "2025-12-16"
 freshness_days: 60
 language: "no"
 source_document: "en/chapters/01_introduction.md"
-source_version: "1.0.0"
+source_content_hash: "1e2e6d53afdf6e17"
 tags:
   - introduksjon
   - oversikt

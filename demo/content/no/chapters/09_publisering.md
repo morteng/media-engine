@@ -6,7 +6,7 @@ last_modified: "2025-12-16"
 freshness_days: 60
 language: "no"
 source_document: "en/chapters/09_publishing.md"
-source_version: "1.0.0"
+source_content_hash: "a037318f08851c0d"
 depends_on:
   - "chapters/05_byggere"
 tags:

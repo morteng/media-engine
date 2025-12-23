@@ -6,7 +6,7 @@ last_modified: "2025-12-20"
 freshness_days: 90
 language: "no"
 source_document: "en/chapters/16_github_showcase.md"
-source_version: "1.0.0"
+source_content_hash: "e550d47e06c988c1"
 tags:
   - utstillingsvindu
   - video

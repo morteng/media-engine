@@ -6,7 +6,7 @@ last_modified: "2025-12-16"
 freshness_days: 60
 language: "no"
 source_document: "en/chapters/06_diagrams.md"
-source_version: "1.0.0"
+source_content_hash: "00388163f9211742"
 depends_on:
   - "chapters/05_byggere"
 tags:

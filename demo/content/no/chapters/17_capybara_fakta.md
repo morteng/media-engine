@@ -6,7 +6,7 @@ last_modified: "2025-12-20"
 freshness_days: 180
 language: "no"
 source_document: "en/chapters/17_capybara_facts.md"
-source_version: "1.0.0"
+source_content_hash: "3586d6c2f496fc73"
 depends_on:
   - "research/capybara_research"
 tags:

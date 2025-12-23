@@ -6,7 +6,7 @@ last_modified: "2025-12-16"
 freshness_days: 60
 language: "no"
 source_document: "en/chapters/12_cli_reference.md"
-source_version: "1.0.0"
+source_content_hash: "655503e732b072c5"
 depends_on:
   - "chapters/01_introduksjon"
 tags:

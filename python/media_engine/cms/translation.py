@@ -4,16 +4,12 @@ Translation tracking for multilingual document management.
 Tracks source documents and their translations, detecting when translations
 become outdated due to source document updates.
 
-Supports two tracking modes:
-1. **Hash-based** (preferred): Uses content hash for automatic change detection
-2. **Version-based** (fallback): Uses semantic version comparison
-
-Hash-based tracking is automatic - any content change is detected.
-Version-based requires manual version bumps in source documents.
+Uses content hash comparison for automatic change detection - any source
+content change is automatically detected without manual version bumps.
 """
 
 import hashlib
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
@@ -24,9 +20,8 @@ def compute_content_hash(content: str) -> str:
     """
     Compute a stable hash of document content for change detection.
 
-    Normalizes whitespace and ignores frontmatter to focus on actual content changes.
+    Normalizes whitespace to focus on actual content changes.
     """
-    # Normalize: strip, collapse whitespace, lowercase for stability
     normalized = " ".join(content.split()).strip()
     return hashlib.sha256(normalized.encode()).hexdigest()[:16]
 
@@ -37,46 +32,35 @@ class TranslationStatus:
 
     source_path: Path
     translation_path: Path
-    source_version: str
-    translated_version: str  # version of source when translation was made
-    is_outdated: bool
     source_language: str
     target_language: str
     source_title: str
     translation_title: str
 
-    # Hash-based tracking fields
-    source_content_hash: str = ""  # Current hash of source content
-    translated_from_hash: str = ""  # Hash of source when translation was made
-    tracking_mode: str = "version"  # "hash" or "version"
-    content_changed: bool = False  # True if content hash differs
+    # Hash-based tracking
+    source_content_hash: str  # Current hash of source content
+    translated_from_hash: str  # Hash of source when translation was made
+    is_outdated: bool  # True if hashes differ
 
-    # Additional context
+    # Metadata
     source_last_modified: str = ""
     translation_last_modified: str = ""
 
     @property
     def status_label(self) -> str:
         """Human-readable status label."""
-        if self.is_outdated:
-            if self.tracking_mode == "hash" and self.content_changed:
-                return "outdated (content changed)"
-            return "outdated"
-        return "current"
-
-    @property
-    def needs_review(self) -> bool:
-        """Whether this translation needs human review."""
-        return self.is_outdated or self.content_changed
+        return "outdated" if self.is_outdated else "current"
 
 
 class TranslationTracker:
     """
     Tracks translations and their sync status with source documents.
 
-    Uses frontmatter fields:
+    Uses content hash comparison for automatic change detection.
+
+    Required frontmatter fields in translations:
     - source_document: relative path to source (e.g., "en/chapters/01_intro.md")
-    - source_version: version of source when translation was made
+    - source_content_hash: hash of source content when translation was made
     - language: target language code
     """
 
@@ -153,8 +137,7 @@ class TranslationTracker:
         """
         Get the translation status for a single document.
 
-        Uses hash-based tracking if source_content_hash is present in frontmatter,
-        otherwise falls back to version-based comparison.
+        Compares content hashes to detect if source has changed.
 
         Args:
             translation: Document to check
@@ -175,25 +158,12 @@ class TranslationTracker:
         except Exception:
             return None
 
-        source_version = source_doc.version
-        translated_version = translation.metadata.get("source_version", "0.0.0")
-
         # Compute current source content hash
         current_source_hash = compute_content_hash(source_doc.content)
-
-        # Check for hash-based tracking
         translated_from_hash = translation.metadata.get("source_content_hash", "")
-        tracking_mode = "hash" if translated_from_hash else "version"
 
-        # Determine if outdated
-        if tracking_mode == "hash":
-            # Hash-based: compare content hashes
-            content_changed = translated_from_hash != current_source_hash
-            is_outdated = content_changed
-        else:
-            # Version-based: compare semantic versions
-            content_changed = False
-            is_outdated = self._compare_versions(source_version, translated_version) > 0
+        # Outdated if hashes differ (or no hash recorded yet)
+        is_outdated = translated_from_hash != current_source_hash
 
         # Extract language codes
         source_lang = self._extract_language(source_path)
@@ -208,17 +178,13 @@ class TranslationTracker:
         return TranslationStatus(
             source_path=source_path,
             translation_path=translation.path,
-            source_version=source_version,
-            translated_version=translated_version,
-            is_outdated=is_outdated,
             source_language=source_lang,
             target_language=target_lang,
             source_title=source_doc.title,
             translation_title=translation.title,
             source_content_hash=current_source_hash,
             translated_from_hash=translated_from_hash,
-            tracking_mode=tracking_mode,
-            content_changed=content_changed,
+            is_outdated=is_outdated,
             source_last_modified=source_last_mod,
             translation_last_modified=trans_last_mod,
         )
@@ -232,33 +198,6 @@ class TranslationTracker:
             return rel_path.parts[0]
         except (ValueError, IndexError):
             return "unknown"
-
-    def _compare_versions(self, v1: str, v2: str) -> int:
-        """
-        Compare two version strings.
-
-        Returns:
-            > 0 if v1 > v2, < 0 if v1 < v2, 0 if equal
-        """
-
-        def parse_version(v: str) -> tuple[int, int, int]:
-            parts = v.split(".")
-            try:
-                major = int(parts[0]) if len(parts) > 0 else 0
-                minor = int(parts[1]) if len(parts) > 1 else 0
-                patch = int(parts[2]) if len(parts) > 2 else 0
-                return (major, minor, patch)
-            except ValueError:
-                return (0, 0, 0)
-
-        p1 = parse_version(v1)
-        p2 = parse_version(v2)
-
-        if p1 > p2:
-            return 1
-        elif p1 < p2:
-            return -1
-        return 0
 
     def get_outdated_translations(self) -> list[TranslationStatus]:
         """
@@ -336,19 +275,18 @@ class TranslationTracker:
 
         return missing
 
-    def mark_synced(self, translation: Document, use_hash: bool = True) -> dict:
+    def mark_synced(self, translation: Document) -> dict:
         """
-        Mark a translation as synced with current source version.
+        Mark a translation as synced with current source content.
 
-        Updates both source_version and source_content_hash in the
-        translation's frontmatter for comprehensive tracking.
+        Updates the source_content_hash in the translation's frontmatter
+        to match the current source document content.
 
         Args:
             translation: Translation document to update
-            use_hash: Whether to also record content hash (default: True)
 
         Returns:
-            Dict with sync details including old/new versions and hashes
+            Dict with sync details including old/new hashes
         """
         source_ref = translation.metadata.get("source_document")
         if not source_ref:
@@ -361,19 +299,12 @@ class TranslationTracker:
         try:
             source_doc = Document.load(source_path)
 
-            # Capture old values
-            old_version = translation.metadata.get("source_version", "")
+            # Capture old hash
             old_hash = translation.metadata.get("source_content_hash", "")
 
-            # Update version
-            translation.metadata["source_version"] = source_doc.version
-
-            # Update content hash for automatic tracking
-            if use_hash:
-                content_hash = compute_content_hash(source_doc.content)
-                translation.metadata["source_content_hash"] = content_hash
-            else:
-                content_hash = ""
+            # Compute and save new hash
+            new_hash = compute_content_hash(source_doc.content)
+            translation.metadata["source_content_hash"] = new_hash
 
             translation.save()
 
@@ -381,11 +312,8 @@ class TranslationTracker:
                 "status": "synced",
                 "source": str(source_path),
                 "translation": str(translation.path),
-                "old_version": old_version,
-                "new_version": source_doc.version,
                 "old_hash": old_hash,
-                "new_hash": content_hash,
-                "tracking_mode": "hash" if use_hash else "version",
+                "new_hash": new_hash,
             }
         except Exception as e:
             return {"error": str(e)}

@@ -6,7 +6,7 @@ last_modified: "2025-12-16"
 freshness_days: 60
 language: "no"
 source_document: "en/chapters/03_video_production.md"
-source_version: "1.0.0"
+source_content_hash: "81dd41a16ae8b361"
 depends_on:
   - "chapters/02_innholdsstyring"
 tags:

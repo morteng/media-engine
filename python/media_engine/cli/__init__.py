@@ -221,6 +221,9 @@ def main():
     trans_missing.add_argument("--lang", help="Target language (default: no)")
     trans_missing.add_argument("--json", action="store_true", help="Output as JSON")
 
+    trans_sync = trans_subparsers.add_parser("sync", help="Sync translation hashes")
+    trans_sync.add_argument("--dry-run", action="store_true", help="Show what would be synced")
+
     # dashboard
     dash_parser = subparsers.add_parser("dashboard", help="Launch web dashboard")
     dash_parser.add_argument("--host", default="127.0.0.1", help="Host to bind to")

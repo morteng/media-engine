@@ -6,7 +6,7 @@ last_modified: "2025-12-16"
 freshness_days: 60
 language: "no"
 source_document: "en/chapters/15_analysis.md"
-source_version: "1.0.0"
+source_content_hash: "6224ebc28194f87c"
 depends_on:
   - "chapters/04_kvalitetssjekker"
 tags:

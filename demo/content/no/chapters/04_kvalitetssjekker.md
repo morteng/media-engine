@@ -6,7 +6,7 @@ last_modified: "2025-12-16"
 freshness_days: 60
 language: "no"
 source_document: "en/chapters/04_quality_checks.md"
-source_version: "1.0.0"
+source_content_hash: "6b2acb90b01fd85e"
 depends_on:
   - "chapters/02_innholdsstyring"
 tags:

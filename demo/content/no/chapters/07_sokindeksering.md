@@ -6,7 +6,7 @@ last_modified: "2025-12-16"
 freshness_days: 60
 language: "no"
 source_document: "en/chapters/07_search_indexing.md"
-source_version: "1.0.0"
+source_content_hash: "07abcad283d1114e"
 depends_on:
   - "chapters/02_innholdsstyring"
 tags:

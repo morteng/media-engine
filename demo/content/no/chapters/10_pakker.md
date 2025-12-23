@@ -6,7 +6,7 @@ last_modified: "2025-12-16"
 freshness_days: 60
 language: "no"
 source_document: "en/chapters/10_packs.md"
-source_version: "1.0.0"
+source_content_hash: "d984193534d4a251"
 depends_on:
   - "chapters/09_publisering"
 tags:
