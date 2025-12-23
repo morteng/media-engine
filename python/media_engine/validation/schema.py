@@ -211,6 +211,70 @@ DEFAULT_DOCUMENT_SCHEMA = {
             "type": "array",
             "items": {"type": "string"},
         },
+        # Hierarchy fields
+        "parent_document": {"type": "string"},
+        "sequence_order": {"type": "integer", "minimum": 0},
+        "hierarchy_level": {"type": "integer", "minimum": 0},
+        "doc_type": {
+            "type": "string",
+            "enum": [
+                "strategy",
+                "research",
+                "requirements",
+                "architecture",
+                "implementation",
+                "operations",
+                "chapter",
+                "presentation",
+                "video",
+                "diagram",
+                "data",
+                "reference",
+            ],
+        },
+        "lifecycle": {
+            "type": "string",
+            "enum": ["living", "snapshot", "deprecated", "archived"],
+        },
+        "derived_from": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string"},
+                    "version": {"type": "string"},
+                    "relationship": {
+                        "type": "string",
+                        "enum": [
+                            "implements",
+                            "summarizes",
+                            "extends",
+                            "translates",
+                            "adapts",
+                            "references",
+                        ],
+                    },
+                },
+            },
+        },
+        "owner": {"type": "string"},
+        "approvers": {
+            "type": "array",
+            "items": {"type": "string"},
+        },
+        "anchors": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "object",
+                "properties": {
+                    "value": {},
+                    "type": {
+                        "type": "string",
+                        "enum": ["string", "number", "date", "url"],
+                    },
+                },
+            },
+        },
     },
 }
 

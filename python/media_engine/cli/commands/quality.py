@@ -22,7 +22,27 @@ def cmd_quality(args):
 
     from ...quality import run_quality_checks
 
-    report = run_quality_checks(project, console_output=True)
+    # Determine if hierarchy checks should be included
+    include_hierarchy = True
+    if hasattr(args, "no_hierarchy") and args.no_hierarchy:
+        include_hierarchy = False
+
+    # Get type filter if specified
+    type_filter = getattr(args, "type", None)
+
+    report = run_quality_checks(
+        project, console_output=not type_filter, include_hierarchy=include_hierarchy
+    )
+
+    # Filter issues by type if specified
+    if type_filter:
+        filtered_issues = [i for i in report.issues if type_filter in i.type]
+        # Update report with filtered issues
+        report.issues = filtered_issues
+        # Print filtered report
+        from ...quality.checks import print_quality_report
+
+        print_quality_report(report)
 
     if args.json:
         import json

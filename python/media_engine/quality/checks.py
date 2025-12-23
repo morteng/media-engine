@@ -6,12 +6,14 @@ Checks content for common issues:
 - Terminology consistency against glossary
 - Norwegian encoding issues
 - Empty sections
+- Hierarchy structure issues
+- Voice/tone consistency against brand profile
 """
 
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import yaml
 from rich import box
@@ -19,7 +21,9 @@ from rich.console import Console
 from rich.table import Table
 
 if TYPE_CHECKING:
+    from ..brand.voice import VoiceProfile
     from ..core.project import Project
+    from ..hierarchy import HierarchyGraph
 
 console = Console()
 
@@ -341,9 +345,188 @@ def check_empty_sections(
     return issues
 
 
+def check_hierarchy(
+    project: "Project",
+    include_staleness: bool = True,
+) -> List[QualityIssue]:
+    """
+    Check hierarchy structure for issues.
+
+    Args:
+        project: Project to check
+        include_staleness: Include staleness checks
+
+    Returns:
+        List of hierarchy-related quality issues
+    """
+    from ..hierarchy import HierarchyGraph, HierarchyValidator, StalenessChecker
+    from ..hierarchy.anchors import AnchorRegistry
+
+    issues: List[QualityIssue] = []
+
+    try:
+        graph = HierarchyGraph(project)
+    except Exception:
+        return issues
+
+    # Run hierarchy validation
+    validator = HierarchyValidator(graph)
+    result = validator.validate_all()
+
+    # Map hierarchy errors to quality issues
+    # Errors that should block publishing
+    CRITICAL_TYPES = {
+        "circular_reference",
+        "missing_parent",
+        "invalid_derivation",
+    }
+
+    for error in result.errors:
+        severity = "error" if error.error_type in CRITICAL_TYPES else "warning"
+        issues.append(
+            QualityIssue(
+                type=f"hierarchy_{error.error_type}",
+                severity=severity,
+                file_path=error.document,
+                line=0,  # Hierarchy issues are document-level
+                message=error.message,
+                context="",
+            )
+        )
+
+    for warning in result.warnings:
+        issues.append(
+            QualityIssue(
+                type=f"hierarchy_{warning.error_type}",
+                severity="warning",
+                file_path=warning.document,
+                line=0,
+                message=warning.message,
+                context="",
+            )
+        )
+
+    # Check staleness
+    if include_staleness:
+        checker = StalenessChecker(graph)
+        staleness_report = checker.check_all()
+
+        for stale_info in staleness_report.stale_documents:
+            if stale_info.stale_reason:
+                sources = ", ".join(str(s.name) for s in stale_info.stale_sources[:3])
+                message = f"Document is stale: {stale_info.stale_reason.value}"
+                if sources:
+                    message += f" (sources: {sources})"
+
+                issues.append(
+                    QualityIssue(
+                        type="hierarchy_stale",
+                        severity="warning",
+                        file_path=stale_info.document,
+                        line=0,
+                        message=message,
+                        context="",
+                    )
+                )
+
+    # Check anchor references
+    anchor_reg = AnchorRegistry(graph.registry)
+    anchor_reg.build()
+    anchor_result = anchor_reg.validate_references()
+
+    if not anchor_result.valid:
+        for ref_doc, anchor_name, source_doc in anchor_result.missing_anchors:
+            issues.append(
+                QualityIssue(
+                    type="hierarchy_missing_anchor",
+                    severity="error",
+                    file_path=ref_doc,
+                    line=0,
+                    message=f"References missing anchor '{anchor_name}' in {source_doc.name}",
+                    context="",
+                )
+            )
+
+        for ref_doc, anchor_name in anchor_result.orphan_references:
+            issues.append(
+                QualityIssue(
+                    type="hierarchy_orphan_reference",
+                    severity="error",
+                    file_path=ref_doc,
+                    line=0,
+                    message=f"References anchor '{anchor_name}' from non-existent document",
+                    context="",
+                )
+            )
+
+        for ref_doc, anchor_name, expected, actual in anchor_result.value_mismatches:
+            issues.append(
+                QualityIssue(
+                    type="hierarchy_anchor_mismatch",
+                    severity="warning",
+                    file_path=ref_doc,
+                    line=0,
+                    message=f"Anchor '{anchor_name}' expected {expected}, got {actual}",
+                    context="",
+                )
+            )
+
+    return issues
+
+
+def check_voice(
+    content: str,
+    file_path: Path,
+    voice_profile: Optional["VoiceProfile"] = None,
+    doc_type: Optional[str] = None,
+    audience: Optional[str] = None,
+) -> List[QualityIssue]:
+    """
+    Check content against brand voice guidelines.
+
+    Args:
+        content: File content
+        file_path: Path to file
+        voice_profile: Brand voice profile to check against
+        doc_type: Document type for context-specific rules
+        audience: Target audience for context-specific rules
+
+    Returns:
+        List of voice-related quality issues
+    """
+    from ..brand.voice_checker import check_document_voice
+
+    issues = []
+
+    result = check_document_voice(
+        content=content,
+        doc_path=file_path,
+        voice_profile=voice_profile,
+        doc_type=doc_type,
+        audience=audience,
+    )
+
+    # Convert voice issues to quality issues
+    for voice_issue in result.issues:
+        issues.append(
+            QualityIssue(
+                type=f"voice_{voice_issue.type}",
+                severity=voice_issue.severity,
+                file_path=file_path,
+                line=0,  # Voice checks are document-level
+                message=voice_issue.message,
+                context=voice_issue.suggestion if voice_issue.suggestion else "",
+            )
+        )
+
+    return issues
+
+
 def run_quality_checks(
     project: "Project",
     console_output: bool = True,
+    include_hierarchy: bool = True,
+    include_voice: bool = True,
 ) -> QualityReport:
     """
     Run all quality checks on a project.
@@ -351,6 +534,8 @@ def run_quality_checks(
     Args:
         project: Project to check
         console_output: Whether to print results
+        include_hierarchy: Include hierarchy structure checks
+        include_voice: Include voice/tone consistency checks
 
     Returns:
         QualityReport with all issues
@@ -360,6 +545,11 @@ def run_quality_checks(
     # Load glossary if exists
     glossary_path = project.root / "glossary.yaml"
     glossary = load_glossary(glossary_path)
+
+    # Load voice profile if available
+    voice_profile = None
+    if include_voice:
+        voice_profile = _load_voice_profile(project)
 
     # Check all content files
     for lang in project.languages:
@@ -382,6 +572,19 @@ def run_quality_checks(
             # Empty sections
             report.issues.extend(check_empty_sections(content, chapter_path))
 
+            # Voice/tone check
+            if include_voice and voice_profile:
+                # Extract doc_type from frontmatter if available
+                doc_type = _extract_doc_type(content)
+                report.issues.extend(
+                    check_voice(content, chapter_path, voice_profile, doc_type)
+                )
+
+    # Hierarchy checks (project-level)
+    if include_hierarchy:
+        hierarchy_issues = check_hierarchy(project)
+        report.issues.extend(hierarchy_issues)
+
     # Update passed status
     report.passed = report.error_count == 0
 
@@ -389,6 +592,35 @@ def run_quality_checks(
         print_quality_report(report)
 
     return report
+
+
+def _load_voice_profile(project: "Project") -> Optional["VoiceProfile"]:
+    """Load voice profile from brand.yaml if available."""
+    try:
+        from ..brand.loader import load_brand_profile
+
+        brand = load_brand_profile(project.root)
+        if brand and brand.voice:
+            return brand.voice
+    except Exception:
+        pass  # Voice profile not available
+
+    return None
+
+
+def _extract_doc_type(content: str) -> Optional[str]:
+    """Extract document type from frontmatter."""
+    # Simple frontmatter extraction
+    if content.startswith("---"):
+        try:
+            end = content.find("---", 3)
+            if end > 0:
+                frontmatter = yaml.safe_load(content[3:end])
+                if isinstance(frontmatter, dict):
+                    return frontmatter.get("type") or frontmatter.get("doc_type")
+        except Exception:
+            pass
+    return None
 
 
 def print_quality_report(report: QualityReport):

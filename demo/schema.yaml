@@ -126,3 +126,107 @@ properties:
   changes:
     type: string
     description: Summary of recent changes
+
+  # === Hierarchy Fields ===
+
+  # Parent-child structure
+  parent_document:
+    type: string
+    description: Path to parent document in hierarchy
+
+  sequence_order:
+    type: integer
+    description: Order among siblings (1, 2, 3...)
+    minimum: 0
+    default: 0
+
+  hierarchy_level:
+    type: integer
+    description: Depth in hierarchy (0 = root)
+    minimum: 0
+    default: 0
+
+  # Document classification
+  doc_type:
+    type: string
+    description: Type of document in hierarchy
+    enum:
+      - strategy       # Vision, goals, strategic plans
+      - research       # Market research, competitive analysis
+      - requirements   # PRDs, user stories, specifications
+      - architecture   # System design, API specs
+      - implementation # Code documentation, technical guides
+      - operations     # Runbooks, deployment guides
+      - chapter        # General documentation chapters
+      - presentation   # Slides, pitch decks
+      - video          # Video content
+      - diagram        # Diagrams, charts
+      - data           # Data files, spreadsheets
+      - reference      # Reference materials, glossaries
+    default: chapter
+
+  lifecycle:
+    type: string
+    description: Document lifecycle status
+    enum:
+      - living      # Actively maintained
+      - snapshot    # Point-in-time, not updated
+      - deprecated  # No longer maintained
+      - archived    # Historical reference only
+    default: living
+
+  # Derivation tracking
+  derived_from:
+    type: array
+    description: Documents this one derives from
+    items:
+      type: object
+      properties:
+        path:
+          type: string
+          description: Path to source document
+        version:
+          type: string
+          description: Version of source when derived
+          pattern: "^\\d+\\.\\d+\\.\\d+$"
+        relationship:
+          type: string
+          description: How this document relates to source
+          enum:
+            - implements  # Technical implementation of source
+            - summarizes  # Condensed version
+            - extends     # Builds upon
+            - translates  # Language translation
+            - adapts      # Audience adaptation
+            - references  # Loose reference
+          default: implements
+
+  # Ownership and governance
+  owner:
+    type: string
+    description: Document owner (email or name)
+
+  approvers:
+    type: array
+    description: Required approvers for changes
+    items:
+      type: string
+
+  # Consistency anchors (key facts that must match)
+  anchors:
+    type: object
+    description: Key facts defined in this document
+    additionalProperties:
+      type: object
+      properties:
+        value:
+          description: The canonical value
+        type:
+          type: string
+          description: Value type
+          enum:
+            - string
+            - number
+            - date
+            - url
+          default: string

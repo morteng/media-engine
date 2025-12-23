@@ -452,3 +452,425 @@
   background: rgba(99, 102, 241, 0.2);
   border-bottom: 2px solid var(--color-accent);
 }
+
+/* ===========================================
+   HIERARCHY PAGE LAYOUT
+   =========================================== */
+
+.hierarchy-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: var(--spacing-lg);
+  min-height: 0;
+}
+
+@media (max-width: 1024px) {
+  .hierarchy-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .hierarchy-sidebar {
+    max-height: 400px;
+  }
+}
+
+/* Hierarchy Sidebar */
+.hierarchy-sidebar {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: calc(100vh - 180px);
+}
+
+.hierarchy-sidebar-header {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.hierarchy-sidebar-header h3 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.hierarchy-stats {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+
+/* Hierarchy Main */
+.hierarchy-main {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.hierarchy-detail-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.hierarchy-detail-card .card-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Breadcrumbs in hierarchy */
+.hierarchy-breadcrumbs {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+}
+
+/* Node badges */
+.node-badges {
+  display: flex;
+  gap: 0.375rem;
+}
+
+/* Node Detail Content */
+.node-detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.node-detail-section {
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.node-detail-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.node-detail-section h4 {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0 0 var(--spacing-sm);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* Relationships */
+.node-relationships {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.relationship-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.relationship-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.relationship-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.relationship-link {
+  padding: 0.25rem 0.5rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  color: var(--color-accent);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.relationship-link:hover {
+  background: var(--color-accent-subtle);
+  border-color: var(--color-accent);
+}
+
+/* Derivations */
+.node-derivations {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.derivation-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.derivation-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.derivation-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+}
+
+/* Anchors */
+.node-anchors {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.anchor-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.anchor-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.anchor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.anchor-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.5rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+}
+
+.anchor-id {
+  padding: 0.125rem 0.375rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-xs);
+  font-size: 0.6875rem;
+  color: var(--color-accent);
+}
+
+.anchor-value {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.anchor-ref-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+/* Ownership */
+.node-ownership {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.ownership-item {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.ownership-label {
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* ===========================================
+   VIEW MODE PILLS (Tree/Flow Toggle)
+   =========================================== */
+
+.view-mode-pills {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.125rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.view-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.625rem;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.view-pill:hover {
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+}
+
+.view-pill.active {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ===========================================
+   HIERARCHY FLOW LAYOUT
+   =========================================== */
+
+.hierarchy-flow-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  height: 100%;
+  min-height: 500px;
+}
+
+.hierarchy-flow-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.hierarchy-flow-header h3 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hierarchy-flow-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.flow-control-group {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.flow-control-group label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.flow-control-group select {
+  padding: 0.25rem 0.5rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.flow-control-group select:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.hierarchy-flow-content {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  min-height: 400px;
+}
+
+/* Flow diagram node selection indicator */
+.hierarchy-flow-selected {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hierarchy-flow-selected strong {
+  color: var(--text-primary);
+}
+
+/* Loading state for flow diagram */
+.hierarchy-flow-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 300px;
+  gap: var(--spacing-sm);
+  color: var(--text-muted);
+}
+
+/* Error state for flow diagram */
+.hierarchy-flow-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 300px;
+  gap: var(--spacing-sm);
+  color: var(--color-error);
+  text-align: center;
+  padding: var(--spacing-lg);
+}
+
+.hierarchy-flow-error p {
+  margin: 0;
+  font-size: 0.8125rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .hierarchy-flow-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .hierarchy-flow-controls {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}

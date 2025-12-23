@@ -6,6 +6,7 @@ import {
   Shield,
   Hammer,
   Sparkles,
+  Palette,
   X,
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -15,6 +16,7 @@ const navItems = [
   { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { path: '/content', icon: FileText, label: 'Content' },
   { path: '/quality', icon: Shield, label: 'Quality' },
+  { path: '/brand', icon: Palette, label: 'Brand Voice' },
   { path: '/build', icon: Hammer, label: 'Build' },
   { path: '/ai-assist', icon: Sparkles, label: 'AI Assist' },
 ];

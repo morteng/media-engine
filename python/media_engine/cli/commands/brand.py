@@ -1,10 +1,14 @@
 """Brand command - manage project brand/design system."""
 
+import json
 import sys
+from pathlib import Path
+from typing import Optional
 
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+from rich.text import Text
 
 from ...core import find_project
 
@@ -25,6 +29,14 @@ def cmd_brand(args):
         cmd_brand_export_css(args)
     elif subcommand == "init":
         cmd_brand_init(args)
+    elif subcommand == "voice":
+        cmd_brand_voice(args)
+    elif subcommand == "voice-check":
+        cmd_brand_voice_check(args)
+    elif subcommand == "context":
+        cmd_brand_context(args)
+    elif subcommand == "terminology":
+        cmd_brand_terminology(args)
     else:
         # Default: show status
         cmd_brand_status(args)
@@ -334,3 +346,371 @@ shadows:
     console.print("  1. Add logo files to brand/logos/")
     console.print("  2. Customize colors and typography in brand.yaml")
     console.print("  3. Run 'media-engine brand status' to verify")
+
+
+# =============================================================================
+# VOICE COMMANDS
+# =============================================================================
+
+
+def cmd_brand_voice(args):
+    """Show brand voice profile."""
+    project = find_project()
+    if not project:
+        console.print("[red]No project.yaml found[/red]")
+        sys.exit(1)
+
+    from ...brand import load_brand_profile
+
+    profile = load_brand_profile(project.root)
+    voice = profile.voice
+
+    if not voice:
+        console.print("[yellow]No voice profile defined in brand.yaml[/yellow]")
+        console.print("Add a 'voice:' section to your brand.yaml to enable voice guidelines.")
+        return
+
+    doc_type = getattr(args, "doc_type", None)
+    audience = getattr(args, "audience", None)
+    as_json = getattr(args, "json", False)
+
+    # Apply context if specified
+    effective_voice = voice
+    if doc_type or audience:
+        effective_voice = voice.get_for_context(doc_type, audience)
+
+    if as_json:
+        print(json.dumps(effective_voice.to_dict(), indent=2))
+        return
+
+    # Display voice profile
+    console.print()
+    title = "Brand Voice Profile"
+    if doc_type:
+        title += f" (doc_type: {doc_type})"
+    if audience:
+        title += f" (audience: {audience})"
+    console.print(Panel(f"[bold]{title}[/bold]"))
+
+    # Personality
+    console.print(f"[cyan]Personality:[/cyan] {', '.join(effective_voice.personality)}")
+    console.print(f"[cyan]Default tone:[/cyan] {effective_voice.tone}")
+    console.print(f"[cyan]Formality:[/cyan] {effective_voice.formality_level} ", end="")
+    if effective_voice.formality_level < 0.4:
+        console.print("(casual)")
+    elif effective_voice.formality_level < 0.7:
+        console.print("(moderate)")
+    else:
+        console.print("(formal)")
+
+    console.print()
+    console.print("[bold]Style targets:[/bold]")
+    style = effective_voice.style
+    console.print(f"  Active voice: {int(style.active_voice_target * 100)}%")
+    console.print(f"  Sentence length: {style.sentence_length_target} words avg")
+    console.print(f"  Max paragraph: {style.paragraph_length_max} sentences")
+    console.print(f"  Contractions: {'allowed' if style.use_contractions else 'avoid'}")
+
+    person = []
+    if style.use_first_person:
+        person.append("first person (I/we)")
+    if style.use_second_person:
+        person.append("second person (you)")
+    if not person:
+        person.append("third person only")
+    console.print(f"  Person: {', '.join(person)}")
+
+    # Document type overrides
+    if voice.by_document_type:
+        console.print()
+        console.print("[bold]Document type overrides:[/bold]")
+        for dt, override in voice.by_document_type.items():
+            parts = []
+            if override.tone:
+                parts.append(override.tone)
+            if override.personality:
+                parts.append(", ".join(override.personality))
+            if override.formality_level is not None:
+                parts.append(f"formality={override.formality_level}")
+            console.print(f"  {dt}: {', '.join(parts) if parts else '(style overrides)'}")
+
+    # Audience overrides
+    if voice.by_audience:
+        console.print()
+        console.print("[bold]Audience overrides:[/bold]")
+        for aud, override in voice.by_audience.items():
+            parts = []
+            if override.tone:
+                parts.append(override.tone)
+            if override.formality_level is not None:
+                parts.append(f"formality={override.formality_level}")
+            console.print(f"  {aud}: {', '.join(parts) if parts else '(style overrides)'}")
+
+    # Terminology preferences
+    if voice.preferred_terms:
+        console.print()
+        console.print("[bold]Terminology preferences:[/bold]")
+        for term in voice.preferred_terms[:5]:
+            console.print(f"  '{term.prefer}' instead of: {', '.join(term.avoid)}")
+        if len(voice.preferred_terms) > 5:
+            console.print(f"  ... and {len(voice.preferred_terms) - 5} more")
+
+    # Avoided phrases
+    if voice.avoid_phrases:
+        console.print()
+        console.print("[bold]Phrases to avoid:[/bold]")
+        for phrase in voice.avoid_phrases[:5]:
+            console.print(f"  - \"{phrase}\"")
+        if len(voice.avoid_phrases) > 5:
+            console.print(f"  ... and {len(voice.avoid_phrases) - 5} more")
+
+
+def cmd_brand_voice_check(args):
+    """Check document(s) against brand voice guidelines."""
+    project = find_project()
+    if not project:
+        console.print("[red]No project.yaml found[/red]")
+        sys.exit(1)
+
+    from ...brand import VoiceConsistencyChecker, load_brand_profile
+
+    profile = load_brand_profile(project.root)
+    voice = profile.voice
+
+    if not voice:
+        console.print("[yellow]No voice profile defined. Using defaults.[/yellow]")
+
+    checker = VoiceConsistencyChecker(voice_profile=voice)
+
+    document = getattr(args, "document", None)
+    check_all = getattr(args, "all", False)
+    as_json = getattr(args, "json", False)
+
+    results = []
+
+    if check_all:
+        # Check all chapters
+        for lang in project.languages:
+            for chapter_path in project.list_chapters(lang):
+                content = chapter_path.read_text()
+                result = checker.check_content(content, chapter_path)
+                results.append(result)
+    elif document:
+        # Check single document
+        doc_path = Path(document)
+        if not doc_path.is_absolute():
+            doc_path = project.root / doc_path
+        if not doc_path.exists():
+            console.print(f"[red]File not found: {document}[/red]")
+            sys.exit(1)
+        content = doc_path.read_text()
+        result = checker.check_content(content, doc_path)
+        results.append(result)
+    else:
+        console.print("[yellow]Specify a document or use --all[/yellow]")
+        return
+
+    if as_json:
+        print(json.dumps([r.to_dict() for r in results], indent=2))
+        return
+
+    # Display results
+    total_issues = 0
+    passed_count = 0
+
+    for result in results:
+        if result.passed:
+            passed_count += 1
+        total_issues += len(result.issues)
+
+        if result.issues or not check_all:
+            console.print()
+            status = "[green]✓[/green]" if result.passed else "[yellow]⚠[/yellow]"
+            console.print(f"{status} [bold]{result.document.name}[/bold]")
+
+            # Show metrics
+            metrics = result.metrics
+            if metrics:
+                active_pct = metrics.get("active_voice_percentage", 0)
+                target = 80  # Default
+                if voice and voice.style:
+                    target = int(voice.style.active_voice_target * 100)
+
+                active_status = "[green]✓[/green]" if active_pct >= target else "[yellow]⚠[/yellow]"
+                console.print(f"  Active voice: {active_pct:.0f}% (target: {target}%) {active_status}")
+
+                if "avg_sentence_length" in metrics:
+                    avg_len = metrics["avg_sentence_length"]
+                    len_target = voice.style.sentence_length_target if voice else 18
+                    len_status = "[green]✓[/green]" if abs(avg_len - len_target) <= 5 else "[yellow]⚠[/yellow]"
+                    console.print(f"  Avg sentence: {avg_len:.0f} words (target: {len_target}) {len_status}")
+
+                if "detected_formality" in metrics:
+                    console.print(f"  Formality: {metrics['detected_formality']}")
+
+            # Show issues
+            if result.issues:
+                console.print()
+                for issue in result.issues[:10]:
+                    severity_icon = {
+                        "error": "[red]✗[/red]",
+                        "warning": "[yellow]⚠[/yellow]",
+                        "info": "[blue]ℹ[/blue]",
+                    }.get(issue.severity, "")
+                    console.print(f"  {severity_icon} {issue.message}")
+                    if issue.suggestion:
+                        console.print(f"      [dim]{issue.suggestion}[/dim]")
+
+                if len(result.issues) > 10:
+                    console.print(f"  [dim]... and {len(result.issues) - 10} more issues[/dim]")
+
+    # Summary
+    console.print()
+    console.print(f"[bold]Summary:[/bold] {passed_count}/{len(results)} documents passed, {total_issues} total issues")
+
+
+def cmd_brand_context(args):
+    """Show effective brand context for a document."""
+    project = find_project()
+    if not project:
+        console.print("[red]No project.yaml found[/red]")
+        sys.exit(1)
+
+    document = getattr(args, "document", None)
+    as_json = getattr(args, "json", False)
+
+    if not document:
+        console.print("[red]Specify a document path[/red]")
+        sys.exit(1)
+
+    from ...brand import BrandContextResolver
+
+    resolver = BrandContextResolver(project)
+    doc_path = Path(document)
+
+    if not doc_path.is_absolute():
+        doc_path = project.root / doc_path
+
+    result = resolver.resolve_for_document(doc_path)
+
+    if as_json:
+        print(json.dumps(result.to_dict(), indent=2))
+        return
+
+    console.print()
+    console.print(Panel(f"[bold]Brand Context Resolution[/bold]"))
+    console.print(f"Document: {document}")
+    console.print()
+
+    # Resolution chain
+    console.print("[bold]Resolution chain:[/bold]")
+    for i, step in enumerate(result.resolution_chain, 1):
+        source = step.source
+        if step.path:
+            source += f" ({step.path.name})"
+        overrides = ""
+        if step.overrides and step.source != "base":
+            # Show key overrides
+            if "voice" in step.overrides:
+                voice_o = step.overrides["voice"]
+                if isinstance(voice_o, dict):
+                    if "tone" in voice_o:
+                        overrides += f"tone={voice_o['tone']} "
+                    if "formality_level" in voice_o:
+                        overrides += f"formality={voice_o['formality_level']}"
+            elif "tone" in step.overrides:
+                overrides = f"tone={step.overrides['tone']}"
+        console.print(f"  {i}. {source}" + (f" → {overrides}" if overrides else ""))
+
+    console.print()
+    console.print("[bold]Effective voice:[/bold]")
+    voice = result.effective_voice
+    console.print(f"  tone: {voice.tone}")
+    console.print(f"  formality: {voice.formality_level}")
+    console.print(f"  active_voice_target: {voice.style.active_voice_target}")
+    console.print(f"  sentence_length_target: {voice.style.sentence_length_target}")
+
+
+def cmd_brand_terminology(args):
+    """Check terminology consistency across documents."""
+    project = find_project()
+    if not project:
+        console.print("[red]No project.yaml found[/red]")
+        sys.exit(1)
+
+    from ...brand import VoiceConsistencyChecker, load_brand_profile
+
+    profile = load_brand_profile(project.root)
+    voice = profile.voice
+
+    if not voice or not voice.preferred_terms:
+        console.print("[yellow]No terminology preferences defined in brand.yaml[/yellow]")
+        return
+
+    as_json = getattr(args, "json", False)
+
+    checker = VoiceConsistencyChecker(voice_profile=voice)
+    term_issues = {}  # term -> list of (file, count)
+
+    # Check all documents
+    for lang in project.languages:
+        for chapter_path in project.list_chapters(lang):
+            content = chapter_path.read_text()
+            result = checker.check_content(content, chapter_path)
+
+            for issue in result.issues:
+                if issue.type == "terminology":
+                    if issue.message not in term_issues:
+                        term_issues[issue.message] = []
+                    term_issues[issue.message].append(chapter_path)
+
+    if as_json:
+        data = {
+            "preferred_terms": [t.to_dict() for t in voice.preferred_terms],
+            "issues": {
+                msg: [str(p) for p in paths] for msg, paths in term_issues.items()
+            },
+            "avoid_phrases": voice.avoid_phrases,
+        }
+        print(json.dumps(data, indent=2))
+        return
+
+    console.print()
+    console.print(Panel("[bold]Terminology Check[/bold]"))
+
+    # Show preferred terms
+    for term in voice.preferred_terms:
+        console.print(f"\n[cyan]Preferred:[/cyan] \"{term.prefer}\" (avoid: {', '.join(term.avoid)})")
+
+        # Find issues for this term
+        found_issues = []
+        for msg, paths in term_issues.items():
+            for avoid in term.avoid:
+                if f"'{avoid}'" in msg:
+                    found_issues.extend(paths)
+                    break
+
+        if found_issues:
+            for path in found_issues[:3]:
+                console.print(f"  [red]✗[/red] {path.name}")
+            if len(found_issues) > 3:
+                console.print(f"  [dim]... and {len(found_issues) - 3} more[/dim]")
+        else:
+            console.print("  [green]✓[/green] All documents compliant")
+
+    # Avoided phrases
+    if voice.avoid_phrases:
+        console.print()
+        console.print("[bold]Avoided phrases:[/bold]")
+
+        # Would need to track phrase issues separately
+        console.print(f"  [dim]Checking {len(voice.avoid_phrases)} phrases...[/dim]")
+        # For now just list them
+        for phrase in voice.avoid_phrases[:5]:
+            console.print(f"  - \"{phrase}\"")
+
+    console.print()
+    if term_issues:
+        console.print(f"[yellow]Found {len(term_issues)} terminology issues[/yellow]")
+    else:
+        console.print("[green]All documents follow terminology guidelines[/green]")

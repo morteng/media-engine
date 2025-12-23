@@ -37,10 +37,10 @@ class SpacingScale:
         if isinstance(scale_data, list):
             # Convert list to dict: [0, 4, 8, 12] -> {0: 0, 1: 4, 2: 8, 3: 12}
             scale_data = {i: v for i, v in enumerate(scale_data)}
-        return cls(
-            unit=data.get("unit", 4),
-            scale=scale_data or cls.scale,
-        )
+        # If no scale provided, create with defaults by omitting scale param
+        if scale_data:
+            return cls(unit=data.get("unit", 4), scale=scale_data)
+        return cls(unit=data.get("unit", 4))
 
     def get(self, key: int) -> int:
         """Get spacing value by key."""

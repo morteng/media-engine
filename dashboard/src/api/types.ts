@@ -560,3 +560,133 @@ export interface QualitySummaryResponse {
     [key: string]: unknown;
   }>;
 }
+
+// ============== HIERARCHY TYPES ==============
+
+export interface HierarchyTreeNode {
+  path: string;
+  title: string;
+  doc_type: 'chapter' | 'operations' | 'reference' | 'tutorial' | 'concept' | 'guide';
+  lifecycle: 'living' | 'snapshot' | 'deprecated' | 'archived';
+  is_stale: boolean;
+  level: number;
+  sequence_order: number;
+  has_anchors: boolean;
+  derived_from_count: number;
+  children: HierarchyTreeNode[];
+}
+
+export interface HierarchyTreeResponse {
+  nodes: HierarchyTreeNode[];
+  total_count: number;
+  root_count: number;
+  error?: string;
+}
+
+export interface HierarchyNodeDetail {
+  path: string;
+  title: string;
+  doc_type: string;
+  lifecycle: string;
+  is_stale: boolean;
+  level: number;
+  sequence_order: number;
+  parent: string | null;
+  children: string[];
+  ancestors: string[];
+  siblings: string[];
+  derived_from: Array<{
+    path: string;
+    version: string | null;
+    relationship: string;
+  }>;
+  derivatives: string[];
+  defined_anchors: Array<{
+    id: string;
+    value: unknown;
+  }>;
+  anchor_refs: Array<{
+    source: string;
+    anchor: string;
+  }>;
+  owner: string | null;
+  approvers: string[];
+  error?: string;
+}
+
+export interface BreadcrumbItem {
+  path: string;
+  title: string;
+  doc_type: string;
+}
+
+export interface BreadcrumbsResponse {
+  breadcrumbs: BreadcrumbItem[];
+  error?: string;
+}
+
+export interface DerivationGraphNode {
+  id: string;
+  title: string;
+  doc_type: string;
+  lifecycle: string;
+  is_stale: boolean;
+}
+
+export interface DerivationGraphEdge {
+  source: string;
+  target: string;
+  relationship: string;
+  version: string | null;
+}
+
+export interface DerivationGraphResponse {
+  nodes: DerivationGraphNode[];
+  edges: DerivationGraphEdge[];
+  node_count: number;
+  edge_count: number;
+  error?: string;
+}
+
+// Flow Graph Types
+export interface FlowGraphNode {
+  id: string;
+  title: string;
+  doc_type: string;
+  lifecycle: string;
+  is_stale: boolean;
+  level: number;
+  sequence_order: number;
+  position: {
+    x: number;
+    y: number;
+  };
+}
+
+export interface FlowGraphEdge {
+  source: string;
+  target: string;
+  type: string;
+  is_stale: boolean;
+  version: string | null;
+}
+
+export interface FlowGraphLevel {
+  level: number;
+  count: number;
+}
+
+export interface StalenessSummary {
+  total_nodes: number;
+  stale_nodes: number;
+  stale_percentage: number;
+  stale_edges: number;
+}
+
+export interface FlowGraphResponse {
+  nodes: FlowGraphNode[];
+  edges: FlowGraphEdge[];
+  levels: FlowGraphLevel[];
+  staleness_summary: StalenessSummary;
+  error?: string;
+}

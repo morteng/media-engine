@@ -289,6 +289,11 @@ import type {
   PredictiveFreshnessResponse,
   EnhancedCodeSyncResponse,
   AdvancedAnalysisResponse,
+  HierarchyTreeResponse,
+  HierarchyNodeDetail,
+  BreadcrumbsResponse,
+  DerivationGraphResponse,
+  FlowGraphResponse,
 } from './types';
 
 // Comprehensive advanced insights
@@ -353,5 +358,143 @@ export const getAdvancedAnalysis = (options?: {
   document?: string;
 }) =>
   api.get<AdvancedAnalysisResponse>('/insights/advanced-analysis', { params: options }).then(r => r.data);
+
+// ============== HIERARCHY API ==============
+
+// Get hierarchy tree structure
+export const getHierarchyTree = (language?: string) =>
+  api.get<HierarchyTreeResponse>('/hierarchy/tree', { params: { language } }).then(r => r.data);
+
+// Get detailed node information
+export const getHierarchyNode = (path: string) =>
+  api.get<HierarchyNodeDetail>(`/hierarchy/node/${encodeURIComponent(path)}`).then(r => r.data);
+
+// Get breadcrumbs for a document
+export const getBreadcrumbs = (path: string) =>
+  api.get<BreadcrumbsResponse>(`/hierarchy/breadcrumbs/${encodeURIComponent(path)}`).then(r => r.data);
+
+// Get derivation graph for visualization
+export const getDerivationGraph = () =>
+  api.get<DerivationGraphResponse>('/hierarchy/derivation-graph').then(r => r.data);
+
+// Get flow graph with positions for visualization
+export const getFlowGraph = (options?: {
+  focus_path?: string;
+  direction?: 'upstream' | 'downstream' | 'both';
+  max_depth?: number;
+  language?: string;
+}) =>
+  api.get<FlowGraphResponse>('/hierarchy/flow-graph', { params: options }).then(r => r.data);
+
+// ============== BRAND VOICE API ==============
+
+export interface VoiceStyle {
+  active_voice_target: number;
+  sentence_length_target: number;
+  paragraph_length_max: number;
+  use_contractions: boolean;
+  use_first_person: boolean;
+  use_second_person: boolean;
+}
+
+export interface TermPreference {
+  prefer: string;
+  avoid: string[];
+}
+
+export interface VoiceProfile {
+  has_voice: boolean;
+  personality: string[];
+  tone: string;
+  formality_level: number;
+  style: VoiceStyle;
+  available_doc_types?: string[];
+  available_audiences?: string[];
+  preferred_terms?: TermPreference[];
+  avoid_phrases?: string[];
+  applied_doc_type?: string;
+  applied_audience?: string;
+  warning?: string;
+}
+
+export interface VoiceIssue {
+  type: string;
+  severity: string;
+  message: string;
+  suggestion?: string;
+}
+
+export interface VoiceCheckResult {
+  document: string;
+  document_name: string;
+  passed: boolean;
+  issues: VoiceIssue[];
+  metrics: {
+    active_voice_percentage?: number;
+    avg_sentence_length?: number;
+    detected_formality?: string;
+    first_person_count?: number;
+    second_person_count?: number;
+  };
+}
+
+export interface VoiceCheckResponse {
+  summary: {
+    documents_checked: number;
+    documents_passed: number;
+    total_issues: number;
+    pass_rate: number;
+  };
+  results: VoiceCheckResult[];
+}
+
+export interface TerminologyCheckResponse {
+  preferred_terms: TermPreference[];
+  avoid_phrases: string[];
+  issues: Record<string, string[]>;
+  summary: {
+    total_issues: number;
+    unique_issues: number;
+  };
+  warning?: string;
+}
+
+export interface VoiceContextResponse {
+  document: string | null;
+  resolution_chain: Array<{
+    source: string;
+    path: string | null;
+    overrides: Record<string, unknown>;
+  }>;
+  effective_voice: {
+    tone: string;
+    formality_level: number;
+    personality: string[];
+    style: Record<string, unknown>;
+  };
+}
+
+// Get brand voice profile
+export const getBrandVoice = (options?: {
+  doc_type?: string;
+  audience?: string;
+}) =>
+  api.get<VoiceProfile>('/brand/voice', { params: options }).then(r => r.data);
+
+// Check all documents against voice guidelines
+export const checkVoiceAll = () =>
+  api.get<VoiceCheckResponse>('/brand/voice/check').then(r => r.data);
+
+// Check specific document against voice guidelines
+export const checkVoiceDocument = (documentPath: string) =>
+  api.get<VoiceCheckResult>(`/brand/voice/check/${encodeURIComponent(documentPath)}`).then(r => r.data);
+
+// Check terminology consistency
+export const checkTerminology = () =>
+  api.get<TerminologyCheckResponse>('/brand/voice/terminology').then(r => r.data);
+
+// Get voice context for a document
+export const getVoiceContext = (documentPath: string) =>
+  api.get<VoiceContextResponse>(`/brand/voice/context/${encodeURIComponent(documentPath)}`).then(r => r.data);
 
 export default api;

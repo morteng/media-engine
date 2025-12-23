@@ -142,11 +142,13 @@ class MediaEngineMCPServer:
             ai,
             audit,
             batch,
+            brand,
             build,
             cache,
             claude,
             context,
             documents,
+            hierarchy,
             notes,
             project,
             provenance,
@@ -164,6 +166,7 @@ class MediaEngineMCPServer:
         documents.register_document_tools(self.mcp, self)
         translation.register_translation_tools(self.mcp, self)
         quality.register_quality_tools(self.mcp, self)
+        brand.register_brand_tools(self.mcp, self)
         reports.register_report_tools(self.mcp, self)  # Comprehensive quality reports
         search.register_search_tools(self.mcp, self)
         build.register_build_tools(self.mcp, self)
@@ -171,6 +174,7 @@ class MediaEngineMCPServer:
         audit.register_audit_tools(self.mcp, self)
         provenance.register_provenance_tools(self.mcp, self)
         notes.register_notes_tools(self.mcp, self)
+        hierarchy.register_hierarchy_tools(self.mcp, self)  # Document hierarchy & info flow
 
         # Enhanced AI agent tools
         context.register_context_tools(self.mcp, self)

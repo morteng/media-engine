@@ -7,6 +7,23 @@ freshness_days: 60
 tags:
   - introduction
   - overview
+
+# Hierarchy metadata
+doc_type: "architecture"
+lifecycle: "living"
+sequence_order: 1
+owner: "morteng@example.com"
+approvers:
+  - "reviewer@example.com"
+
+# Key facts defined here
+anchors:
+  project_name:
+    value: "Media Engine"
+    type: string
+  min_python_version:
+    value: "3.11"
+    type: string
 ---
 
 # Introduction to Media Engine

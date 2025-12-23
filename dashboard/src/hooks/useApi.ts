@@ -246,3 +246,77 @@ export const useAdvancedAnalysis = (options?: Parameters<typeof api.getAdvancedA
     staleTime: 1000 * 60 * 5,
     enabled: true,
   });
+
+// ============== HIERARCHY HOOKS ==============
+
+export const useHierarchyTree = (language?: string) =>
+  useQuery({
+    queryKey: ['hierarchyTree', language] as const,
+    queryFn: () => api.getHierarchyTree(language),
+    staleTime: 1000 * 60 * 2,
+  });
+
+export const useHierarchyNode = (path: string) =>
+  useQuery({
+    queryKey: ['hierarchyNode', path] as const,
+    queryFn: () => api.getHierarchyNode(path),
+    enabled: !!path,
+  });
+
+export const useBreadcrumbs = (path: string) =>
+  useQuery({
+    queryKey: ['breadcrumbs', path] as const,
+    queryFn: () => api.getBreadcrumbs(path),
+    enabled: !!path,
+  });
+
+export const useDerivationGraph = () =>
+  useQuery({
+    queryKey: ['derivationGraph'] as const,
+    queryFn: () => api.getDerivationGraph(),
+    staleTime: 1000 * 60 * 2,
+  });
+
+export const useFlowGraph = (options?: Parameters<typeof api.getFlowGraph>[0]) =>
+  useQuery({
+    queryKey: ['flowGraph', options] as const,
+    queryFn: () => api.getFlowGraph(options),
+    staleTime: 1000 * 60 * 2,
+  });
+
+// ============== BRAND VOICE HOOKS ==============
+
+export const useBrandVoice = (options?: Parameters<typeof api.getBrandVoice>[0]) =>
+  useQuery({
+    queryKey: ['brandVoice', options] as const,
+    queryFn: () => api.getBrandVoice(options),
+    staleTime: 1000 * 60 * 5,
+  });
+
+export const useVoiceCheck = () =>
+  useQuery({
+    queryKey: ['voiceCheck'] as const,
+    queryFn: api.checkVoiceAll,
+    staleTime: 1000 * 60 * 2,
+  });
+
+export const useVoiceCheckDocument = (documentPath: string) =>
+  useQuery({
+    queryKey: ['voiceCheckDocument', documentPath] as const,
+    queryFn: () => api.checkVoiceDocument(documentPath),
+    enabled: !!documentPath,
+  });
+
+export const useTerminologyCheck = () =>
+  useQuery({
+    queryKey: ['terminologyCheck'] as const,
+    queryFn: api.checkTerminology,
+    staleTime: 1000 * 60 * 2,
+  });
+
+export const useVoiceContext = (documentPath: string) =>
+  useQuery({
+    queryKey: ['voiceContext', documentPath] as const,
+    queryFn: () => api.getVoiceContext(documentPath),
+    enabled: !!documentPath,
+  });

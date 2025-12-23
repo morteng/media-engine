@@ -10,6 +10,24 @@ tags:
   - quality
   - validation
   - placeholders
+
+# Hierarchy metadata
+doc_type: "operations"
+lifecycle: "living"
+parent_document: "chapters/01_introduction.md"
+sequence_order: 4
+hierarchy_level: 1
+
+# Derives from content management (implements quality aspects)
+derived_from:
+  - path: "chapters/02_content_management.md"
+    version: "1.0.0"
+    relationship: "implements"
+
+# References anchors from introduction
+anchor_refs:
+  - source: "chapters/01_introduction.md"
+    anchor: "project_name"
 ---
 
 # Quality Checks

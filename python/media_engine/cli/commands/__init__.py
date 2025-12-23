@@ -8,6 +8,7 @@ from .content import cmd_changelog, cmd_gaps, cmd_links, cmd_readability, cmd_se
 from .dashboard import cmd_dashboard
 from .demos import cmd_demos
 from .freshness import cmd_freshness
+from .hierarchy import cmd_hierarchy
 from .init import cmd_init
 from .insights import (
     cmd_consistency,
@@ -60,6 +61,7 @@ __all__ = [
     "cmd_changelog",
     "cmd_demos",
     "cmd_freshness",
+    "cmd_hierarchy",
     # Insights commands
     "cmd_health",
     "cmd_stats",

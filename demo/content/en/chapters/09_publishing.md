@@ -10,6 +10,26 @@ tags:
   - publishing
   - packaging
   - deliverables
+
+# Hierarchy metadata
+doc_type: "operations"
+lifecycle: "living"
+parent_document: "chapters/05_builders.md"
+sequence_order: 9
+hierarchy_level: 2
+
+# Derives from builders (extends with publishing workflow)
+derived_from:
+  - path: "chapters/05_builders.md"
+    version: "1.0.0"
+    relationship: "extends"
+
+# References output configuration
+anchor_refs:
+  - source: "chapters/05_builders.md"
+    anchor: "supported_formats"
+  - source: "chapters/05_builders.md"
+    anchor: "default_output_dir"
 ---
 
 # Publishing

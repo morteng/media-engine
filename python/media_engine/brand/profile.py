@@ -21,6 +21,7 @@ from .tokens import (
     ZIndexScale,
 )
 from .typography import Typography
+from .voice import VoiceProfile
 
 
 @dataclass
@@ -78,6 +79,7 @@ class BrandProfile:
     zIndex: ZIndexScale = field(default_factory=ZIndexScale)
     breakpoints: Breakpoints = field(default_factory=Breakpoints)
     components: ComponentTokens = field(default_factory=ComponentTokens)
+    voice: Optional[VoiceProfile] = None  # Voice and tone profile
 
     # Internal state
     _project_root: Optional[Path] = field(default=None, repr=False)
@@ -86,6 +88,11 @@ class BrandProfile:
     @classmethod
     def from_dict(cls, data: Dict[str, Any], project_root: Optional[Path] = None) -> "BrandProfile":
         """Create BrandProfile from dictionary (parsed YAML)."""
+        # Load voice profile if present
+        voice = None
+        if "voice" in data:
+            voice = VoiceProfile.from_dict(data["voice"])
+
         profile = cls(
             name=data.get("name", "Default Brand"),
             identity=Identity.from_dict(data.get("identity", {})),
@@ -98,6 +105,7 @@ class BrandProfile:
             zIndex=ZIndexScale.from_dict(data.get("zIndex", data.get("zindex", {}))),
             breakpoints=Breakpoints.from_dict(data.get("breakpoints", {})),
             components=ComponentTokens.from_dict(data.get("components", {})),
+            voice=voice,
         )
 
         if project_root:

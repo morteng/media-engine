@@ -9,6 +9,19 @@ depends_on:
 tags:
   - content
   - cms
+
+# Hierarchy metadata
+doc_type: "implementation"
+lifecycle: "living"
+parent_document: "chapters/01_introduction.md"
+sequence_order: 2
+hierarchy_level: 1
+
+# Derives from introduction
+derived_from:
+  - path: "chapters/01_introduction.md"
+    version: "1.0.0"
+    relationship: "implements"
 ---
 
 # Content Management

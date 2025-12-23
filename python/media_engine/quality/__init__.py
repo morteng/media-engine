@@ -6,6 +6,7 @@ Quality checks for content:
 - Terminology consistency
 - Encoding validation (Norwegian characters)
 - Reference validation
+- Voice/tone consistency (brand guidelines)
 """
 
 from .checks import (
@@ -14,6 +15,7 @@ from .checks import (
     check_encoding,
     check_placeholders,
     check_terminology,
+    check_voice,
     run_quality_checks,
 )
 
@@ -21,6 +23,7 @@ __all__ = [
     "check_placeholders",
     "check_terminology",
     "check_encoding",
+    "check_voice",
     "run_quality_checks",
     "QualityIssue",
     "QualityReport",

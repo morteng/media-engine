@@ -1,0 +1,358 @@
+# Media Engine Demo - Brand Configuration
+# Complete brand system including visual identity and voice guidelines
+
+name: "Media Engine Demo"
+
+# =============================================================================
+# IDENTITY
+# =============================================================================
+identity:
+  logos:
+    primary:
+      path: "brand/logos/logo.svg"
+      alt: "Media Engine Logo"
+    dark:
+      path: "brand/logos/logo-dark.svg"
+    icon:
+      path: "brand/logos/icon.png"
+      sizes: [16, 32, 64, 128]
+  legal:
+    copyright: "2024 Media Engine Project"
+    tagline: "Agent-based media production framework"
+
+# =============================================================================
+# COLORS
+# =============================================================================
+colors:
+  brand:
+    primary: "#6366f1"      # Indigo
+    secondary: "#8b5cf6"    # Violet
+    accent: "#06b6d4"       # Cyan
+
+  semantic:
+    success: "#10b981"      # Emerald
+    warning: "#f59e0b"      # Amber
+    error: "#ef4444"        # Red
+    info: "#3b82f6"         # Blue
+
+  text:
+    primary: "#1f2937"      # Gray-800
+    secondary: "#4b5563"    # Gray-600
+    muted: "#9ca3af"        # Gray-400
+
+  background:
+    primary: "#ffffff"
+    secondary: "#f9fafb"    # Gray-50
+    tertiary: "#f3f4f6"     # Gray-100
+
+  border:
+    default: "#e5e7eb"      # Gray-200
+    subtle: "#f3f4f6"       # Gray-100
+    strong: "#d1d5db"       # Gray-300
+
+  dark:
+    text:
+      primary: "#f9fafb"
+      secondary: "#e5e7eb"
+      muted: "#9ca3af"
+    background:
+      primary: "#111827"    # Gray-900
+      secondary: "#1f2937"  # Gray-800
+      tertiary: "#374151"   # Gray-700
+
+# =============================================================================
+# TYPOGRAPHY
+# =============================================================================
+typography:
+  fonts:
+    heading:
+      family: "Inter"
+      weights: [500, 600, 700]
+      source: google
+    body:
+      family: "Inter"
+      weights: [400, 500]
+      source: google
+    code:
+      family: "JetBrains Mono"
+      weights: [400, 500]
+      source: google
+
+  scale:
+    xs: 12
+    sm: 14
+    base: 16
+    lg: 18
+    xl: 20
+    2xl: 24
+    3xl: 30
+    4xl: 36
+    5xl: 48
+    6xl: 60
+    display: 72
+
+# =============================================================================
+# SPACING
+# =============================================================================
+spacing:
+  unit: 4
+  scale:
+    0: 0
+    1: 4
+    2: 8
+    3: 12
+    4: 16
+    5: 20
+    6: 24
+    8: 32
+    10: 40
+    12: 48
+    16: 64
+    20: 80
+    24: 96
+
+# =============================================================================
+# BORDERS
+# =============================================================================
+borders:
+  radius:
+    none: 0
+    sm: 2
+    md: 4
+    lg: 8
+    xl: 12
+    2xl: 16
+    full: 9999
+  width:
+    thin: 1
+    default: 1
+    medium: 2
+    thick: 4
+
+# =============================================================================
+# SHADOWS
+# =============================================================================
+shadows:
+  xs: "0 1px 2px rgba(0, 0, 0, 0.05)"
+  sm: "0 1px 3px rgba(0, 0, 0, 0.1)"
+  md: "0 4px 6px rgba(0, 0, 0, 0.1)"
+  lg: "0 10px 15px rgba(0, 0, 0, 0.1)"
+  xl: "0 20px 25px rgba(0, 0, 0, 0.1)"
+  2xl: "0 25px 50px rgba(0, 0, 0, 0.25)"
+  inner: "inset 0 2px 4px rgba(0, 0, 0, 0.05)"
+
+# =============================================================================
+# VOICE & TONE
+# =============================================================================
+voice:
+  # Overall brand voice characteristics
+  personality:
+    - professional
+    - approachable
+    - innovative
+    - helpful
+
+  # Default tone settings
+  tone:
+    default: conversational  # formal | conversational | technical | casual
+    formality_level: 0.6     # 0 = very casual, 1 = very formal
+
+  # Writing style preferences
+  style:
+    active_voice_target: 0.8      # Target 80% active voice
+    sentence_length_target: 18    # Average words per sentence
+    paragraph_length_max: 5       # Max sentences per paragraph
+    use_contractions: true        # "don't" vs "do not"
+    use_first_person: false       # Avoid "I" and "we"
+    use_second_person: true       # Use "you" and "your"
+
+  # Terminology preferences - prefer simple, clear terms
+  preferred_terms:
+    - prefer: "use"
+      avoid: ["utilize", "leverage"]
+    - prefer: "help"
+      avoid: ["assist", "facilitate"]
+    - prefer: "show"
+      avoid: ["demonstrate", "illustrate"]
+    - prefer: "start"
+      avoid: ["commence", "initiate", "begin"]
+    - prefer: "end"
+      avoid: ["terminate", "conclude", "finalize"]
+    - prefer: "get"
+      avoid: ["obtain", "acquire", "retrieve"]
+    - prefer: "need"
+      avoid: ["require", "necessitate"]
+    - prefer: "make"
+      avoid: ["construct", "fabricate", "create"]
+    - prefer: "change"
+      avoid: ["modify", "alter", "adjust"]
+    - prefer: "fix"
+      avoid: ["rectify", "remedy", "resolve"]
+
+  # Phrases to avoid - bureaucratic or verbose language
+  avoid_phrases:
+    - "please note that"
+    - "it should be noted"
+    - "in order to"
+    - "at this point in time"
+    - "for the purpose of"
+    - "with regard to"
+    - "in the event that"
+    - "due to the fact that"
+    - "in light of the fact that"
+    - "as a matter of fact"
+    - "it is important to note"
+    - "please be advised"
+    - "as per"
+    - "pursuant to"
+    - "herein"
+    - "aforementioned"
+
+  # Document-type-specific voice overrides
+  by_document_type:
+    # Strategy documents - more formal, visionary
+    strategy:
+      tone: formal
+      formality_level: 0.8
+      personality: [visionary, confident, authoritative]
+      style:
+        use_contractions: false
+        use_first_person: true  # "We will..." for company voice
+
+    # Technical architecture docs
+    architecture:
+      tone: technical
+      formality_level: 0.7
+      personality: [precise, thorough]
+      style:
+        active_voice_target: 0.9
+        use_first_person: false
+        sentence_length_target: 15
+
+    # Operations/how-to guides
+    operations:
+      tone: procedural
+      formality_level: 0.5
+      personality: [clear, direct, helpful]
+      style:
+        use_second_person: true
+        sentence_length_target: 12
+        paragraph_length_max: 3
+
+    # API reference documentation
+    reference:
+      tone: technical
+      formality_level: 0.6
+      personality: [precise, concise]
+      style:
+        active_voice_target: 0.85
+        sentence_length_target: 14
+
+    # Tutorials and guides
+    tutorial:
+      tone: conversational
+      formality_level: 0.4
+      personality: [friendly, encouraging, patient]
+      style:
+        use_contractions: true
+        use_second_person: true
+        sentence_length_target: 16
+
+    # Concept explanations
+    concept:
+      tone: educational
+      formality_level: 0.5
+      personality: [clear, thorough, engaging]
+      style:
+        sentence_length_target: 18
+        paragraph_length_max: 4
+
+    # Pitch/marketing materials
+    pitch:
+      tone: persuasive
+      formality_level: 0.5
+      personality: [enthusiastic, confident, compelling]
+      style:
+        use_contractions: true
+        sentence_length_target: 14
+        active_voice_target: 0.9
+
+  # Audience-specific overrides
+  by_audience:
+    # Developer audience
+    developer:
+      formality_level: 0.5
+      personality: [technical, direct, peer-level]
+      style:
+        use_contractions: true
+        sentence_length_target: 16
+
+    # Executive/management audience
+    executive:
+      formality_level: 0.8
+      personality: [strategic, concise, authoritative]
+      style:
+        sentence_length_target: 15
+        paragraph_length_max: 3
+        use_contractions: false
+
+    # End user audience
+    end_user:
+      formality_level: 0.4
+      personality: [friendly, helpful, patient]
+      style:
+        use_contractions: true
+        use_second_person: true
+        sentence_length_target: 14
+
+    # Technical writer audience
+    technical_writer:
+      formality_level: 0.6
+      personality: [precise, structured]
+      style:
+        active_voice_target: 0.85
+        sentence_length_target: 16
+
+  # ==========================================================================
+  # AUDIO VOICE (for voiceover generation)
+  # ==========================================================================
+  audio:
+    provider: elevenlabs  # elevenlabs | azure | google | amazon
+
+    # Default voice generation settings
+    default:
+      stability: 0.5
+      similarity_boost: 0.75
+      style: 0.0
+
+    # Per-language voice mapping
+    voices:
+      en:
+        voice_id: "pNInz6obpgDQGcFmaJgB"  # Adam
+        name: "Adam"
+        description: "Professional male voice for English content"
+      "no":  # YAML requires quoting "no" (it's a boolean)
+        voice_id: "ErXwobaYiN019PkySvjV"  # Antoni
+        name: "Norwegian Voice"
+        description: "Native Norwegian speaker"
+
+    # Per-document-type voice style overrides
+    by_document_type:
+      pitch:
+        style: 0.3  # More expressive for presentations
+        stability: 0.4
+      operations:
+        style: 0.0  # Neutral for runbooks
+        stability: 0.7
+      tutorial:
+        style: 0.2  # Slightly engaging
+        stability: 0.5
+
+    # Per-audience voice style
+    by_audience:
+      executive:
+        stability: 0.6
+        similarity_boost: 0.8
+      end_user:
+        style: 0.15
+        stability: 0.5

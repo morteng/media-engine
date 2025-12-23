@@ -36,6 +36,7 @@ from .commands import (
     cmd_gaps,
     cmd_graph,
     cmd_health,
+    cmd_hierarchy,
     cmd_incomplete,
     cmd_index,
     cmd_init,
@@ -94,6 +95,30 @@ def main():
     brand_export.add_argument("--output", "-o", help="Output file path")
     brand_export.add_argument("--dark", action="store_true", help="Generate dark mode CSS")
 
+    # Voice commands
+    brand_voice = brand_subparsers.add_parser("voice", help="Show brand voice profile")
+    brand_voice.add_argument("--doc-type", help="Show profile for document type")
+    brand_voice.add_argument("--audience", help="Show profile for audience")
+    brand_voice.add_argument("--json", action="store_true", help="Output as JSON")
+
+    brand_voice_check = brand_subparsers.add_parser(
+        "voice-check", help="Check documents against voice guidelines"
+    )
+    brand_voice_check.add_argument("document", nargs="?", help="Document to check")
+    brand_voice_check.add_argument("--all", action="store_true", help="Check all documents")
+    brand_voice_check.add_argument("--json", action="store_true", help="Output as JSON")
+
+    brand_context = brand_subparsers.add_parser(
+        "context", help="Show effective brand context for document"
+    )
+    brand_context.add_argument("document", help="Document path")
+    brand_context.add_argument("--json", action="store_true", help="Output as JSON")
+
+    brand_terminology = brand_subparsers.add_parser(
+        "terminology", help="Check terminology consistency"
+    )
+    brand_terminology.add_argument("--json", action="store_true", help="Output as JSON")
+
     # build
     build_parser = subparsers.add_parser("build", help="Build media outputs")
     build_parser.add_argument("--only", help="Only build specific formats (comma-separated)")
@@ -134,6 +159,12 @@ def main():
     # quality
     quality_parser = subparsers.add_parser("quality", help="Run quality checks")
     quality_parser.add_argument("--json", action="store_true", help="Output as JSON")
+    quality_parser.add_argument(
+        "--type", "-t", help="Filter by issue type (e.g., hierarchy, placeholder, encoding)"
+    )
+    quality_parser.add_argument(
+        "--no-hierarchy", action="store_true", help="Skip hierarchy structure checks"
+    )
 
     # stale
     stale_parser = subparsers.add_parser("stale", help="List stale content")
@@ -361,6 +392,48 @@ def main():
     )
     fresh_parser.add_argument("--json", action="store_true", help="Output as JSON")
 
+    # hierarchy
+    hier_parser = subparsers.add_parser("hierarchy", help="Document hierarchy management")
+    hier_subparsers = hier_parser.add_subparsers(dest="hierarchy_command")
+
+    hier_status = hier_subparsers.add_parser("status", help="Show hierarchy status")
+    hier_status.add_argument("--json", action="store_true", help="Output as JSON")
+
+    hier_tree = hier_subparsers.add_parser("tree", help="Show hierarchy as tree")
+    hier_tree.add_argument("--root", help="Root document path")
+    hier_tree.add_argument("--dot", action="store_true", help="Output DOT format for Graphviz")
+
+    hier_stale = hier_subparsers.add_parser("stale", help="Show stale documents")
+    hier_stale.add_argument("--json", action="store_true", help="Output as JSON")
+
+    hier_validate = hier_subparsers.add_parser("validate", help="Validate hierarchy structure")
+    hier_validate.add_argument("--json", action="store_true", help="Output as JSON")
+
+    hier_subparsers.add_parser("refresh", help="Refresh hierarchy from documents")
+
+    hier_nav = hier_subparsers.add_parser("nav", help="Show navigation context for a document")
+    hier_nav.add_argument("--document", "-d", required=True, help="Document path")
+    hier_nav.add_argument("--json", action="store_true", help="Output as JSON")
+
+    hier_anchors = hier_subparsers.add_parser("anchors", help="Show consistency anchors")
+    hier_anchors.add_argument("--json", action="store_true", help="Output as JSON")
+    hier_anchors.add_argument("--validate", action="store_true", help="Validate anchor references")
+
+    hier_impact = hier_subparsers.add_parser("impact", help="Analyze impact of document changes")
+    hier_impact.add_argument("--document", "-d", required=True, help="Document path")
+    hier_impact.add_argument(
+        "--change-type", "-t",
+        choices=["content", "metadata", "delete", "anchor"],
+        default="content",
+        help="Type of change",
+    )
+    hier_impact.add_argument("--description", help="Description of the change")
+    hier_impact.add_argument("--json", action="store_true", help="Output as JSON")
+
+    hier_coverage = hier_subparsers.add_parser("coverage", help="Analyze documentation coverage")
+    hier_coverage.add_argument("--json", action="store_true", help="Output as JSON")
+    hier_coverage.add_argument("--suggest", action="store_true", help="Show gap suggestions")
+
     # ============== INSIGHTS COMMANDS ==============
 
     # health
@@ -545,6 +618,7 @@ def main():
         "changelog": cmd_changelog,
         "demos": cmd_demos,
         "freshness": cmd_freshness,
+        "hierarchy": cmd_hierarchy,
         # Insights commands
         "health": cmd_health,
         "stats": cmd_stats,

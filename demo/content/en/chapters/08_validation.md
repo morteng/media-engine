@@ -11,6 +11,22 @@ tags:
   - validation
   - schema
   - references
+
+# Hierarchy metadata
+doc_type: "operations"
+lifecycle: "living"
+parent_document: "chapters/04_quality_checks.md"
+sequence_order: 8
+hierarchy_level: 2
+
+# Derives from quality checks (extends with schema validation)
+derived_from:
+  - path: "chapters/04_quality_checks.md"
+    version: "1.0.0"
+    relationship: "extends"
+  - path: "chapters/02_content_management.md"
+    version: "1.0.0"
+    relationship: "implements"
 ---
 
 # Validation

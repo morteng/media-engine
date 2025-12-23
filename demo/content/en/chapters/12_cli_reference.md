@@ -10,6 +10,33 @@ tags:
   - cli
   - reference
   - commands
+
+# Hierarchy metadata
+doc_type: "operations"
+lifecycle: "living"
+parent_document: "chapters/01_introduction.md"
+sequence_order: 12
+hierarchy_level: 1
+
+# Derived from architecture docs
+derived_from:
+  - path: "chapters/01_introduction.md"
+    version: "1.0.0"
+    relationship: "implements"
+  - path: "chapters/02_content_management.md"
+    version: "1.0.0"
+    relationship: "summarizes"
+
+# References anchors from other chapters
+anchor_refs:
+  - source: "chapters/01_introduction.md"
+    anchor: "project_name"
+  - source: "chapters/01_introduction.md"
+    anchor: "min_python_version"
+  - source: "chapters/05_builders.md"
+    anchor: "supported_formats"
+  - source: "chapters/03_video_production.md"
+    anchor: "default_video_fps"
 ---
 
 # CLI Reference

@@ -7,19 +7,26 @@ def register_quality_tools(mcp, server_instance):
     """Register quality-related MCP tools."""
 
     @mcp.tool()
-    async def quality_check() -> str:
+    async def quality_check(include_hierarchy: bool = True) -> str:
         """
         Run quality checks on the project.
 
         Checks for placeholders, encoding issues, stale content,
-        terminology consistency, and more.
+        terminology consistency, and hierarchy structure.
+
+        Args:
+            include_hierarchy: Include hierarchy validation (default: True)
         """
         from ...quality import run_quality_checks
 
         if not server_instance.project:
             return json.dumps({"error": "No project found"}, indent=2)
 
-        report = run_quality_checks(server_instance.project, console_output=False)
+        report = run_quality_checks(
+            server_instance.project,
+            console_output=False,
+            include_hierarchy=include_hierarchy,
+        )
 
         # Calculate counts from issues
         info_count = sum(1 for i in report.issues if i.severity == "info")

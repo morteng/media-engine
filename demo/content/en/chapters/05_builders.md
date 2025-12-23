@@ -11,6 +11,35 @@ tags:
   - html
   - pptx
   - xlsx
+
+# Hierarchy metadata
+doc_type: "implementation"
+lifecycle: "living"
+parent_document: "chapters/01_introduction.md"
+sequence_order: 5
+hierarchy_level: 1
+
+# Derives from content management
+derived_from:
+  - path: "chapters/02_content_management.md"
+    version: "1.0.0"
+    relationship: "extends"
+
+# Anchors - key facts defined here
+anchors:
+  supported_formats:
+    value: ["html", "pdf", "pptx", "xlsx"]
+    type: array
+    description: "List of output formats supported by Media Engine"
+  default_output_dir:
+    value: "dist"
+    type: string
+    description: "Default output directory for built files"
+
+# References project name from introduction
+anchor_refs:
+  - source: "chapters/01_introduction.md"
+    anchor: "project_name"
 ---
 
 # Output Builders

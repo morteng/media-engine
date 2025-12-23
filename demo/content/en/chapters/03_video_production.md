@@ -9,6 +9,34 @@ depends_on:
 tags:
   - video
   - production
+
+# Hierarchy metadata
+doc_type: "implementation"
+lifecycle: "living"
+parent_document: "chapters/01_introduction.md"
+sequence_order: 3
+hierarchy_level: 1
+
+# Derives from content management
+derived_from:
+  - path: "chapters/02_content_management.md"
+    version: "1.0.0"
+    relationship: "extends"
+
+# Anchors - video configuration facts
+anchors:
+  default_video_width:
+    value: 1920
+    type: integer
+    description: "Default video width in pixels"
+  default_video_height:
+    value: 1080
+    type: integer
+    description: "Default video height in pixels"
+  default_video_fps:
+    value: 30
+    type: integer
+    description: "Default frames per second"
 ---
 
 # Video Production
