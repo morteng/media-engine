@@ -396,7 +396,17 @@ def register_brand_routes(
                         "primary": getattr(profile.colors.background, "primary", "#ffffff"),
                         "secondary": getattr(profile.colors.background, "secondary", "#f9fafb"),
                     } if profile.colors.background else {},
-                    "dark": profile.colors.dark.to_dict() if hasattr(profile.colors, "dark") and profile.colors.dark else None,
+                    "dark": {
+                        "text": {
+                            "primary": getattr(profile.colors.dark.text, "primary", "#f9fafb"),
+                            "secondary": getattr(profile.colors.dark.text, "secondary", "#e5e7eb"),
+                            "muted": getattr(profile.colors.dark.text, "muted", "#9ca3af"),
+                        } if profile.colors.dark and profile.colors.dark.text else {},
+                        "background": {
+                            "primary": getattr(profile.colors.dark.background, "primary", "#111827"),
+                            "secondary": getattr(profile.colors.dark.background, "secondary", "#1f2937"),
+                        } if profile.colors.dark and profile.colors.dark.background else {},
+                    } if hasattr(profile.colors, "dark") and profile.colors.dark else None,
                 },
                 "typography": {
                     "fonts": {
