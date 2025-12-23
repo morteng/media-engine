@@ -284,8 +284,8 @@ interface NavTooltipProps {
 }
 
 export function NavTooltip({ label, children, show = true }: NavTooltipProps) {
-  const [isVisible, setIsVisible] = useState(false);
-  const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
+  const [isHovered, setIsHovered] = useState(false);
+  const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
 
   const updatePosition = useCallback(() => {
@@ -294,16 +294,14 @@ export function NavTooltip({ label, children, show = true }: NavTooltipProps) {
     const rect = triggerRef.current.getBoundingClientRect();
     const padding = 12;
 
-    setTooltipStyle({
-      position: 'fixed',
-      top: `${rect.top + rect.height / 2}px`,
-      left: `${rect.right + padding}px`,
-      transform: 'translateY(-50%)',
+    setPosition({
+      top: rect.top + rect.height / 2,
+      left: rect.right + padding,
     });
   }, [show]);
 
   useEffect(() => {
-    if (isVisible && show) {
+    if (isHovered && show) {
       updatePosition();
       window.addEventListener('scroll', updatePosition, true);
       window.addEventListener('resize', updatePosition);
@@ -311,11 +309,23 @@ export function NavTooltip({ label, children, show = true }: NavTooltipProps) {
         window.removeEventListener('scroll', updatePosition, true);
         window.removeEventListener('resize', updatePosition);
       };
+    } else {
+      setPosition(null);
     }
-  }, [isVisible, show, updatePosition]);
+  }, [isHovered, show, updatePosition]);
 
-  const tooltipContent = isVisible && show ? (
-    <div className="nav-tooltip-portal" style={tooltipStyle} role="tooltip">
+  // Only render tooltip when we have a valid position
+  const tooltipContent = isHovered && show && position ? (
+    <div
+      className="nav-tooltip-portal"
+      style={{
+        position: 'fixed',
+        top: `${position.top}px`,
+        left: `${position.left}px`,
+        transform: 'translateY(-50%)',
+      }}
+      role="tooltip"
+    >
       {label}
     </div>
   ) : null;
@@ -324,8 +334,8 @@ export function NavTooltip({ label, children, show = true }: NavTooltipProps) {
     <div
       ref={triggerRef}
       className="nav-tooltip-wrapper"
-      onMouseEnter={() => setIsVisible(true)}
-      onMouseLeave={() => setIsVisible(false)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {children}
       {createPortal(tooltipContent, document.body)}
