@@ -5,7 +5,6 @@ Tracks content hashes for all document dependencies to automatically
 detect when dependent content needs review.
 """
 
-import hashlib
 import json
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -13,52 +12,12 @@ from pathlib import Path
 from typing import Optional
 
 from . import DependencyGraph, DependencyInfo
-
-
-def compute_file_hash(path: Path) -> str:
-    """
-    Compute content hash for any file.
-
-    For text files: normalizes whitespace and hashes content.
-    For binary files: hashes raw bytes.
-    """
-    if not path.exists():
-        return ""
-
-    try:
-        # Try as text first
-        content = path.read_text(encoding="utf-8")
-        # Normalize whitespace for text
-        normalized = " ".join(content.split()).strip()
-        return hashlib.sha256(normalized.encode()).hexdigest()[:16]
-    except UnicodeDecodeError:
-        # Binary file - hash raw bytes
-        content = path.read_bytes()
-        return hashlib.sha256(content).hexdigest()[:16]
-
-
-def compute_document_hash(doc_path: Path) -> str:
-    """
-    Compute content hash for a document, excluding frontmatter metadata.
-
-    This focuses on the actual content that matters for dependents.
-    """
-    if not doc_path.exists():
-        return ""
-
-    content = doc_path.read_text(encoding="utf-8")
-
-    # Strip frontmatter for markdown files
-    if doc_path.suffix == ".md" and content.startswith("---"):
-        parts = content.split("---", 2)
-        if len(parts) >= 3:
-            content = parts[2]
-
-    # For YAML files, hash the whole thing
-    # (frontmatter IS the content)
-
-    normalized = " ".join(content.split()).strip()
-    return hashlib.sha256(normalized.encode()).hexdigest()[:16]
+from ..core.hashing import (
+    compute_content_hash,
+    compute_document_hash,
+    compute_file_hash,
+    compute_raw_hash,
+)
 
 
 @dataclass
@@ -405,6 +364,95 @@ class DependencyHashTracker:
                 for s in stale
             ],
         }
+
+    def remove_document(self, doc_path: Path) -> bool:
+        """
+        Remove a document and all its dependencies from the registry.
+
+        Called when a document is deleted.
+        """
+        doc_str = str(doc_path)
+
+        if doc_str in self._registry:
+            del self._registry[doc_str]
+            self._save()
+            return True
+        return False
+
+    def register_document(self, doc_path: Path) -> int:
+        """
+        Register a new document and scan for its dependencies.
+
+        Called when a new document is created.
+
+        Returns the number of dependencies found.
+        """
+        from ..cms.document import Document
+
+        try:
+            doc = Document.load(doc_path)
+        except Exception:
+            return 0
+
+        registered = 0
+
+        # Check for source_document reference (translations)
+        source_ref = doc.metadata.get("source_document")
+        if source_ref:
+            source_path = self.project.content_dir / source_ref
+            if source_path.exists():
+                self.record_dependency(doc_path, source_path, "translation")
+                registered += 1
+
+        # Check for explicit dependencies
+        deps = doc.metadata.get("dependencies", [])
+        for dep in deps:
+            dep_path = self.project.content_dir / dep
+            if dep_path.exists():
+                self.record_dependency(doc_path, dep_path, "explicit")
+                registered += 1
+
+        return registered
+
+    def update_document_hash(self, doc_path: Path) -> None:
+        """
+        Update the content hash for a document.
+
+        Called when a document's content changes.
+        This updates any entries where this document is a target.
+        """
+        doc_str = str(doc_path)
+
+        # Note: We don't update recorded_hash here because that
+        # represents "when last acknowledged". Instead, the
+        # current_hash is computed on-demand during checks.
+
+        # If this document has dependencies, we might want to check
+        # if any of its dependencies have changed (but that's done
+        # separately in check_document).
+        pass
+
+    def check_dependents(self, target_path: Path) -> list[Path]:
+        """
+        Find all documents that depend on the given target.
+
+        Called when a target file changes to identify affected documents.
+
+        Returns list of document paths that have stale dependencies.
+        """
+        target_str = str(target_path)
+        stale_docs = []
+
+        # Find all documents that have this target as a dependency
+        for source_str, deps in self._registry.items():
+            if target_str in deps:
+                info = deps[target_str]
+                # Compute current hash
+                current_hash = self._compute_hash(target_path)
+                if current_hash != info.recorded_hash:
+                    stale_docs.append(Path(source_str))
+
+        return stale_docs
 
 
 __all__ = [

@@ -8,12 +8,12 @@ Uses centralized settings from media_engine.settings for defaults.
 """
 
 import fnmatch
-import hashlib
 import json
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple
 
+from ..core.hashing import compute_file_hash
 from ..settings import DEFAULT_IGNORE_PATTERNS, DIRS, FILES
 from .types import ContentType, FreshnessReport, FreshnessStatus, TrackedItem
 
@@ -436,14 +436,7 @@ class ContentRegistry:
 
     def _compute_hash(self, path: Path) -> str:
         """Compute SHA256 hash of file content (first 16 chars)."""
-        hasher = hashlib.sha256()
-
-        with open(path, "rb") as f:
-            # Read in chunks for large files
-            for chunk in iter(lambda: f.read(8192), b""):
-                hasher.update(chunk)
-
-        return hasher.hexdigest()[:16]
+        return compute_file_hash(path)
 
     def all_paths(self) -> Set[str]:
         """Get all tracked paths."""

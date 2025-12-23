@@ -8,22 +8,12 @@ Uses content hash comparison for automatic change detection - any source
 content change is automatically detected without manual version bumps.
 """
 
-import hashlib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
 from .document import Document
-
-
-def compute_content_hash(content: str) -> str:
-    """
-    Compute a stable hash of document content for change detection.
-
-    Normalizes whitespace to focus on actual content changes.
-    """
-    normalized = " ".join(content.split()).strip()
-    return hashlib.sha256(normalized.encode()).hexdigest()[:16]
+from ..core.hashing import compute_content_hash
 
 
 @dataclass

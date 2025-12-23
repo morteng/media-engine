@@ -194,6 +194,27 @@ class FileWatcher:
 
         logger.debug(f"Broadcast file changes: {len(events)} files, refresh: {refresh_types}")
 
+        # Notify preprocessor to refresh affected caches
+        try:
+            from .preprocessor import get_preprocessor
+            preprocessor = get_preprocessor()
+            if preprocessor:
+                preprocessor.on_file_change(set(categories.keys()))
+        except Exception as e:
+            logger.debug(f"Could not notify preprocessor: {e}")
+
+        # Perform incremental registry updates
+        try:
+            from .incremental import process_file_changes
+            from ..core.project import find_project
+
+            project = find_project(self.project_root)
+            if project:
+                update_result = process_file_changes(events, project)
+                logger.debug(f"Incremental updates: {update_result}")
+        except Exception as e:
+            logger.debug(f"Could not perform incremental updates: {e}")
+
 
 # Global instance for the application
 _watcher: Optional[FileWatcher] = None

@@ -78,8 +78,31 @@ cd dashboard && npm install && npm run build
     @router.get("/api/status")
     async def get_status():
         """Get comprehensive project status."""
+        from ..preprocessor import get_preprocessor
+
+        # Try cache first
+        preprocessor = get_preprocessor()
+        if preprocessor:
+            cached = preprocessor.get_cached("project_status", max_age_seconds=60)
+            if cached is not None:
+                return cached
+
+        # Compute fresh
         project = get_project()
         return project.get_status()
+
+    @router.get("/api/cache-stats")
+    async def get_cache_stats():
+        """Get preprocessor cache statistics."""
+        from ..preprocessor import get_preprocessor
+
+        preprocessor = get_preprocessor()
+        if not preprocessor:
+            return {"enabled": False, "message": "Preprocessor not running"}
+
+        stats = preprocessor.get_cache_stats()
+        stats["enabled"] = True
+        return stats
 
     # === Project Switching API ===
 

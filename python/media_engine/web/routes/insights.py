@@ -1,7 +1,7 @@
 """API routes for project insights."""
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Callable, Optional
 
 from fastapi import APIRouter, Query
 from fastapi.responses import PlainTextResponse
@@ -9,6 +9,36 @@ from fastapi.responses import PlainTextResponse
 if TYPE_CHECKING:
     from ...core.project import Project
     from ..websocket import ConnectionManager
+
+
+def _get_cached_or_compute(key: str, compute_fn, max_age: float = 300):
+    """Helper to get cached data or compute it."""
+    from ..preprocessor import get_preprocessor
+
+    preprocessor = get_preprocessor()
+    if preprocessor:
+        cached = preprocessor.get_cached(key, max_age_seconds=max_age)
+        if cached is not None:
+            return cached
+
+    # Fallback to direct computation
+    return compute_fn()
+
+
+def _compute_graph(project):
+    """Compute knowledge graph (helper for caching)."""
+    from ...insights import KnowledgeGraph
+
+    graph = KnowledgeGraph(project)
+    nodes, edges = graph.build_graph()
+    hubs = graph.find_hubs()
+    orphans = graph.find_orphans()
+    return {
+        "nodes": [n.to_dict() for n in nodes],
+        "links": [e.to_dict() for e in edges],
+        "hubs": len(hubs),
+        "orphans": len(orphans),
+    }
 
 
 def register_insights_routes(
@@ -37,75 +67,86 @@ def register_insights_routes(
 
         result = {}
 
-        # Health score
+        # Health score - try cache first
         try:
-            scorer = HealthScorer(project)
-            health = scorer.score_project()
-            result["health"] = health.to_dict()
+            def compute_health():
+                scorer = HealthScorer(project)
+                return scorer.score_project().to_dict()
+
+            result["health"] = _get_cached_or_compute("health", compute_health)
         except Exception as e:
             result["health"] = {"error": str(e)}
 
-        # Statistics
+        # Statistics - try cache first
         try:
-            collector = StatisticsCollector(project)
-            stats = collector.collect()
-            result["statistics"] = stats.to_dict()
+            def compute_stats():
+                collector = StatisticsCollector(project)
+                return collector.collect().to_dict()
+
+            result["statistics"] = _get_cached_or_compute("statistics", compute_stats)
         except Exception as e:
             result["statistics"] = {"error": str(e)}
 
-        # Incomplete content
+        # Incomplete content - try cache first
         try:
-            tracker = IncompleteTracker(project)
-            items = tracker.scan_project()
-            summary = tracker.get_summary()
-            result["incomplete"] = {
-                "total": summary["total"],
-                "debt_score": summary["debt_score"],
-                "items": [i.to_dict() for i in items[:10]],
-            }
+            def compute_incomplete():
+                tracker = IncompleteTracker(project)
+                items = tracker.scan_project()
+                summary = tracker.get_summary()
+                return {
+                    "total": summary["total"],
+                    "debt_score": summary["debt_score"],
+                    "items": [i.to_dict() for i in items[:10]],
+                }
+
+            result["incomplete"] = _get_cached_or_compute("incomplete", compute_incomplete)
         except Exception as e:
             result["incomplete"] = {"error": str(e)}
 
-        # Consistency issues
+        # Consistency issues - try cache first
         try:
-            checker = ConsistencyChecker(project)
-            issues = checker.check_project()
-            result["consistency"] = [i.to_dict() for i in issues[:10]]
+            def compute_consistency():
+                checker = ConsistencyChecker(project)
+                issues = checker.check_project()
+                return {"total": len(issues), "issues": [i.to_dict() for i in issues[:10]]}
+
+            cached = _get_cached_or_compute("consistency", compute_consistency)
+            # Handle both old format (list) and new format (dict)
+            if isinstance(cached, dict):
+                result["consistency"] = cached.get("issues", [])
+            else:
+                result["consistency"] = cached
         except Exception as e:
             result["consistency"] = {"error": str(e)}
 
-        # Translation parity
+        # Translation parity - try cache first
         try:
-            analyzer = ParityAnalyzer(project)
-            parity = analyzer.analyze()
-            result["parity"] = parity.to_dict()
+            def compute_parity():
+                analyzer = ParityAnalyzer(project)
+                return analyzer.analyze().to_dict()
+
+            result["parity"] = _get_cached_or_compute("parity", compute_parity)
         except Exception as e:
             result["parity"] = {"error": str(e)}
 
-        # Velocity
+        # Velocity - try cache first
         try:
-            velocity_tracker = VelocityTracker(project)
-            metrics = velocity_tracker.get_metrics(days=30)
-            result["velocity"] = metrics.to_dict()
+            def compute_velocity():
+                velocity_tracker = VelocityTracker(project)
+                return velocity_tracker.get_metrics(days=30).to_dict()
+
+            result["velocity"] = _get_cached_or_compute("velocity", compute_velocity)
         except Exception as e:
             result["velocity"] = {"error": str(e)}
 
-        # Knowledge graph summary
+        # Knowledge graph summary - try cache first
         try:
-            graph = KnowledgeGraph(project)
-            nodes, edges = graph.build_graph()
-            hubs = graph.find_hubs()
-            orphans = graph.find_orphans()
-            result["graph"] = {
-                "nodes": [n.to_dict() for n in nodes],
-                "links": [e.to_dict() for e in edges],
-                "hubs": len(hubs),
-                "orphans": len(orphans),
-            }
+            result["graph"] = _get_cached_or_compute("graph", lambda: _compute_graph(project))
         except Exception as e:
             result["graph"] = {"error": str(e)}
 
         return result
+
 
     @router.get("/api/insights/health")
     async def get_health(document: str = None):

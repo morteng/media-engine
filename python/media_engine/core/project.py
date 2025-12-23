@@ -7,7 +7,6 @@ manages content, and coordinates builds.
 Uses centralized settings from media_engine.settings for paths and defaults.
 """
 
-import hashlib
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -17,6 +16,7 @@ import yaml
 
 from ..settings import CACHE, CLI, DIRS, ENV
 from .config import Config
+from .hashing import compute_content_hash, compute_file_hash
 from .theme import Theme, load_theme
 
 if TYPE_CHECKING:
@@ -290,17 +290,11 @@ class Project:
 
     def hash_file(self, path: Path) -> str:
         """Compute SHA256 hash of a file."""
-        if not path.exists():
-            return ""
-        hasher = hashlib.sha256()
-        with open(path, "rb") as f:
-            for chunk in iter(lambda: f.read(CACHE.chunk_size), b""):
-                hasher.update(chunk)
-        return hasher.hexdigest()[: CACHE.hash_length]
+        return compute_file_hash(path)
 
     def hash_content(self, content: str) -> str:
         """Compute SHA256 hash of string content."""
-        return hashlib.sha256(content.encode()).hexdigest()[: CACHE.hash_length]
+        return compute_content_hash(content)
 
     def is_cached(self, key: str, current_hash: str) -> bool:
         """Check if a cached item is still valid."""

@@ -39,7 +39,7 @@ media-engine brand status        # Brand/design system status
 
 ```
 python/media_engine/     # Main Python package (45+ modules, 200+ files)
-  core/                  # Config, Project, Theme (entry points)
+  core/                  # Config, Project, Theme, Hashing (entry points)
   brand/                 # Brand/design system (8 files)
   settings/              # Centralized configuration (env, paths, defaults)
   config/                # User-level configuration
@@ -58,7 +58,8 @@ python/media_engine/     # Main Python package (45+ modules, 200+ files)
   insights/              # Comprehensive analytics (11 files)
   freshness/             # Content freshness tracking + predictive (4 files)
   mcp/                   # MCP server with 18 tool modules
-  web/                   # FastAPI dashboard (16 tabs, 25 API routes)
+  web/                   # FastAPI dashboard (16 tabs, 25 API routes, file watcher)
+  hierarchy/             # Document hierarchy and staleness propagation
   gui/                   # Easy GUI launcher
   audit/                 # Audit logging system
   provenance/            # Claim tracking and approval workflows
@@ -108,6 +109,27 @@ Test files (19 total):
 - `test_integration.py`, `test_user_config.py`
 
 Test classes follow `Test{ClassName}` naming with `test_{method}` methods.
+
+## Unified Hashing
+
+All modules use consistent SHA256 hashes (16 characters) via `core/hashing.py`:
+
+```python
+from media_engine.core import (
+    compute_content_hash,   # Text content (normalized whitespace)
+    compute_document_hash,  # Markdown (content only, no frontmatter)
+    compute_file_hash,      # Binary files (chunked reading)
+    compute_raw_hash,       # Raw bytes
+    compute_short_hash,     # Configurable length (default 8)
+    verify_hash,            # Verify content matches hash
+    verify_file_hash,       # Verify file matches hash
+)
+
+# All hashes are 16-char SHA256 by default
+hash = compute_content_hash("Hello world")  # "b94d27b9934d3e08"
+```
+
+Used by: translation tracking, dependency detection, freshness registry, provenance, scene notes.
 
 ## Key Patterns
 
@@ -187,12 +209,21 @@ media-engine demos list          # List available demos
 media-engine demos build         # Build interactive demos
 ```
 
+**Dependencies:**
+```bash
+media-engine graph               # Dependency visualization
+media-engine deps status         # Dependency hash status
+media-engine deps stale          # Documents with stale dependencies
+media-engine deps check <path>   # Check specific document
+media-engine deps sync           # Sync hashes from graph
+media-engine deps refresh        # Refresh all hashes
+```
+
 **Workflow & Maintenance:**
 ```bash
 media-engine provenance report   # Approval workflow status
 media-engine provenance claims   # Claims needing verification
 media-engine provenance queue    # Documents awaiting review
-media-engine graph               # Dependency visualization
 media-engine search              # Content search
 media-engine cache               # Cache management
 media-engine changelog           # Generate changelog
@@ -388,19 +419,30 @@ stale_docs = scanner.find_stale(days=30)
 
 ## Translation Tracking
 
-Multilingual documents use frontmatter to track translation status:
+Multilingual documents use frontmatter to track translation status with **hash-based change detection**:
 
 ```yaml
 language: "no"
 source_document: "en/chapters/01_introduction.md"
-source_version: "1.0.0"  # version of source when translated
+source_hash: "a1b2c3d4e5f67890"  # Content hash of source when translated
 ```
+
+The system uses SHA256 content hashes (16 characters) to detect when source documents change, automatically flagging translations for review.
 
 Translation commands:
 ```bash
 media-engine translation status    # Show all translation pairs
 media-engine translation outdated  # Show only outdated translations
-media-engine translation missing   # Show missing translations
+media-engine translation missing   # Missing translations
+media-engine translation sync      # Sync translation status registry
+```
+
+```python
+from media_engine.cms.translation import TranslationTracker
+
+tracker = TranslationTracker(project)
+status = tracker.get_all_status()  # All translation pairs with hash status
+outdated = tracker.get_outdated()  # Translations with stale source hashes
 ```
 
 ## Demo Project
@@ -607,8 +649,28 @@ media-engine dashboard
 
 **Features:**
 - Real-time collaboration via WebSocket
+- **File watching** with automatic UI refresh on content changes
+- **Background preprocessing** for fast API responses
+- **Incremental registry updates** on file changes
 - Responsive design (~195KB JavaScript, ~49KB CSS)
 - RESTful API for all operations
+
+**Real-time Updates:**
+
+The dashboard monitors project files and broadcasts changes to connected clients:
+
+```python
+from media_engine.web.watcher import FileWatcher, start_watcher
+from media_engine.web.preprocessor import BackgroundPreprocessor
+from media_engine.web.incremental import IncrementalUpdater
+
+# File watching detects changes and triggers:
+# 1. WebSocket broadcast to all dashboard clients
+# 2. Background preprocessor cache invalidation
+# 3. Incremental registry updates (freshness, translations, dependencies)
+```
+
+Cache stats endpoint: `GET /api/cache-stats`
 
 ## Remotion (Motion Graphics)
 
@@ -684,18 +746,31 @@ entries = get_recent_entries(project, limit=50)
 
 ## Dependency Tracking
 
-Track relationships between documents:
+Track relationships between documents with **hash-based change detection**:
 
 ```python
-from media_engine.dependencies import DependencyGraph
+from media_engine.dependencies import DependencyGraph, DependencyHashTracker
 
+# Graph-based dependency analysis
 graph = DependencyGraph(project)
 graph.refresh()  # Scan all documents
 affected = graph.get_impact(changed_doc)  # What needs review?
+
+# Hash-based staleness detection
+tracker = DependencyHashTracker(project)
+status = tracker.check_document(doc_path)  # Check if dependencies changed
+stale = tracker.get_all_stale()  # All documents with stale dependencies
+tracker.mark_current(doc_path)  # Acknowledge dependency changes
 ```
 
+CLI commands:
 ```bash
 media-engine graph               # Visualize dependencies
+media-engine deps status         # Dependency hash status
+media-engine deps stale          # Documents with stale dependencies
+media-engine deps check <path>   # Check specific document
+media-engine deps sync           # Sync hashes from dependency graph
+media-engine deps refresh        # Refresh all dependency hashes
 ```
 
 ## Platform Independence

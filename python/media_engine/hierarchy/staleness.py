@@ -202,12 +202,31 @@ class StalenessChecker:
         path: Path,
         reason: StalenessReason,
         sources: Optional[list[Path]] = None,
+        propagate: bool = True,
+        _visited: Optional[set[str]] = None,
     ) -> bool:
         """
         Mark a document as stale and propagate to dependents.
 
+        Args:
+            path: Document path to mark stale
+            reason: Why the document is stale
+            sources: Source documents that caused staleness
+            propagate: Whether to propagate staleness to dependents
+            _visited: Internal parameter to prevent infinite loops
+
         Returns True if document was marked stale.
         """
+        # Initialize visited set for cycle detection
+        if _visited is None:
+            _visited = set()
+
+        path_str = str(path)
+        if path_str in _visited:
+            # Already processed this document - avoid infinite loop
+            return False
+        _visited.add(path_str)
+
         node = self.registry.get_node(path)
         if not node:
             return False
@@ -217,14 +236,22 @@ class StalenessChecker:
         node.stale_sources = sources or []
         self.registry.set_node(node)
 
-        # Propagate to dependents
-        impacted = self.propagate_staleness(path)
-        for impact in impacted:
-            self.mark_stale(
-                impact.path,
-                StalenessReason.TRANSITIVE,
-                [path],
-            )
+        # Propagate to dependents (if enabled)
+        if propagate:
+            # Get impacted documents (this uses its own visited set internally)
+            impacted = self.propagate_staleness(path)
+
+            # Mark each impacted document as stale, sharing the visited set
+            for impact in impacted:
+                impact_path_str = str(impact.path)
+                if impact_path_str not in _visited:
+                    self.mark_stale(
+                        impact.path,
+                        StalenessReason.TRANSITIVE,
+                        [path],
+                        propagate=False,  # Don't re-propagate to avoid exponential growth
+                        _visited=_visited,
+                    )
 
         return True
 

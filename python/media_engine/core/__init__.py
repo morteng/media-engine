@@ -5,6 +5,15 @@ Shared utilities for configuration, theming, and project management.
 """
 
 from .config import Config, FreshnessConfig, VideoConfig, VoiceoverConfig, load_config
+from .hashing import (
+    compute_content_hash,
+    compute_document_hash,
+    compute_file_hash,
+    compute_raw_hash,
+    compute_short_hash,
+    verify_file_hash,
+    verify_hash,
+)
 from .project import LanguageConfig, Project, find_project
 from .theme import COPPER_AND_CREAM, ColorPalette, Theme, Typography, load_theme
 
@@ -40,6 +49,14 @@ __all__ = [
     "Project",
     "LanguageConfig",
     "find_project",
+    # Hashing
+    "compute_content_hash",
+    "compute_document_hash",
+    "compute_file_hash",
+    "compute_raw_hash",
+    "compute_short_hash",
+    "verify_hash",
+    "verify_file_hash",
     # Brand (lazy loaded)
     "BrandProfile",
     "BrandContext",

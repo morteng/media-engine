@@ -37,6 +37,7 @@ from ..settings import WEB
 from .routes import register_routes
 from .watcher import start_watcher, stop_watcher
 from .websocket import ConnectionManager
+from .preprocessor import start_preprocessor, stop_preprocessor, get_preprocessor
 
 
 def create_app(project_path: Optional[Path] = None) -> "FastAPI":
@@ -107,21 +108,27 @@ def create_app(project_path: Optional[Path] = None) -> "FastAPI":
     # Register all routes
     register_routes(app, get_project, manager, static_dir, set_project)
 
-    # File watcher for live updates
+    # File watcher and preprocessor for live updates
     @app.on_event("startup")
-    async def startup_watcher():
-        """Start file watcher on server startup."""
+    async def startup_services():
+        """Start file watcher and preprocessor on server startup."""
         try:
             project = get_project()
             loop = asyncio.get_event_loop()
+
+            # Start file watcher
             start_watcher(project.root, manager, loop)
+
+            # Start background preprocessor
+            start_preprocessor(project, loop)
         except Exception:
-            pass  # Watcher is optional
+            pass  # Services are optional
 
     @app.on_event("shutdown")
-    async def shutdown_watcher():
-        """Stop file watcher on server shutdown."""
+    async def shutdown_services():
+        """Stop file watcher and preprocessor on server shutdown."""
         stop_watcher()
+        stop_preprocessor()
 
     return app
 

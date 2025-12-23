@@ -5,11 +5,11 @@ Central registry for managing notes across all content types.
 Stores data in {project}/.media-engine/notes/
 """
 
-import hashlib
 import json
 from datetime import datetime
 from typing import TYPE_CHECKING, Dict, List, Optional
 
+from ..core.hashing import compute_short_hash
 from .types import Note, NotePriority, NotesReport, NoteStatus, NoteType
 
 if TYPE_CHECKING:
@@ -70,7 +70,7 @@ class NotesRegistry:
     def _generate_id(self, text: str, target_path: str) -> str:
         """Generate unique note ID."""
         content = f"{text}:{target_path}:{datetime.now().isoformat()}"
-        return hashlib.sha256(content.encode()).hexdigest()[:8]
+        return compute_short_hash(content, length=8)
 
     def _log_action(self, action: str, details: str = None, user: str = None):
         """Log action to audit log."""

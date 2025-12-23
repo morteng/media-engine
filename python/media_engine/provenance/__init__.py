@@ -314,9 +314,9 @@ class ProvenanceTracker:
         prov = self.get(document_path)
 
         # Generate claim ID
-        import hashlib
+        from ..core.hashing import compute_short_hash
 
-        claim_id = hashlib.sha256(claim_text.encode()).hexdigest()[:8]
+        claim_id = compute_short_hash(claim_text, length=8)
 
         claim = Claim(
             claim_id=claim_id,

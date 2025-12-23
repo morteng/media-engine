@@ -10,13 +10,13 @@ Detection methods:
 - Concept repetition (same topic explained multiple times)
 """
 
-import hashlib
 import re
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+from ..core.hashing import compute_content_hash
 from ..core.project import Project
 
 
@@ -125,7 +125,7 @@ class DuplicateDetector:
                     if len(para["text"].split()) >= min_words:
                         # Normalize and hash
                         normalized = self._normalize_text(para["text"])
-                        hash_key = hashlib.md5(normalized.encode()).hexdigest()
+                        hash_key = compute_content_hash(normalized)
 
                         content_hashes[hash_key].append(
                             ContentLocation(

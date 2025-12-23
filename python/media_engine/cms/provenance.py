@@ -2,13 +2,13 @@
 Provenance and version tracking for documents.
 """
 
-import hashlib
 import json
 from dataclasses import asdict, dataclass, field
 from datetime import date, datetime
 from pathlib import Path
 from typing import Optional
 
+from ..core.hashing import compute_content_hash
 from .document import Document, DocumentCollection
 
 
@@ -109,7 +109,7 @@ class ProvenanceTracker:
     @staticmethod
     def compute_content_hash(content: str) -> str:
         """Compute hash of document content."""
-        return hashlib.sha256(content.encode()).hexdigest()[:16]
+        return compute_content_hash(content)
 
     def get_provenance(self, doc: Document) -> DocumentProvenance:
         """Get or create provenance for a document."""

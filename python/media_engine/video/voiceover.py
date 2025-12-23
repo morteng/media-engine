@@ -12,13 +12,14 @@ Features:
 - Segment concatenation
 """
 
-import hashlib
 import os
 import re
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional
+
+from ..core.hashing import compute_raw_hash
 
 if TYPE_CHECKING:
     from ..core.project import Project
@@ -84,7 +85,7 @@ def clean_text(text: str) -> str:
 def calculate_hash(text: str, voice_id: str, language: str = "en") -> str:
     """Calculate cache hash for text + voice + language."""
     content = f"{voice_id}:{language}:{text}"
-    return hashlib.sha256(content.encode()).hexdigest()[:16]
+    return compute_raw_hash(content)
 
 
 def calculate_pause(text: str, is_last: bool = False) -> float:
