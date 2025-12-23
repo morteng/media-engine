@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import {
   useBrandVoice,
@@ -34,8 +34,23 @@ import {
   Trash2,
   Eye,
   Download,
+  Copy,
+  Sparkles,
 } from 'lucide-react';
 import './Brand.css';
+
+// Helper hook for copy to clipboard
+function useCopyToClipboard() {
+  const [copiedValue, setCopiedValue] = useState<string | null>(null);
+
+  const copy = useCallback((text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedValue(text);
+    setTimeout(() => setCopiedValue(null), 2000);
+  }, []);
+
+  return { copy, copiedValue };
+}
 
 const tabs = [
   { path: '', label: 'Overview' },
@@ -53,6 +68,7 @@ function OverviewView() {
   const { data: voice, isLoading: loadingVoice } = useBrandVoice();
   useBrandFiles();  // Prefetch for later use
   const { data: notes } = useBrandNotes();
+  const { copy, copiedValue } = useCopyToClipboard();
 
   if (loadingAssets || loadingVoice) {
     return <LoadingState message="Loading brand overview..." />;
@@ -61,25 +77,37 @@ function OverviewView() {
   const logoCount = assets?.logos ? Object.keys(assets.logos).length : 0;
   const hasVoice = voice?.has_voice;
   const pendingNotes = notes?.notes.filter(n => n.status === 'pending').length || 0;
+  const colorCount = assets?.colors.brand ? Object.keys(assets.colors.brand).length : 0;
+  const fontCount = assets?.typography?.fonts ? Object.keys(assets.typography.fonts).length : 0;
 
   return (
     <div className="brand-overview">
-      {/* Brand Identity Card */}
-      <Card className="brand-identity-card">
+      {/* Brand Hero Card */}
+      <Card variant="gradient" className="brand-hero">
         <CardContent>
-          <div className="brand-header">
-            {assets?.logos?.primary?.exists && (
-              <div className="brand-logo-preview">
+          <div className="brand-hero-content">
+            <div className="brand-hero-logo">
+              {assets?.logos?.primary?.exists ? (
                 <LogoPreview path={assets.logos.primary.path} alt={assets.name} />
-              </div>
-            )}
-            <div className="brand-info">
-              <h1 className="brand-name">{assets?.name || 'Brand'}</h1>
-              {assets?.identity?.taglines?.primary && (
-                <p className="brand-tagline">{assets.identity.taglines.primary}</p>
+              ) : (
+                <div className="brand-hero-placeholder">
+                  <Sparkles size={48} />
+                </div>
               )}
+            </div>
+            <div className="brand-hero-info">
+              <h2 className="brand-hero-name">{assets?.name || 'Your Brand'}</h2>
+              {assets?.identity?.taglines?.primary && (
+                <p className="brand-hero-tagline">{assets.identity.taglines.primary}</p>
+              )}
+              <div className="brand-hero-badges">
+                <Badge variant="accent">{colorCount} Colors</Badge>
+                <Badge variant="info">{logoCount} Logos</Badge>
+                <Badge variant="success">{fontCount} Fonts</Badge>
+                {hasVoice && <Badge variant="default">Voice Defined</Badge>}
+              </div>
               {assets?.identity?.legal?.copyright && (
-                <p className="brand-copyright text-muted">{assets.identity.legal.copyright}</p>
+                <p className="brand-hero-copyright">{assets.identity.legal.copyright}</p>
               )}
             </div>
           </div>
@@ -88,42 +116,48 @@ function OverviewView() {
 
       {/* Quick Stats */}
       <div className="brand-stats-grid">
-        <Card>
-          <CardContent className="stat-card">
-            <Palette size={24} className="stat-icon" style={{ color: assets?.colors.brand.primary }} />
-            <div className="stat-content">
-              <span className="stat-value">
-                {assets?.colors.brand ? Object.keys(assets.colors.brand).length : 0}
-              </span>
+        <Card className="brand-stat-card">
+          <CardContent>
+            <div className="stat-icon-wrapper" style={{ background: `${assets?.colors.brand.primary}15` }}>
+              <Palette size={22} style={{ color: assets?.colors.brand.primary }} />
+            </div>
+            <div className="stat-info">
+              <span className="stat-value">{colorCount}</span>
               <span className="stat-label">Brand Colors</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="stat-card">
-            <Image size={24} className="stat-icon" />
-            <div className="stat-content">
+        <Card className="brand-stat-card">
+          <CardContent>
+            <div className="stat-icon-wrapper accent">
+              <Image size={22} />
+            </div>
+            <div className="stat-info">
               <span className="stat-value">{logoCount}</span>
               <span className="stat-label">Logo Variants</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="stat-card">
-            <MessageCircle size={24} className="stat-icon" />
-            <div className="stat-content">
-              <span className="stat-value">{hasVoice ? 'Defined' : 'None'}</span>
-              <span className="stat-label">Voice Profile</span>
+        <Card className="brand-stat-card">
+          <CardContent>
+            <div className="stat-icon-wrapper info">
+              <Type size={22} />
+            </div>
+            <div className="stat-info">
+              <span className="stat-value">{fontCount}</span>
+              <span className="stat-label">Font Families</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="stat-card">
-            <StickyNote size={24} className="stat-icon" />
-            <div className="stat-content">
+        <Card className="brand-stat-card">
+          <CardContent>
+            <div className="stat-icon-wrapper warning">
+              <StickyNote size={22} />
+            </div>
+            <div className="stat-info">
               <span className="stat-value">{pendingNotes}</span>
               <span className="stat-label">Pending Notes</span>
             </div>
@@ -133,40 +167,60 @@ function OverviewView() {
 
       {/* Color Palette Preview */}
       <Card>
-        <CardHeader title="Color Palette" />
+        <CardHeader title="Color Palette" subtitle="Click to copy hex value" />
         <CardContent>
           <div className="color-palette-preview">
             <div className="color-group">
               <h4>Brand Colors</h4>
-              <div className="color-swatches">
+              <div className="color-swatches-large">
                 {assets?.colors.brand && Object.entries(assets.colors.brand).map(([name, color]) => (
                   color && (
-                    <div key={name} className="color-swatch-item">
+                    <button
+                      key={name}
+                      className={`color-swatch-card ${copiedValue === color ? 'copied' : ''}`}
+                      onClick={() => copy(color as string)}
+                      title={`Click to copy ${color}`}
+                    >
                       <div
-                        className="color-swatch"
+                        className="swatch-color"
                         style={{ backgroundColor: color as string }}
-                        title={`${name}: ${color}`}
                       />
-                      <span className="color-name">{name}</span>
-                      <span className="color-value">{color as string}</span>
-                    </div>
+                      <div className="swatch-info">
+                        <span className="swatch-name">{name}</span>
+                        <code className="swatch-hex">{color as string}</code>
+                      </div>
+                      <Copy size={14} className="swatch-copy-icon" />
+                      {copiedValue === color && (
+                        <span className="copied-toast">Copied!</span>
+                      )}
+                    </button>
                   )
                 ))}
               </div>
             </div>
             <div className="color-group">
               <h4>Semantic Colors</h4>
-              <div className="color-swatches">
+              <div className="color-swatches-large">
                 {assets?.colors.semantic && Object.entries(assets.colors.semantic).map(([name, color]) => (
-                  <div key={name} className="color-swatch-item">
+                  <button
+                    key={name}
+                    className={`color-swatch-card ${copiedValue === color ? 'copied' : ''}`}
+                    onClick={() => copy(color)}
+                    title={`Click to copy ${color}`}
+                  >
                     <div
-                      className="color-swatch"
+                      className="swatch-color"
                       style={{ backgroundColor: color }}
-                      title={`${name}: ${color}`}
                     />
-                    <span className="color-name">{name}</span>
-                    <span className="color-value">{color}</span>
-                  </div>
+                    <div className="swatch-info">
+                      <span className="swatch-name">{name}</span>
+                      <code className="swatch-hex">{color}</code>
+                    </div>
+                    <Copy size={14} className="swatch-copy-icon" />
+                    {copiedValue === color && (
+                      <span className="copied-toast">Copied!</span>
+                    )}
+                  </button>
                 ))}
               </div>
             </div>
@@ -176,21 +230,30 @@ function OverviewView() {
 
       {/* Typography Preview */}
       <Card>
-        <CardHeader title="Typography" />
+        <CardHeader title="Typography" subtitle="Font families and weights" />
         <CardContent>
-          <div className="typography-preview">
+          <div className="typography-preview-grid">
             {assets?.typography?.fonts && Object.entries(assets.typography.fonts).map(([role, font]) => (
-              <div key={role} className="font-preview">
-                <div className="font-role">{role}</div>
+              <div key={role} className="font-card">
+                <div className="font-card-header">
+                  <Type size={16} className="text-accent" />
+                  <span className="font-card-role">{role}</span>
+                  <Badge variant="default" size="sm">{font.source}</Badge>
+                </div>
                 <div
-                  className="font-sample"
+                  className="font-card-sample"
                   style={{ fontFamily: `${font.family}, ${font.fallback || 'sans-serif'}` }}
                 >
-                  {font.family}
+                  <span className="sample-display">{font.family}</span>
+                  <span className="sample-alphabet">ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789</span>
                 </div>
-                <div className="font-meta">
-                  <Badge variant="default">{font.source}</Badge>
-                  <span className="font-weights">Weights: {font.weights.join(', ')}</span>
+                <div className="font-card-footer">
+                  <span className="font-weights-label">Weights:</span>
+                  <div className="font-weights-list">
+                    {font.weights.map((w: number) => (
+                      <span key={w} className="font-weight-badge">{w}</span>
+                    ))}
+                  </div>
                 </div>
               </div>
             ))}
@@ -201,17 +264,26 @@ function OverviewView() {
       {/* Voice Summary */}
       {hasVoice && (
         <Card>
-          <CardHeader title="Voice Profile Summary" />
+          <CardHeader title="Voice Profile" subtitle="Brand personality and tone" />
           <CardContent>
-            <div className="voice-summary">
-              <div className="voice-personality">
-                {voice.personality?.map((trait: string) => (
-                  <Badge key={trait} variant="accent">{trait}</Badge>
-                ))}
+            <div className="voice-summary-card">
+              <div className="voice-personality-section">
+                <MessageCircle size={20} className="text-accent" />
+                <div className="voice-traits">
+                  {voice.personality?.map((trait: string) => (
+                    <Badge key={trait} variant="accent">{trait}</Badge>
+                  ))}
+                </div>
               </div>
-              <div className="voice-details">
-                <span>Tone: <strong>{voice.tone}</strong></span>
-                <span>Formality: <strong>Level {voice.formality_level}</strong></span>
+              <div className="voice-metrics">
+                <div className="voice-metric">
+                  <span className="metric-label">Tone</span>
+                  <span className="metric-value">{voice.tone}</span>
+                </div>
+                <div className="voice-metric">
+                  <span className="metric-label">Formality</span>
+                  <span className="metric-value">Level {voice.formality_level}/5</span>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -939,24 +1011,20 @@ function LogoPreview({ path, alt }: { path: string; alt: string }) {
 
 export function Brand() {
   return (
-    <div className="brand-page">
+    <div className="page brand-page">
       <div className="page-header">
         <h1>Brand Hub</h1>
-        <p className="text-muted">Visual identity, voice guidelines, and brand assets</p>
+        <SubTabs tabs={tabs} basePath="/brand" />
       </div>
 
-      <SubTabs tabs={tabs} basePath="/brand" />
-
-      <div className="brand-content">
-        <Routes>
-          <Route index element={<OverviewView />} />
-          <Route path="identity" element={<VisualIdentityView />} />
-          <Route path="voice" element={<VoiceProfileView />} />
-          <Route path="check" element={<VoiceCheckView />} />
-          <Route path="files" element={<FilesView />} />
-          <Route path="notes" element={<NotesView />} />
-        </Routes>
-      </div>
+      <Routes>
+        <Route index element={<OverviewView />} />
+        <Route path="identity" element={<VisualIdentityView />} />
+        <Route path="voice" element={<VoiceProfileView />} />
+        <Route path="check" element={<VoiceCheckView />} />
+        <Route path="files" element={<FilesView />} />
+        <Route path="notes" element={<NotesView />} />
+      </Routes>
     </div>
   );
 }
