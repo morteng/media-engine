@@ -1,35 +1,16 @@
 /* Tailwind CSS Base - Media Engine Dashboard */
 @import "tailwindcss";
 
-/* Theme configuration for shadcn/ui compatibility */
-@theme {
-  /* Map our design tokens to Tailwind theme */
-  --color-background: #09090b;
-  --color-foreground: #fafafa;
-  --color-card: #1c1c1f;
-  --color-card-foreground: #fafafa;
-  --color-popover: #2a2a2e;
-  --color-popover-foreground: #fafafa;
-  --color-primary: #6366f1;
-  --color-primary-foreground: #ffffff;
-  --color-secondary: #18181b;
-  --color-secondary-foreground: #a1a1aa;
-  --color-muted: #27272a;
-  --color-muted-foreground: #71717a;
-  --color-accent: #6366f1;
-  --color-accent-foreground: #ffffff;
-  --color-destructive: #ef4444;
-  --color-destructive-foreground: #ffffff;
-  --color-success: #10b981;
-  --color-success-foreground: #ffffff;
-  --color-warning: #f59e0b;
-  --color-warning-foreground: #ffffff;
-  --color-info: #3b82f6;
-  --color-info-foreground: #ffffff;
-  --color-border: #3f3f46;
-  --color-input: #3f3f46;
-  --color-ring: #6366f1;
+/* Typography plugin for prose/markdown styling */
+@plugin "@tailwindcss/typography";
 
+/* DaisyUI theme configuration - nord (light) and sunset (dark) */
+@plugin "daisyui" {
+  themes: nord --default, sunset --prefersdark;
+}
+
+/* Theme configuration for custom colors */
+@theme {
   /* Border radius scale */
   --radius-sm: 6px;
   --radius-md: 8px;

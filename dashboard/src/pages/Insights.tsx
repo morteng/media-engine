@@ -1,9 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
 import { useInsights, useAuditLog } from '@/hooks/useApi';
-import { Card, CardHeader, CardContent } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { ProgressBar } from '@/components/ui/ProgressBar';
-import { LoadingState } from '@/components/ui/Spinner';
 import { SubTabs } from '@/components/ui/SubTabs';
 import {
   TrendingUp,
@@ -27,142 +23,156 @@ export function AnalyticsView() {
   const { data: insights, isLoading } = useInsights();
 
   if (isLoading) {
-    return <LoadingState message="Loading insights..." />;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <p className="mt-4 text-base-content/60">Loading insights...</p>
+        </div>
+      </div>
+    );
   }
 
   const stats = insights?.statistics;
   const velocity = insights?.velocity;
   const incomplete = insights?.incomplete;
   const consistency = insights?.consistency ?? [];
+  const debtScore = incomplete?.debt_score ?? 0;
 
   return (
-    <div className="insights-content">
-      <div className="insights-grid">
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Content Statistics */}
-        <Card>
-          <CardHeader title="Content Statistics" />
-          <CardContent>
-            <div className="stat-rows">
-              <div className="stat-row">
-                <span>Total Documents</span>
-                <strong>{stats?.content?.total_documents ?? 0}</strong>
+        <div className="card bg-base-200">
+          <div className="card-body">
+            <h3 className="card-title text-lg">Content Statistics</h3>
+            <div className="space-y-3 mt-4">
+              <div className="flex justify-between items-center p-3 rounded-lg bg-base-300">
+                <span className="text-base-content/70">Total Documents</span>
+                <strong className="text-lg">{stats?.content?.total_documents ?? 0}</strong>
               </div>
-              <div className="stat-row">
-                <span>Total Words</span>
-                <strong>{(stats?.content?.total_words ?? 0).toLocaleString()}</strong>
+              <div className="flex justify-between items-center p-3 rounded-lg bg-base-300">
+                <span className="text-base-content/70">Total Words</span>
+                <strong className="text-lg">{(stats?.content?.total_words ?? 0).toLocaleString()}</strong>
               </div>
               {stats?.content?.documents_by_language && (
-                <div className="language-breakdown">
-                  <h4>By Language</h4>
-                  {Object.entries(stats.content.documents_by_language).map(([lang, count]) => (
-                    <div key={lang} className="stat-row">
-                      <Badge variant="accent">{lang.toUpperCase()}</Badge>
-                      <span>{count} docs</span>
-                    </div>
-                  ))}
+                <div className="pt-3 border-t border-base-300">
+                  <h4 className="text-sm text-base-content/50 uppercase tracking-wider mb-2">By Language</h4>
+                  <div className="space-y-2">
+                    {Object.entries(stats.content.documents_by_language).map(([lang, count]) => (
+                      <div key={lang} className="flex justify-between items-center">
+                        <div className="badge badge-primary">{lang.toUpperCase()}</div>
+                        <span className="text-sm">{count} docs</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Velocity */}
-        <Card>
-          <CardHeader title="Velocity" subtitle={`Last ${velocity?.period ?? 'month'}`} />
-          <CardContent>
-            <div className="velocity-stats">
-              <div className="velocity-stat">
-                <GitCommit size={20} className="text-accent" />
-                <div>
-                  <span className="stat-value">{velocity?.commits ?? 0}</span>
-                  <span className="stat-label">Commits</span>
-                </div>
+        <div className="card bg-base-200">
+          <div className="card-body">
+            <h3 className="card-title text-lg">Velocity</h3>
+            <p className="text-sm text-base-content/60">Last {velocity?.period ?? 'month'}</p>
+            <div className="grid grid-cols-3 gap-4 mt-4">
+              <div className="text-center p-3 rounded-lg bg-base-300">
+                <GitCommit size={20} className="text-primary mx-auto mb-2" />
+                <div className="text-2xl font-bold">{velocity?.commits ?? 0}</div>
+                <div className="text-xs text-base-content/60">Commits</div>
               </div>
-              <div className="velocity-stat">
-                <FileText size={20} className="text-success" />
-                <div>
-                  <span className="stat-value">{velocity?.documents_modified ?? 0}</span>
-                  <span className="stat-label">Modified</span>
-                </div>
+              <div className="text-center p-3 rounded-lg bg-base-300">
+                <FileText size={20} className="text-success mx-auto mb-2" />
+                <div className="text-2xl font-bold">{velocity?.documents_modified ?? 0}</div>
+                <div className="text-xs text-base-content/60">Modified</div>
               </div>
-              <div className="velocity-stat">
-                <TrendingUp size={20} className="text-warning" />
-                <div>
-                  <span className="lines-added">+{velocity?.lines_added ?? 0}</span>
-                  <span className="lines-removed">-{velocity?.lines_removed ?? 0}</span>
-                </div>
+              <div className="text-center p-3 rounded-lg bg-base-300">
+                <TrendingUp size={20} className="text-warning mx-auto mb-2" />
+                <div className="text-success text-sm font-semibold">+{velocity?.lines_added ?? 0}</div>
+                <div className="text-error text-sm font-semibold">-{velocity?.lines_removed ?? 0}</div>
               </div>
             </div>
 
             {velocity?.top_contributors && velocity.top_contributors.length > 0 && (
-              <div className="contributors">
-                <h4>Top Contributors</h4>
-                {velocity.top_contributors.slice(0, 3).map(contributor => (
-                  <div key={contributor.email} className="contributor">
-                    <Users size={14} />
-                    <span>{contributor.name}</span>
-                    <Badge variant="default" size="sm">{contributor.commits}</Badge>
-                  </div>
-                ))}
+              <div className="mt-4 pt-4 border-t border-base-300">
+                <h4 className="text-sm text-base-content/50 uppercase tracking-wider mb-2">Top Contributors</h4>
+                <div className="space-y-2">
+                  {velocity.top_contributors.slice(0, 3).map(contributor => (
+                    <div key={contributor.email} className="flex items-center gap-2">
+                      <Users size={14} className="text-base-content/40" />
+                      <span className="flex-1 text-sm">{contributor.name}</span>
+                      <div className="badge badge-ghost badge-sm">{contributor.commits}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Incomplete Content */}
-        <Card>
-          <CardHeader title="Incomplete Content" subtitle={`${incomplete?.total ?? 0} markers`} />
-          <CardContent>
-            <div className="debt-score">
-              <span className="label">Technical Debt</span>
-              <ProgressBar
-                value={100 - (incomplete?.debt_score ?? 0)}
-                variant={incomplete?.debt_score ?? 0 > 50 ? 'error' : 'warning'}
-                showLabel
-              />
-            </div>
-            <div className="incomplete-list">
-              {incomplete?.items?.slice(0, 4).map((item, idx) => (
-                <div key={idx} className="incomplete-item">
-                  <Badge variant="warning" size="sm">{item.marker_type}</Badge>
-                  <span className="item-doc">{item.document}</span>
+        <div className="card bg-base-200">
+          <div className="card-body">
+            <h3 className="card-title text-lg">Incomplete Content</h3>
+            <p className="text-sm text-base-content/60">{incomplete?.total ?? 0} markers</p>
+            <div className="mt-4 space-y-4">
+              <div>
+                <div className="flex justify-between text-sm mb-1">
+                  <span>Technical Debt</span>
+                  <span>{100 - debtScore}%</span>
                 </div>
-              ))}
-              {(incomplete?.total ?? 0) > 4 && (
-                <p className="text-muted">+{(incomplete?.total ?? 0) - 4} more</p>
-              )}
+                <progress
+                  className={`progress w-full ${debtScore > 50 ? 'progress-error' : 'progress-warning'}`}
+                  value={100 - debtScore}
+                  max="100"
+                ></progress>
+              </div>
+              <div className="space-y-2">
+                {incomplete?.items?.slice(0, 4).map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-2 text-sm">
+                    <div className="badge badge-warning badge-sm">{item.marker_type}</div>
+                    <span className="truncate text-base-content/70">{item.document}</span>
+                  </div>
+                ))}
+                {(incomplete?.total ?? 0) > 4 && (
+                  <p className="text-sm text-base-content/50">+{(incomplete?.total ?? 0) - 4} more</p>
+                )}
+              </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Consistency */}
-        <Card>
-          <CardHeader title="Consistency" subtitle={`${consistency.length} issues`} />
-          <CardContent>
-            <div className="consistency-list">
+        <div className="card bg-base-200">
+          <div className="card-body">
+            <h3 className="card-title text-lg">Consistency</h3>
+            <p className="text-sm text-base-content/60">{consistency.length} issues</p>
+            <div className="mt-4 space-y-2">
               {consistency.slice(0, 4).map((issue, idx) => (
-                <div key={idx} className="consistency-item">
-                  <AlertTriangle size={14} className="text-warning" />
-                  <span className="issue-doc">{issue.document}</span>
-                  <div className="issue-status">
-                    <Badge variant="error" size="sm">{issue.declared}</Badge>
-                    <span>→</span>
-                    <Badge variant="success" size="sm">{issue.detected}</Badge>
+                <div key={idx} className="flex items-center gap-2 p-2 rounded bg-base-300">
+                  <AlertTriangle size={14} className="text-warning flex-shrink-0" />
+                  <span className="truncate text-sm flex-1">{issue.document}</span>
+                  <div className="flex items-center gap-1 text-xs flex-shrink-0">
+                    <div className="badge badge-error badge-xs">{issue.declared}</div>
+                    <span className="text-base-content/50">-&gt;</span>
+                    <div className="badge badge-success badge-xs">{issue.detected}</div>
                   </div>
                 </div>
               ))}
               {consistency.length > 4 && (
-                <p className="text-muted">+{consistency.length - 4} more</p>
+                <p className="text-sm text-base-content/50">+{consistency.length - 4} more</p>
               )}
               {consistency.length === 0 && (
-                <div className="empty-state small">
-                  <CheckCircle size={24} className="text-success" />
-                  <p>No issues</p>
+                <div className="flex flex-col items-center py-6 text-center">
+                  <CheckCircle size={24} className="text-success mb-2" />
+                  <p className="text-sm text-base-content/60">No issues</p>
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -174,69 +184,82 @@ export function ActivityView() {
   const { data: insights, isLoading: insightsLoading } = useInsights();
 
   if (auditLoading || insightsLoading) {
-    return <LoadingState message="Loading activity..." />;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <p className="mt-4 text-base-content/60">Loading activity...</p>
+        </div>
+      </div>
+    );
   }
 
   const recentChanges = insights?.statistics?.activity?.recent_changes ?? [];
   const entries = auditLog?.entries ?? [];
 
   return (
-    <div className="activity-content">
+    <div className="space-y-6">
       {/* Recent Commits */}
-      <Card>
-        <CardHeader title="Recent Commits" subtitle="Git activity" />
-        <CardContent>
-          <div className="commits-list">
-            {recentChanges.slice(0, 5).map((change, idx) => (
-              <div key={idx} className="commit-item">
-                <GitCommit size={16} className="text-accent" />
-                <div className="commit-content">
-                  <div className="commit-header">
-                    <span className="commit-message">{change.message}</span>
-                    <Badge variant="default" size="sm">{change.hash.substring(0, 7)}</Badge>
-                  </div>
-                  <div className="commit-meta">
-                    <span><User size={10} /> {change.author}</span>
-                    <span><Clock size={10} /> {new Date(change.date).toLocaleDateString()}</span>
-                    <span><FileText size={10} /> {change.files.length} files</span>
+      <div className="card bg-base-200">
+        <div className="card-body">
+          <h3 className="card-title text-lg">Recent Commits</h3>
+          <p className="text-sm text-base-content/60 mb-4">Git activity</p>
+          {recentChanges.length > 0 ? (
+            <div className="space-y-3">
+              {recentChanges.slice(0, 5).map((change, idx) => (
+                <div key={idx} className="p-3 rounded-lg bg-base-300">
+                  <div className="flex items-start gap-3">
+                    <GitCommit size={16} className="text-primary flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium truncate">{change.message}</span>
+                        <div className="badge badge-ghost badge-sm">{change.hash.substring(0, 7)}</div>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-base-content/60">
+                        <span className="flex items-center gap-1"><User size={10} /> {change.author}</span>
+                        <span className="flex items-center gap-1"><Clock size={10} /> {new Date(change.date).toLocaleDateString()}</span>
+                        <span className="flex items-center gap-1"><FileText size={10} /> {change.files.length} files</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-            {recentChanges.length === 0 && (
-              <div className="empty-state small">
-                <GitCommit size={24} className="text-muted" />
-                <p>No recent commits</p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center py-6 text-center">
+              <GitCommit size={24} className="text-base-content/30 mb-2" />
+              <p className="text-sm text-base-content/60">No recent commits</p>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Audit Log */}
-      <Card>
-        <CardHeader title="Audit Log" subtitle="System activity" />
-        <CardContent>
-          <div className="audit-list">
-            {entries.slice(0, 10).map((entry, idx) => (
-              <div key={idx} className="audit-item">
-                <ActivityIcon size={14} className="text-muted" />
-                <div className="audit-content">
-                  <span className="audit-action">{entry.action}</span>
-                  {entry.details && <span className="audit-details">{entry.details}</span>}
+      <div className="card bg-base-200">
+        <div className="card-body">
+          <h3 className="card-title text-lg">Audit Log</h3>
+          <p className="text-sm text-base-content/60 mb-4">System activity</p>
+          {entries.length > 0 ? (
+            <div className="space-y-2">
+              {entries.slice(0, 10).map((entry, idx) => (
+                <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-base-300">
+                  <ActivityIcon size={14} className="text-base-content/40 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <span className="font-medium">{entry.action}</span>
+                    {entry.details && <span className="text-sm text-base-content/60 ml-2">{entry.details}</span>}
+                  </div>
+                  <span className="text-xs text-base-content/50">{new Date(entry.timestamp).toLocaleString()}</span>
                 </div>
-                <span className="audit-time">{new Date(entry.timestamp).toLocaleString()}</span>
-              </div>
-            ))}
-            {entries.length === 0 && (
-              <div className="empty-state small">
-                <ActivityIcon size={24} className="text-muted" />
-                <p>No audit log entries</p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center py-6 text-center">
+              <ActivityIcon size={24} className="text-base-content/30 mb-2" />
+              <p className="text-sm text-base-content/60">No audit log entries</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -244,9 +267,9 @@ export function ActivityView() {
 // Main Insights Page
 export function Insights() {
   return (
-    <div className="page insights-page">
-      <div className="page-header">
-        <h1>Insights</h1>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold">Insights</h1>
         <SubTabs tabs={tabs} basePath="/insights" />
       </div>
 

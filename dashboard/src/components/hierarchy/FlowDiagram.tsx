@@ -8,10 +8,7 @@ import {
   Download,
 } from 'lucide-react';
 import clsx from 'clsx';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
 import type { FlowGraphNode, FlowGraphEdge, StalenessSummary } from '@/api/types';
-import './FlowDiagram.css';
 
 // Edge colors by relationship type
 const edgeColors: Record<string, { stroke: string; stale: string }> = {
@@ -124,55 +121,57 @@ export function FlowDiagram({
 
   if (nodes.length === 0) {
     return (
-      <div className={clsx('flow-diagram-empty', className)}>
-        <BookOpen size={32} />
-        <p>No hierarchy data available</p>
-        <span className="text-muted">Documents need hierarchy metadata to appear here</span>
+      <div className={clsx('flex flex-col items-center justify-center py-12 text-center', className)}>
+        <BookOpen size={32} className="text-base-content/30 mb-2" />
+        <p className="font-medium">No hierarchy data available</p>
+        <span className="text-sm text-base-content/60">Documents need hierarchy metadata to appear here</span>
       </div>
     );
   }
 
   return (
-    <div className={clsx('flow-diagram', className)}>
+    <div className={clsx('flex flex-col h-full', className)}>
       {/* Toolbar */}
-      <div className="flow-diagram-toolbar">
-        <div className="toolbar-group">
-          <Button variant="ghost" size="sm" onClick={handleZoomOut} title="Zoom out">
+      <div className="flex items-center justify-between p-2 border-b border-base-300 bg-base-200">
+        <div className="flex items-center gap-1">
+          <button className="btn btn-ghost btn-xs btn-square" onClick={handleZoomOut} title="Zoom out">
             <ZoomOut size={14} />
-          </Button>
-          <span className="zoom-level">{Math.round(zoom * 100)}%</span>
-          <Button variant="ghost" size="sm" onClick={handleZoomIn} title="Zoom in">
+          </button>
+          <span className="px-2 text-xs text-base-content/60 tabular-nums min-w-[50px] text-center">
+            {Math.round(zoom * 100)}%
+          </span>
+          <button className="btn btn-ghost btn-xs btn-square" onClick={handleZoomIn} title="Zoom in">
             <ZoomIn size={14} />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={handleResetZoom} title="Reset view">
+          </button>
+          <button className="btn btn-ghost btn-xs btn-square" onClick={handleResetZoom} title="Reset view">
             <Maximize2 size={14} />
-          </Button>
+          </button>
         </div>
 
-        <div className="toolbar-group">
-          <Button variant="ghost" size="sm" onClick={handleExport} title="Export SVG">
+        <div className="flex items-center gap-2">
+          <button className="btn btn-ghost btn-xs btn-square" onClick={handleExport} title="Export SVG">
             <Download size={14} />
-          </Button>
-        </div>
+          </button>
 
-        {stalenessSummary && (
-          <div className="staleness-badge">
-            {stalenessSummary.stale_nodes > 0 ? (
-              <Badge variant="warning">
-                <AlertTriangle size={12} />
-                {stalenessSummary.stale_nodes} stale ({stalenessSummary.stale_percentage}%)
-              </Badge>
-            ) : (
-              <Badge variant="success">All fresh</Badge>
-            )}
-          </div>
-        )}
+          {stalenessSummary && (
+            <div>
+              {stalenessSummary.stale_nodes > 0 ? (
+                <span className="badge badge-warning gap-1">
+                  <AlertTriangle size={12} />
+                  {stalenessSummary.stale_nodes} stale ({stalenessSummary.stale_percentage}%)
+                </span>
+              ) : (
+                <span className="badge badge-success">All fresh</span>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Canvas */}
       <div
         ref={containerRef}
-        className="flow-diagram-canvas"
+        className="flex-1 overflow-hidden bg-base-300/50"
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -211,7 +210,7 @@ export function FlowDiagram({
             </marker>
           </defs>
 
-          <g className="edges">
+          <g>
             {edges.map((edge, idx) => {
               const sourceNode = nodeMap[edge.source];
               const targetNode = nodeMap[edge.target];
@@ -230,7 +229,7 @@ export function FlowDiagram({
               const path = `M ${sx} ${sy} C ${sx} ${midY}, ${tx} ${midY}, ${tx} ${ty}`;
 
               return (
-                <g key={idx} className="edge-group">
+                <g key={idx}>
                   <path
                     d={path}
                     fill="none"
@@ -246,17 +245,13 @@ export function FlowDiagram({
           </g>
 
           {/* Nodes */}
-          <g className="nodes">
+          <g>
             {nodes.map((node) => {
               const isSelected = selectedNode === node.id;
 
               return (
                 <g
                   key={node.id}
-                  className={clsx('node-group', {
-                    'node-selected': isSelected,
-                    'node-stale': node.is_stale,
-                  })}
                   transform={`translate(${node.position.x}, ${node.position.y})`}
                   onClick={() => onNodeClick?.(node.id)}
                   style={{ cursor: 'pointer' }}
@@ -306,26 +301,24 @@ export function FlowDiagram({
       </div>
 
       {/* Legend */}
-      <div className="flow-diagram-legend">
-        <span className="legend-title">Edge Types:</span>
-        <div className="legend-items">
-          <span className="legend-item">
-            <span className="legend-line" style={{ background: edgeColors.implements.stroke }} />
-            implements
-          </span>
-          <span className="legend-item">
-            <span className="legend-line" style={{ background: edgeColors.extends.stroke }} />
-            extends
-          </span>
-          <span className="legend-item">
-            <span className="legend-line dashed" style={{ background: edgeColors.summarizes.stroke }} />
-            summarizes
-          </span>
-          <span className="legend-item">
-            <span className="legend-line" style={{ background: '#ef4444' }} />
-            stale
-          </span>
-        </div>
+      <div className="flex items-center gap-4 p-2 border-t border-base-300 text-xs text-base-content/60">
+        <span className="font-medium">Edge Types:</span>
+        <span className="flex items-center gap-1">
+          <span className="w-4 h-0.5 rounded" style={{ background: edgeColors.implements.stroke }} />
+          implements
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-4 h-0.5 rounded" style={{ background: edgeColors.extends.stroke }} />
+          extends
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-4 h-0.5 rounded border-dashed border-t-2" style={{ borderColor: edgeColors.summarizes.stroke }} />
+          summarizes
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-4 h-0.5 rounded" style={{ background: '#ef4444' }} />
+          stale
+        </span>
       </div>
     </div>
   );

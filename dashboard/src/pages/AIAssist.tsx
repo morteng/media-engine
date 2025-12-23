@@ -122,7 +122,6 @@ export function AIAssist() {
 
   const handleProcess = async () => {
     const selectedItems = selections.filter(s => s.selected);
-    // Allow submission with just instructions (no selections) for general tasks
     if (selectedItems.length === 0 && !instructions.trim()) return;
 
     const apiSelections: AIContentSelection[] = selectedItems.map(s => ({
@@ -135,7 +134,6 @@ export function AIAssist() {
     }));
 
     if (mode === 'claude_code') {
-      // Submit to task queue for Claude Code processing
       try {
         await submitTask.mutateAsync({
           operation,
@@ -144,14 +142,12 @@ export function AIAssist() {
           priority,
           target_language: operation === 'translate' ? targetLanguage : undefined,
         });
-        // Clear selections after successful submission
         setSelections([]);
         setInstructions('');
       } catch (error) {
         console.error('Failed to submit task:', error);
       }
     } else {
-      // Direct API processing
       try {
         const response = await processAI.mutateAsync({
           operation,
@@ -219,11 +215,9 @@ export function AIAssist() {
 
   if (configLoading) {
     return (
-      <div className="page ai-page">
-        <div className="page-loading">
-          <Spinner size="lg" />
-          <p>Loading AI configuration...</p>
-        </div>
+      <div className="flex flex-col items-center justify-center py-12 gap-4">
+        <Spinner size="lg" />
+        <p className="text-base-content/60">Loading AI configuration...</p>
       </div>
     );
   }
@@ -233,15 +227,16 @@ export function AIAssist() {
   const processingCount = stats?.processing || 0;
 
   return (
-    <div className="page ai-page">
-      <header className="page-header">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
-          <h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
             <Wand2 size={24} /> AI Assist
           </h1>
-          <p className="text-secondary">AI-powered content processing via Claude Code</p>
+          <p className="text-base-content/60">AI-powered content processing via Claude Code</p>
         </div>
-        <div className="header-actions">
+        <div className="flex items-center gap-3">
           {(pendingCount > 0 || processingCount > 0) && (
             <Badge variant="info">
               <Clock size={12} /> {pendingCount} pending, {processingCount} processing
@@ -255,42 +250,55 @@ export function AIAssist() {
             <Settings size={16} /> Settings
           </Button>
         </div>
-      </header>
+      </div>
 
+      {/* Settings Card */}
       {showSettings && (
-        <Card className="settings-card">
+        <Card>
           <CardHeader title="AI Settings" />
           <CardContent>
-            <div className="settings-grid">
-              <div className="form-group">
-                <label>Processing Mode</label>
-                <div className="mode-toggle">
+            <div className="space-y-4">
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium">Processing Mode</span>
+                </label>
+                <div className="grid grid-cols-2 gap-3">
                   <button
-                    className={`mode-btn ${mode === 'claude_code' ? 'active' : ''}`}
+                    className={`flex flex-col items-center gap-1 p-4 border-2 rounded-lg transition-colors ${
+                      mode === 'claude_code'
+                        ? 'border-primary bg-primary/10'
+                        : 'border-base-300 bg-base-200 hover:border-primary/50'
+                    }`}
                     onClick={() => setMode('claude_code')}
                   >
-                    <Bot size={16} />
-                    <span>Claude Code</span>
-                    <small>Full tool access, file editing</small>
+                    <Bot size={20} />
+                    <span className="font-medium">Claude Code</span>
+                    <span className="text-xs text-base-content/60">Full tool access, file editing</span>
                   </button>
                   <button
-                    className={`mode-btn ${mode === 'direct' ? 'active' : ''}`}
+                    className={`flex flex-col items-center gap-1 p-4 border-2 rounded-lg transition-colors ${
+                      mode === 'direct'
+                        ? 'border-primary bg-primary/10'
+                        : 'border-base-300 bg-base-200 hover:border-primary/50'
+                    }`}
                     onClick={() => setMode('direct')}
                   >
-                    <Zap size={16} />
-                    <span>Direct API</span>
-                    <small>Fast, text-only responses</small>
+                    <Zap size={20} />
+                    <span className="font-medium">Direct API</span>
+                    <span className="text-xs text-base-content/60">Fast, text-only responses</span>
                   </button>
                 </div>
               </div>
 
               {mode === 'direct' && (
                 <>
-                  <div className="form-group">
-                    <label>Backend</label>
-                    <div className="backend-info">
-                      <Badge variant="default">{aiConfig?.backend || 'anthropic'}</Badge>
-                      <span className="text-secondary">
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text font-medium">Backend</span>
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <Badge>{aiConfig?.backend || 'anthropic'}</Badge>
+                      <span className="text-sm text-base-content/60">
                         {aiConfig?.backend === 'claude_code'
                           ? 'Using Claude Code CLI'
                           : 'Using Anthropic API'}
@@ -298,26 +306,27 @@ export function AIAssist() {
                     </div>
                   </div>
 
-                  <div className="form-group">
-                    <label>API Key</label>
-                    <div className="api-key-input">
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text font-medium">API Key</span>
+                    </label>
+                    <div className="flex gap-2">
                       <input
                         type="password"
                         value={newApiKey}
                         onChange={e => setNewApiKey(e.target.value)}
                         placeholder={aiConfig?.has_api_key ? '********' : 'Enter API key'}
+                        className="input input-bordered flex-1"
                       />
-                      <Button
-                        size="sm"
-                        onClick={handleSaveConfig}
-                        disabled={!newApiKey}
-                      >
+                      <Button size="sm" onClick={handleSaveConfig} disabled={!newApiKey}>
                         Save
                       </Button>
                     </div>
-                    <p className="text-secondary text-sm">
-                      Or set ANTHROPIC_API_KEY environment variable
-                    </p>
+                    <label className="label">
+                      <span className="label-text-alt text-base-content/60">
+                        Or set ANTHROPIC_API_KEY environment variable
+                      </span>
+                    </label>
                   </div>
                 </>
               )}
@@ -326,17 +335,18 @@ export function AIAssist() {
         </Card>
       )}
 
+      {/* Claude Code Info */}
       {mode === 'claude_code' && (
-        <Card className="info-card">
-          <CardContent>
-            <div className="info-content">
-              <Bot size={24} className="text-primary" />
+        <Card className="border-primary/30">
+          <CardContent className="pt-4">
+            <div className="flex gap-4 items-start">
+              <Bot size={24} className="text-primary shrink-0" />
               <div>
-                <h3>Claude Code Integration</h3>
-                <p>
+                <h3 className="font-semibold">Claude Code Integration</h3>
+                <p className="text-sm text-base-content/60 mt-1">
                   Tasks are queued and processed by your running Claude Code session.
                   Claude Code can edit files directly, run quality checks, and use all available skills.
-                  Say <code>/process-ai-queue</code> in Claude Code to process pending tasks.
+                  Say <code className="px-1.5 py-0.5 bg-base-300 rounded text-xs">/process-ai-queue</code> in Claude Code to process pending tasks.
                 </p>
               </div>
             </div>
@@ -344,14 +354,15 @@ export function AIAssist() {
         </Card>
       )}
 
+      {/* Not Configured Warning */}
       {mode === 'direct' && !aiConfig?.configured && (
-        <Card className="warning-card">
-          <CardContent>
-            <div className="warning-content">
-              <AlertCircle size={24} />
+        <Card className="border-warning/50">
+          <CardContent className="pt-4">
+            <div className="flex gap-4 items-start text-warning">
+              <AlertCircle size={24} className="shrink-0" />
               <div>
-                <h3>AI Not Configured</h3>
-                <p>
+                <h3 className="font-semibold text-base-content">AI Not Configured</h3>
+                <p className="text-sm text-base-content/60 mt-1">
                   Set your Anthropic API key in settings or use the ANTHROPIC_API_KEY
                   environment variable to enable direct API processing.
                 </p>
@@ -361,8 +372,10 @@ export function AIAssist() {
         </Card>
       )}
 
-      <div className="ai-layout">
-        <div className="ai-sidebar">
+      {/* Main Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6">
+        {/* Sidebar - Content Selection */}
+        <div>
           <Card>
             <CardHeader
               title="Content Selection"
@@ -386,15 +399,13 @@ export function AIAssist() {
               )}
 
               {selections.length === 0 ? (
-                <div className="empty-selection">
-                  <FileText size={32} className="text-muted" />
-                  <p>No content selected</p>
-                  <p className="text-secondary text-sm">
-                    Add documents or scenes to process
-                  </p>
+                <div className="text-center py-8 text-base-content/60">
+                  <FileText size={32} className="mx-auto mb-2 opacity-50" />
+                  <p className="font-medium">No content selected</p>
+                  <p className="text-sm">Add documents or scenes to process</p>
                 </div>
               ) : (
-                <div className="selection-list">
+                <div className="space-y-3">
                   {selections.map(item => (
                     <SelectionCard
                       key={item.path}
@@ -410,116 +421,134 @@ export function AIAssist() {
           </Card>
         </div>
 
-        <div className="ai-main">
+        {/* Main - Processing Options */}
+        <div className="space-y-6">
           <Card>
             <CardHeader title="Processing Options" />
             <CardContent>
-              <div className="form-group">
-                <label>Operation</label>
-                <select
-                  value={operation}
-                  onChange={e => setOperation(e.target.value)}
-                  className="select-input"
-                >
-                  <option value="general">General Task - Any custom request or instruction</option>
-                  {operationsData?.operations.map(op => (
-                    <option key={op.id} value={op.id}>
-                      {op.name} - {op.description}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {operation === 'translate' && (
-                <div className="form-group">
-                  <label>Target Language</label>
+              <div className="space-y-4">
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium">Operation</span>
+                  </label>
                   <select
-                    value={targetLanguage}
-                    onChange={e => setTargetLanguage(e.target.value)}
-                    className="select-input"
+                    value={operation}
+                    onChange={e => setOperation(e.target.value)}
+                    className="select select-bordered w-full"
                   >
-                    <option value="">Select language...</option>
-                    {languages.map(lang => (
-                      <option key={lang} value={lang}>
-                        {lang.toUpperCase()}
+                    <option value="general">General Task - Any custom request or instruction</option>
+                    {operationsData?.operations.map(op => (
+                      <option key={op.id} value={op.id}>
+                        {op.name} - {op.description}
                       </option>
                     ))}
-                    <option value="es">Spanish (es)</option>
-                    <option value="de">German (de)</option>
-                    <option value="fr">French (fr)</option>
                   </select>
                 </div>
-              )}
 
-              {mode === 'claude_code' && (
-                <div className="form-group">
-                  <label>Priority</label>
-                  <select
-                    value={priority}
-                    onChange={e => setPriority(e.target.value)}
-                    className="select-input"
-                  >
-                    <option value="low">Low</option>
-                    <option value="normal">Normal</option>
-                    <option value="high">High</option>
-                    <option value="urgent">Urgent</option>
-                  </select>
+                {operation === 'translate' && (
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text font-medium">Target Language</span>
+                    </label>
+                    <select
+                      value={targetLanguage}
+                      onChange={e => setTargetLanguage(e.target.value)}
+                      className="select select-bordered w-full"
+                    >
+                      <option value="">Select language...</option>
+                      {languages.map(lang => (
+                        <option key={lang} value={lang}>
+                          {lang.toUpperCase()}
+                        </option>
+                      ))}
+                      <option value="es">Spanish (es)</option>
+                      <option value="de">German (de)</option>
+                      <option value="fr">French (fr)</option>
+                    </select>
+                  </div>
+                )}
+
+                {mode === 'claude_code' && (
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text font-medium">Priority</span>
+                    </label>
+                    <select
+                      value={priority}
+                      onChange={e => setPriority(e.target.value)}
+                      className="select select-bordered w-full"
+                    >
+                      <option value="low">Low</option>
+                      <option value="normal">Normal</option>
+                      <option value="high">High</option>
+                      <option value="urgent">Urgent</option>
+                    </select>
+                  </div>
+                )}
+
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium">
+                      Instructions
+                      {selections.filter(s => s.selected).length === 0 && (
+                        <span className="text-error ml-1">*</span>
+                      )}
+                    </span>
+                  </label>
+                  <textarea
+                    value={instructions}
+                    onChange={e => setInstructions(e.target.value)}
+                    placeholder={
+                      mode === 'claude_code'
+                        ? selections.filter(s => s.selected).length === 0
+                          ? 'Enter a general task for Claude Code... (e.g., "Create a new chapter about API integration")'
+                          : 'Detailed instructions for Claude Code...'
+                        : 'Add specific instructions for the AI... (optional)'
+                    }
+                    rows={4}
+                    className="textarea textarea-bordered w-full"
+                  />
+                  {selections.filter(s => s.selected).length === 0 && (
+                    <label className="label">
+                      <span className="label-text-alt text-base-content/60">
+                        No documents selected — submit a general task with just instructions
+                      </span>
+                    </label>
+                  )}
                 </div>
-              )}
 
-              <div className="form-group">
-                <label>Instructions {selections.filter(s => s.selected).length === 0 && <span className="required">*</span>}</label>
-                <textarea
-                  value={instructions}
-                  onChange={e => setInstructions(e.target.value)}
-                  placeholder={
-                    mode === 'claude_code'
-                      ? selections.filter(s => s.selected).length === 0
-                        ? 'Enter a general task for Claude Code... (e.g., "Create a new chapter about API integration", "Run quality checks on all documents")'
-                        : 'Detailed instructions for Claude Code... (e.g., "Improve clarity, add examples, then run quality check")'
-                      : 'Add specific instructions for the AI... (optional)'
+                <Button
+                  onClick={handleProcess}
+                  disabled={
+                    (mode === 'claude_code' ? submitTask.isPending : processAI.isPending) ||
+                    (selections.filter(s => s.selected).length === 0 && !instructions.trim()) ||
+                    (mode === 'direct' && !aiConfig?.configured)
                   }
-                  rows={4}
-                  className="textarea-input"
-                />
-                {selections.filter(s => s.selected).length === 0 && (
-                  <p className="text-secondary text-sm" style={{ marginTop: '0.25rem' }}>
-                    No documents selected — submit a general task with just instructions
-                  </p>
-                )}
+                  className="w-full"
+                >
+                  {(mode === 'claude_code' ? submitTask.isPending : processAI.isPending) ? (
+                    <>
+                      <Spinner size="sm" /> {mode === 'claude_code' ? 'Submitting...' : 'Processing...'}
+                    </>
+                  ) : (
+                    <>
+                      {mode === 'claude_code' ? <ListTodo size={16} /> : <Sparkles size={16} />}
+                      {mode === 'claude_code' ? 'Submit to Queue' : 'Process Content'}
+                    </>
+                  )}
+                </Button>
               </div>
-
-              <Button
-                onClick={handleProcess}
-                disabled={
-                  (mode === 'claude_code' ? submitTask.isPending : processAI.isPending) ||
-                  (selections.filter(s => s.selected).length === 0 && !instructions.trim()) ||
-                  (mode === 'direct' && !aiConfig?.configured)
-                }
-                className="process-button"
-              >
-                {(mode === 'claude_code' ? submitTask.isPending : processAI.isPending) ? (
-                  <>
-                    <Spinner size="sm" /> {mode === 'claude_code' ? 'Submitting...' : 'Processing...'}
-                  </>
-                ) : (
-                  <>
-                    {mode === 'claude_code' ? <ListTodo size={16} /> : <Sparkles size={16} />}
-                    {mode === 'claude_code' ? 'Submit to Queue' : 'Process Content'}
-                  </>
-                )}
-              </Button>
             </CardContent>
           </Card>
 
           {/* Task Queue (Claude Code mode) */}
           {mode === 'claude_code' && (
-            <Card className="queue-card">
+            <Card>
               <CardHeader
                 title="Task Queue"
                 action={
                   <Button
-                    size="sm"
+                    size="icon"
                     variant="ghost"
                     onClick={() => setShowTaskQueue(!showTaskQueue)}
                   >
@@ -530,20 +559,18 @@ export function AIAssist() {
               {showTaskQueue && (
                 <CardContent>
                   {tasksLoading ? (
-                    <div className="queue-loading">
+                    <div className="flex items-center justify-center gap-2 py-4 text-base-content/60">
                       <Spinner size="sm" />
                       <span>Loading tasks...</span>
                     </div>
                   ) : tasksData?.tasks.length === 0 ? (
-                    <div className="queue-empty">
-                      <ListTodo size={24} className="text-muted" />
+                    <div className="text-center py-8 text-base-content/60">
+                      <ListTodo size={24} className="mx-auto mb-2 opacity-50" />
                       <p>No tasks in queue</p>
-                      <p className="text-secondary text-sm">
-                        Submit content above to add tasks
-                      </p>
+                      <p className="text-sm">Submit content above to add tasks</p>
                     </div>
                   ) : (
-                    <div className="queue-list">
+                    <div className="space-y-3">
                       {tasksData?.tasks.map(task => (
                         <TaskCard
                           key={task.id}
@@ -561,7 +588,7 @@ export function AIAssist() {
 
           {/* Results (Direct API mode) */}
           {mode === 'direct' && results.length > 0 && (
-            <Card className="results-card">
+            <Card>
               <CardHeader
                 title="Results"
                 action={
@@ -571,7 +598,7 @@ export function AIAssist() {
                 }
               />
               <CardContent>
-                <div className="results-list">
+                <div className="space-y-4">
                   {results.map((result, index) => (
                     <ResultCard
                       key={index}
@@ -592,231 +619,6 @@ export function AIAssist() {
           )}
         </div>
       </div>
-
-      <style>{`
-        .ai-page .page-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 1.5rem;
-        }
-
-        .ai-page .page-header h1 {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-
-        .ai-page .header-actions {
-          display: flex;
-          gap: 0.75rem;
-          align-items: center;
-        }
-
-        .ai-page .settings-card,
-        .ai-page .info-card,
-        .ai-page .warning-card {
-          margin-bottom: 1.5rem;
-        }
-
-        .ai-page .settings-grid {
-          display: grid;
-          gap: 1rem;
-        }
-
-        .ai-page .mode-toggle {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 0.75rem;
-        }
-
-        .ai-page .mode-btn {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 0.25rem;
-          padding: 1rem;
-          border: 2px solid var(--border);
-          border-radius: 8px;
-          background: var(--bg-secondary);
-          color: var(--text-primary);
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .ai-page .mode-btn:hover {
-          border-color: var(--primary);
-        }
-
-        .ai-page .mode-btn.active {
-          border-color: var(--primary);
-          background: var(--primary-bg);
-        }
-
-        .ai-page .mode-btn small {
-          font-size: 0.7rem;
-          color: var(--text-secondary);
-        }
-
-        .ai-page .backend-info,
-        .ai-page .model-info {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-
-        .ai-page .api-key-input {
-          display: flex;
-          gap: 0.5rem;
-        }
-
-        .ai-page .api-key-input input {
-          flex: 1;
-          padding: 0.5rem;
-          border: 1px solid var(--border);
-          border-radius: 4px;
-          background: var(--bg-secondary);
-          color: var(--text-primary);
-        }
-
-        .ai-page .info-card {
-          border-color: var(--primary);
-        }
-
-        .ai-page .info-content {
-          display: flex;
-          gap: 1rem;
-          align-items: flex-start;
-        }
-
-        .ai-page .info-content h3 {
-          margin: 0 0 0.25rem 0;
-        }
-
-        .ai-page .info-content p {
-          margin: 0;
-          color: var(--text-secondary);
-        }
-
-        .ai-page .info-content code {
-          background: var(--bg-secondary);
-          padding: 0.1rem 0.3rem;
-          border-radius: 3px;
-          font-size: 0.85em;
-        }
-
-        .ai-page .warning-card {
-          border-color: var(--warning);
-        }
-
-        .ai-page .warning-content {
-          display: flex;
-          gap: 1rem;
-          align-items: flex-start;
-          color: var(--warning);
-        }
-
-        .ai-page .warning-content h3 {
-          margin: 0 0 0.25rem 0;
-          color: var(--text-primary);
-        }
-
-        .ai-page .warning-content p {
-          margin: 0;
-          color: var(--text-secondary);
-        }
-
-        .ai-page .ai-layout {
-          display: grid;
-          grid-template-columns: 350px 1fr;
-          gap: 1.5rem;
-        }
-
-        @media (max-width: 900px) {
-          .ai-page .ai-layout {
-            grid-template-columns: 1fr;
-          }
-        }
-
-        .ai-page .empty-selection,
-        .ai-page .queue-empty {
-          text-align: center;
-          padding: 2rem;
-          color: var(--text-secondary);
-        }
-
-        .ai-page .empty-selection svg,
-        .ai-page .queue-empty svg {
-          margin-bottom: 0.5rem;
-          opacity: 0.5;
-        }
-
-        .ai-page .selection-list,
-        .ai-page .queue-list {
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-        }
-
-        .ai-page .form-group {
-          margin-bottom: 1rem;
-        }
-
-        .ai-page .form-group label {
-          display: block;
-          margin-bottom: 0.5rem;
-          font-weight: 500;
-        }
-
-        .ai-page .form-group label .required {
-          color: var(--error, #ef4444);
-          margin-left: 0.25rem;
-        }
-
-        .ai-page .select-input,
-        .ai-page .textarea-input {
-          width: 100%;
-          padding: 0.5rem;
-          border: 1px solid var(--border);
-          border-radius: 4px;
-          background: var(--bg-secondary);
-          color: var(--text-primary);
-          font-family: inherit;
-        }
-
-        .ai-page .textarea-input {
-          resize: vertical;
-          min-height: 80px;
-        }
-
-        .ai-page .process-button {
-          width: 100%;
-          justify-content: center;
-        }
-
-        .ai-page .queue-card {
-          margin-top: 1.5rem;
-        }
-
-        .ai-page .queue-loading {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          justify-content: center;
-          padding: 1rem;
-          color: var(--text-secondary);
-        }
-
-        .ai-page .results-card {
-          margin-top: 1.5rem;
-        }
-
-        .ai-page .results-list {
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
-      `}</style>
     </div>
   );
 }
@@ -847,32 +649,40 @@ function TaskCard({ task, onCancel, onDelete }: TaskCardProps) {
   };
 
   return (
-    <div className="task-card">
-      <div className="task-header">
-        <div className="task-info">
+    <div className="p-3 border border-base-300 rounded-lg bg-base-200">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
           <Badge variant={statusColors[task.status] || 'default'}>
             {statusIcons[task.status]} {task.status}
           </Badge>
-          <span className="task-op">{task.operation}</span>
-          <Badge size="sm" variant="default">{task.priority}</Badge>
+          <span className="font-medium capitalize">{task.operation}</span>
+          <Badge size="sm">{task.priority}</Badge>
         </div>
-        <div className="task-actions">
+        <div className="flex gap-1">
           {task.status === 'pending' && (
-            <button className="cancel-btn" onClick={onCancel} title="Cancel task">
+            <button
+              className="btn btn-ghost btn-xs btn-square text-base-content/60 hover:text-error"
+              onClick={onCancel}
+              title="Cancel task"
+            >
               <X size={14} />
             </button>
           )}
           {['completed', 'failed', 'cancelled'].includes(task.status) && (
-            <button className="delete-btn" onClick={onDelete} title="Delete task">
+            <button
+              className="btn btn-ghost btn-xs btn-square text-base-content/60 hover:text-error"
+              onClick={onDelete}
+              title="Delete task"
+            >
               <Trash2 size={14} />
             </button>
           )}
         </div>
       </div>
 
-      <div className="task-selections">
+      <div className="flex flex-wrap gap-2 mb-2">
         {task.selections.map((s, i) => (
-          <span key={i} className="task-selection">
+          <span key={i} className="inline-flex items-center gap-1 text-sm text-base-content/60">
             <FileText size={12} /> {s.title}
             {s.notes_count > 0 && <Badge size="sm">{s.notes_count} notes</Badge>}
           </span>
@@ -880,125 +690,30 @@ function TaskCard({ task, onCancel, onDelete }: TaskCardProps) {
       </div>
 
       {task.instructions && (
-        <div className="task-instructions">{task.instructions}</div>
+        <div className="text-sm text-base-content/60 p-2 bg-base-100 rounded mb-2">
+          {task.instructions}
+        </div>
       )}
 
       {task.summary && (
-        <div className="task-summary">
-          <CheckCircle size={14} className="text-success" />
+        <div className="flex items-center gap-2 text-sm text-success mt-2">
+          <CheckCircle size={14} />
           <span>{task.summary}</span>
         </div>
       )}
 
       {task.files_modified && task.files_modified.length > 0 && (
-        <div className="task-files">
+        <div className="text-xs text-base-content/60 mt-1">
           <strong>Modified:</strong> {task.files_modified.join(', ')}
         </div>
       )}
 
       {task.error && (
-        <div className="task-error">
+        <div className="flex items-center gap-2 text-sm text-error mt-2">
           <AlertCircle size={14} />
           <span>{task.error}</span>
         </div>
       )}
-
-      <style>{`
-        .task-card {
-          padding: 0.75rem;
-          border: 1px solid var(--border);
-          border-radius: 6px;
-          background: var(--bg-secondary);
-        }
-
-        .task-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 0.5rem;
-        }
-
-        .task-info {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-
-        .task-op {
-          font-weight: 500;
-          text-transform: capitalize;
-        }
-
-        .task-actions {
-          display: flex;
-          gap: 0.25rem;
-        }
-
-        .cancel-btn,
-        .delete-btn {
-          background: none;
-          border: none;
-          color: var(--text-secondary);
-          cursor: pointer;
-          padding: 0.25rem;
-          border-radius: 4px;
-          transition: all 0.15s ease;
-        }
-
-        .cancel-btn:hover,
-        .delete-btn:hover {
-          color: var(--error);
-          background: var(--error-bg, rgba(239, 68, 68, 0.1));
-        }
-
-        .task-selections {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.5rem;
-          margin-bottom: 0.5rem;
-        }
-
-        .task-selection {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.25rem;
-          font-size: 0.85rem;
-          color: var(--text-secondary);
-        }
-
-        .task-instructions {
-          font-size: 0.85rem;
-          color: var(--text-secondary);
-          margin-bottom: 0.5rem;
-          padding: 0.5rem;
-          background: var(--bg-primary);
-          border-radius: 4px;
-        }
-
-        .task-summary {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          font-size: 0.85rem;
-          color: var(--success);
-          margin-top: 0.5rem;
-        }
-
-        .task-files {
-          font-size: 0.75rem;
-          color: var(--text-secondary);
-          margin-top: 0.25rem;
-        }
-
-        .task-error {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          font-size: 0.85rem;
-          color: var(--error);
-          margin-top: 0.5rem;
-        }
-      `}</style>
     </div>
   );
 }
@@ -1023,27 +738,31 @@ function SelectionCard({ item, onToggle, onRemove, onAddNote }: SelectionCardPro
   };
 
   return (
-    <div className={`selection-card ${item.selected ? 'selected' : ''}`}>
-      <div className="selection-header">
-        <label className="checkbox-label">
+    <div className={`p-3 border rounded-lg bg-base-200 ${item.selected ? 'border-primary' : 'border-base-300'}`}>
+      <div className="flex items-center justify-between">
+        <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
             checked={item.selected}
             onChange={onToggle}
+            className="checkbox checkbox-sm checkbox-primary"
           />
-          <span className="title">{item.title}</span>
+          <span className="font-medium">{item.title}</span>
         </label>
-        <button className="remove-btn" onClick={onRemove}>
+        <button
+          className="btn btn-ghost btn-xs btn-square text-base-content/60 hover:text-error"
+          onClick={onRemove}
+        >
           <Trash2 size={14} />
         </button>
       </div>
-      <div className="selection-path">{item.path}</div>
+      <div className="text-xs text-base-content/60 mt-1 ml-6">{item.path}</div>
 
       {item.notes.length > 0 && (
-        <div className="selection-notes">
+        <div className="mt-2 ml-6 space-y-1">
           {item.notes.map((note, i) => (
-            <div key={i} className="note-item">
-              <Badge size="sm" variant="default">{note.priority}</Badge>
+            <div key={i} className="flex items-center gap-2 text-sm">
+              <Badge size="sm">{note.priority}</Badge>
               <span>{note.text}</span>
             </div>
           ))}
@@ -1051,12 +770,13 @@ function SelectionCard({ item, onToggle, onRemove, onAddNote }: SelectionCardPro
       )}
 
       {showNoteInput ? (
-        <div className="note-input">
+        <div className="flex gap-1 mt-2">
           <input
             type="text"
             value={noteInput}
             onChange={e => setNoteInput(e.target.value)}
             placeholder="Add a note..."
+            className="input input-bordered input-sm flex-1"
             onKeyDown={e => e.key === 'Enter' && handleAddNote()}
           />
           <Button size="sm" onClick={handleAddNote}>
@@ -1067,102 +787,13 @@ function SelectionCard({ item, onToggle, onRemove, onAddNote }: SelectionCardPro
           </Button>
         </div>
       ) : (
-        <button className="add-note-btn" onClick={() => setShowNoteInput(true)}>
+        <button
+          className="text-xs text-primary mt-2 ml-6 hover:underline"
+          onClick={() => setShowNoteInput(true)}
+        >
           + Add note
         </button>
       )}
-
-      <style>{`
-        .selection-card {
-          padding: 0.75rem;
-          border: 1px solid var(--border);
-          border-radius: 6px;
-          background: var(--bg-secondary);
-        }
-
-        .selection-card.selected {
-          border-color: var(--primary);
-        }
-
-        .selection-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .checkbox-label {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          cursor: pointer;
-        }
-
-        .checkbox-label .title {
-          font-weight: 500;
-        }
-
-        .remove-btn {
-          background: none;
-          border: none;
-          color: var(--text-secondary);
-          cursor: pointer;
-          padding: 0.25rem;
-        }
-
-        .remove-btn:hover {
-          color: var(--error);
-        }
-
-        .selection-path {
-          font-size: 0.75rem;
-          color: var(--text-secondary);
-          margin-top: 0.25rem;
-          margin-left: 1.5rem;
-        }
-
-        .selection-notes {
-          margin-top: 0.5rem;
-          margin-left: 1.5rem;
-        }
-
-        .note-item {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          font-size: 0.85rem;
-          margin-top: 0.25rem;
-        }
-
-        .note-input {
-          display: flex;
-          gap: 0.25rem;
-          margin-top: 0.5rem;
-        }
-
-        .note-input input {
-          flex: 1;
-          padding: 0.25rem 0.5rem;
-          border: 1px solid var(--border);
-          border-radius: 4px;
-          background: var(--bg-primary);
-          color: var(--text-primary);
-          font-size: 0.85rem;
-        }
-
-        .add-note-btn {
-          background: none;
-          border: none;
-          color: var(--primary);
-          cursor: pointer;
-          font-size: 0.75rem;
-          margin-top: 0.5rem;
-          margin-left: 1.5rem;
-        }
-
-        .add-note-btn:hover {
-          text-decoration: underline;
-        }
-      `}</style>
     </div>
   );
 }
@@ -1200,14 +831,15 @@ function ContentPicker({ languages, onSelect, onClose }: ContentPickerProps) {
   });
 
   return (
-    <div className="content-picker">
-      <div className="picker-header">
+    <div className="border border-base-300 rounded-lg mb-4 bg-base-100 overflow-hidden">
+      <div className="flex items-center justify-between p-2 border-b border-base-300">
         <select
           value={selectedLang}
           onChange={e => {
             setSelectedLang(e.target.value);
             loadDocuments(e.target.value);
           }}
+          className="select select-bordered select-xs"
         >
           {languages.map(lang => (
             <option key={lang} value={lang}>
@@ -1215,93 +847,29 @@ function ContentPicker({ languages, onSelect, onClose }: ContentPickerProps) {
             </option>
           ))}
         </select>
-        <button onClick={onClose}>
+        <button className="btn btn-ghost btn-xs btn-square" onClick={onClose}>
           <X size={14} />
         </button>
       </div>
 
       {loading ? (
-        <div className="picker-loading">
+        <div className="p-4 text-center">
           <Spinner size="sm" />
         </div>
       ) : (
-        <div className="picker-list">
+        <div className="max-h-48 overflow-y-auto">
           {documents.map(doc => (
             <button
               key={doc.path}
-              className="picker-item"
+              className="flex items-center gap-2 w-full p-2 text-left border-b border-base-300 last:border-b-0 hover:bg-base-200 transition-colors"
               onClick={() => onSelect(doc.path)}
             >
               <FileText size={14} />
-              <span>{doc.title}</span>
+              <span className="text-sm">{doc.title}</span>
             </button>
           ))}
         </div>
       )}
-
-      <style>{`
-        .content-picker {
-          border: 1px solid var(--border);
-          border-radius: 6px;
-          margin-bottom: 1rem;
-          background: var(--bg-primary);
-        }
-
-        .picker-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 0.5rem;
-          border-bottom: 1px solid var(--border);
-        }
-
-        .picker-header select {
-          padding: 0.25rem;
-          border: 1px solid var(--border);
-          border-radius: 4px;
-          background: var(--bg-secondary);
-          color: var(--text-primary);
-        }
-
-        .picker-header button {
-          background: none;
-          border: none;
-          color: var(--text-secondary);
-          cursor: pointer;
-        }
-
-        .picker-loading {
-          padding: 1rem;
-          text-align: center;
-        }
-
-        .picker-list {
-          max-height: 200px;
-          overflow-y: auto;
-        }
-
-        .picker-item {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          width: 100%;
-          padding: 0.5rem;
-          background: none;
-          border: none;
-          border-bottom: 1px solid var(--border);
-          color: var(--text-primary);
-          cursor: pointer;
-          text-align: left;
-        }
-
-        .picker-item:hover {
-          background: var(--bg-secondary);
-        }
-
-        .picker-item:last-child {
-          border-bottom: none;
-        }
-      `}</style>
     </div>
   );
 }
@@ -1314,91 +882,33 @@ interface ResultCardProps {
 
 function ResultCard({ result, onCopy, onToggleExpand }: ResultCardProps) {
   return (
-    <div className="result-card">
-      <div className="result-header">
-        <div className="result-info">
-          <span className="result-path">{result.path}</span>
-          <span className="result-summary">{result.changesSummary}</span>
+    <div className="border border-base-300 rounded-lg overflow-hidden">
+      <div className="flex items-center justify-between p-3 bg-base-200">
+        <div>
+          <span className="font-medium text-sm">{result.path}</span>
+          <div className="text-xs text-base-content/60">{result.changesSummary}</div>
         </div>
-        <div className="result-actions">
-          <button onClick={onCopy} title="Copy to clipboard">
+        <div className="flex gap-2">
+          <button
+            className="btn btn-ghost btn-xs btn-square"
+            onClick={onCopy}
+            title="Copy to clipboard"
+          >
             <Copy size={14} />
           </button>
-          <button onClick={onToggleExpand}>
+          <button className="btn btn-ghost btn-xs btn-square" onClick={onToggleExpand}>
             {result.expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </button>
         </div>
       </div>
 
       {result.expanded && (
-        <div className="result-content">
-          <pre>{result.processed}</pre>
+        <div className="p-4 bg-base-100 border-t border-base-300">
+          <pre className="text-sm whitespace-pre-wrap break-words max-h-96 overflow-y-auto">
+            {result.processed}
+          </pre>
         </div>
       )}
-
-      <style>{`
-        .result-card {
-          border: 1px solid var(--border);
-          border-radius: 6px;
-          overflow: hidden;
-        }
-
-        .result-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 0.75rem;
-          background: var(--bg-secondary);
-        }
-
-        .result-info {
-          display: flex;
-          flex-direction: column;
-          gap: 0.25rem;
-        }
-
-        .result-path {
-          font-weight: 500;
-          font-size: 0.9rem;
-        }
-
-        .result-summary {
-          font-size: 0.75rem;
-          color: var(--text-secondary);
-        }
-
-        .result-actions {
-          display: flex;
-          gap: 0.5rem;
-        }
-
-        .result-actions button {
-          background: none;
-          border: none;
-          color: var(--text-secondary);
-          cursor: pointer;
-          padding: 0.25rem;
-        }
-
-        .result-actions button:hover {
-          color: var(--primary);
-        }
-
-        .result-content {
-          padding: 1rem;
-          background: var(--bg-primary);
-          border-top: 1px solid var(--border);
-        }
-
-        .result-content pre {
-          margin: 0;
-          white-space: pre-wrap;
-          word-break: break-word;
-          font-size: 0.85rem;
-          max-height: 400px;
-          overflow-y: auto;
-        }
-      `}</style>
     </div>
   );
 }

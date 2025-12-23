@@ -1,33 +1,26 @@
 import * as React from 'react';
-import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '@/utils/cn';
+import clsx from 'clsx';
 
-const spinnerVariants = cva(
-  'animate-spin rounded-full border-2 border-current border-t-transparent',
-  {
-    variants: {
-      size: {
-        sm: 'h-4 w-4',
-        md: 'h-6 w-6',
-        lg: 'h-8 w-8',
-        xl: 'h-12 w-12',
-      },
-    },
-    defaultVariants: {
-      size: 'md',
-    },
-  }
-);
+export interface SpinnerProps extends React.HTMLAttributes<HTMLSpanElement> {
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+}
 
-export interface SpinnerProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof spinnerVariants> {}
+const sizeClasses: Record<string, string> = {
+  sm: 'loading-sm',
+  md: 'loading-md',
+  lg: 'loading-lg',
+  xl: 'loading-lg', // DaisyUI doesn't have xl, use lg
+};
 
-const Spinner = React.forwardRef<HTMLDivElement, SpinnerProps>(
-  ({ className, size, ...props }, ref) => (
-    <div
+const Spinner = React.forwardRef<HTMLSpanElement, SpinnerProps>(
+  ({ className, size = 'md', ...props }, ref) => (
+    <span
       ref={ref}
-      className={cn(spinnerVariants({ size }), className)}
+      className={clsx(
+        'loading loading-spinner',
+        sizeClasses[size],
+        className
+      )}
       {...props}
     />
   )
@@ -41,8 +34,8 @@ interface LoadingStateProps extends React.HTMLAttributes<HTMLDivElement> {
 function LoadingState({ message = 'Loading...', className, ...props }: LoadingStateProps) {
   return (
     <div
-      className={cn(
-        'flex flex-col items-center justify-center gap-3 p-8 text-muted-foreground',
+      className={clsx(
+        'flex flex-col items-center justify-center gap-3 p-8 text-base-content/60',
         className
       )}
       {...props}
@@ -53,4 +46,4 @@ function LoadingState({ message = 'Loading...', className, ...props }: LoadingSt
   );
 }
 
-export { Spinner, LoadingState, spinnerVariants };
+export { Spinner, LoadingState };

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useProject, useRecentProjects, useOpenProject, useBrowseProject } from '@/hooks/useApi';
-import { useSidebar } from '@/contexts';
+import { useSidebar, useSettings } from '@/contexts';
 import { ConnectionStatus } from '@/components/ui';
 import {
   Search,
@@ -21,8 +21,8 @@ export function Header() {
   const openProject = useOpenProject();
   const browseProject = useBrowseProject();
   const { isMobile, isCollapsed, toggleMobileMenu, toggleSidebar } = useSidebar();
+  const { toggleTheme, isDark } = useSettings();
 
-  const [isDark, setIsDark] = useState(true);
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -36,11 +36,6 @@ export function Header() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const toggleTheme = () => {
-    setIsDark(!isDark);
-    document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
-  };
 
   const handleOpenProject = async (path: string) => {
     await openProject.mutateAsync(path);
@@ -59,11 +54,11 @@ export function Header() {
   const recent = recentProjects?.recent?.filter(p => p.path !== currentProject?.path) ?? [];
 
   return (
-    <header className="header">
-      {/* Unified menu toggle - always in top left */}
-      <div className="header-left">
+    <header className="flex items-center justify-between h-14 px-4 bg-base-200 border-b border-base-300 gap-4">
+      {/* Left side - menu toggle and project selector */}
+      <div className="flex items-center gap-2 flex-shrink-0">
         <button
-          className="menu-toggle"
+          className="btn btn-ghost btn-sm btn-square"
           onClick={isMobile ? toggleMobileMenu : toggleSidebar}
           title={isMobile ? "Open menu" : (isCollapsed ? "Expand sidebar" : "Collapse sidebar")}
           aria-label={isMobile ? "Open navigation menu" : (isCollapsed ? "Expand sidebar" : "Collapse sidebar")}
@@ -79,62 +74,67 @@ export function Header() {
         </button>
 
         {/* Project Selector */}
-        <div className="project-selector" ref={menuRef}>
-        <button
-          className="project-button"
-          onClick={() => setProjectMenuOpen(!projectMenuOpen)}
-        >
-          <span className="project-logo">ME</span>
-          <span className="project-name">{project?.name || 'Media Engine'}</span>
-          <ChevronDown size={16} className={projectMenuOpen ? 'rotate' : ''} />
-        </button>
+        <div className={`dropdown ${projectMenuOpen ? 'dropdown-open' : ''}`} ref={menuRef}>
+          <button
+            tabIndex={0}
+            className="btn btn-ghost btn-sm gap-2"
+            onClick={() => setProjectMenuOpen(!projectMenuOpen)}
+          >
+            <span className="flex items-center justify-center w-7 h-7 rounded bg-gradient-to-br from-primary to-secondary text-white text-xs font-bold">
+              ME
+            </span>
+            <span className="max-w-[150px] truncate hidden sm:inline">{project?.name || 'Media Engine'}</span>
+            <ChevronDown size={16} className={`transition-transform ${projectMenuOpen ? 'rotate-180' : ''}`} />
+          </button>
 
-        {projectMenuOpen && (
-          <div className="project-menu">
-            {currentProject && (
-              <div className="menu-section">
-                <div className="menu-label">Current Project</div>
-                <div className="menu-item current">
-                  <Check size={14} />
-                  <span className="item-name">{currentProject.name}</span>
+          <div className="dropdown-content bg-base-200 rounded-box w-72 shadow-xl border border-base-300 mt-2 z-[100]">
+              {currentProject && (
+                <div className="px-3 pt-3 pb-1">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-base-content/50">Current Project</span>
+                  <div className="flex items-center gap-2 px-3 py-2 mt-1 rounded-lg bg-primary/10 text-primary">
+                    <Check size={14} />
+                    <span className="flex-1 truncate">{currentProject.name}</span>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {recent.length > 0 && (
-              <div className="menu-section">
-                <div className="menu-label">Recent Projects</div>
-                {recent.slice(0, 5).map((p) => (
-                  <button
-                    key={p.path}
-                    className="menu-item"
-                    onClick={() => handleOpenProject(p.path)}
-                    disabled={!p.exists}
-                  >
-                    <Clock size={14} />
-                    <span className="item-name">{p.name}</span>
-                    {!p.exists && <span className="item-badge">Missing</span>}
-                  </button>
-                ))}
-              </div>
-            )}
+              {recent.length > 0 && (
+                <div className="px-3 pt-3 pb-1">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-base-content/50">Recent Projects</span>
+                  <div className="mt-1 space-y-1">
+                    {recent.slice(0, 5).map((p) => (
+                      <button
+                        key={p.path}
+                        className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-base-content/70 hover:bg-base-300 hover:text-base-content transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => handleOpenProject(p.path)}
+                        disabled={!p.exists}
+                      >
+                        <Clock size={14} />
+                        <span className="flex-1 truncate text-left">{p.name}</span>
+                        {!p.exists && <span className="badge badge-error badge-xs">Missing</span>}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-            <div className="menu-divider" />
+              <div className="divider my-1"></div>
 
-            <button className="menu-item" onClick={handleBrowse}>
-              <FolderOpen size={14} />
-              <span>Open Project...</span>
-            </button>
-          </div>
-        )}
+              <button
+                className="flex items-center gap-2 w-full px-4 py-2 text-sm text-base-content/70 hover:bg-base-300 hover:text-base-content rounded-lg mx-2 mb-2 transition-colors"
+                onClick={handleBrowse}
+              >
+                <FolderOpen size={14} />
+                <span>Open Project...</span>
+              </button>
+            </div>
         </div>
       </div>
 
       {/* Search - triggers Command Palette */}
       <button
-        className="search-container"
+        className="flex items-center gap-2 flex-1 max-w-md px-3 py-2 bg-base-300 border border-base-content/10 rounded-lg text-base-content/50 hover:border-primary/50 transition-colors"
         onClick={() => {
-          // Trigger Cmd+K to open command palette
           const event = new KeyboardEvent('keydown', {
             key: 'k',
             metaKey: true,
@@ -144,14 +144,18 @@ export function Header() {
         }}
       >
         <Search size={16} />
-        <span className="search-placeholder">Search...</span>
-        <kbd>⌘K</kbd>
+        <span className="flex-1 text-left text-sm">Search...</span>
+        <kbd className="kbd kbd-sm">⌘K</kbd>
       </button>
 
       {/* Right side actions */}
-      <div className="header-right">
+      <div className="flex items-center gap-2 flex-shrink-0">
         <ConnectionStatus />
-        <button className="icon-btn" onClick={toggleTheme} title="Toggle theme">
+        <button
+          className="btn btn-ghost btn-sm btn-square"
+          onClick={toggleTheme}
+          title={isDark ? "Switch to light theme" : "Switch to dark theme"}
+        >
           {isDark ? <Sun size={18} /> : <Moon size={18} />}
         </button>
       </div>

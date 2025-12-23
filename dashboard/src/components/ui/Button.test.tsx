@@ -11,35 +11,34 @@ describe('Button', () => {
   it('renders with default styling', () => {
     render(<Button>Default</Button>);
     const button = screen.getByRole('button');
-    // Check that it has essential Tailwind classes
-    expect(button).toHaveClass('inline-flex', 'items-center', 'justify-center');
-    expect(button).toHaveClass('bg-primary', 'text-primary-foreground');
+    // Check for DaisyUI btn classes
+    expect(button).toHaveClass('btn', 'btn-primary');
   });
 
   it('renders with secondary variant', () => {
     render(<Button variant="secondary">Secondary</Button>);
     const button = screen.getByRole('button');
-    expect(button).toHaveClass('bg-secondary', 'text-secondary-foreground');
+    expect(button).toHaveClass('btn', 'btn-secondary');
   });
 
   it('renders with ghost variant', () => {
     render(<Button variant="ghost">Ghost</Button>);
     const button = screen.getByRole('button');
-    expect(button).toHaveClass('hover:bg-muted');
+    expect(button).toHaveClass('btn', 'btn-ghost');
   });
 
   it('renders with danger variant', () => {
     render(<Button variant="danger">Danger</Button>);
     const button = screen.getByRole('button');
-    expect(button).toHaveClass('bg-destructive', 'text-destructive-foreground');
+    expect(button).toHaveClass('btn', 'btn-error');
   });
 
   it('renders with different sizes', () => {
     const { rerender } = render(<Button size="sm">Small</Button>);
-    expect(screen.getByRole('button')).toHaveClass('h-8', 'px-3', 'text-xs');
+    expect(screen.getByRole('button')).toHaveClass('btn', 'btn-sm');
 
     rerender(<Button size="lg">Large</Button>);
-    expect(screen.getByRole('button')).toHaveClass('h-10', 'px-6', 'text-base');
+    expect(screen.getByRole('button')).toHaveClass('btn', 'btn-lg');
   });
 
   it('handles click events', async () => {
@@ -65,9 +64,10 @@ describe('Button', () => {
 
   it('shows spinner when loading', () => {
     render(<Button loading>Loading</Button>);
-    // Check for the SVG spinner
-    expect(screen.getByRole('button').querySelector('svg')).toBeInTheDocument();
-    expect(screen.getByRole('button').querySelector('.animate-spin')).toBeInTheDocument();
+    const button = screen.getByRole('button');
+    // Check for DaisyUI loading spinner
+    const spinner = button.querySelector('.loading');
+    expect(spinner).toBeInTheDocument();
   });
 
   it('does not trigger click when disabled', async () => {

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSettings } from '@/contexts';
 import {
   Search,
   Home,
@@ -10,13 +11,14 @@ import {
   Hammer,
   Sparkles,
   Moon,
+  Sun,
   Languages,
   Clock,
   BarChart3,
   Activity,
   Palette,
+  Settings,
 } from 'lucide-react';
-import './CommandPalette.css';
 
 interface Command {
   id: string;
@@ -33,6 +35,7 @@ export function CommandPalette() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const { toggleTheme, isDark } = useSettings();
 
   const commands: Command[] = [
     // Main Navigation
@@ -41,6 +44,7 @@ export function CommandPalette() {
     { id: 'nav-quality', label: 'Go to Quality', icon: <Shield size={16} />, action: () => navigate('/quality'), category: 'Navigation' },
     { id: 'nav-build', label: 'Go to Build', icon: <Hammer size={16} />, action: () => navigate('/build'), category: 'Navigation' },
     { id: 'nav-ai', label: 'Go to AI Assist', icon: <Sparkles size={16} />, action: () => navigate('/ai-assist'), category: 'Navigation' },
+    { id: 'nav-settings', label: 'Go to Settings', icon: <Settings size={16} />, action: () => navigate('/settings'), category: 'Navigation' },
 
     // Content sub-pages
     { id: 'nav-documents', label: 'Content → Documents', icon: <FileText size={16} />, action: () => navigate('/content'), category: 'Content' },
@@ -61,13 +65,9 @@ export function CommandPalette() {
     // Actions
     {
       id: 'theme-toggle',
-      label: 'Toggle Theme',
-      icon: <Moon size={16} />,
-      action: () => {
-        const html = document.documentElement;
-        const current = html.getAttribute('data-theme');
-        html.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
-      },
+      label: isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme',
+      icon: isDark ? <Sun size={16} /> : <Moon size={16} />,
+      action: toggleTheme,
       category: 'Actions'
     },
   ];
@@ -136,29 +136,40 @@ export function CommandPalette() {
 
   return (
     <>
-      <div className="command-overlay" onClick={() => setIsOpen(false)} />
-      <div className="command-palette">
-        <div className="command-header">
-          <Search size={18} className="command-search-icon" />
+      {/* Overlay */}
+      <div
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+        onClick={() => setIsOpen(false)}
+      />
+
+      {/* Modal */}
+      <div className="fixed top-[20%] left-1/2 -translate-x-1/2 w-full max-w-xl bg-base-200 rounded-xl shadow-2xl border border-base-300 z-50 overflow-hidden">
+        {/* Search Header */}
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-base-300">
+          <Search size={18} className="text-base-content/50" />
           <input
             ref={inputRef}
             type="text"
-            className="command-input"
+            className="flex-1 bg-transparent outline-none text-base-content placeholder:text-base-content/40"
             placeholder="Type a command or search..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <kbd className="command-kbd">ESC</kbd>
+          <kbd className="kbd kbd-sm">ESC</kbd>
         </div>
-        <div className="command-list">
+
+        {/* Command List */}
+        <div className="max-h-80 overflow-y-auto p-2">
           {filteredCommands.length === 0 ? (
-            <div className="command-empty">
+            <div className="py-8 text-center text-base-content/50">
               No commands found for "{query}"
             </div>
           ) : (
             categories.map(category => (
-              <div key={category} className="command-group">
-                <div className="command-group-label">{category}</div>
+              <div key={category} className="mb-2">
+                <div className="px-3 py-1 text-xs font-semibold uppercase tracking-wider text-base-content/50">
+                  {category}
+                </div>
                 {filteredCommands
                   .filter(cmd => cmd.category === category)
                   .map((cmd) => {
@@ -166,7 +177,11 @@ export function CommandPalette() {
                     return (
                       <button
                         key={cmd.id}
-                        className={`command-item ${globalIdx === selectedIndex ? 'selected' : ''}`}
+                        className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-left transition-colors ${
+                          globalIdx === selectedIndex
+                            ? 'bg-primary/20 text-primary'
+                            : 'text-base-content/70 hover:bg-base-300'
+                        }`}
                         onClick={() => {
                           cmd.action();
                           setIsOpen(false);
@@ -174,9 +189,9 @@ export function CommandPalette() {
                         }}
                         onMouseEnter={() => setSelectedIndex(globalIdx)}
                       >
-                        <span className="command-icon">{cmd.icon}</span>
-                        <span className="command-label">{cmd.label}</span>
-                        {cmd.shortcut && <kbd className="command-shortcut">{cmd.shortcut}</kbd>}
+                        <span className="text-base-content/50">{cmd.icon}</span>
+                        <span className="flex-1">{cmd.label}</span>
+                        {cmd.shortcut && <kbd className="kbd kbd-xs">{cmd.shortcut}</kbd>}
                       </button>
                     );
                   })}
@@ -184,10 +199,12 @@ export function CommandPalette() {
             ))
           )}
         </div>
-        <div className="command-footer">
-          <span><kbd>↑↓</kbd> to navigate</span>
-          <span><kbd>↵</kbd> to select</span>
-          <span><kbd>esc</kbd> to close</span>
+
+        {/* Footer */}
+        <div className="flex items-center gap-4 px-4 py-2 border-t border-base-300 text-xs text-base-content/50">
+          <span><kbd className="kbd kbd-xs">↑↓</kbd> to navigate</span>
+          <span><kbd className="kbd kbd-xs">↵</kbd> to select</span>
+          <span><kbd className="kbd kbd-xs">esc</kbd> to close</span>
         </div>
       </div>
     </>

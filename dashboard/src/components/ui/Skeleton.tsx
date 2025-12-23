@@ -1,11 +1,16 @@
-import './Skeleton.css';
-
 interface SkeletonProps {
   width?: string | number;
   height?: string | number;
   variant?: 'text' | 'circular' | 'rectangular' | 'rounded';
   className?: string;
 }
+
+const variantStyles = {
+  text: 'rounded',
+  circular: 'rounded-full',
+  rectangular: '',
+  rounded: 'rounded-lg',
+};
 
 export function Skeleton({
   width,
@@ -19,7 +24,7 @@ export function Skeleton({
 
   return (
     <div
-      className={`skeleton skeleton-${variant} ${className}`}
+      className={`skeleton bg-base-300 ${variantStyles[variant]} ${className}`}
       style={style}
     />
   );
@@ -28,10 +33,10 @@ export function Skeleton({
 // Pre-built skeleton patterns
 export function SkeletonCard() {
   return (
-    <div className="skeleton-card">
-      <div className="skeleton-card-header">
+    <div className="card bg-base-200 p-4 space-y-3">
+      <div className="flex items-center gap-3">
         <Skeleton variant="circular" width={40} height={40} />
-        <div className="skeleton-card-meta">
+        <div className="space-y-2">
           <Skeleton width={120} height={14} />
           <Skeleton width={80} height={12} />
         </div>
@@ -45,11 +50,11 @@ export function SkeletonCard() {
 
 export function SkeletonList({ count = 5 }: { count?: number }) {
   return (
-    <div className="skeleton-list">
+    <div className="space-y-2">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="skeleton-list-item">
+        <div key={i} className="flex items-center gap-3 p-2">
           <Skeleton variant="rounded" width={32} height={32} />
-          <div className="skeleton-list-content">
+          <div className="flex-1 space-y-2">
             <Skeleton width="60%" height={14} />
             <Skeleton width="40%" height={12} />
           </div>
@@ -61,9 +66,9 @@ export function SkeletonList({ count = 5 }: { count?: number }) {
 
 export function SkeletonStats() {
   return (
-    <div className="skeleton-stats">
+    <div className="grid grid-cols-4 gap-4">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="skeleton-stat">
+        <div key={i} className="card bg-base-200 p-4 space-y-2">
           <Skeleton width={80} height={12} />
           <Skeleton width={60} height={32} />
         </div>

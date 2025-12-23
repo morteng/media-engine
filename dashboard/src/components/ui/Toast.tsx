@@ -1,6 +1,5 @@
 import { useState, useEffect, createContext, useContext, useCallback, type ReactNode } from 'react';
 import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from 'lucide-react';
-import './Toast.css';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -60,7 +59,7 @@ function ToastContainer({ toasts, removeToast }: ToastContainerProps) {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="toast-container">
+    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
       {toasts.map(toast => (
         <ToastItem key={toast.id} toast={toast} onRemove={removeToast} />
       ))}
@@ -72,6 +71,20 @@ interface ToastItemProps {
   toast: Toast;
   onRemove: (id: string) => void;
 }
+
+const typeStyles: Record<ToastType, string> = {
+  success: 'alert-success',
+  error: 'alert-error',
+  warning: 'alert-warning',
+  info: 'alert-info',
+};
+
+const typeIcons: Record<ToastType, typeof CheckCircle> = {
+  success: CheckCircle,
+  error: AlertCircle,
+  warning: AlertTriangle,
+  info: Info,
+};
 
 function ToastItem({ toast, onRemove }: ToastItemProps) {
   const [isExiting, setIsExiting] = useState(false);
@@ -91,18 +104,20 @@ function ToastItem({ toast, onRemove }: ToastItemProps) {
     setTimeout(() => onRemove(toast.id), 200);
   };
 
-  const Icon = {
-    success: CheckCircle,
-    error: AlertCircle,
-    warning: AlertTriangle,
-    info: Info,
-  }[toast.type];
+  const Icon = typeIcons[toast.type];
 
   return (
-    <div className={`toast toast-${toast.type} ${isExiting ? 'toast-exit' : ''}`}>
-      <Icon size={18} className="toast-icon" />
-      <span className="toast-message">{toast.message}</span>
-      <button className="toast-close" onClick={handleClose}>
+    <div
+      className={`alert ${typeStyles[toast.type]} shadow-lg min-w-80 max-w-md transition-all duration-200 ${
+        isExiting ? 'opacity-0 translate-x-4' : 'opacity-100 translate-x-0'
+      }`}
+    >
+      <Icon size={18} />
+      <span className="flex-1">{toast.message}</span>
+      <button
+        className="btn btn-ghost btn-xs btn-square"
+        onClick={handleClose}
+      >
         <X size={14} />
       </button>
     </div>

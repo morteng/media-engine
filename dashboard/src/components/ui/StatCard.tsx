@@ -1,7 +1,5 @@
-import { Card, CardContent } from './Card';
 import { InfoTooltip } from './InfoTooltip';
 import type { ReactNode } from 'react';
-import clsx from 'clsx';
 
 interface StatCardProps {
   label: string;
@@ -18,25 +16,55 @@ interface StatCardProps {
   };
 }
 
+const variantStyles: Record<string, { border: string; icon: string; accent: string }> = {
+  default: {
+    border: 'border-base-300',
+    icon: 'text-base-content/60',
+    accent: 'text-primary',
+  },
+  success: {
+    border: 'border-success/30',
+    icon: 'text-success',
+    accent: 'text-success',
+  },
+  warning: {
+    border: 'border-warning/30',
+    icon: 'text-warning',
+    accent: 'text-warning',
+  },
+  error: {
+    border: 'border-error/30',
+    icon: 'text-error',
+    accent: 'text-error',
+  },
+  accent: {
+    border: 'border-primary/30',
+    icon: 'text-primary',
+    accent: 'text-primary',
+  },
+};
+
 export function StatCard({ label, value, icon, trend, variant = 'default', tooltip }: StatCardProps) {
+  const styles = variantStyles[variant];
+
   return (
-    <Card className={clsx('stat-card', `stat-card-${variant}`)}>
-      <CardContent>
-        <div className="stat-card-header">
-          {icon && <div className="stat-card-icon">{icon}</div>}
-          <span className="stat-card-label">
+    <div className={`card bg-base-200 border ${styles.border}`}>
+      <div className="card-body p-4">
+        <div className="flex items-center gap-3 mb-2">
+          {icon && <div className={`${styles.icon}`}>{icon}</div>}
+          <span className="text-sm text-base-content/70 flex items-center gap-1.5">
             {label}
             {tooltip && <InfoTooltip title={tooltip.title} content={tooltip.content} />}
           </span>
         </div>
-        <div className="stat-card-value">{value}</div>
+        <div className={`text-3xl font-semibold ${styles.accent}`}>{value}</div>
         {trend && (
-          <div className={clsx('stat-card-trend', { positive: trend.value > 0, negative: trend.value < 0 })}>
+          <div className={`flex items-center gap-2 text-sm mt-2 ${trend.value > 0 ? 'text-success' : trend.value < 0 ? 'text-error' : 'text-base-content/60'}`}>
             <span>{trend.value > 0 ? '+' : ''}{trend.value}%</span>
-            <span className="trend-label">{trend.label}</span>
+            <span className="text-base-content/50">{trend.label}</span>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

@@ -1,9 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getMedia } from '@/api/client';
-import { Card, CardHeader, CardContent } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { LoadingState } from '@/components/ui/Spinner';
 import { MediaPlayer } from '@/components/ui/MediaPlayer';
 import {
   Video,
@@ -18,8 +15,6 @@ import {
   Clock,
   HardDrive,
 } from 'lucide-react';
-import clsx from 'clsx';
-import './Media.css';
 
 interface MediaSource {
   path: string;
@@ -90,20 +85,25 @@ export function Media() {
   });
 
   if (isLoading) {
-    return <LoadingState message="Loading media files..." />;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <p className="mt-4 text-base-content/60">Loading media files...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div className="page media-page">
-        <div className="page-header">
-          <h1>Media</h1>
-        </div>
-        <Card>
-          <CardContent className="empty-state">
+      <div className="space-y-6">
+        <h1 className="text-2xl font-semibold">Media</h1>
+        <div className="card bg-base-200">
+          <div className="card-body items-center text-center py-12">
             <p className="text-error">Failed to load media files</p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     );
   }
@@ -121,163 +121,201 @@ export function Media() {
   );
 
   return (
-    <div className="page media-page">
-      <div className="page-header">
-        <h1>Media</h1>
-        <p className="text-muted">{data?.total ?? 0} files in {data?.output_dir ?? 'output'}</p>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Media</h1>
+          <p className="text-sm text-base-content/60">{data?.total ?? 0} files in {data?.output_dir ?? 'output'}</p>
+        </div>
       </div>
 
-      <div className="media-layout">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-220px)]">
         {/* Type Filter Sidebar */}
-        <Card className="media-types">
-          <CardHeader title="Types" />
-          <CardContent>
-            <button
-              className={clsx('type-item', { active: selectedType === null })}
-              onClick={() => setSelectedType(null)}
-            >
-              <FolderOpen size={16} />
-              <span>All Files</span>
-              <Badge variant="default" size="sm">{data?.total ?? 0}</Badge>
-            </button>
-            {sortedTypes.map(type => {
-              const Icon = typeIcons[type] || FileText;
-              return (
+        <div className="lg:col-span-2">
+          <div className="card bg-base-200 h-full">
+            <div className="card-body p-3">
+              <h3 className="font-semibold text-sm mb-2 px-2">Types</h3>
+              <div className="space-y-1">
                 <button
-                  key={type}
-                  className={clsx('type-item', { active: selectedType === type })}
-                  onClick={() => setSelectedType(type)}
+                  className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                    selectedType === null ? 'bg-primary/20 text-primary' : 'hover:bg-base-300'
+                  }`}
+                  onClick={() => setSelectedType(null)}
                 >
-                  <Icon size={16} />
-                  <span>{typeLabels[type] || type}</span>
-                  <Badge variant="default" size="sm">{byType[type]}</Badge>
+                  <FolderOpen size={16} />
+                  <span className="flex-1 text-left">All Files</span>
+                  <div className="badge badge-ghost badge-sm">{data?.total ?? 0}</div>
                 </button>
-              );
-            })}
-          </CardContent>
-        </Card>
-
-        {/* File List */}
-        <Card className="media-files">
-          <CardHeader
-            title={selectedType ? typeLabels[selectedType] || selectedType : 'All Files'}
-            subtitle={`${filteredFiles.length} files`}
-          />
-          <CardContent>
-            {filteredFiles.length === 0 ? (
-              <div className="empty-state">
-                <Image size={48} className="text-muted" />
-                <p>No media files found</p>
-              </div>
-            ) : (
-              <div className="file-list">
-                {filteredFiles.map(file => {
-                  const Icon = typeIcons[file.type] || FileText;
+                {sortedTypes.map(type => {
+                  const Icon = typeIcons[type] || FileText;
                   return (
                     <button
-                      key={file.path}
-                      className={clsx('file-item', { active: selectedFile?.path === file.path })}
-                      onClick={() => setSelectedFile(file)}
+                      key={type}
+                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                        selectedType === type ? 'bg-primary/20 text-primary' : 'hover:bg-base-300'
+                      }`}
+                      onClick={() => setSelectedType(type)}
                     >
-                      <Icon size={20} className="file-icon" />
-                      <div className="file-info">
-                        <span className="file-name">{file.filename}</span>
-                        <span className="file-meta">
-                          <HardDrive size={10} />
-                          {formatSize(file.size)}
-                          <Clock size={10} />
-                          {formatDate(file.modified)}
-                        </span>
-                      </div>
-                      {(file.type === 'video' || file.type === 'audio') && (
-                        <Play size={16} className="play-icon" />
-                      )}
+                      <Icon size={16} />
+                      <span className="flex-1 text-left">{typeLabels[type] || type}</span>
+                      <div className="badge badge-ghost badge-sm">{byType[type]}</div>
                     </button>
                   );
                 })}
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </div>
+          </div>
+        </div>
+
+        {/* File List */}
+        <div className="lg:col-span-4">
+          <div className="card bg-base-200 h-full flex flex-col">
+            <div className="p-4 border-b border-base-300">
+              <h3 className="font-semibold">{selectedType ? typeLabels[selectedType] || selectedType : 'All Files'}</h3>
+              <p className="text-sm text-base-content/60">{filteredFiles.length} files</p>
+            </div>
+            <div className="flex-1 overflow-y-auto p-2">
+              {filteredFiles.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <Image size={48} className="text-base-content/30 mb-4" />
+                  <p className="text-base-content/60">No media files found</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {filteredFiles.map(file => {
+                    const Icon = typeIcons[file.type] || FileText;
+                    return (
+                      <button
+                        key={file.path}
+                        className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors ${
+                          selectedFile?.path === file.path ? 'bg-primary/20' : 'hover:bg-base-300'
+                        }`}
+                        onClick={() => setSelectedFile(file)}
+                      >
+                        <Icon size={20} className="text-base-content/60 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <span className="block truncate text-sm font-medium">{file.filename}</span>
+                          <span className="flex items-center gap-2 text-xs text-base-content/50">
+                            <HardDrive size={10} />
+                            {formatSize(file.size)}
+                            <Clock size={10} />
+                            {formatDate(file.modified)}
+                          </span>
+                        </div>
+                        {(file.type === 'video' || file.type === 'audio') && (
+                          <Play size={16} className="text-primary flex-shrink-0" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* Preview Panel */}
-        <Card className="media-preview">
-          <CardHeader title="Preview" />
-          <CardContent>
-            {selectedFile ? (
-              <div className="preview-content">
-                {(selectedFile.type === 'video' || selectedFile.type === 'audio') && (
-                  <MediaPlayer
-                    src={selectedFile.url}
-                    type={selectedFile.type}
-                    title={selectedFile.filename}
-                  />
-                )}
-
-                {selectedFile.type === 'demo' && (
-                  <div className="demo-preview">
-                    <iframe
+        <div className="lg:col-span-6">
+          <div className="card bg-base-200 h-full flex flex-col">
+            <div className="p-4 border-b border-base-300">
+              <h3 className="font-semibold">Preview</h3>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              {selectedFile ? (
+                <div className="space-y-4">
+                  {(selectedFile.type === 'video' || selectedFile.type === 'audio') && (
+                    <MediaPlayer
                       src={selectedFile.url}
-                      title={selectedFile.filename}
-                      sandbox="allow-scripts allow-same-origin"
-                    />
-                  </div>
-                )}
-
-                {selectedFile.type === 'document' && selectedFile.format === 'html' && (
-                  <div className="document-preview">
-                    <iframe
-                      src={selectedFile.url}
+                      type={selectedFile.type}
                       title={selectedFile.filename}
                     />
-                  </div>
-                )}
+                  )}
 
-                {selectedFile.type === 'captions' && (
-                  <div className="captions-preview">
-                    <Badge variant="info">VTT Captions</Badge>
-                    <a href={selectedFile.url} target="_blank" rel="noopener noreferrer">
-                      Download {selectedFile.filename}
-                    </a>
-                  </div>
-                )}
+                  {selectedFile.type === 'demo' && (
+                    <div className="aspect-video rounded-lg overflow-hidden bg-base-300">
+                      <iframe
+                        src={selectedFile.url}
+                        title={selectedFile.filename}
+                        className="w-full h-full"
+                        sandbox="allow-scripts allow-same-origin"
+                      />
+                    </div>
+                  )}
 
-                {selectedFile.type === 'video_props' && (
-                  <div className="props-preview">
-                    <Badge variant="info">Video Properties</Badge>
-                    <a href={selectedFile.url} target="_blank" rel="noopener noreferrer">
-                      View {selectedFile.filename}
-                    </a>
-                  </div>
-                )}
+                  {selectedFile.type === 'document' && selectedFile.format === 'html' && (
+                    <div className="aspect-video rounded-lg overflow-hidden bg-base-300">
+                      <iframe
+                        src={selectedFile.url}
+                        title={selectedFile.filename}
+                        className="w-full h-full"
+                      />
+                    </div>
+                  )}
 
-                <div className="file-details">
-                  <dl>
-                    <dt>Path</dt>
-                    <dd>{selectedFile.relative_path}</dd>
-                    <dt>Format</dt>
-                    <dd>{selectedFile.format.toUpperCase()}</dd>
-                    <dt>Size</dt>
-                    <dd>{formatSize(selectedFile.size)}</dd>
-                    <dt>Modified</dt>
-                    <dd>{formatDate(selectedFile.modified)}</dd>
-                    {selectedFile.source && (
-                      <>
-                        <dt>Source</dt>
-                        <dd>{selectedFile.source.name} ({selectedFile.source.language})</dd>
-                      </>
-                    )}
-                  </dl>
+                  {selectedFile.type === 'captions' && (
+                    <div className="flex flex-col items-center gap-3 p-6 rounded-lg bg-base-300">
+                      <div className="badge badge-info">VTT Captions</div>
+                      <a
+                        href={selectedFile.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-ghost btn-sm"
+                      >
+                        Download {selectedFile.filename}
+                      </a>
+                    </div>
+                  )}
+
+                  {selectedFile.type === 'video_props' && (
+                    <div className="flex flex-col items-center gap-3 p-6 rounded-lg bg-base-300">
+                      <div className="badge badge-info">Video Properties</div>
+                      <a
+                        href={selectedFile.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-ghost btn-sm"
+                      >
+                        View {selectedFile.filename}
+                      </a>
+                    </div>
+                  )}
+
+                  <div className="p-4 rounded-lg bg-base-300">
+                    <dl className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <dt className="text-base-content/60">Path</dt>
+                        <dd className="truncate max-w-[60%] text-right">{selectedFile.relative_path}</dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt className="text-base-content/60">Format</dt>
+                        <dd>{selectedFile.format.toUpperCase()}</dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt className="text-base-content/60">Size</dt>
+                        <dd>{formatSize(selectedFile.size)}</dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt className="text-base-content/60">Modified</dt>
+                        <dd>{formatDate(selectedFile.modified)}</dd>
+                      </div>
+                      {selectedFile.source && (
+                        <div className="flex justify-between">
+                          <dt className="text-base-content/60">Source</dt>
+                          <dd>{selectedFile.source.name} ({selectedFile.source.language})</dd>
+                        </div>
+                      )}
+                    </dl>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="empty-state">
-                <Play size={48} className="text-muted" />
-                <p>Select a file to preview</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <Play size={48} className="text-base-content/30 mb-4" />
+                  <p className="text-base-content/60">Select a file to preview</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

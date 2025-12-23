@@ -104,12 +104,13 @@ describe('Sidebar', () => {
   });
 
   describe('Active State', () => {
-    it('applies active class to current route', () => {
+    it('applies active styling to current route', () => {
       mockWindowWidth(1024);
       render(<Sidebar />, { route: '/', useMemoryRouter: true });
 
       const dashboardLink = screen.getByRole('link', { name: /dashboard/i });
-      expect(dashboardLink).toHaveClass('active');
+      // Active state uses bg-primary/20 and text-primary classes
+      expect(dashboardLink).toHaveClass('text-primary');
     });
 
     it('Quality link is active on /quality route', () => {
@@ -117,7 +118,8 @@ describe('Sidebar', () => {
       render(<Sidebar />, { route: '/quality', useMemoryRouter: true });
 
       const qualityLink = screen.getByRole('link', { name: /quality/i });
-      expect(qualityLink).toHaveClass('active');
+      // Active state uses bg-primary/20 and text-primary classes
+      expect(qualityLink).toHaveClass('text-primary');
     });
   });
 });

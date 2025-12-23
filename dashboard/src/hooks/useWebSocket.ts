@@ -35,20 +35,26 @@ interface UseWebSocketOptions {
   onDisconnect?: () => void;
   autoReconnect?: boolean;
   reconnectInterval?: number;
+  maxReconnectAttempts?: number;
 }
+
+// Generate a stable user ID once
+const stableUserId = `user-${Math.random().toString(36).slice(2, 8)}`;
 
 export function useWebSocket(options: UseWebSocketOptions = {}) {
   const {
-    userId = `user-${Math.random().toString(36).slice(2, 8)}`,
+    userId = stableUserId,
     onMessage,
     onConnect,
     onDisconnect,
     autoReconnect = true,
     reconnectInterval = 3000,
+    maxReconnectAttempts = 5,
   } = options;
 
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectAttemptsRef = useRef(0);
   const [state, setState] = useState<WebSocketState>({
     isConnected: false,
     users: [],
@@ -61,6 +67,12 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       return;
     }
 
+    // Check if we've exceeded max reconnect attempts
+    if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
+      console.warn(`WebSocket: Max reconnect attempts (${maxReconnectAttempts}) reached. Giving up.`);
+      return;
+    }
+
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.host;
     const wsUrl = `${protocol}//${host}/api/ws/${userId}`;
@@ -69,6 +81,8 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
+        // Reset reconnect attempts on successful connection
+        reconnectAttemptsRef.current = 0;
         setState(prev => ({ ...prev, isConnected: true }));
         onConnect?.();
       };
@@ -78,12 +92,20 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
         onDisconnect?.();
         wsRef.current = null;
 
-        if (autoReconnect) {
-          reconnectTimeoutRef.current = setTimeout(connect, reconnectInterval);
+        if (autoReconnect && reconnectAttemptsRef.current < maxReconnectAttempts) {
+          // Exponential backoff: 3s, 6s, 12s, 24s, 48s...
+          const backoff = reconnectInterval * Math.pow(2, reconnectAttemptsRef.current);
+          const maxBackoff = 60000; // Cap at 1 minute
+          const delay = Math.min(backoff, maxBackoff);
+
+          reconnectAttemptsRef.current += 1;
+          console.log(`WebSocket: Reconnecting in ${delay / 1000}s (attempt ${reconnectAttemptsRef.current}/${maxReconnectAttempts})`);
+          reconnectTimeoutRef.current = setTimeout(connect, delay);
         }
       };
 
       ws.onerror = () => {
+        // Don't log error - onclose will handle reconnection
         ws.close();
       };
 
@@ -138,7 +160,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
         reconnectTimeoutRef.current = setTimeout(connect, reconnectInterval);
       }
     }
-  }, [userId, onConnect, onDisconnect, onMessage, autoReconnect, reconnectInterval]);
+  }, [userId, onConnect, onDisconnect, onMessage, autoReconnect, reconnectInterval, maxReconnectAttempts]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {

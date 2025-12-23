@@ -88,14 +88,14 @@ describe('Header', () => {
   describe('Theme Toggle', () => {
     it('renders theme toggle button', () => {
       render(<Header />);
-      expect(screen.getByRole('button', { name: /toggle theme/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /switch to (light|dark) theme/i })).toBeInTheDocument();
     });
 
     it('toggles theme on click', async () => {
       const user = userEvent.setup();
       render(<Header />);
 
-      const themeButton = screen.getByRole('button', { name: /toggle theme/i });
+      const themeButton = screen.getByRole('button', { name: /switch to (light|dark) theme/i });
       await user.click(themeButton);
 
       // Theme should toggle (we can't easily test document attribute changes)
@@ -111,9 +111,9 @@ describe('Header', () => {
 
     it('renders header with correct structure', () => {
       const { container } = render(<Header />);
-      // Check that header-left and header-right containers exist
-      expect(container.querySelector('.header-left')).toBeInTheDocument();
-      expect(container.querySelector('.header-right')).toBeInTheDocument();
+      // Check that header uses flexbox layout
+      const header = container.querySelector('header');
+      expect(header).toHaveClass('flex', 'items-center', 'justify-between');
     });
   });
 
@@ -126,7 +126,7 @@ describe('Header', () => {
 
     it('theme toggle has accessible name', () => {
       render(<Header />);
-      const themeButton = screen.getByRole('button', { name: /toggle theme/i });
+      const themeButton = screen.getByRole('button', { name: /switch to (light|dark) theme/i });
       expect(themeButton).toHaveAccessibleName();
     });
   });

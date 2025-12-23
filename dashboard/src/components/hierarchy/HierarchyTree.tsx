@@ -15,9 +15,7 @@ import {
   Clock,
 } from 'lucide-react';
 import clsx from 'clsx';
-import { Badge } from '@/components/ui/Badge';
 import type { HierarchyTreeNode } from '@/api/types';
-import './HierarchyTree.css';
 
 // Icons for document types
 const docTypeIcons: Record<string, typeof FileText> = {
@@ -30,11 +28,11 @@ const docTypeIcons: Record<string, typeof FileText> = {
 };
 
 // Colors for lifecycle states
-const lifecycleColors: Record<string, string> = {
-  living: 'success',
-  snapshot: 'info',
-  deprecated: 'warning',
-  archived: 'default',
+const lifecycleBadges: Record<string, string> = {
+  living: 'badge-success',
+  snapshot: 'badge-info',
+  deprecated: 'badge-warning',
+  archived: 'badge-ghost',
 };
 
 interface TreeNodeProps {
@@ -89,13 +87,17 @@ function TreeNode({
   };
 
   return (
-    <div className="tree-node-container">
+    <div>
       <div
-        className={clsx('tree-node', {
-          'tree-node-selected': isSelected,
-          'tree-node-focused': isFocused,
-          'tree-node-stale': node.is_stale,
-        })}
+        className={clsx(
+          'flex items-center gap-1 px-2 py-1.5 rounded-lg cursor-pointer transition-colors',
+          {
+            'bg-primary/20 text-primary': isSelected,
+            'ring-2 ring-primary ring-offset-1 ring-offset-base-100': isFocused && !isSelected,
+            'text-warning': node.is_stale && !isSelected,
+            'hover:bg-base-300': !isSelected,
+          }
+        )}
         style={{ paddingLeft: `${level * 16 + 8}px` }}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
@@ -107,7 +109,7 @@ function TreeNode({
       >
         {/* Expand/Collapse Button */}
         <button
-          className="tree-toggle"
+          className="w-4 h-4 flex items-center justify-center text-base-content/50 hover:text-base-content"
           onClick={handleToggle}
           aria-label={isExpanded ? 'Collapse' : 'Expand'}
           disabled={!hasChildren}
@@ -118,57 +120,52 @@ function TreeNode({
             ) : (
               <ChevronRight size={14} />
             )
-          ) : (
-            <span className="tree-toggle-placeholder" />
-          )}
+          ) : null}
         </button>
 
         {/* Document Type Icon */}
-        <Icon size={14} className={`tree-icon tree-icon-${node.doc_type}`} />
+        <Icon size={14} className={isSelected ? 'text-primary' : 'text-base-content/60'} />
 
         {/* Title */}
-        <span className="tree-title">{node.title}</span>
+        <span className="flex-1 truncate text-sm">{node.title}</span>
 
         {/* Status Indicators */}
-        <div className="tree-indicators">
+        <div className="flex items-center gap-1">
           {/* Stale indicator */}
           {node.is_stale && (
-            <span className="tree-indicator stale" title="Content is stale">
-              <AlertTriangle size={12} />
+            <span className="tooltip tooltip-left" data-tip="Content is stale">
+              <AlertTriangle size={12} className="text-warning" />
             </span>
           )}
 
           {/* Anchors indicator */}
           {node.has_anchors && (
-            <span className="tree-indicator anchors" title="Defines anchors">
-              <Anchor size={12} />
+            <span className="tooltip tooltip-left" data-tip="Defines anchors">
+              <Anchor size={12} className="text-info" />
             </span>
           )}
 
           {/* Derivation indicator */}
           {node.derived_from_count > 0 && (
-            <span className="tree-indicator derived" title={`Derived from ${node.derived_from_count} source(s)`}>
-              <GitBranch size={12} />
+            <span className="tooltip tooltip-left" data-tip={`Derived from ${node.derived_from_count} source(s)`}>
+              <GitBranch size={12} className="text-secondary" />
             </span>
           )}
 
           {/* Lifecycle badge */}
           {node.lifecycle !== 'living' && (
-            <Badge
-              variant={lifecycleColors[node.lifecycle] as 'success' | 'info' | 'warning' | 'default'}
-              size="sm"
-            >
-              {node.lifecycle === 'archived' && <Archive size={10} />}
-              {node.lifecycle === 'deprecated' && <Clock size={10} />}
+            <span className={`badge badge-xs ${lifecycleBadges[node.lifecycle]}`}>
+              {node.lifecycle === 'archived' && <Archive size={10} className="mr-0.5" />}
+              {node.lifecycle === 'deprecated' && <Clock size={10} className="mr-0.5" />}
               {node.lifecycle}
-            </Badge>
+            </span>
           )}
         </div>
       </div>
 
       {/* Children */}
       {hasChildren && isExpanded && (
-        <div className="tree-children" role="group">
+        <div role="group">
           {node.children.map((child) => (
             <TreeNode
               key={child.path}
@@ -312,22 +309,22 @@ export function HierarchyTree({
 
   if (!nodes || nodes.length === 0) {
     return (
-      <div className={clsx('hierarchy-tree-empty', className)}>
-        <FileText size={32} />
-        <p>No hierarchy data available</p>
-        <span className="text-muted">Documents need hierarchy metadata to appear here</span>
+      <div className={clsx('flex flex-col items-center justify-center py-12 text-center', className)}>
+        <FileText size={32} className="text-base-content/30 mb-2" />
+        <p className="font-medium">No hierarchy data available</p>
+        <span className="text-sm text-base-content/60">Documents need hierarchy metadata to appear here</span>
       </div>
     );
   }
 
   return (
-    <div className={clsx('hierarchy-tree', className)}>
+    <div className={clsx('flex flex-col', className)}>
       {/* Toolbar */}
-      <div className="hierarchy-tree-toolbar">
-        <button className="tree-toolbar-btn" onClick={handleExpandAll} title="Expand all">
+      <div className="flex items-center gap-2 p-2 border-b border-base-300">
+        <button className="btn btn-ghost btn-xs" onClick={handleExpandAll}>
           Expand All
         </button>
-        <button className="tree-toolbar-btn" onClick={handleCollapseAll} title="Collapse all">
+        <button className="btn btn-ghost btn-xs" onClick={handleCollapseAll}>
           Collapse All
         </button>
       </div>
@@ -335,7 +332,7 @@ export function HierarchyTree({
       {/* Tree */}
       <div
         ref={treeRef}
-        className="hierarchy-tree-content"
+        className="flex-1 overflow-y-auto p-2"
         role="tree"
         onKeyDown={handleKeyDown}
         aria-label="Document hierarchy"
@@ -358,25 +355,23 @@ export function HierarchyTree({
 
       {/* Legend */}
       {showLegend && (
-        <div className="hierarchy-tree-legend">
-          <span className="legend-title">Legend:</span>
-          <div className="legend-items">
-            <span className="legend-item">
-              <BookOpen size={12} /> Chapter
-            </span>
-            <span className="legend-item">
-              <Settings size={12} /> Operations
-            </span>
-            <span className="legend-item">
-              <AlertTriangle size={12} className="text-warning" /> Stale
-            </span>
-            <span className="legend-item">
-              <Anchor size={12} /> Anchors
-            </span>
-            <span className="legend-item">
-              <GitBranch size={12} /> Derived
-            </span>
-          </div>
+        <div className="flex items-center gap-4 p-2 border-t border-base-300 text-xs text-base-content/60">
+          <span className="font-medium">Legend:</span>
+          <span className="flex items-center gap-1">
+            <BookOpen size={12} /> Chapter
+          </span>
+          <span className="flex items-center gap-1">
+            <Settings size={12} /> Operations
+          </span>
+          <span className="flex items-center gap-1">
+            <AlertTriangle size={12} className="text-warning" /> Stale
+          </span>
+          <span className="flex items-center gap-1">
+            <Anchor size={12} /> Anchors
+          </span>
+          <span className="flex items-center gap-1">
+            <GitBranch size={12} /> Derived
+          </span>
         </div>
       )}
     </div>

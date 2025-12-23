@@ -2,10 +2,6 @@ import { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { useBuildStatus, useBuild, useProject } from '@/hooks/useApi';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardHeader, CardContent } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { LoadingState, Spinner } from '@/components/ui/Spinner';
 import { SubTabs } from '@/components/ui/SubTabs';
 import {
   FileText,
@@ -44,7 +40,14 @@ function BuildView() {
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(['en']);
 
   if (isLoading) {
-    return <LoadingState message="Loading build status..." />;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <p className="mt-4 text-base-content/60">Loading build status...</p>
+        </div>
+      </div>
+    );
   }
 
   const formats = buildStatus?.availableFormats ?? ['html', 'pptx', 'xlsx'];
@@ -74,17 +77,17 @@ function BuildView() {
   };
 
   return (
-    <div className="build-content">
+    <div className="space-y-6">
       {/* Build Status */}
-      <Card className="build-status-card">
-        <CardContent>
-          <div className="build-status">
+      <div className="card bg-gradient-to-br from-base-200 to-base-300 border border-base-300">
+        <div className="card-body">
+          <div className="flex items-center gap-4">
             {buildStatus?.isBuilding ? (
               <>
-                <Spinner size="lg" />
-                <div className="status-info">
-                  <span className="status-label">Building...</span>
-                  <span className="text-muted">Please wait while your content is being processed</span>
+                <span className="loading loading-spinner loading-lg text-primary"></span>
+                <div>
+                  <div className="font-semibold">Building...</div>
+                  <div className="text-sm text-base-content/60">Please wait while your content is being processed</div>
                 </div>
               </>
             ) : (
@@ -94,107 +97,123 @@ function BuildView() {
                 ) : buildStatus?.lastBuildStatus === 'failed' ? (
                   <XCircle size={48} className="text-error" />
                 ) : (
-                  <Clock size={48} className="text-muted" />
+                  <Clock size={48} className="text-base-content/40" />
                 )}
-                <div className="status-info">
-                  <span className="status-label">
+                <div>
+                  <div className="font-semibold">
                     {buildStatus?.lastBuildStatus === 'success' ? 'Last build successful' :
                      buildStatus?.lastBuildStatus === 'failed' ? 'Last build failed' :
                      'No recent builds'}
-                  </span>
+                  </div>
                   {buildStatus?.lastBuild && (
-                    <span className="text-muted">
+                    <div className="text-sm text-base-content/60">
                       {new Date(buildStatus.lastBuild).toLocaleString()}
-                    </span>
+                    </div>
                   )}
                 </div>
               </>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <div className="build-options">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Format Selection */}
-        <Card>
-          <CardHeader title="Output Formats" subtitle="Select formats to generate" />
-          <CardContent>
-            <div className="format-grid">
+        <div className="card bg-base-200">
+          <div className="card-body">
+            <h3 className="card-title text-lg">Output Formats</h3>
+            <p className="text-sm text-base-content/60 mb-4">Select formats to generate</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {formats.map(format => {
                 const Icon = formatIcons[format] ?? FileText;
                 const isSelected = selectedFormats.includes(format);
                 return (
                   <button
                     key={format}
-                    className={`format-option ${isSelected ? 'selected' : ''}`}
+                    className={`flex flex-col items-center gap-2 p-4 rounded-lg transition-all ${
+                      isSelected
+                        ? 'bg-primary/20 border-2 border-primary'
+                        : 'bg-base-300 border-2 border-transparent hover:bg-base-100'
+                    }`}
                     onClick={() => toggleFormat(format)}
                   >
-                    <Icon size={24} />
-                    <span className="format-name">{format.toUpperCase()}</span>
-                    {isSelected && <CheckCircle size={16} className="check-icon" />}
+                    <Icon size={24} className={isSelected ? 'text-primary' : ''} />
+                    <span className="font-medium text-sm">{format.toUpperCase()}</span>
+                    {isSelected && <CheckCircle size={16} className="text-primary" />}
                   </button>
                 );
               })}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Language Selection */}
-        <Card>
-          <CardHeader title="Languages" subtitle="Select languages to build" />
-          <CardContent>
-            <div className="language-grid">
+        <div className="card bg-base-200">
+          <div className="card-body">
+            <h3 className="card-title text-lg">Languages</h3>
+            <p className="text-sm text-base-content/60 mb-4">Select languages to build</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {languages.map(lang => {
                 const isSelected = selectedLanguages.includes(lang);
                 return (
                   <button
                     key={lang}
-                    className={`language-option ${isSelected ? 'selected' : ''}`}
+                    className={`flex items-center justify-center gap-2 p-4 rounded-lg transition-all ${
+                      isSelected
+                        ? 'bg-success/20 border-2 border-success'
+                        : 'bg-base-300 border-2 border-transparent hover:bg-base-100'
+                    }`}
                     onClick={() => toggleLanguage(lang)}
                   >
-                    <span className="lang-code">{lang.toUpperCase()}</span>
-                    {isSelected && <CheckCircle size={16} className="check-icon" />}
+                    <span className="font-semibold">{lang.toUpperCase()}</span>
+                    {isSelected && <CheckCircle size={16} className="text-success" />}
                   </button>
                 );
               })}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Build Button */}
-      <Card className="build-action-card">
-        <CardContent>
-          <div className="build-summary">
-            <div className="summary-item">
-              <span className="label">Formats:</span>
-              <div className="badges">
-                {selectedFormats.map(f => (
-                  <Badge key={f} variant="accent">{f.toUpperCase()}</Badge>
-                ))}
+      <div className="card bg-base-200">
+        <div className="card-body">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-6">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-base-content/60">Formats:</span>
+                <div className="flex gap-1">
+                  {selectedFormats.map(f => (
+                    <div key={f} className="badge badge-primary">{f.toUpperCase()}</div>
+                  ))}
+                  {selectedFormats.length === 0 && <span className="text-sm text-base-content/50">None selected</span>}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-base-content/60">Languages:</span>
+                <div className="flex gap-1">
+                  {selectedLanguages.map(l => (
+                    <div key={l} className="badge badge-success">{l.toUpperCase()}</div>
+                  ))}
+                  {selectedLanguages.length === 0 && <span className="text-sm text-base-content/50">None selected</span>}
+                </div>
               </div>
             </div>
-            <div className="summary-item">
-              <span className="label">Languages:</span>
-              <div className="badges">
-                {selectedLanguages.map(l => (
-                  <Badge key={l} variant="success">{l.toUpperCase()}</Badge>
-                ))}
-              </div>
-            </div>
+            <button
+              className="btn btn-primary btn-lg gap-2"
+              onClick={handleBuild}
+              disabled={buildMutation.isPending || selectedFormats.length === 0 || selectedLanguages.length === 0}
+            >
+              {buildMutation.isPending ? (
+                <span className="loading loading-spinner"></span>
+              ) : (
+                <Play size={20} />
+              )}
+              Start Build
+            </button>
           </div>
-          <Button
-            variant="primary"
-            size="lg"
-            onClick={handleBuild}
-            loading={buildMutation.isPending}
-            disabled={selectedFormats.length === 0 || selectedLanguages.length === 0}
-          >
-            <Play size={20} />
-            Start Build
-          </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
@@ -209,7 +228,6 @@ function BrandView() {
     queryFn: async () => {
       const response = await fetch('/api/brand');
       if (!response.ok) {
-        // Return default if no brand endpoint yet
         return null;
       }
       return response.json();
@@ -217,7 +235,14 @@ function BrandView() {
   });
 
   if (isLoading) {
-    return <LoadingState message="Loading brand configuration..." />;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <p className="mt-4 text-base-content/60">Loading brand configuration...</p>
+        </div>
+      </div>
+    );
   }
 
   // Use project theme as fallback
@@ -236,269 +261,126 @@ function BrandView() {
   const logos = brandData?.logos || {};
 
   return (
-    <div className="brand-content">
+    <div className="space-y-6">
       {/* Brand Overview */}
-      <Card variant="gradient">
-        <CardContent>
-          <div className="brand-header">
-            <Palette size={32} />
-            <div>
-              <h2>{brandData?.name || project?.name || 'Project'}</h2>
-              <p className="text-muted">Brand & Design System</p>
+      <div className="card bg-gradient-to-br from-base-200 to-base-300 border border-base-300">
+        <div className="card-body">
+          <div className="flex items-center gap-4">
+            <Palette size={32} className="text-primary" />
+            <div className="flex-1">
+              <h2 className="text-xl font-semibold">{brandData?.name || project?.name || 'Project'}</h2>
+              <p className="text-sm text-base-content/60">Brand & Design System</p>
             </div>
             {brandData?.source === 'brand.yaml' ? (
-              <Badge variant="success">brand.yaml</Badge>
+              <div className="badge badge-success">brand.yaml</div>
             ) : (
-              <Badge variant="warning">theme.yaml (legacy)</Badge>
+              <div className="badge badge-warning">theme.yaml (legacy)</div>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <div className="brand-grid">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Colors */}
-        <Card>
-          <CardHeader title="Colors" subtitle="Brand color palette" />
-          <CardContent>
-            <div className="color-swatches">
-              <div className="color-swatch">
-                <div className="swatch" style={{ backgroundColor: colors.primary }} />
-                <div className="swatch-info">
-                  <span className="swatch-label">Primary</span>
-                  <code>{colors.primary}</code>
+        <div className="card bg-base-200">
+          <div className="card-body">
+            <h3 className="card-title text-lg">Colors</h3>
+            <p className="text-sm text-base-content/60 mb-4">Brand color palette</p>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-lg border border-base-300" style={{ backgroundColor: colors.primary }} />
+                <div>
+                  <div className="font-medium text-sm">Primary</div>
+                  <code className="text-xs text-base-content/60">{colors.primary}</code>
                 </div>
               </div>
-              <div className="color-swatch">
-                <div className="swatch" style={{ backgroundColor: colors.secondary }} />
-                <div className="swatch-info">
-                  <span className="swatch-label">Secondary</span>
-                  <code>{colors.secondary}</code>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-lg border border-base-300" style={{ backgroundColor: colors.secondary }} />
+                <div>
+                  <div className="font-medium text-sm">Secondary</div>
+                  <code className="text-xs text-base-content/60">{colors.secondary}</code>
                 </div>
               </div>
-              <div className="color-swatch">
-                <div className="swatch" style={{ backgroundColor: colors.accent }} />
-                <div className="swatch-info">
-                  <span className="swatch-label">Accent</span>
-                  <code>{colors.accent}</code>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-lg border border-base-300" style={{ backgroundColor: colors.accent }} />
+                <div>
+                  <div className="font-medium text-sm">Accent</div>
+                  <code className="text-xs text-base-content/60">{colors.accent}</code>
                 </div>
               </div>
             </div>
             {brandData?.colors?.semantic && (
-              <div className="semantic-colors">
-                <h4>Semantic Colors</h4>
-                <div className="color-swatches small">
+              <div className="mt-4 pt-4 border-t border-base-300">
+                <h4 className="text-xs uppercase tracking-wider text-base-content/50 mb-3">Semantic Colors</h4>
+                <div className="flex flex-wrap gap-2">
                   {Object.entries(brandData.colors.semantic).map(([name, color]) => (
-                    <div key={name} className="color-swatch">
-                      <div className="swatch small" style={{ backgroundColor: color as string }} />
-                      <span className="swatch-label">{name}</span>
+                    <div key={name} className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded border border-base-300" style={{ backgroundColor: color as string }} />
+                      <span className="text-xs">{name}</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Typography */}
-        <Card>
-          <CardHeader title="Typography" subtitle="Font families" />
-          <CardContent>
-            <div className="typography-list">
-              <div className="font-item">
-                <Type size={20} />
-                <div className="font-info">
-                  <span className="font-role">Heading</span>
-                  <span className="font-family" style={{ fontFamily: typography.heading }}>
-                    {typography.heading}
-                  </span>
+        <div className="card bg-base-200">
+          <div className="card-body">
+            <h3 className="card-title text-lg">Typography</h3>
+            <p className="text-sm text-base-content/60 mb-4">Font families</p>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-base-300">
+                <Type size={20} className="text-base-content/60" />
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-base-content/50">Heading</div>
+                  <div className="font-medium" style={{ fontFamily: typography.heading }}>{typography.heading}</div>
                 </div>
               </div>
-              <div className="font-item">
-                <Type size={20} />
-                <div className="font-info">
-                  <span className="font-role">Body</span>
-                  <span className="font-family" style={{ fontFamily: typography.body }}>
-                    {typography.body}
-                  </span>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-base-300">
+                <Type size={20} className="text-base-content/60" />
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-base-content/50">Body</div>
+                  <div className="font-medium" style={{ fontFamily: typography.body }}>{typography.body}</div>
                 </div>
               </div>
-              <div className="font-item">
-                <Type size={20} />
-                <div className="font-info">
-                  <span className="font-role">Code</span>
-                  <code className="font-family" style={{ fontFamily: typography.code }}>
-                    {typography.code}
-                  </code>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-base-300">
+                <Type size={20} className="text-base-content/60" />
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-base-content/50">Code</div>
+                  <code className="font-medium" style={{ fontFamily: typography.code }}>{typography.code}</code>
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Logos */}
-        <Card>
-          <CardHeader title="Logos" subtitle="Brand assets" />
-          <CardContent>
-            <div className="logo-list">
+        <div className="card bg-base-200">
+          <div className="card-body">
+            <h3 className="card-title text-lg">Logos</h3>
+            <p className="text-sm text-base-content/60 mb-4">Brand assets</p>
+            <div className="space-y-2">
               {Object.entries(logos).length > 0 ? (
                 Object.entries(logos).map(([variant, logo]: [string, unknown]) => (
-                  <div key={variant} className="logo-item">
-                    <Image size={16} />
-                    <span className="logo-variant">{variant}</span>
+                  <div key={variant} className="flex items-center gap-3 p-2">
+                    <Image size={16} className="text-base-content/60" />
+                    <span className="flex-1 capitalize">{variant}</span>
                     {(logo as { exists?: boolean })?.exists ? (
-                      <Badge variant="success" size="sm">Found</Badge>
+                      <div className="badge badge-success badge-sm">Found</div>
                     ) : (
-                      <Badge variant="default" size="sm">Not found</Badge>
+                      <div className="badge badge-ghost badge-sm">Not found</div>
                     )}
                   </div>
                 ))
               ) : (
-                <p className="text-muted">No logos configured</p>
+                <p className="text-sm text-base-content/60">No logos configured</p>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
-
-      <style>{`
-        .brand-content {
-          display: flex;
-          flex-direction: column;
-          gap: 1.5rem;
-        }
-
-        .brand-header {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-        }
-
-        .brand-header h2 {
-          margin: 0;
-        }
-
-        .brand-header > :last-child {
-          margin-left: auto;
-        }
-
-        .brand-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-          gap: 1.5rem;
-        }
-
-        .color-swatches {
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-        }
-
-        .color-swatches.small {
-          flex-direction: row;
-          flex-wrap: wrap;
-          gap: 0.5rem;
-        }
-
-        .color-swatch {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-        }
-
-        .swatch {
-          width: 48px;
-          height: 48px;
-          border-radius: 8px;
-          border: 1px solid var(--border);
-        }
-
-        .swatch.small {
-          width: 24px;
-          height: 24px;
-          border-radius: 4px;
-        }
-
-        .swatch-info {
-          display: flex;
-          flex-direction: column;
-          gap: 0.25rem;
-        }
-
-        .swatch-label {
-          font-weight: 500;
-          font-size: 0.875rem;
-        }
-
-        .swatch-info code {
-          font-size: 0.75rem;
-          color: var(--text-secondary);
-        }
-
-        .semantic-colors {
-          margin-top: 1.5rem;
-          padding-top: 1rem;
-          border-top: 1px solid var(--border);
-        }
-
-        .semantic-colors h4 {
-          margin: 0 0 0.75rem 0;
-          font-size: 0.75rem;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          color: var(--text-secondary);
-        }
-
-        .typography-list {
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
-
-        .font-item {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          padding: 0.75rem;
-          background: var(--bg-tertiary);
-          border-radius: 8px;
-        }
-
-        .font-info {
-          display: flex;
-          flex-direction: column;
-          gap: 0.25rem;
-        }
-
-        .font-role {
-          font-size: 0.75rem;
-          color: var(--text-secondary);
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-        }
-
-        .font-family {
-          font-size: 1rem;
-          font-weight: 500;
-        }
-
-        .logo-list {
-          display: flex;
-          flex-direction: column;
-          gap: 0.5rem;
-        }
-
-        .logo-item {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0.5rem 0;
-        }
-
-        .logo-variant {
-          flex: 1;
-          text-transform: capitalize;
-        }
-      `}</style>
     </div>
   );
 }
@@ -506,9 +388,9 @@ function BrandView() {
 // Main Build Page
 export function Build() {
   return (
-    <div className="page build-page">
-      <div className="page-header">
-        <h1>Build</h1>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold">Build</h1>
         <SubTabs tabs={tabs} basePath="/build" />
       </div>
 

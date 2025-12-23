@@ -3,6 +3,7 @@ import { render, type RenderOptions } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 import { SidebarProvider } from '@/contexts/SidebarContext';
+import { SettingsProvider } from '@/contexts/SettingsContext';
 
 // Create a fresh QueryClient for each test
 function createTestQueryClient() {
@@ -25,14 +26,16 @@ interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
   useMemoryRouter?: boolean;
 }
 
-// All-in-one wrapper with QueryClient, Router, and SidebarProvider
+// All-in-one wrapper with QueryClient, Router, SidebarProvider, and SettingsProvider
 function AllProviders({ children }: WrapperProps) {
   const queryClient = createTestQueryClient();
   return (
     <QueryClientProvider client={queryClient}>
-      <SidebarProvider>
-        <BrowserRouter>{children}</BrowserRouter>
-      </SidebarProvider>
+      <SettingsProvider>
+        <SidebarProvider>
+          <BrowserRouter>{children}</BrowserRouter>
+        </SidebarProvider>
+      </SettingsProvider>
     </QueryClientProvider>
   );
 }
@@ -43,9 +46,11 @@ function createMemoryRouterWrapper(initialRoute: string) {
     const queryClient = createTestQueryClient();
     return (
       <QueryClientProvider client={queryClient}>
-        <SidebarProvider>
-          <MemoryRouter initialEntries={[initialRoute]}>{children}</MemoryRouter>
-        </SidebarProvider>
+        <SettingsProvider>
+          <SidebarProvider>
+            <MemoryRouter initialEntries={[initialRoute]}>{children}</MemoryRouter>
+          </SidebarProvider>
+        </SettingsProvider>
       </QueryClientProvider>
     );
   };

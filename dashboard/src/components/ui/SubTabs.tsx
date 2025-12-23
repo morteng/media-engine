@@ -15,7 +15,7 @@ export function SubTabs({ tabs, basePath }: SubTabsProps) {
   const location = useLocation();
 
   return (
-    <div className="sub-tabs">
+    <div role="tablist" className="tabs tabs-bordered tabs-sm">
       {tabs.map((tab) => {
         const fullPath = tab.path ? `${basePath}/${tab.path}` : basePath;
         const isActive = tab.path
@@ -26,7 +26,11 @@ export function SubTabs({ tabs, basePath }: SubTabsProps) {
           <NavLink
             key={tab.path}
             to={fullPath}
-            className={clsx('sub-tab', { active: isActive })}
+            role="tab"
+            className={clsx(
+              'tab',
+              isActive && 'tab-active'
+            )}
             end={!tab.path}
           >
             {tab.label}

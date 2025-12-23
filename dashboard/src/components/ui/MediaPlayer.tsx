@@ -1,7 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
 import { Play, Pause, Volume2, VolumeX, Maximize, SkipBack, SkipForward } from 'lucide-react';
-import { Button } from './Button';
-import './MediaPlayer.css';
 
 interface MediaPlayerProps {
   src: string;
@@ -137,51 +135,77 @@ export function MediaPlayer({
   const skipForward = () => seek(currentTime + 10);
 
   return (
-    <div className={`media-player media-player--${type} ${className}`}>
-      {title && <div className="media-player__title">{title}</div>}
+    <div className={`card bg-base-300 overflow-hidden ${className}`}>
+      {title && (
+        <div className="px-4 py-2 border-b border-base-content/10 text-sm font-medium">
+          {title}
+        </div>
+      )}
 
-      <div className="media-player__container">
+      <div className="relative">
         {type === 'video' ? (
           <video
             ref={mediaRef as React.RefObject<HTMLVideoElement>}
             src={src}
             poster={poster}
             onClick={togglePlay}
+            className="w-full aspect-video bg-black cursor-pointer"
           >
             {captions && <track kind="captions" src={captions} srcLang="en" label="English" default />}
           </video>
         ) : (
-          <div className="media-player__audio-visual">
-            <div className="audio-wave" />
+          <div className="flex items-center justify-center h-32 bg-gradient-to-br from-base-200 to-base-300">
+            <div className="flex gap-1">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="w-1 bg-primary rounded-full animate-pulse"
+                  style={{
+                    height: `${20 + Math.sin(i * 0.5) * 15}px`,
+                    animationDelay: `${i * 0.1}s`,
+                  }}
+                />
+              ))}
+            </div>
             <audio ref={mediaRef as React.RefObject<HTMLAudioElement>} src={src} />
           </div>
         )}
       </div>
 
-      <div className="media-player__controls">
-        <div className="media-player__buttons">
-          <Button variant="ghost" size="sm" onClick={skipBack} title="Skip back 10s">
-            <SkipBack size={16} />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={togglePlay}>
-            {isPlaying ? <Pause size={20} /> : <Play size={20} />}
-          </Button>
-          <Button variant="ghost" size="sm" onClick={skipForward} title="Skip forward 10s">
-            <SkipForward size={16} />
-          </Button>
+      {/* Controls */}
+      <div className="flex items-center gap-2 p-2 bg-base-200">
+        <div className="flex items-center gap-1">
+          <button className="btn btn-ghost btn-xs btn-square" onClick={skipBack} title="Skip back 10s">
+            <SkipBack size={14} />
+          </button>
+          <button className="btn btn-ghost btn-sm btn-square" onClick={togglePlay}>
+            {isPlaying ? <Pause size={18} /> : <Play size={18} />}
+          </button>
+          <button className="btn btn-ghost btn-xs btn-square" onClick={skipForward} title="Skip forward 10s">
+            <SkipForward size={14} />
+          </button>
         </div>
 
-        <div className="media-player__time">{formatTime(currentTime)}</div>
+        <span className="text-xs text-base-content/60 tabular-nums min-w-[40px]">
+          {formatTime(currentTime)}
+        </span>
 
-        <div className="media-player__progress" onClick={handleProgressClick}>
+        <div
+          className="flex-1 h-1.5 bg-base-300 rounded-full cursor-pointer relative group"
+          onClick={handleProgressClick}
+        >
           <div
-            className="media-player__progress-bar"
+            className="h-full bg-primary rounded-full transition-all"
             style={{ width: `${(currentTime / duration) * 100}%` }}
           />
           {sceneTiming?.map(scene => (
             <div
               key={scene.id}
-              className={`media-player__scene-marker ${currentScene === scene.id ? 'active' : ''}`}
+              className={`absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full cursor-pointer transition-all ${
+                currentScene === scene.id
+                  ? 'bg-primary scale-125'
+                  : 'bg-base-content/30 hover:bg-primary/60'
+              }`}
               style={{ left: `${(scene.startTime / duration) * 100}%` }}
               title={scene.name || scene.id}
               onClick={(e) => {
@@ -192,26 +216,33 @@ export function MediaPlayer({
           ))}
         </div>
 
-        <div className="media-player__time">{formatTime(duration)}</div>
+        <span className="text-xs text-base-content/60 tabular-nums min-w-[40px]">
+          {formatTime(duration)}
+        </span>
 
-        <div className="media-player__buttons">
-          <Button variant="ghost" size="sm" onClick={toggleMute}>
-            {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-          </Button>
+        <div className="flex items-center gap-1">
+          <button className="btn btn-ghost btn-xs btn-square" onClick={toggleMute}>
+            {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+          </button>
           {type === 'video' && (
-            <Button variant="ghost" size="sm" onClick={toggleFullscreen}>
-              <Maximize size={16} />
-            </Button>
+            <button className="btn btn-ghost btn-xs btn-square" onClick={toggleFullscreen}>
+              <Maximize size={14} />
+            </button>
           )}
         </div>
       </div>
 
+      {/* Scene chips */}
       {sceneTiming && sceneTiming.length > 0 && (
-        <div className="media-player__scenes">
+        <div className="flex flex-wrap gap-1 p-2 border-t border-base-content/10">
           {sceneTiming.map(scene => (
             <button
               key={scene.id}
-              className={`scene-chip ${currentScene === scene.id ? 'active' : ''}`}
+              className={`badge badge-sm cursor-pointer transition-colors ${
+                currentScene === scene.id
+                  ? 'badge-primary'
+                  : 'badge-ghost hover:badge-primary/50'
+              }`}
               onClick={() => seekToScene(scene.id)}
             >
               {scene.name || scene.id}

@@ -8,3 +8,4 @@ export { Insights } from './Insights';
 export { AIAssist } from './AIAssist';
 export { SearchPage } from './Search';
 export { Brand } from './Brand';
+export { Settings } from './Settings';

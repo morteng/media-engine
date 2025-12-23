@@ -11,8 +11,8 @@ describe('Card', () => {
   it('renders with default styling', () => {
     render(<Card data-testid="card">Default Card</Card>);
     const card = screen.getByTestId('card');
-    // Check for essential Tailwind classes
-    expect(card).toHaveClass('rounded-lg', 'border', 'bg-card');
+    // Check for DaisyUI classes
+    expect(card).toHaveClass('card', 'bg-base-200', 'border');
   });
 
   it('renders with glow variant', () => {
@@ -58,7 +58,7 @@ describe('CardHeader', () => {
   it('renders title with proper styling', () => {
     render(<CardHeader title="Test" />);
     const title = screen.getByText('Test');
-    expect(title).toHaveClass('text-lg', 'font-semibold');
+    expect(title).toHaveClass('text-base', 'font-semibold');
   });
 });
 
@@ -71,7 +71,7 @@ describe('CardContent', () => {
   it('renders with proper padding', () => {
     render(<CardContent data-testid="content">Content</CardContent>);
     const content = screen.getByTestId('content');
-    expect(content).toHaveClass('p-6', 'pt-0');
+    expect(content).toHaveClass('p-4', 'pt-0');
   });
 
   it('applies custom className', () => {

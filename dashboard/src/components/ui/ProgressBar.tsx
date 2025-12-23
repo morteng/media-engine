@@ -1,61 +1,44 @@
 import * as React from 'react';
-import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '@/utils/cn';
+import clsx from 'clsx';
 
-const progressVariants = cva('', {
-  variants: {
-    variant: {
-      default: 'bg-primary',
-      success: 'bg-success',
-      warning: 'bg-warning',
-      error: 'bg-destructive',
-      accent: 'bg-accent',
-      info: 'bg-info',
-    },
-    size: {
-      sm: 'h-1',
-      md: 'h-2',
-      lg: 'h-3',
-    },
-  },
-  defaultVariants: {
-    variant: 'default',
-    size: 'md',
-  },
-});
-
-export interface ProgressBarProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof progressVariants> {
+export interface ProgressBarProps extends React.HTMLAttributes<HTMLDivElement> {
   value: number;
   max?: number;
+  variant?: 'default' | 'success' | 'warning' | 'error' | 'accent' | 'info';
+  size?: 'sm' | 'md' | 'lg';
   showLabel?: boolean;
 }
 
+const variantClasses: Record<string, string> = {
+  default: 'progress-primary',
+  success: 'progress-success',
+  warning: 'progress-warning',
+  error: 'progress-error',
+  accent: 'progress-accent',
+  info: 'progress-info',
+};
+
 const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
-  ({ className, variant, size, value, max = 100, showLabel = false, ...props }, ref) => {
+  ({ className, variant = 'default', size = 'md', value, max = 100, showLabel = false, ...props }, ref) => {
     const percentage = Math.min(100, Math.max(0, (value / max) * 100));
 
     return (
-      <div className={cn('flex items-center gap-3', className)} ref={ref} {...props}>
-        <div
-          className={cn(
-            'relative w-full overflow-hidden rounded-full bg-muted',
-            size === 'sm' && 'h-1',
-            size === 'md' && 'h-2',
-            size === 'lg' && 'h-3'
+      <div className={clsx('flex items-center gap-3', className)} ref={ref} {...props}>
+        <progress
+          className={clsx(
+            'progress w-full',
+            variantClasses[variant],
+            {
+              'h-1': size === 'sm',
+              'h-2': size === 'md',
+              'h-3': size === 'lg',
+            }
           )}
-        >
-          <div
-            className={cn(
-              'h-full transition-all duration-300 ease-out rounded-full',
-              progressVariants({ variant })
-            )}
-            style={{ width: `${percentage}%` }}
-          />
-        </div>
+          value={value}
+          max={max}
+        />
         {showLabel && (
-          <span className="text-sm font-medium text-muted-foreground tabular-nums min-w-[3ch]">
+          <span className="text-sm font-medium text-base-content/60 tabular-nums min-w-[3ch]">
             {Math.round(percentage)}%
           </span>
         )}
@@ -65,4 +48,4 @@ const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
 );
 ProgressBar.displayName = 'ProgressBar';
 
-export { ProgressBar, progressVariants };
+export { ProgressBar };

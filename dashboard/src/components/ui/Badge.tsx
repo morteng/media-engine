@@ -1,48 +1,39 @@
 import * as React from 'react';
-import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '@/utils/cn';
+import clsx from 'clsx';
 
-const badgeVariants = cva(
-  'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-  {
-    variants: {
-      variant: {
-        default:
-          'border-transparent bg-muted text-muted-foreground',
-        success:
-          'border-transparent bg-success/15 text-success',
-        warning:
-          'border-transparent bg-warning/15 text-warning',
-        error:
-          'border-transparent bg-destructive/15 text-destructive',
-        info:
-          'border-transparent bg-info/15 text-info',
-        accent:
-          'border-transparent bg-primary/15 text-primary',
-        outline:
-          'text-foreground border-border',
-      },
-      size: {
-        sm: 'text-[10px] px-2 py-0',
-        md: 'text-xs px-2.5 py-0.5',
-        lg: 'text-sm px-3 py-1',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-      size: 'md',
-    },
-  }
-);
+export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: 'default' | 'success' | 'warning' | 'error' | 'info' | 'accent' | 'outline';
+  size?: 'sm' | 'md' | 'lg';
+}
 
-export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {}
+const variantClasses: Record<string, string> = {
+  default: 'badge-ghost',
+  success: 'badge-success',
+  warning: 'badge-warning',
+  error: 'badge-error',
+  info: 'badge-info',
+  accent: 'badge-primary',
+  outline: 'badge-outline',
+};
 
-function Badge({ className, variant, size, ...props }: BadgeProps) {
+const sizeClasses: Record<string, string> = {
+  sm: 'badge-xs',
+  md: 'badge-sm',
+  lg: 'badge-md',
+};
+
+function Badge({ className, variant = 'default', size = 'md', ...props }: BadgeProps) {
   return (
-    <div className={cn(badgeVariants({ variant, size }), className)} {...props} />
+    <div
+      className={clsx(
+        'badge gap-1',
+        variantClasses[variant],
+        sizeClasses[size],
+        className
+      )}
+      {...props}
+    />
   );
 }
 
-export { Badge, badgeVariants };
+export { Badge };

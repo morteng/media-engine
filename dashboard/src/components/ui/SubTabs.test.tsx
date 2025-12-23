@@ -13,16 +13,16 @@ describe('SubTabs', () => {
     it('renders all tabs', () => {
       render(<SubTabs tabs={mockTabs} basePath="/test" />);
 
-      expect(screen.getByRole('link', { name: 'Overview' })).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Details' })).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Settings' })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Overview' })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Details' })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Settings' })).toBeInTheDocument();
     });
 
     it('renders correct number of tabs', () => {
       render(<SubTabs tabs={mockTabs} basePath="/test" />);
 
-      const links = screen.getAllByRole('link');
-      expect(links).toHaveLength(3);
+      const tabs = screen.getAllByRole('tab');
+      expect(tabs).toHaveLength(3);
     });
   });
 
@@ -30,21 +30,21 @@ describe('SubTabs', () => {
     it('generates correct href for base tab', () => {
       render(<SubTabs tabs={mockTabs} basePath="/test" />);
 
-      expect(screen.getByRole('link', { name: 'Overview' })).toHaveAttribute('href', '/test');
+      expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('href', '/test');
     });
 
     it('generates correct href for sub tabs', () => {
       render(<SubTabs tabs={mockTabs} basePath="/test" />);
 
-      expect(screen.getByRole('link', { name: 'Details' })).toHaveAttribute('href', '/test/details');
-      expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute('href', '/test/settings');
+      expect(screen.getByRole('tab', { name: 'Details' })).toHaveAttribute('href', '/test/details');
+      expect(screen.getByRole('tab', { name: 'Settings' })).toHaveAttribute('href', '/test/settings');
     });
 
     it('works with different base paths', () => {
       render(<SubTabs tabs={mockTabs} basePath="/quality" />);
 
-      expect(screen.getByRole('link', { name: 'Overview' })).toHaveAttribute('href', '/quality');
-      expect(screen.getByRole('link', { name: 'Details' })).toHaveAttribute('href', '/quality/details');
+      expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('href', '/quality');
+      expect(screen.getByRole('tab', { name: 'Details' })).toHaveAttribute('href', '/quality/details');
     });
   });
 
@@ -55,7 +55,7 @@ describe('SubTabs', () => {
         useMemoryRouter: true,
       });
 
-      expect(screen.getByRole('link', { name: 'Overview' })).toHaveClass('active');
+      expect(screen.getByRole('tab', { name: 'Overview' })).toHaveClass('tab-active');
     });
 
     it('marks sub tab as active on sub route', () => {
@@ -64,7 +64,7 @@ describe('SubTabs', () => {
         useMemoryRouter: true,
       });
 
-      expect(screen.getByRole('link', { name: 'Details' })).toHaveClass('active');
+      expect(screen.getByRole('tab', { name: 'Details' })).toHaveClass('tab-active');
     });
 
     it('only one tab is active at a time', () => {
@@ -73,25 +73,31 @@ describe('SubTabs', () => {
         useMemoryRouter: true,
       });
 
-      const activeLinks = screen.getAllByRole('link').filter(link =>
-        link.classList.contains('active')
+      const activeTabs = screen.getAllByRole('tab').filter(tab =>
+        tab.classList.contains('tab-active')
       );
-      expect(activeLinks).toHaveLength(1);
+      expect(activeTabs).toHaveLength(1);
     });
   });
 
   describe('Styling', () => {
-    it('applies sub-tabs class to container', () => {
+    it('applies DaisyUI tabs class to container', () => {
       const { container } = render(<SubTabs tabs={mockTabs} basePath="/test" />);
 
-      expect(container.querySelector('.sub-tabs')).toBeInTheDocument();
+      expect(container.querySelector('.tabs')).toBeInTheDocument();
     });
 
-    it('applies sub-tab class to each tab', () => {
+    it('applies tab class to each tab', () => {
       const { container } = render(<SubTabs tabs={mockTabs} basePath="/test" />);
 
-      const tabs = container.querySelectorAll('.sub-tab');
+      const tabs = container.querySelectorAll('.tab');
       expect(tabs).toHaveLength(3);
+    });
+
+    it('applies tabs-bordered style', () => {
+      const { container } = render(<SubTabs tabs={mockTabs} basePath="/test" />);
+
+      expect(container.querySelector('.tabs-bordered')).toBeInTheDocument();
     });
   });
 
@@ -100,7 +106,7 @@ describe('SubTabs', () => {
       const user = userEvent.setup();
       render(<SubTabs tabs={mockTabs} basePath="/test" />);
 
-      const detailsTab = screen.getByRole('link', { name: 'Details' });
+      const detailsTab = screen.getByRole('tab', { name: 'Details' });
       await user.click(detailsTab);
 
       // Navigation should work (we can't easily test route change in this setup)
@@ -109,12 +115,25 @@ describe('SubTabs', () => {
   });
 
   describe('Accessibility', () => {
+    it('has tablist role on container', () => {
+      render(<SubTabs tabs={mockTabs} basePath="/test" />);
+
+      expect(screen.getByRole('tablist')).toBeInTheDocument();
+    });
+
+    it('has tab role on each tab link', () => {
+      render(<SubTabs tabs={mockTabs} basePath="/test" />);
+
+      const tabs = screen.getAllByRole('tab');
+      expect(tabs).toHaveLength(3);
+    });
+
     it('all tabs are keyboard navigable', () => {
       render(<SubTabs tabs={mockTabs} basePath="/test" />);
 
-      const links = screen.getAllByRole('link');
-      links.forEach(link => {
-        expect(link).not.toHaveAttribute('tabindex', '-1');
+      const tabs = screen.getAllByRole('tab');
+      tabs.forEach(tab => {
+        expect(tab).not.toHaveAttribute('tabindex', '-1');
       });
     });
   });
@@ -134,20 +153,20 @@ describe('SubTabs', () => {
     it('renders all Quality page tabs', () => {
       render(<SubTabs tabs={qualityTabs} basePath="/quality" />);
 
-      expect(screen.getByRole('link', { name: 'Quality' })).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Semantic' })).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Knowledge' })).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Readability' })).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Freshness' })).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Code Sync' })).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Advanced' })).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'Activity' })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Quality' })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Semantic' })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Knowledge' })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Readability' })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Freshness' })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Code Sync' })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Advanced' })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: 'Activity' })).toBeInTheDocument();
     });
 
     it('semantic tab has correct href', () => {
       render(<SubTabs tabs={qualityTabs} basePath="/quality" />);
 
-      expect(screen.getByRole('link', { name: 'Semantic' })).toHaveAttribute(
+      expect(screen.getByRole('tab', { name: 'Semantic' })).toHaveAttribute(
         'href',
         '/quality/semantic'
       );

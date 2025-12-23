@@ -11,12 +11,7 @@ import {
   useUpdateBrandNote,
   useDeleteBrandNote,
 } from '@/hooks/useApi';
-import { Card, CardHeader, CardContent } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { ProgressBar } from '@/components/ui/ProgressBar';
-import { LoadingState } from '@/components/ui/Spinner';
 import { SubTabs } from '@/components/ui/SubTabs';
-import { Button } from '@/components/ui/Button';
 import {
   MessageCircle,
   CheckCircle,
@@ -37,7 +32,6 @@ import {
   Copy,
   Sparkles,
 } from 'lucide-react';
-import './Brand.css';
 
 // Helper hook for copy to clipboard
 function useCopyToClipboard() {
@@ -61,17 +55,28 @@ const tabs = [
   { path: 'notes', label: 'Notes' },
 ];
 
+// ==================== LOADING STATE ====================
+
+function LoadingSpinner({ message = 'Loading...' }: { message?: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-4 py-16">
+      <span className="loading loading-spinner loading-lg text-primary"></span>
+      <p className="text-base-content/60">{message}</p>
+    </div>
+  );
+}
+
 // ==================== OVERVIEW ====================
 
 function OverviewView() {
   const { data: assets, isLoading: loadingAssets } = useBrandAssets();
   const { data: voice, isLoading: loadingVoice } = useBrandVoice();
-  useBrandFiles();  // Prefetch for later use
+  useBrandFiles();
   const { data: notes } = useBrandNotes();
   const { copy, copiedValue } = useCopyToClipboard();
 
   if (loadingAssets || loadingVoice) {
-    return <LoadingState message="Loading brand overview..." />;
+    return <LoadingSpinner message="Loading brand overview..." />;
   }
 
   const logoCount = assets?.logos ? Object.keys(assets.logos).length : 0;
@@ -81,213 +86,209 @@ function OverviewView() {
   const fontCount = assets?.typography?.fonts ? Object.keys(assets.typography.fonts).length : 0;
 
   return (
-    <div className="brand-overview">
+    <div className="space-y-6">
       {/* Brand Hero Card */}
-      <Card variant="gradient" className="brand-hero">
-        <CardContent>
-          <div className="brand-hero-content">
-            <div className="brand-hero-logo">
+      <div className="card bg-gradient-to-br from-base-200 to-base-300 border border-primary/20">
+        <div className="card-body">
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <div className="w-24 h-24 rounded-xl bg-base-100 flex items-center justify-center overflow-hidden">
               {assets?.logos?.primary?.exists ? (
                 <LogoPreview path={assets.logos.primary.path} alt={assets.name} />
               ) : (
-                <div className="brand-hero-placeholder">
-                  <Sparkles size={48} />
-                </div>
+                <Sparkles size={48} className="text-primary" />
               )}
             </div>
-            <div className="brand-hero-info">
-              <h2 className="brand-hero-name">{assets?.name || 'Your Brand'}</h2>
+            <div className="flex-1 text-center md:text-left">
+              <h2 className="text-2xl font-bold">{assets?.name || 'Your Brand'}</h2>
               {assets?.identity?.taglines?.primary && (
-                <p className="brand-hero-tagline">{assets.identity.taglines.primary}</p>
+                <p className="text-base-content/70 mt-1">{assets.identity.taglines.primary}</p>
               )}
-              <div className="brand-hero-badges">
-                <Badge variant="accent">{colorCount} Colors</Badge>
-                <Badge variant="info">{logoCount} Logos</Badge>
-                <Badge variant="success">{fontCount} Fonts</Badge>
-                {hasVoice && <Badge variant="default">Voice Defined</Badge>}
+              <div className="flex flex-wrap gap-2 mt-3 justify-center md:justify-start">
+                <div className="badge badge-primary">{colorCount} Colors</div>
+                <div className="badge badge-info">{logoCount} Logos</div>
+                <div className="badge badge-success">{fontCount} Fonts</div>
+                {hasVoice && <div className="badge badge-ghost">Voice Defined</div>}
               </div>
               {assets?.identity?.legal?.copyright && (
-                <p className="brand-hero-copyright">{assets.identity.legal.copyright}</p>
+                <p className="text-xs text-base-content/50 mt-3">{assets.identity.legal.copyright}</p>
               )}
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Quick Stats */}
-      <div className="brand-stats-grid">
-        <Card className="brand-stat-card">
-          <CardContent>
-            <div className="stat-icon-wrapper" style={{ background: `${assets?.colors.brand.primary}15` }}>
-              <Palette size={22} style={{ color: assets?.colors.brand.primary }} />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="card bg-base-200">
+          <div className="card-body p-4 flex flex-row items-center gap-3">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: `${assets?.colors.brand.primary}20` }}>
+              <Palette size={20} style={{ color: assets?.colors.brand.primary }} />
             </div>
-            <div className="stat-info">
-              <span className="stat-value">{colorCount}</span>
-              <span className="stat-label">Brand Colors</span>
+            <div>
+              <div className="text-2xl font-bold">{colorCount}</div>
+              <div className="text-xs text-base-content/60">Brand Colors</div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card className="brand-stat-card">
-          <CardContent>
-            <div className="stat-icon-wrapper accent">
-              <Image size={22} />
+        <div className="card bg-base-200">
+          <div className="card-body p-4 flex flex-row items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center">
+              <Image size={20} className="text-accent" />
             </div>
-            <div className="stat-info">
-              <span className="stat-value">{logoCount}</span>
-              <span className="stat-label">Logo Variants</span>
+            <div>
+              <div className="text-2xl font-bold">{logoCount}</div>
+              <div className="text-xs text-base-content/60">Logo Variants</div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card className="brand-stat-card">
-          <CardContent>
-            <div className="stat-icon-wrapper info">
-              <Type size={22} />
+        <div className="card bg-base-200">
+          <div className="card-body p-4 flex flex-row items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-info/20 flex items-center justify-center">
+              <Type size={20} className="text-info" />
             </div>
-            <div className="stat-info">
-              <span className="stat-value">{fontCount}</span>
-              <span className="stat-label">Font Families</span>
+            <div>
+              <div className="text-2xl font-bold">{fontCount}</div>
+              <div className="text-xs text-base-content/60">Font Families</div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card className="brand-stat-card">
-          <CardContent>
-            <div className="stat-icon-wrapper warning">
-              <StickyNote size={22} />
+        <div className="card bg-base-200">
+          <div className="card-body p-4 flex flex-row items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-warning/20 flex items-center justify-center">
+              <StickyNote size={20} className="text-warning" />
             </div>
-            <div className="stat-info">
-              <span className="stat-value">{pendingNotes}</span>
-              <span className="stat-label">Pending Notes</span>
+            <div>
+              <div className="text-2xl font-bold">{pendingNotes}</div>
+              <div className="text-xs text-base-content/60">Pending Notes</div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Color Palette Preview */}
-      <Card>
-        <CardHeader title="Color Palette" subtitle="Click to copy hex value" />
-        <CardContent>
-          <div className="color-palette-preview">
-            <div className="color-group">
-              <h4>Brand Colors</h4>
-              <div className="color-swatches-large">
+      <div className="card bg-base-200">
+        <div className="card-body">
+          <h3 className="card-title text-lg">Color Palette</h3>
+          <p className="text-sm text-base-content/60 -mt-2">Click to copy hex value</p>
+
+          <div className="space-y-6 mt-4">
+            <div>
+              <h4 className="text-sm font-medium mb-3">Brand Colors</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {assets?.colors.brand && Object.entries(assets.colors.brand).map(([name, color]) => (
                   color && (
                     <button
                       key={name}
-                      className={`color-swatch-card ${copiedValue === color ? 'copied' : ''}`}
+                      className={`group relative p-3 rounded-lg border transition-all ${copiedValue === color ? 'border-success bg-success/10' : 'border-base-300 hover:border-primary/50 bg-base-100'}`}
                       onClick={() => copy(color as string)}
-                      title={`Click to copy ${color}`}
                     >
-                      <div
-                        className="swatch-color"
-                        style={{ backgroundColor: color as string }}
-                      />
-                      <div className="swatch-info">
-                        <span className="swatch-name">{name}</span>
-                        <code className="swatch-hex">{color as string}</code>
+                      <div className="w-full h-12 rounded-md mb-2" style={{ backgroundColor: color as string }} />
+                      <div className="text-left">
+                        <div className="font-medium text-sm capitalize">{name}</div>
+                        <code className="text-xs text-base-content/60">{color as string}</code>
                       </div>
-                      <Copy size={14} className="swatch-copy-icon" />
+                      <Copy size={14} className="absolute top-2 right-2 opacity-0 group-hover:opacity-50" />
                       {copiedValue === color && (
-                        <span className="copied-toast">Copied!</span>
+                        <span className="absolute top-2 right-2 text-xs text-success">Copied!</span>
                       )}
                     </button>
                   )
                 ))}
               </div>
             </div>
-            <div className="color-group">
-              <h4>Semantic Colors</h4>
-              <div className="color-swatches-large">
+
+            <div>
+              <h4 className="text-sm font-medium mb-3">Semantic Colors</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {assets?.colors.semantic && Object.entries(assets.colors.semantic).map(([name, color]) => (
                   <button
                     key={name}
-                    className={`color-swatch-card ${copiedValue === color ? 'copied' : ''}`}
+                    className={`group relative p-3 rounded-lg border transition-all ${copiedValue === color ? 'border-success bg-success/10' : 'border-base-300 hover:border-primary/50 bg-base-100'}`}
                     onClick={() => copy(color)}
-                    title={`Click to copy ${color}`}
                   >
-                    <div
-                      className="swatch-color"
-                      style={{ backgroundColor: color }}
-                    />
-                    <div className="swatch-info">
-                      <span className="swatch-name">{name}</span>
-                      <code className="swatch-hex">{color}</code>
+                    <div className="w-full h-12 rounded-md mb-2" style={{ backgroundColor: color }} />
+                    <div className="text-left">
+                      <div className="font-medium text-sm capitalize">{name}</div>
+                      <code className="text-xs text-base-content/60">{color}</code>
                     </div>
-                    <Copy size={14} className="swatch-copy-icon" />
+                    <Copy size={14} className="absolute top-2 right-2 opacity-0 group-hover:opacity-50" />
                     {copiedValue === color && (
-                      <span className="copied-toast">Copied!</span>
+                      <span className="absolute top-2 right-2 text-xs text-success">Copied!</span>
                     )}
                   </button>
                 ))}
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Typography Preview */}
-      <Card>
-        <CardHeader title="Typography" subtitle="Font families and weights" />
-        <CardContent>
-          <div className="typography-preview-grid">
+      <div className="card bg-base-200">
+        <div className="card-body">
+          <h3 className="card-title text-lg">Typography</h3>
+          <p className="text-sm text-base-content/60 -mt-2">Font families and weights</p>
+
+          <div className="grid md:grid-cols-2 gap-4 mt-4">
             {assets?.typography?.fonts && Object.entries(assets.typography.fonts).map(([role, font]) => (
-              <div key={role} className="font-card">
-                <div className="font-card-header">
+              <div key={role} className="p-4 rounded-lg bg-base-100 border border-base-300">
+                <div className="flex items-center gap-2 mb-3">
                   <Type size={16} className="text-accent" />
-                  <span className="font-card-role">{role}</span>
-                  <Badge variant="default" size="sm">{font.source}</Badge>
+                  <span className="font-medium capitalize">{role}</span>
+                  <div className="badge badge-ghost badge-sm">{font.source}</div>
                 </div>
-                <div
-                  className="font-card-sample"
-                  style={{ fontFamily: `${font.family}, ${font.fallback || 'sans-serif'}` }}
-                >
-                  <span className="sample-display">{font.family}</span>
-                  <span className="sample-alphabet">ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789</span>
+                <div style={{ fontFamily: `${font.family}, ${font.fallback || 'sans-serif'}` }}>
+                  <div className="text-2xl font-semibold mb-1">{font.family}</div>
+                  <div className="text-xs text-base-content/50 truncate">
+                    ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
+                  </div>
                 </div>
-                <div className="font-card-footer">
-                  <span className="font-weights-label">Weights:</span>
-                  <div className="font-weights-list">
+                <div className="flex items-center gap-2 mt-3">
+                  <span className="text-xs text-base-content/60">Weights:</span>
+                  <div className="flex gap-1">
                     {font.weights.map((w: number) => (
-                      <span key={w} className="font-weight-badge">{w}</span>
+                      <span key={w} className="badge badge-ghost badge-xs">{w}</span>
                     ))}
                   </div>
                 </div>
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Voice Summary */}
       {hasVoice && (
-        <Card>
-          <CardHeader title="Voice Profile" subtitle="Brand personality and tone" />
-          <CardContent>
-            <div className="voice-summary-card">
-              <div className="voice-personality-section">
-                <MessageCircle size={20} className="text-accent" />
-                <div className="voice-traits">
+        <div className="card bg-base-200">
+          <div className="card-body">
+            <h3 className="card-title text-lg">Voice Profile</h3>
+            <p className="text-sm text-base-content/60 -mt-2">Brand personality and tone</p>
+
+            <div className="flex flex-col md:flex-row gap-6 mt-4">
+              <div className="flex items-start gap-3">
+                <MessageCircle size={20} className="text-accent mt-1" />
+                <div className="flex flex-wrap gap-2">
                   {voice.personality?.map((trait: string) => (
-                    <Badge key={trait} variant="accent">{trait}</Badge>
+                    <div key={trait} className="badge badge-accent">{trait}</div>
                   ))}
                 </div>
               </div>
-              <div className="voice-metrics">
-                <div className="voice-metric">
-                  <span className="metric-label">Tone</span>
-                  <span className="metric-value">{voice.tone}</span>
+              <div className="flex gap-6">
+                <div>
+                  <div className="text-xs text-base-content/60">Tone</div>
+                  <div className="font-medium">{voice.tone}</div>
                 </div>
-                <div className="voice-metric">
-                  <span className="metric-label">Formality</span>
-                  <span className="metric-value">Level {voice.formality_level}/5</span>
+                <div>
+                  <div className="text-xs text-base-content/60">Formality</div>
+                  <div className="font-medium">Level {voice.formality_level}/5</div>
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -300,69 +301,73 @@ function VisualIdentityView() {
   const [selectedLogo, setSelectedLogo] = useState<string | null>(null);
 
   if (isLoading) {
-    return <LoadingState message="Loading visual identity..." />;
+    return <LoadingSpinner message="Loading visual identity..." />;
   }
 
   return (
-    <div className="visual-identity">
+    <div className="space-y-6">
       {/* Logos Section */}
-      <Card>
-        <CardHeader title="Logos" />
-        <CardContent>
-          <div className="logos-grid">
+      <div className="card bg-base-200">
+        <div className="card-body">
+          <h3 className="card-title text-lg">Logos</h3>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
             {assets?.logos && Object.entries(assets.logos).map(([variant, logo]) => (
               <div
                 key={variant}
-                className={`logo-card ${selectedLogo === variant ? 'selected' : ''} ${!logo.exists ? 'missing' : ''}`}
+                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                  selectedLogo === variant
+                    ? 'border-primary bg-primary/5'
+                    : logo.exists
+                      ? 'border-base-300 hover:border-primary/50 bg-base-100'
+                      : 'border-dashed border-base-300 bg-base-100/50'
+                }`}
                 onClick={() => setSelectedLogo(variant)}
               >
-                <div className="logo-preview-container">
+                <div className="aspect-square flex items-center justify-center mb-3 bg-base-200 rounded-lg">
                   {logo.exists ? (
                     <LogoPreview path={logo.path} alt={logo.alt} />
                   ) : (
-                    <div className="logo-placeholder">
-                      <Image size={32} className="text-muted" />
-                      <span>Not found</span>
+                    <div className="text-center text-base-content/40">
+                      <Image size={32} className="mx-auto mb-1" />
+                      <span className="text-xs">Not found</span>
                     </div>
                   )}
                 </div>
-                <div className="logo-info">
-                  <span className="logo-variant">{variant}</span>
-                  <span className="logo-path text-muted">{logo.path}</span>
-                </div>
+                <div className="font-medium text-sm capitalize">{variant}</div>
+                <div className="text-xs text-base-content/50 truncate">{logo.path}</div>
                 {logo.exists && (
-                  <div className="logo-actions">
-                    <Button size="sm" variant="ghost" title="Preview">
+                  <div className="flex gap-1 mt-2">
+                    <button className="btn btn-ghost btn-xs" title="Preview">
                       <Eye size={14} />
-                    </Button>
-                    <Button size="sm" variant="ghost" title="Download">
+                    </button>
+                    <button className="btn btn-ghost btn-xs" title="Download">
                       <Download size={14} />
-                    </Button>
+                    </button>
                   </div>
                 )}
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Colors Section */}
-      <Card>
-        <CardHeader title="Color System" />
-        <CardContent>
-          <div className="color-system">
+      <div className="card bg-base-200">
+        <div className="card-body">
+          <h3 className="card-title text-lg">Color System</h3>
+
+          <div className="space-y-6 mt-4">
             {/* Brand Colors */}
-            <div className="color-section">
-              <h4>Brand Colors</h4>
-              <div className="color-grid">
+            <div>
+              <h4 className="text-sm font-medium mb-3">Brand Colors</h4>
+              <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
                 {assets?.colors.brand && Object.entries(assets.colors.brand).map(([name, color]) => (
                   color && (
-                    <div key={name} className="color-card">
-                      <div className="color-preview" style={{ backgroundColor: color as string }} />
-                      <div className="color-details">
-                        <span className="color-name">{name}</span>
-                        <code className="color-hex">{color as string}</code>
-                      </div>
+                    <div key={name} className="text-center">
+                      <div className="w-full aspect-square rounded-lg mb-2 border border-base-300" style={{ backgroundColor: color as string }} />
+                      <div className="text-sm font-medium capitalize">{name}</div>
+                      <code className="text-xs text-base-content/60">{color as string}</code>
                     </div>
                   )
                 ))}
@@ -370,16 +375,14 @@ function VisualIdentityView() {
             </div>
 
             {/* Semantic Colors */}
-            <div className="color-section">
-              <h4>Semantic Colors</h4>
-              <div className="color-grid">
+            <div>
+              <h4 className="text-sm font-medium mb-3">Semantic Colors</h4>
+              <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
                 {assets?.colors.semantic && Object.entries(assets.colors.semantic).map(([name, color]) => (
-                  <div key={name} className="color-card">
-                    <div className="color-preview" style={{ backgroundColor: color }} />
-                    <div className="color-details">
-                      <span className="color-name">{name}</span>
-                      <code className="color-hex">{color}</code>
-                    </div>
+                  <div key={name} className="text-center">
+                    <div className="w-full aspect-square rounded-lg mb-2 border border-base-300" style={{ backgroundColor: color }} />
+                    <div className="text-sm font-medium capitalize">{name}</div>
+                    <code className="text-xs text-base-content/60">{color}</code>
                   </div>
                 ))}
               </div>
@@ -387,62 +390,58 @@ function VisualIdentityView() {
 
             {/* Text Colors */}
             {assets?.colors.text && (
-              <div className="color-section">
-                <h4>Text Colors</h4>
-                <div className="color-grid">
+              <div>
+                <h4 className="text-sm font-medium mb-3">Text Colors</h4>
+                <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
                   {Object.entries(assets.colors.text).map(([name, color]) => (
-                    <div key={name} className="color-card">
-                      <div className="color-preview" style={{ backgroundColor: color }} />
-                      <div className="color-details">
-                        <span className="color-name">{name}</span>
-                        <code className="color-hex">{color}</code>
-                      </div>
+                    <div key={name} className="text-center">
+                      <div className="w-full aspect-square rounded-lg mb-2 border border-base-300" style={{ backgroundColor: color }} />
+                      <div className="text-sm font-medium capitalize">{name}</div>
+                      <code className="text-xs text-base-content/60">{color}</code>
                     </div>
                   ))}
                 </div>
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Typography Section */}
-      <Card>
-        <CardHeader title="Typography System" />
-        <CardContent>
-          <div className="typography-system">
+      <div className="card bg-base-200">
+        <div className="card-body">
+          <h3 className="card-title text-lg">Typography System</h3>
+
+          <div className="space-y-4 mt-4">
             {assets?.typography?.fonts && Object.entries(assets.typography.fonts).map(([role, font]) => (
-              <div key={role} className="typography-card">
-                <div className="typography-header">
-                  <Type size={20} />
-                  <h4>{role.charAt(0).toUpperCase() + role.slice(1)}</h4>
+              <div key={role} className="p-4 rounded-lg bg-base-100 border border-base-300">
+                <div className="flex items-center gap-2 mb-4">
+                  <Type size={20} className="text-primary" />
+                  <h4 className="font-semibold capitalize">{role}</h4>
                 </div>
-                <div
-                  className="typography-sample"
-                  style={{ fontFamily: `${font.family}, ${font.fallback || 'sans-serif'}` }}
-                >
-                  <span className="sample-large">Aa Bb Cc</span>
-                  <span className="sample-text">The quick brown fox jumps over the lazy dog</span>
+                <div style={{ fontFamily: `${font.family}, ${font.fallback || 'sans-serif'}` }} className="mb-4">
+                  <div className="text-4xl font-semibold mb-2">Aa Bb Cc</div>
+                  <div className="text-base-content/70">The quick brown fox jumps over the lazy dog</div>
                 </div>
-                <div className="typography-meta">
-                  <div className="meta-row">
-                    <span className="meta-label">Family:</span>
-                    <span className="meta-value">{font.family}</span>
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <span className="text-base-content/60">Family:</span>
+                    <div className="font-medium">{font.family}</div>
                   </div>
-                  <div className="meta-row">
-                    <span className="meta-label">Weights:</span>
-                    <span className="meta-value">{font.weights.join(', ')}</span>
+                  <div>
+                    <span className="text-base-content/60">Weights:</span>
+                    <div className="font-medium">{font.weights.join(', ')}</div>
                   </div>
-                  <div className="meta-row">
-                    <span className="meta-label">Source:</span>
-                    <Badge variant="default">{font.source}</Badge>
+                  <div>
+                    <span className="text-base-content/60">Source:</span>
+                    <div className="badge badge-ghost badge-sm">{font.source}</div>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
@@ -453,20 +452,20 @@ function VoiceProfileView() {
   const { data: voice, isLoading } = useBrandVoice();
 
   if (isLoading) {
-    return <LoadingState message="Loading voice profile..." />;
+    return <LoadingSpinner message="Loading voice profile..." />;
   }
 
   if (!voice?.has_voice) {
     return (
-      <Card>
-        <CardContent className="empty-state">
-          <MessageCircle size={48} className="text-muted" />
-          <h3>No Voice Profile</h3>
-          <p className="text-muted">
+      <div className="card bg-base-200">
+        <div className="card-body items-center text-center py-16">
+          <MessageCircle size={48} className="text-base-content/30 mb-4" />
+          <h3 className="text-lg font-semibold">No Voice Profile</h3>
+          <p className="text-base-content/60 max-w-md">
             {voice?.warning || 'Add a voice section to your brand.yaml to define voice guidelines.'}
           </p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
@@ -479,150 +478,167 @@ function VoiceProfileView() {
   };
 
   return (
-    <div className="voice-profile-view">
+    <div className="space-y-6">
       {/* Personality & Tone */}
-      <Card>
-        <CardHeader title="Personality & Tone" />
-        <CardContent>
-          <div className="personality-section">
-            <h4>Personality Traits</h4>
-            <div className="personality-tags">
-              {voice.personality?.map((trait: string) => (
-                <Badge key={trait} variant="accent">{trait}</Badge>
-              ))}
-            </div>
-          </div>
+      <div className="card bg-base-200">
+        <div className="card-body">
+          <h3 className="card-title text-lg">Personality & Tone</h3>
 
-          <div className="tone-section">
-            <div className="tone-item">
-              <span className="tone-label">Tone:</span>
-              <Badge variant="default">{voice.tone}</Badge>
-            </div>
-            <div className="tone-item">
-              <span className="tone-label">Formality:</span>
-              <div className="formality-scale">
-                {[1, 2, 3, 4, 5].map(level => (
-                  <div
-                    key={level}
-                    className={`formality-level ${level === voice.formality_level ? 'active' : ''}`}
-                    title={formalityLabels[level]}
-                  >
-                    {level}
-                  </div>
+          <div className="space-y-6 mt-4">
+            <div>
+              <h4 className="text-sm font-medium mb-3">Personality Traits</h4>
+              <div className="flex flex-wrap gap-2">
+                {voice.personality?.map((trait: string) => (
+                  <div key={trait} className="badge badge-accent badge-lg">{trait}</div>
                 ))}
               </div>
-              <span className="formality-label">{formalityLabels[voice.formality_level]}</span>
             </div>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Style Guidelines */}
-      <Card>
-        <CardHeader title="Style Guidelines" />
-        <CardContent>
-          <div className="style-guidelines">
-            <div className="style-item">
-              <span className="style-label">Active Voice Target</span>
-              <ProgressBar
-                value={voice.style.active_voice_target * 100}
-                max={100}
-                showLabel
-              />
-            </div>
-            <div className="style-item">
-              <span className="style-label">Sentence Length</span>
-              <span className="style-value">{voice.style.sentence_length_target} words avg</span>
-            </div>
-            <div className="style-item">
-              <span className="style-label">Paragraph Max</span>
-              <span className="style-value">{voice.style.paragraph_length_max} sentences</span>
-            </div>
-            <div className="style-item">
-              <span className="style-label">Contractions</span>
-              <Badge variant={voice.style.use_contractions ? 'success' : 'default'}>
-                {voice.style.use_contractions ? 'Allowed' : 'Avoid'}
-              </Badge>
-            </div>
-            <div className="style-item">
-              <span className="style-label">Person Usage</span>
-              <div className="person-badges">
-                {voice.style.use_first_person && <Badge variant="info">First Person</Badge>}
-                {voice.style.use_second_person && <Badge variant="info">Second Person</Badge>}
+            <div className="flex flex-wrap gap-6">
+              <div>
+                <span className="text-sm text-base-content/60">Tone:</span>
+                <div className="badge badge-ghost ml-2">{voice.tone}</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-base-content/60">Formality:</span>
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map(level => (
+                    <div
+                      key={level}
+                      className={`w-8 h-8 rounded flex items-center justify-center text-sm font-medium ${
+                        level === voice.formality_level
+                          ? 'bg-primary text-primary-content'
+                          : 'bg-base-300'
+                      }`}
+                    >
+                      {level}
+                    </div>
+                  ))}
+                </div>
+                <span className="text-sm font-medium">{formalityLabels[voice.formality_level]}</span>
               </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      {/* Style Guidelines */}
+      <div className="card bg-base-200">
+        <div className="card-body">
+          <h3 className="card-title text-lg">Style Guidelines</h3>
+
+          <div className="grid md:grid-cols-2 gap-4 mt-4">
+            <div className="p-4 rounded-lg bg-base-100">
+              <div className="text-sm text-base-content/60 mb-2">Active Voice Target</div>
+              <progress className="progress progress-primary w-full" value={voice.style.active_voice_target * 100} max="100"></progress>
+              <div className="text-right text-sm mt-1">{Math.round(voice.style.active_voice_target * 100)}%</div>
+            </div>
+            <div className="p-4 rounded-lg bg-base-100">
+              <div className="text-sm text-base-content/60 mb-2">Sentence Length</div>
+              <div className="text-2xl font-bold">{voice.style.sentence_length_target}</div>
+              <div className="text-xs text-base-content/60">words average</div>
+            </div>
+            <div className="p-4 rounded-lg bg-base-100">
+              <div className="text-sm text-base-content/60 mb-2">Paragraph Max</div>
+              <div className="text-2xl font-bold">{voice.style.paragraph_length_max}</div>
+              <div className="text-xs text-base-content/60">sentences</div>
+            </div>
+            <div className="p-4 rounded-lg bg-base-100">
+              <div className="text-sm text-base-content/60 mb-2">Contractions</div>
+              <div className={`badge ${voice.style.use_contractions ? 'badge-success' : 'badge-ghost'}`}>
+                {voice.style.use_contractions ? 'Allowed' : 'Avoid'}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <div className="text-sm text-base-content/60 mb-2">Person Usage</div>
+            <div className="flex gap-2">
+              {voice.style.use_first_person && <div className="badge badge-info">First Person</div>}
+              {voice.style.use_second_person && <div className="badge badge-info">Second Person</div>}
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Overrides */}
       {((voice.available_doc_types?.length ?? 0) > 0 || (voice.available_audiences?.length ?? 0) > 0) && (
-        <Card>
-          <CardHeader title="Context Overrides" />
-          <CardContent>
-            <div className="overrides-section">
+        <div className="card bg-base-200">
+          <div className="card-body">
+            <h3 className="card-title text-lg">Context Overrides</h3>
+
+            <div className="grid md:grid-cols-2 gap-6 mt-4">
               {(voice.available_doc_types?.length ?? 0) > 0 && (
-                <div className="override-group">
-                  <h4><FileText size={16} /> Document Types</h4>
-                  <div className="override-items">
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <FileText size={16} className="text-primary" />
+                    <h4 className="font-medium">Document Types</h4>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
                     {voice.available_doc_types?.map((type: string) => (
-                      <Badge key={type} variant="default">{type}</Badge>
+                      <div key={type} className="badge badge-ghost">{type}</div>
                     ))}
                   </div>
                 </div>
               )}
               {(voice.available_audiences?.length ?? 0) > 0 && (
-                <div className="override-group">
-                  <h4><Users size={16} /> Audiences</h4>
-                  <div className="override-items">
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Users size={16} className="text-primary" />
+                    <h4 className="font-medium">Audiences</h4>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
                     {voice.available_audiences?.map((audience: string) => (
-                      <Badge key={audience} variant="default">{audience}</Badge>
+                      <div key={audience} className="badge badge-ghost">{audience}</div>
                     ))}
                   </div>
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {/* Terminology */}
       {((voice.preferred_terms?.length ?? 0) > 0 || (voice.avoid_phrases?.length ?? 0) > 0) && (
-        <Card>
-          <CardHeader title="Terminology Guidelines" />
-          <CardContent>
-            {(voice.preferred_terms?.length ?? 0) > 0 && (
-              <div className="terminology-section">
-                <h4>Preferred Terms</h4>
-                <div className="terms-list">
-                  {voice.preferred_terms?.slice(0, 5).map((term: { prefer: string; avoid: string[] }, i: number) => (
-                    <div key={i} className="term-item">
-                      <Badge variant="success">{term.prefer}</Badge>
-                      <span className="term-arrow">instead of</span>
-                      <span className="avoid-terms">{term.avoid.join(', ')}</span>
-                    </div>
-                  ))}
-                  {(voice.preferred_terms?.length ?? 0) > 5 && (
-                    <span className="more-terms">+{(voice.preferred_terms?.length ?? 0) - 5} more</span>
-                  )}
+        <div className="card bg-base-200">
+          <div className="card-body">
+            <h3 className="card-title text-lg">Terminology Guidelines</h3>
+
+            <div className="space-y-6 mt-4">
+              {(voice.preferred_terms?.length ?? 0) > 0 && (
+                <div>
+                  <h4 className="font-medium mb-3">Preferred Terms</h4>
+                  <div className="space-y-2">
+                    {voice.preferred_terms?.slice(0, 5).map((term: { prefer: string; avoid: string[] }, i: number) => (
+                      <div key={i} className="flex items-center gap-2 text-sm">
+                        <div className="badge badge-success">{term.prefer}</div>
+                        <span className="text-base-content/60">instead of</span>
+                        <span className="text-base-content/80">{term.avoid.join(', ')}</span>
+                      </div>
+                    ))}
+                    {(voice.preferred_terms?.length ?? 0) > 5 && (
+                      <div className="text-sm text-base-content/60">+{(voice.preferred_terms?.length ?? 0) - 5} more</div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
-            {(voice.avoid_phrases?.length ?? 0) > 0 && (
-              <div className="terminology-section">
-                <h4>Phrases to Avoid</h4>
-                <div className="avoid-phrases">
-                  {voice.avoid_phrases?.slice(0, 8).map((phrase: string) => (
-                    <Badge key={phrase} variant="warning">{phrase}</Badge>
-                  ))}
-                  {(voice.avoid_phrases?.length ?? 0) > 8 && (
-                    <span className="more-terms">+{(voice.avoid_phrases?.length ?? 0) - 8} more</span>
-                  )}
+              )}
+              {(voice.avoid_phrases?.length ?? 0) > 0 && (
+                <div>
+                  <h4 className="font-medium mb-3">Phrases to Avoid</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {voice.avoid_phrases?.slice(0, 8).map((phrase: string) => (
+                      <div key={phrase} className="badge badge-warning">{phrase}</div>
+                    ))}
+                    {(voice.avoid_phrases?.length ?? 0) > 8 && (
+                      <span className="text-sm text-base-content/60">+{(voice.avoid_phrases?.length ?? 0) - 8} more</span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -634,78 +650,89 @@ function VoiceCheckView() {
   const { data, isLoading } = useVoiceCheck();
 
   if (isLoading) {
-    return <LoadingState message="Checking documents against voice guidelines..." />;
+    return <LoadingSpinner message="Checking documents against voice guidelines..." />;
   }
 
   if (!data) {
     return (
-      <Card>
-        <CardContent className="empty-state">
-          <AlertCircle size={48} className="text-muted" />
-          <h3>No Voice Check Data</h3>
-          <p className="text-muted">Unable to load voice check results.</p>
-        </CardContent>
-      </Card>
+      <div className="card bg-base-200">
+        <div className="card-body items-center text-center py-16">
+          <AlertCircle size={48} className="text-base-content/30 mb-4" />
+          <h3 className="text-lg font-semibold">No Voice Check Data</h3>
+          <p className="text-base-content/60">Unable to load voice check results.</p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="voice-check-view">
+    <div className="space-y-6">
       {/* Summary */}
-      <Card>
-        <CardHeader title="Voice Compliance Summary" />
-        <CardContent>
-          <div className="compliance-summary">
-            <div className="compliance-stat">
-              <span className="stat-value">{data.summary.pass_rate}%</span>
-              <span className="stat-label">Pass Rate</span>
+      <div className="card bg-base-200">
+        <div className="card-body">
+          <h3 className="card-title text-lg">Voice Compliance Summary</h3>
+
+          <div className="grid grid-cols-3 gap-4 mt-4">
+            <div className="text-center p-4 rounded-lg bg-base-100">
+              <div className="text-3xl font-bold">{data.summary.pass_rate}%</div>
+              <div className="text-sm text-base-content/60">Pass Rate</div>
             </div>
-            <div className="compliance-stat">
-              <span className="stat-value">{data.summary.documents_passed}/{data.summary.documents_checked}</span>
-              <span className="stat-label">Documents Passing</span>
+            <div className="text-center p-4 rounded-lg bg-base-100">
+              <div className="text-3xl font-bold">{data.summary.documents_passed}/{data.summary.documents_checked}</div>
+              <div className="text-sm text-base-content/60">Documents Passing</div>
             </div>
-            <div className="compliance-stat">
-              <span className="stat-value">{data.summary.total_issues}</span>
-              <span className="stat-label">Total Issues</span>
+            <div className="text-center p-4 rounded-lg bg-base-100">
+              <div className="text-3xl font-bold">{data.summary.total_issues}</div>
+              <div className="text-sm text-base-content/60">Total Issues</div>
             </div>
           </div>
-          <ProgressBar
+
+          <progress
+            className={`progress w-full mt-4 ${
+              data.summary.pass_rate >= 80 ? 'progress-success' :
+              data.summary.pass_rate >= 50 ? 'progress-warning' : 'progress-error'
+            }`}
             value={data.summary.pass_rate}
-            max={100}
-            variant={data.summary.pass_rate >= 80 ? 'success' : data.summary.pass_rate >= 50 ? 'warning' : 'error'}
-          />
-        </CardContent>
-      </Card>
+            max="100"
+          ></progress>
+        </div>
+      </div>
 
       {/* Document Results */}
-      <Card>
-        <CardHeader title="Document Results" />
-        <CardContent>
-          <div className="document-results">
+      <div className="card bg-base-200">
+        <div className="card-body">
+          <h3 className="card-title text-lg">Document Results</h3>
+
+          <div className="space-y-3 mt-4">
             {data.results.map((result) => (
-              <div key={result.document} className={`result-item ${result.passed ? 'passed' : 'failed'}`}>
-                <div className="result-header">
+              <div
+                key={result.document}
+                className={`p-4 rounded-lg border ${
+                  result.passed ? 'bg-success/5 border-success/20' : 'bg-warning/5 border-warning/20'
+                }`}
+              >
+                <div className="flex items-center gap-3">
                   {result.passed ? (
-                    <CheckCircle size={18} className="result-icon success" />
+                    <CheckCircle size={18} className="text-success" />
                   ) : (
-                    <XCircle size={18} className="result-icon error" />
+                    <XCircle size={18} className="text-error" />
                   )}
-                  <span className="result-name">{result.document_name}</span>
-                  <Badge variant={result.passed ? 'success' : 'warning'}>
+                  <span className="font-medium flex-1">{result.document_name}</span>
+                  <div className={`badge ${result.passed ? 'badge-success' : 'badge-warning'}`}>
                     {result.issues.length} issues
-                  </Badge>
+                  </div>
                 </div>
                 {result.issues.length > 0 && (
-                  <div className="result-issues">
+                  <div className="mt-3 pl-7 space-y-2">
                     {result.issues.map((issue, i) => (
-                      <div key={i} className="issue-item">
-                        <Badge
-                          variant={issue.severity === 'error' ? 'error' : issue.severity === 'warning' ? 'warning' : 'info'}
-                          size="sm"
-                        >
+                      <div key={i} className="flex items-start gap-2 text-sm">
+                        <div className={`badge badge-sm ${
+                          issue.severity === 'error' ? 'badge-error' :
+                          issue.severity === 'warning' ? 'badge-warning' : 'badge-info'
+                        }`}>
                           {issue.type}
-                        </Badge>
-                        <span className="issue-message">{issue.message}</span>
+                        </div>
+                        <span className="text-base-content/80">{issue.message}</span>
                       </div>
                     ))}
                   </div>
@@ -713,8 +740,8 @@ function VoiceCheckView() {
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
@@ -727,7 +754,7 @@ function FilesView() {
   const { data: fileContent } = useBrandFile(selectedFile || '');
 
   if (isLoading) {
-    return <LoadingState message="Loading brand files..." />;
+    return <LoadingSpinner message="Loading brand files..." />;
   }
 
   const getCategoryIcon = (category: string) => {
@@ -741,81 +768,91 @@ function FilesView() {
   };
 
   return (
-    <div className="files-view">
+    <div className="space-y-6">
       {/* File Categories */}
-      <Card>
-        <CardHeader title="Brand Files" />
-        <CardContent>
-          <div className="file-categories">
+      <div className="card bg-base-200">
+        <div className="card-body">
+          <h3 className="card-title text-lg">Brand Files</h3>
+
+          <div className="flex flex-wrap gap-3 mt-4">
             {data?.categories && Object.entries(data.categories).map(([category, count]) => (
               count > 0 && (
-                <div key={category} className="category-badge">
+                <div key={category} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-base-100 border border-base-300">
                   {getCategoryIcon(category)}
-                  <span>{category}</span>
-                  <Badge variant="default" size="sm">{count}</Badge>
+                  <span className="capitalize">{category}</span>
+                  <div className="badge badge-ghost badge-sm">{count}</div>
                 </div>
               )
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* File List */}
-      <div className="files-grid">
-        <Card className="file-list-card">
-          <CardHeader title={`Files (${data?.total || 0})`} />
-          <CardContent>
-            <div className="file-list">
+      {/* File List & Preview */}
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="card bg-base-200">
+          <div className="card-body">
+            <h3 className="card-title text-lg">Files ({data?.total || 0})</h3>
+
+            <div className="space-y-2 mt-4 max-h-96 overflow-y-auto">
               {data?.files.map((file) => (
                 <div
                   key={file.path}
-                  className={`file-item ${selectedFile === file.path ? 'selected' : ''}`}
+                  className={`p-3 rounded-lg cursor-pointer transition-all ${
+                    selectedFile === file.path
+                      ? 'bg-primary/10 border border-primary/30'
+                      : 'bg-base-100 border border-base-300 hover:border-primary/30'
+                  }`}
                   onClick={() => setSelectedFile(file.path)}
                 >
-                  {getCategoryIcon(file.category)}
-                  <div className="file-info">
-                    <span className="file-name">{file.path.split('/').pop()}</span>
-                    <span className="file-path text-muted">{file.path}</span>
-                  </div>
-                  <div className="file-meta">
-                    <Badge variant="default" size="sm">{file.type}</Badge>
-                    {file.legacy && <Badge variant="warning" size="sm">legacy</Badge>}
+                  <div className="flex items-center gap-3">
+                    {getCategoryIcon(file.category)}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm truncate">{file.path.split('/').pop()}</div>
+                      <div className="text-xs text-base-content/50 truncate">{file.path}</div>
+                    </div>
+                    <div className="flex gap-1">
+                      <div className="badge badge-ghost badge-xs">{file.type}</div>
+                      {file.legacy && <div className="badge badge-warning badge-xs">legacy</div>}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* File Preview */}
-        <Card className="file-preview-card">
-          <CardHeader title="Preview" />
-          <CardContent>
-            {selectedFile && fileContent ? (
-              <div className="file-preview">
-                {fileContent.encoding === 'base64' && fileContent.mime_type.startsWith('image/') ? (
-                  <img
-                    src={`data:${fileContent.mime_type};base64,${fileContent.content}`}
-                    alt={fileContent.name}
-                    className="preview-image"
-                  />
-                ) : fileContent.encoding === 'text' ? (
-                  <pre className="preview-text">{fileContent.content}</pre>
-                ) : (
-                  <div className="preview-binary">
-                    <FileText size={48} className="text-muted" />
-                    <p>Binary file - {fileContent.size} bytes</p>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="preview-empty">
-                <Eye size={48} className="text-muted" />
-                <p>Select a file to preview</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <div className="card bg-base-200">
+          <div className="card-body">
+            <h3 className="card-title text-lg">Preview</h3>
+
+            <div className="mt-4">
+              {selectedFile && fileContent ? (
+                <div>
+                  {fileContent.encoding === 'base64' && fileContent.mime_type.startsWith('image/') ? (
+                    <img
+                      src={`data:${fileContent.mime_type};base64,${fileContent.content}`}
+                      alt={fileContent.name}
+                      className="max-w-full rounded-lg"
+                    />
+                  ) : fileContent.encoding === 'text' ? (
+                    <pre className="text-xs bg-base-300 p-4 rounded-lg overflow-auto max-h-80">{fileContent.content}</pre>
+                  ) : (
+                    <div className="text-center py-12">
+                      <FileText size={48} className="text-base-content/30 mx-auto mb-3" />
+                      <p className="text-base-content/60">Binary file - {fileContent.size} bytes</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Eye size={48} className="text-base-content/30 mx-auto mb-3" />
+                  <p className="text-base-content/60">Select a file to preview</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -833,7 +870,7 @@ function NotesView() {
   const [newNote, setNewNote] = useState({ category: 'general', text: '', priority: 'medium' });
 
   if (isLoading) {
-    return <LoadingState message="Loading brand notes..." />;
+    return <LoadingSpinner message="Loading brand notes..." />;
   }
 
   const handleAddNote = async () => {
@@ -856,37 +893,36 @@ function NotesView() {
   const pendingNotes = data?.notes.filter(n => n.status === 'pending') || [];
   const completedNotes = data?.notes.filter(n => n.status === 'completed') || [];
 
-  const priorityColors: Record<string, 'default' | 'info' | 'warning' | 'error'> = {
-    low: 'default',
-    medium: 'info',
-    high: 'warning',
-    critical: 'error',
+  const priorityColors: Record<string, string> = {
+    low: 'badge-ghost',
+    medium: 'badge-info',
+    high: 'badge-warning',
+    critical: 'badge-error',
   };
 
   return (
-    <div className="notes-view">
+    <div className="space-y-6">
       {/* Add Note */}
-      <Card>
-        <CardHeader
-          title="Brand Notes for AI Processing"
-          action={
-            <Button size="sm" onClick={() => setShowAddForm(!showAddForm)}>
+      <div className="card bg-base-200">
+        <div className="card-body">
+          <div className="flex items-center justify-between">
+            <h3 className="card-title text-lg">Brand Notes for AI Processing</h3>
+            <button className="btn btn-primary btn-sm" onClick={() => setShowAddForm(!showAddForm)}>
               <Plus size={14} /> Add Note
-            </Button>
-          }
-        />
-        <CardContent>
-          <p className="notes-description text-muted">
+            </button>
+          </div>
+
+          <p className="text-sm text-base-content/60 mt-2">
             Add notes about brand elements for AI to process. Notes can target specific files or general guidelines.
           </p>
 
           {showAddForm && (
-            <div className="add-note-form">
-              <div className="form-row">
+            <div className="mt-4 p-4 rounded-lg bg-base-100 border border-base-300 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
                 <select
                   value={newNote.category}
                   onChange={(e) => setNewNote({ ...newNote, category: e.target.value })}
-                  className="form-select"
+                  className="select select-bordered w-full"
                 >
                   {data?.categories.map(cat => (
                     <option key={cat} value={cat}>{cat}</option>
@@ -895,7 +931,7 @@ function NotesView() {
                 <select
                   value={newNote.priority}
                   onChange={(e) => setNewNote({ ...newNote, priority: e.target.value })}
-                  className="form-select"
+                  className="select select-bordered w-full"
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -907,79 +943,77 @@ function NotesView() {
                 value={newNote.text}
                 onChange={(e) => setNewNote({ ...newNote, text: e.target.value })}
                 placeholder="Enter your note for AI processing..."
-                className="form-textarea"
+                className="textarea textarea-bordered w-full"
                 rows={3}
               />
-              <div className="form-actions">
-                <Button variant="ghost" onClick={() => setShowAddForm(false)}>Cancel</Button>
-                <Button onClick={handleAddNote} disabled={!newNote.text.trim()}>
+              <div className="flex justify-end gap-2">
+                <button className="btn btn-ghost" onClick={() => setShowAddForm(false)}>Cancel</button>
+                <button className="btn btn-primary" onClick={handleAddNote} disabled={!newNote.text.trim()}>
                   Add Note
-                </Button>
+                </button>
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Pending Notes */}
-      <Card>
-        <CardHeader title={`Pending Notes (${pendingNotes.length})`} />
-        <CardContent>
+      <div className="card bg-base-200">
+        <div className="card-body">
+          <h3 className="card-title text-lg">Pending Notes ({pendingNotes.length})</h3>
+
           {pendingNotes.length === 0 ? (
-            <p className="text-muted">No pending notes</p>
+            <p className="text-base-content/60 mt-4">No pending notes</p>
           ) : (
-            <div className="notes-list">
+            <div className="space-y-3 mt-4">
               {pendingNotes.map((note) => (
-                <div key={note.id} className="note-item">
-                  <div className="note-header">
-                    <Badge variant={priorityColors[note.priority]}>
-                      {note.priority}
-                    </Badge>
-                    <Badge variant="default">{note.category}</Badge>
-                    {note.target && <span className="note-target">{note.target}</span>}
+                <div key={note.id} className="p-4 rounded-lg bg-base-100 border border-base-300">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`badge ${priorityColors[note.priority]}`}>{note.priority}</div>
+                    <div className="badge badge-ghost">{note.category}</div>
+                    {note.target && <span className="text-xs text-base-content/50">{note.target}</span>}
                   </div>
-                  <p className="note-text">{note.text}</p>
-                  <div className="note-actions">
-                    <Button
-                      size="sm"
-                      variant="ghost"
+                  <p className="text-sm">{note.text}</p>
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      className="btn btn-ghost btn-xs"
                       onClick={() => handleStatusChange(note.id, 'completed')}
                     >
                       <CheckCircle size={14} /> Complete
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
+                    </button>
+                    <button
+                      className="btn btn-ghost btn-xs text-error"
                       onClick={() => handleDelete(note.id)}
                     >
                       <Trash2 size={14} />
-                    </Button>
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Completed Notes */}
       {completedNotes.length > 0 && (
-        <Card>
-          <CardHeader title={`Completed (${completedNotes.length})`} />
-          <CardContent>
-            <div className="notes-list completed">
+        <div className="card bg-base-200">
+          <div className="card-body">
+            <h3 className="card-title text-lg">Completed ({completedNotes.length})</h3>
+
+            <div className="space-y-3 mt-4 opacity-60">
               {completedNotes.slice(0, 5).map((note) => (
-                <div key={note.id} className="note-item completed">
-                  <div className="note-header">
-                    <Badge variant="success">completed</Badge>
-                    <Badge variant="default">{note.category}</Badge>
+                <div key={note.id} className="p-4 rounded-lg bg-base-100 border border-base-300">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="badge badge-success">completed</div>
+                    <div className="badge badge-ghost">{note.category}</div>
                   </div>
-                  <p className="note-text">{note.text}</p>
+                  <p className="text-sm">{note.text}</p>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -991,7 +1025,7 @@ function LogoPreview({ path, alt }: { path: string; alt: string }) {
   const { data, isLoading } = useBrandFile(path);
 
   if (isLoading || !data) {
-    return <div className="logo-loading" />;
+    return <span className="loading loading-spinner loading-sm"></span>;
   }
 
   if (data.encoding === 'base64' && data.mime_type.startsWith('image/')) {
@@ -999,21 +1033,21 @@ function LogoPreview({ path, alt }: { path: string; alt: string }) {
       <img
         src={`data:${data.mime_type};base64,${data.content}`}
         alt={alt}
-        className="logo-image"
+        className="max-w-full max-h-full object-contain"
       />
     );
   }
 
-  return <div className="logo-placeholder"><Image size={24} /></div>;
+  return <Image size={24} className="text-base-content/30" />;
 }
 
 // ==================== MAIN COMPONENT ====================
 
 export function Brand() {
   return (
-    <div className="page brand-page">
-      <div className="page-header">
-        <h1>Brand Hub</h1>
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold mb-4">Brand Hub</h1>
         <SubTabs tabs={tabs} basePath="/brand" />
       </div>
 

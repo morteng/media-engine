@@ -5,11 +5,11 @@ import { CommandPalette } from '@/components/ui';
 
 export function Layout() {
   return (
-    <div className="app-layout">
+    <div className="flex flex-col min-h-screen bg-base-100">
       <Header />
-      <div className="app-body">
+      <div className="flex flex-1 overflow-hidden">
         <Sidebar />
-        <main className="main-content">
+        <main className="flex-1 overflow-y-auto p-6">
           <Outlet />
         </main>
       </div>

@@ -1,9 +1,9 @@
-// Core UI Components (shadcn-style with Tailwind + CVA)
-export { Card, CardHeader, CardContent, CardTitle, CardDescription, CardFooter, cardVariants } from './Card';
-export { Badge, badgeVariants } from './Badge';
-export { Button, buttonVariants } from './Button';
-export { ProgressBar, progressVariants } from './ProgressBar';
-export { Spinner, LoadingState, spinnerVariants } from './Spinner';
+// Core UI Components (DaisyUI-based)
+export { Card, CardHeader, CardContent, CardTitle, CardDescription, CardFooter } from './Card';
+export { Badge } from './Badge';
+export { Button } from './Button';
+export { ProgressBar } from './ProgressBar';
+export { Spinner, LoadingState } from './Spinner';
 
 // Form Components
 export { Input } from './Input';

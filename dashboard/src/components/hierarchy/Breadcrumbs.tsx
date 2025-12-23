@@ -1,7 +1,6 @@
 import { ChevronRight, Home, FileText, BookOpen, Settings, HelpCircle, Lightbulb, BookMarked } from 'lucide-react';
 import clsx from 'clsx';
 import type { BreadcrumbItem } from '@/api/types';
-import './Breadcrumbs.css';
 
 // Icons for document types
 const docTypeIcons: Record<string, typeof FileText> = {
@@ -31,21 +30,21 @@ export function Breadcrumbs({ items, onNavigate, showHome = true, className }: B
   }
 
   return (
-    <nav className={clsx('breadcrumbs', className)} aria-label="Breadcrumb">
-      <ol className="breadcrumbs-list">
+    <nav className={clsx('breadcrumbs text-sm', className)} aria-label="Breadcrumb">
+      <ul className="flex items-center flex-wrap gap-1">
         {/* Home link */}
         {showHome && (
           <>
-            <li className="breadcrumb-item">
+            <li>
               <button
-                className="breadcrumb-link breadcrumb-home"
+                className="btn btn-ghost btn-xs btn-square"
                 onClick={(e) => handleClick(e, '')}
                 title="Home"
               >
                 <Home size={14} />
               </button>
             </li>
-            <li className="breadcrumb-separator" aria-hidden="true">
+            <li className="text-base-content/30" aria-hidden="true">
               <ChevronRight size={14} />
             </li>
           </>
@@ -57,32 +56,32 @@ export function Breadcrumbs({ items, onNavigate, showHome = true, className }: B
           const Icon = docTypeIcons[item.doc_type] || FileText;
 
           return (
-            <li key={item.path} className="breadcrumb-item">
+            <li key={item.path} className="flex items-center gap-1">
               {index > 0 && (
-                <span className="breadcrumb-separator" aria-hidden="true">
+                <span className="text-base-content/30" aria-hidden="true">
                   <ChevronRight size={14} />
                 </span>
               )}
 
               {isLast ? (
-                <span className="breadcrumb-current" aria-current="page">
-                  <Icon size={14} className="breadcrumb-icon" />
-                  <span className="breadcrumb-title">{item.title}</span>
+                <span className="flex items-center gap-1.5 px-2 py-1 text-base-content" aria-current="page">
+                  <Icon size={14} className="text-primary" />
+                  <span className="font-medium">{item.title}</span>
                 </span>
               ) : (
                 <button
-                  className="breadcrumb-link"
+                  className="flex items-center gap-1.5 px-2 py-1 rounded-md text-base-content/70 hover:text-base-content hover:bg-base-300 transition-colors"
                   onClick={(e) => handleClick(e, item.path)}
                   title={item.title}
                 >
-                  <Icon size={14} className="breadcrumb-icon" />
-                  <span className="breadcrumb-title">{item.title}</span>
+                  <Icon size={14} />
+                  <span>{item.title}</span>
                 </button>
               )}
             </li>
           );
         })}
-      </ol>
+      </ul>
     </nav>
   );
 }
