@@ -1,0 +1,304 @@
+{# Report Template - Professional report format #}
+{% extends "base.html.j2" %}
+
+{% block css_layout %}
+{{ super() }}
+
+/* Report-specific layout */
+.report-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: var(--spacing-2xl) var(--spacing-lg);
+}
+
+{% if features.cover_page %}
+.report-cover {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: var(--spacing-2xl);
+    page-break-after: always;
+}
+
+.report-cover .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.report-cover .logo img {
+    max-height: 60px;
+}
+
+.report-cover .document-type {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-muted);
+    background: rgba(0, 0, 0, 0.05);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: 4px;
+}
+
+.report-cover .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.report-cover .title {
+    font-size: 2.8rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-md);
+    line-height: 1.2;
+}
+
+.report-cover .subtitle {
+    font-size: 1.3rem;
+    color: var(--color-secondary);
+    margin-bottom: var(--spacing-2xl);
+}
+
+.report-cover .meta {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-2xl);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--color-border);
+}
+
+.report-cover .meta dt {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-muted);
+    margin-bottom: var(--spacing-xs);
+}
+
+.report-cover .meta dd {
+    margin: 0;
+    font-weight: 500;
+}
+
+.report-cover .footer {
+    text-align: center;
+    color: var(--color-muted);
+    font-size: 0.85rem;
+}
+{% endif %}
+
+/* Section styling */
+section {
+    margin-bottom: var(--spacing-2xl);
+}
+
+section h2 {
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--color-accent);
+    margin-bottom: var(--spacing-lg);
+}
+
+/* Executive summary */
+.executive-summary {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05));
+    padding: var(--spacing-xl);
+    border-radius: 8px;
+    margin-bottom: var(--spacing-2xl);
+    border-left: 4px solid var(--color-primary);
+}
+
+.executive-summary h2 {
+    border-bottom: none;
+    margin-top: 0;
+}
+
+/* Key findings */
+.key-findings {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+    margin: var(--spacing-xl) 0;
+}
+
+.finding-card {
+    background: rgba(0, 0, 0, 0.02);
+    padding: var(--spacing-lg);
+    border-radius: 8px;
+    border-top: 3px solid var(--color-accent);
+}
+
+.finding-card .number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.finding-card .label {
+    color: var(--color-muted);
+    font-size: 0.9rem;
+}
+
+/* Recommendations */
+.recommendations {
+    counter-reset: rec;
+}
+
+.recommendations li {
+    counter-increment: rec;
+    position: relative;
+    padding-left: var(--spacing-2xl);
+    margin-bottom: var(--spacing-lg);
+}
+
+.recommendations li::before {
+    content: counter(rec);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 28px;
+    height: 28px;
+    background: var(--color-primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+{% endblock %}
+
+{% block css_components %}
+{{ super() }}
+
+/* Report TOC */
+.report-toc {
+    page-break-after: always;
+    padding: var(--spacing-2xl) 0;
+}
+
+.report-toc h2 {
+    margin-bottom: var(--spacing-xl);
+}
+
+.report-toc ul {
+    list-style: none;
+    padding: 0;
+}
+
+.report-toc > ul > li {
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.report-toc a {
+    display: flex;
+    justify-content: space-between;
+    color: var(--color-text);
+    border-bottom: none;
+}
+
+.report-toc a:hover {
+    color: var(--color-accent);
+}
+
+/* Report header/footer for print */
+@media print {
+    .report-header {
+        position: running(header);
+    }
+    
+    @page {
+        @top-left {
+            content: element(header);
+        }
+        @bottom-center {
+            content: "Page " counter(page) " of " counter(pages);
+        }
+    }
+}
+
+/* Confidentiality stamp */
+.confidential {
+    display: inline-block;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: #dc2626;
+    color: white;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 4px;
+}
+
+.internal-only {
+    display: inline-block;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: #f59e0b;
+    color: white;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 4px;
+}
+{% endblock %}
+
+{% block main %}
+<div class="report-container">
+    {% if features.cover_page %}
+    <div class="report-cover">
+        <div class="header">
+            {% if logo %}
+            <div class="logo"><img src="{{ logo }}" alt=""></div>
+            {% endif %}
+            {% if document_type %}
+            <span class="document-type">{{ document_type }}</span>
+            {% endif %}
+        </div>
+        
+        <div class="main">
+            <h1 class="title">{{ title }}</h1>
+            {% if subtitle %}<p class="subtitle">{{ subtitle }}</p>{% endif %}
+            
+            {% if meta %}
+            <dl class="meta">
+                {% for key, value in meta.items() %}
+                <div>
+                    <dt>{{ key }}</dt>
+                    <dd>{{ value }}</dd>
+                </div>
+                {% endfor %}
+            </dl>
+            {% endif %}
+        </div>
+        
+        <div class="footer">
+            {% if confidential %}<span class="confidential">Confidential</span>{% endif %}
+            {{ copyright | default('') }}
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if features.toc and toc %}
+    <nav class="report-toc">
+        <h2>Table of Contents</h2>
+        {{ toc }}
+    </nav>
+    {% endif %}
+    
+    <article class="report-content">
+        {% block content %}
+        {{ content }}
+        {% endblock %}
+    </article>
+    
+    {% if features.footer %}
+    <footer class="footer">
+        {{ footer_content | default('') }}
+    </footer>
+    {% endif %}
+</div>
+{% endblock %}

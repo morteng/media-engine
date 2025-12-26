@@ -1,0 +1,25 @@
+{# Table of Contents Component #}
+<nav class="table-of-contents" aria-label="Table of contents">
+    {% if title %}<h2>{{ title | default('Contents') }}</h2>{% endif %}
+    
+    <ul>
+        {% for heading in headings %}
+        <li class="toc-level-{{ heading.level }}">
+            {% if include_numbers %}
+            <span class="toc-number">{{ heading.number }}</span>
+            {% endif %}
+            <a href="#{{ heading.id }}">{{ heading.text }}</a>
+            
+            {% if heading.children %}
+            <ul>
+                {% for child in heading.children %}
+                <li class="toc-level-{{ child.level }}">
+                    <a href="#{{ child.id }}">{{ child.text }}</a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+</nav>

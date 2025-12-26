@@ -1,6 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as api from '@/api/client';
 
+// Generic API hook for arbitrary endpoints
+export const useApi = <T>(url: string, options?: { enabled?: boolean; refetchInterval?: number }) =>
+  useQuery<T>({
+    queryKey: [url] as const,
+    queryFn: async () => {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      return response.json();
+    },
+    enabled: options?.enabled ?? true,
+    refetchInterval: options?.refetchInterval,
+  });
+
 // Query Keys
 export const queryKeys = {
   project: ['project'] as const,
@@ -12,12 +27,18 @@ export const queryKeys = {
   translationMatrix: ['translationMatrix'] as const,
   quality: ['quality'] as const,
   freshness: ['freshness'] as const,
+  publications: (lang?: string) => ['publications', lang] as const,
+  publicationTranslations: ['publicationTranslations'] as const,
   insights: ['insights'] as const,
   insightsPath: (type: string) => ['insightsPath', type] as const,
   buildStatus: ['buildStatus'] as const,
   auditLog: ['auditLog'] as const,
   media: ['media'] as const,
   sceneNotes: (path: string) => ['sceneNotes', path] as const,
+  settings: ['settings'] as const,
+  settingsDefaults: ['settingsDefaults'] as const,
+  settingsProject: ['settingsProject'] as const,
+  settingsEnv: ['settingsEnv'] as const,
 };
 
 // Project Hooks
@@ -95,6 +116,21 @@ export const useFreshness = () =>
     queryFn: api.getFreshness,
   });
 
+// Publications Hooks
+export const usePublicationsStatus = (language?: string) =>
+  useQuery({
+    queryKey: queryKeys.publications(language),
+    queryFn: () => api.getPublicationsStatus(language),
+    staleTime: 1000 * 60 * 2, // 2 minutes
+  });
+
+export const usePublicationTranslations = () =>
+  useQuery({
+    queryKey: queryKeys.publicationTranslations,
+    queryFn: api.getPublicationTranslations,
+    staleTime: 1000 * 60 * 2,
+  });
+
 // Insights Hooks
 export const useInsights = () =>
   useQuery({
@@ -114,12 +150,51 @@ export const useBuildStatus = () =>
   useQuery({
     queryKey: queryKeys.buildStatus,
     queryFn: api.getBuildStatus,
+    refetchInterval: (query) => {
+      // Refetch more frequently when build is active
+      const data = query.state.data;
+      return data?.active ? 2000 : 10000;
+    },
+  });
+
+export const useBuildOutputs = () =>
+  useQuery({
+    queryKey: ['buildOutputs'] as const,
+    queryFn: api.getBuildOutputs,
   });
 
 export const useBuild = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: api.triggerBuild,
+    mutationFn: api.startBuild,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.buildStatus });
+    },
+  });
+};
+
+export const useCancelBuild = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: api.cancelBuild,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.buildStatus });
+    },
+  });
+};
+
+// Publish Hooks
+export const usePublishConfig = () =>
+  useQuery({
+    queryKey: ['publishConfig'] as const,
+    queryFn: api.getPublishConfig,
+    staleTime: 1000 * 60 * 2,
+  });
+
+export const usePublish = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: api.startPublish,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.buildStatus });
     },
@@ -180,6 +255,16 @@ export const useOpenProject = () => {
 export const useBrowseProject = () => {
   return useMutation({
     mutationFn: api.browseProject,
+  });
+};
+
+export const useRemoveRecentProject = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: api.removeRecentProject,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recentProjects'] });
+    },
   });
 };
 
@@ -281,6 +366,13 @@ export const useFlowGraph = (options?: Parameters<typeof api.getFlowGraph>[0]) =
   useQuery({
     queryKey: ['flowGraph', options] as const,
     queryFn: () => api.getFlowGraph(options),
+    staleTime: 1000 * 60 * 2,
+  });
+
+export const useUnifiedGraph = (language?: string) =>
+  useQuery({
+    queryKey: ['unifiedGraph', language] as const,
+    queryFn: () => api.getUnifiedGraph(language),
     staleTime: 1000 * 60 * 2,
   });
 
@@ -387,4 +479,87 @@ export const useBrandGuide = () =>
     queryKey: ['brandGuide'] as const,
     queryFn: api.getBrandGuide,
     staleTime: 1000 * 60 * 5,
+  });
+
+// ============== SETTINGS HOOKS ==============
+
+export const useSettings = () =>
+  useQuery({
+    queryKey: queryKeys.settings,
+    queryFn: api.getSettings,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+  });
+
+export const useSettingsDefaults = () =>
+  useQuery({
+    queryKey: queryKeys.settingsDefaults,
+    queryFn: api.getSettingsDefaults,
+    staleTime: 1000 * 60 * 10, // 10 minutes - defaults don't change
+  });
+
+export const useSettingsProject = () =>
+  useQuery({
+    queryKey: queryKeys.settingsProject,
+    queryFn: api.getSettingsProject,
+    staleTime: 1000 * 60 * 2,
+  });
+
+export const useSettingsEnv = () =>
+  useQuery({
+    queryKey: queryKeys.settingsEnv,
+    queryFn: api.getSettingsEnv,
+    staleTime: 1000 * 60 * 5, // 5 minutes - env vars rarely change
+  });
+
+export const useUpdateSettings = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: api.updateSettings,
+    onSuccess: () => {
+      // Invalidate all settings queries
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings });
+      queryClient.invalidateQueries({ queryKey: queryKeys.settingsProject });
+      // Also invalidate project since settings affect it
+      queryClient.invalidateQueries({ queryKey: queryKeys.project });
+    },
+  });
+};
+
+export const useValidateSettings = () =>
+  useMutation({
+    mutationFn: api.validateSettings,
+  });
+
+// ============== UNIFIED BUILD HOOKS ==============
+
+export const useBuildPublications = () =>
+  useQuery({
+    queryKey: ['buildPublications'] as const,
+    queryFn: api.getBuildPublications,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+  });
+
+export const useBuildPresets = () =>
+  useQuery({
+    queryKey: ['buildPresets'] as const,
+    queryFn: api.getBuildPresets,
+    staleTime: 1000 * 60 * 10, // 10 minutes - presets don't change often
+  });
+
+export const useUnifiedBuild = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: api.startUnifiedBuild,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.buildStatus });
+      queryClient.invalidateQueries({ queryKey: ['buildPublications'] });
+    },
+  });
+};
+
+export const usePublishConfiguration = () =>
+  useQuery({
+    queryKey: ['publishConfiguration'] as const,
+    queryFn: api.getPublishConfiguration,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });

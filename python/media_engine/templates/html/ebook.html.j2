@@ -1,0 +1,204 @@
+{# Ebook Template - Book-style layout with chapters #}
+{% extends "base.html.j2" %}
+
+{% block css_layout %}
+{{ super() }}
+
+/* Ebook-specific layout */
+.ebook-container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: var(--spacing-2xl) var(--spacing-lg);
+}
+
+{% if features.cover_page %}
+.cover-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: var(--spacing-2xl);
+    page-break-after: always;
+}
+
+.cover-page .title {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-bottom: var(--spacing-lg);
+    line-height: 1.2;
+}
+
+.cover-page .subtitle {
+    font-size: 1.5rem;
+    color: var(--color-secondary);
+    margin-bottom: var(--spacing-2xl);
+}
+
+.cover-page .author {
+    font-size: 1.2rem;
+    color: var(--color-muted);
+}
+
+.cover-page .logo {
+    margin-bottom: var(--spacing-2xl);
+}
+
+.cover-page .logo img {
+    max-height: 80px;
+}
+{% endif %}
+
+/* Chapter styling */
+.chapter {
+    page-break-before: always;
+    padding-top: var(--spacing-2xl);
+}
+
+.chapter:first-child {
+    page-break-before: auto;
+}
+
+.chapter-number {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-accent);
+    margin-bottom: var(--spacing-sm);
+}
+
+.chapter h1 {
+    border-bottom: none;
+    font-size: 2.2rem;
+}
+
+/* Drop cap for first paragraph */
+.chapter > p:first-of-type::first-letter {
+    float: left;
+    font-size: 4rem;
+    line-height: 0.8;
+    padding-right: var(--spacing-sm);
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+/* Pull quotes */
+.pullquote {
+    font-size: 1.4rem;
+    font-style: italic;
+    color: var(--color-secondary);
+    text-align: center;
+    margin: var(--spacing-2xl) var(--spacing-xl);
+    padding: var(--spacing-lg) 0;
+    border-top: 2px solid var(--color-border);
+    border-bottom: 2px solid var(--color-border);
+}
+{% endblock %}
+
+{% block css_components %}
+{{ super() }}
+
+/* Table of Contents - Ebook style */
+.ebook-toc {
+    page-break-after: always;
+    padding: var(--spacing-2xl);
+}
+
+.ebook-toc h2 {
+    text-align: center;
+    margin-bottom: var(--spacing-2xl);
+}
+
+.ebook-toc ul {
+    list-style: none;
+    padding: 0;
+}
+
+.ebook-toc > ul > li {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px dotted var(--color-border);
+}
+
+.ebook-toc a {
+    color: var(--color-text);
+    border-bottom: none;
+}
+
+.ebook-toc .page-num {
+    color: var(--color-muted);
+    font-size: 0.9rem;
+}
+
+/* Footnotes */
+{% if features.footnotes %}
+.footnotes {
+    margin-top: var(--spacing-2xl);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--color-border);
+    font-size: 0.9rem;
+}
+
+.footnote-ref {
+    font-size: 0.75em;
+    vertical-align: super;
+    color: var(--color-accent);
+}
+
+.footnotes ol {
+    padding-left: var(--spacing-lg);
+}
+
+.footnotes li {
+    margin-bottom: var(--spacing-sm);
+    color: var(--color-muted);
+}
+{% endif %}
+
+/* Page numbers for print */
+@media print {
+    @page {
+        @bottom-center {
+            content: counter(page);
+        }
+    }
+}
+{% endblock %}
+
+{% block main %}
+<div class="ebook-container">
+    {% if features.cover_page %}
+    <div class="cover-page">
+        {% if logo %}
+        <div class="logo"><img src="{{ logo }}" alt=""></div>
+        {% endif %}
+        <h1 class="title">{{ title }}</h1>
+        {% if subtitle %}<p class="subtitle">{{ subtitle }}</p>{% endif %}
+        {% if author %}<p class="author">by {{ author }}</p>{% endif %}
+    </div>
+    {% endif %}
+    
+    {% if features.toc and toc %}
+    <nav class="ebook-toc">
+        <h2>Contents</h2>
+        {{ toc }}
+    </nav>
+    {% endif %}
+    
+    <article class="chapters">
+        {% block content %}
+        {{ content }}
+        {% endblock %}
+    </article>
+    
+    {% if features.footer %}
+    <footer class="footer">
+        {{ footer_content | default('') }}
+    </footer>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+{# Callout/Alert Component #}
+<div class="callout callout-{{ type | default('info') }}" role="alert">
+    {% if icon %}
+    <span class="callout-icon">{{ icon }}</span>
+    {% else %}
+    <span class="callout-icon">
+        {% if type == 'warning' %}⚠️{% elif type == 'error' %}❌{% elif type == 'success' %}✅{% else %}ℹ️{% endif %}
+    </span>
+    {% endif %}
+    
+    <div class="callout-content">
+        {% if title %}
+        <strong class="callout-title">{{ title }}</strong>
+        {% endif %}
+        {{ content }}
+    </div>
+</div>

@@ -1,0 +1,346 @@
+{# Documentation Template - Technical docs with sidebar navigation #}
+{% extends "base.html.j2" %}
+
+{% block css_layout %}
+{{ super() }}
+
+/* Documentation-specific layout */
+.docs-container {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    grid-template-rows: auto 1fr;
+    gap: 0;
+    min-height: 100vh;
+}
+
+.docs-header {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md) var(--spacing-xl);
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-background);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.docs-header .logo {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--color-primary);
+}
+
+.docs-header .logo img {
+    height: 32px;
+    margin: 0;
+}
+
+.docs-sidebar {
+    padding: var(--spacing-lg);
+    border-right: 1px solid var(--color-border);
+    background: rgba(0, 0, 0, 0.01);
+    position: sticky;
+    top: 60px;
+    height: calc(100vh - 60px);
+    overflow-y: auto;
+}
+
+.docs-sidebar nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.docs-sidebar nav > ul > li {
+    margin-bottom: var(--spacing-lg);
+}
+
+.docs-sidebar .nav-section-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-muted);
+    margin-bottom: var(--spacing-sm);
+}
+
+.docs-sidebar nav a {
+    display: block;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: 4px;
+    color: var(--color-text);
+    border-bottom: none;
+    font-size: 0.9rem;
+}
+
+.docs-sidebar nav a:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--color-accent);
+}
+
+.docs-sidebar nav a.active {
+    background: var(--color-accent);
+    color: white;
+}
+
+.docs-content {
+    padding: var(--spacing-xl) var(--spacing-2xl);
+    max-width: 900px;
+}
+
+{% if features.breadcrumbs %}
+.breadcrumbs {
+    display: flex;
+    gap: var(--spacing-sm);
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    margin-bottom: var(--spacing-lg);
+}
+
+.breadcrumbs a { color: var(--color-muted); }
+.breadcrumbs a:hover { color: var(--color-accent); }
+.breadcrumbs span::before { content: "/"; margin-right: var(--spacing-sm); }
+{% endif %}
+
+{% if features.search %}
+.docs-search {
+    margin-bottom: var(--spacing-lg);
+}
+
+.docs-search input {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    background: var(--color-background);
+    color: var(--color-text);
+}
+
+.docs-search input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+}
+{% endif %}
+
+/* Mobile responsive */
+@media (max-width: 1024px) {
+    .docs-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .docs-sidebar {
+        display: none;
+        position: fixed;
+        left: 0;
+        top: 60px;
+        width: 280px;
+        height: calc(100vh - 60px);
+        z-index: 50;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .docs-sidebar.open {
+        display: block;
+    }
+    
+    .docs-content {
+        padding: var(--spacing-lg);
+    }
+    
+    .mobile-menu-toggle {
+        display: block;
+    }
+}
+
+@media (min-width: 1025px) {
+    .mobile-menu-toggle { display: none; }
+}
+{% endblock %}
+
+{% block css_components %}
+{{ super() }}
+
+{% if features.copy_code_buttons %}
+/* Copy code button */
+pre {
+    position: relative;
+}
+
+.copy-button {
+    position: absolute;
+    top: var(--spacing-sm);
+    right: var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 4px;
+    color: #888;
+    cursor: pointer;
+    font-size: 0.75rem;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+pre:hover .copy-button {
+    opacity: 1;
+}
+
+.copy-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+{% endif %}
+
+{% if features.collapsible_sections %}
+/* Collapsible sections */
+details {
+    margin: var(--spacing-md) 0;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+summary {
+    padding: var(--spacing-md);
+    background: rgba(0, 0, 0, 0.02);
+    cursor: pointer;
+    font-weight: 500;
+}
+
+summary:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+details[open] summary {
+    border-bottom: 1px solid var(--color-border);
+}
+
+details > :not(summary) {
+    padding: var(--spacing-md);
+}
+{% endif %}
+
+/* On this page (right sidebar mini-toc) */
+.on-this-page {
+    position: fixed;
+    right: var(--spacing-xl);
+    top: 100px;
+    width: 200px;
+    font-size: 0.85rem;
+}
+
+.on-this-page h4 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-muted);
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+.on-this-page ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.on-this-page a {
+    display: block;
+    padding: var(--spacing-xs) 0;
+    color: var(--color-muted);
+    border-bottom: none;
+    border-left: 2px solid transparent;
+    padding-left: var(--spacing-sm);
+}
+
+.on-this-page a:hover,
+.on-this-page a.active {
+    color: var(--color-accent);
+    border-left-color: var(--color-accent);
+}
+
+@media (max-width: 1400px) {
+    .on-this-page { display: none; }
+}
+{% endblock %}
+
+{% block main %}
+<div class="docs-container">
+    <header class="docs-header">
+        <div class="logo">
+            {% if logo %}<img src="{{ logo }}" alt="">{% endif %}
+            <span>{{ project_name | default('Documentation') }}</span>
+        </div>
+        <button class="mobile-menu-toggle" aria-label="Toggle menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 12h18M3 6h18M3 18h18"></path>
+            </svg>
+        </button>
+    </header>
+    
+    <aside class="docs-sidebar">
+        {% if features.search %}
+        <div class="docs-search">
+            <input type="search" placeholder="Search docs..." aria-label="Search documentation">
+        </div>
+        {% endif %}
+        
+        <nav>
+            {% if nav_items %}
+            {{ nav_items }}
+            {% endif %}
+        </nav>
+    </aside>
+    
+    <article class="docs-content">
+        {% if features.breadcrumbs and breadcrumbs %}
+        <nav class="breadcrumbs">
+            {{ breadcrumbs }}
+        </nav>
+        {% endif %}
+        
+        {% block content %}
+        {{ content }}
+        {% endblock %}
+        
+        {% if features.footer %}
+        <footer class="footer">
+            {{ footer_content | default('') }}
+        </footer>
+        {% endif %}
+    </article>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if features.copy_code_buttons %}
+<script>
+document.querySelectorAll('pre').forEach(pre => {
+    const button = document.createElement('button');
+    button.className = 'copy-button';
+    button.textContent = 'Copy';
+    button.addEventListener('click', () => {
+        const code = pre.querySelector('code') || pre;
+        navigator.clipboard.writeText(code.textContent).then(() => {
+            button.textContent = 'Copied!';
+            setTimeout(() => button.textContent = 'Copy', 2000);
+        });
+    });
+    pre.appendChild(button);
+});
+</script>
+{% endif %}
+
+<script>
+// Mobile menu toggle
+document.querySelector('.mobile-menu-toggle')?.addEventListener('click', () => {
+    document.querySelector('.docs-sidebar').classList.toggle('open');
+});
+</script>
+{% endblock %}

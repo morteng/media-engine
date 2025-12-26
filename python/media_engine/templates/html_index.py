@@ -59,12 +59,18 @@ class LanguageInfo:
 
 
 # Project Index Template (root index.html)
+# For single-language projects, this redirects to the language index
 PROJECT_INDEX_TEMPLATE = """<!DOCTYPE html>
-<html lang="en" data-theme="dark" class="project-index">
+<html lang="en" data-theme="dark" class="project-index{% if languages|length == 1 %} single-language{% endif %}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ project_name }} - Deliverables</title>
+    {% if languages|length == 1 %}
+    <meta http-equiv="refresh" content="0; url={{ languages[0].path }}">
+    <script>window.location.href = "{{ languages[0].path }}";</script>
+    {% endif %}
+    <link rel="icon" type="image/png" href="shared/favicon.png">
     <link rel="stylesheet" href="shared/fonts.css">
     <link rel="stylesheet" href="{{ assets_path }}/css/index.css">
     <style>
@@ -93,6 +99,7 @@ PROJECT_INDEX_TEMPLATE = """<!DOCTYPE html>
     </style>
 </head>
 <body>
+    {% if languages|length > 1 %}
     <div class="top-bar">
         {% if logo_path %}
         <div>
@@ -102,7 +109,7 @@ PROJECT_INDEX_TEMPLATE = """<!DOCTYPE html>
         {% else %}
         <span></span>
         {% endif %}
-        <button class="theme-toggle" id="theme-toggle">☀️ Light Mode</button>
+        <button class="theme-toggle" id="theme-toggle">Light Mode</button>
     </div>
 
     <div class="container">
@@ -129,6 +136,9 @@ PROJECT_INDEX_TEMPLATE = """<!DOCTYPE html>
     </footer>
 
     <script src="{{ assets_path }}/js/index.js"></script>
+    {% else %}
+    <p>Redirecting to deliverables...</p>
+    {% endif %}
 </body>
 </html>"""
 
@@ -139,7 +149,8 @@ LANGUAGE_INDEX_TEMPLATE = """<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ lang_name }} - {{ project_name }}</title>
+    <title>{{ project_name }} - {{ lang_name }} Deliverables</title>
+    <link rel="icon" type="image/png" href="../shared/favicon.png">
     <link rel="stylesheet" href="../shared/fonts.css">
     <link rel="stylesheet" href="{{ assets_path }}/css/index.css">
     <style>
@@ -176,9 +187,11 @@ LANGUAGE_INDEX_TEMPLATE = """<!DOCTYPE html>
                 <img src="{{ logo_path.replace('logo.', 'logo-light.') }}" alt="{{ project_name }}" class="logo logo-light">
             </div>
             {% endif %}
-            <a href="../index.html" class="back-link">← All Languages</a>
+            {% if show_back_link %}
+            <a href="../index.html" class="back-link">All Languages</a>
+            {% endif %}
         </div>
-        <button class="theme-toggle" id="theme-toggle">☀️ Light</button>
+        <button class="theme-toggle" id="theme-toggle">Light</button>
     </div>
 
     <div class="container">
@@ -307,6 +320,7 @@ class IndexTemplate:
         categories: List[DeliverableCategory],
         logo_path: Optional[str] = None,
         assets_path: str = "../shared/assets",
+        show_back_link: bool = True,
     ) -> str:
         """Render a language-specific index."""
         return self.language_template.render(
@@ -316,6 +330,7 @@ class IndexTemplate:
             categories=categories,
             logo_path=logo_path,
             assets_path=assets_path,
+            show_back_link=show_back_link,
             theme=self.theme,
             date=datetime.now().strftime("%Y-%m-%d"),
         )
@@ -344,9 +359,10 @@ def render_language_index(
     logo_path: Optional[str] = None,
     brand: "BrandContext" = None,
     assets_path: str = "../shared/assets",
+    show_back_link: bool = True,
 ) -> str:
     """Convenience function to render language index."""
     template = IndexTemplate(theme=theme, brand=brand)
     return template.render_language_index(
-        project_name, lang_code, lang_name, categories, logo_path, assets_path
+        project_name, lang_code, lang_name, categories, logo_path, assets_path, show_back_link
     )

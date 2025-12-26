@@ -4,11 +4,16 @@ import type {
   ProjectStatus,
   Document,
   DocumentContent,
+  PublicationRef,
+  PublicationsStatusResponse,
+  PublicationTranslationsResponse,
   TranslationMatrix,
   QualityIssue,
   FreshnessResponse,
   InsightsResponse,
   BuildStatus,
+  BuildStartResponse,
+  BuildOutputsResponse,
   AuditLogEntry,
   RecentProjectsResponse,
   OpenProjectResponse,
@@ -38,17 +43,58 @@ export const getStatus = () => api.get<ProjectStatus>('/status').then(r => r.dat
 
 // Documents
 export const getDocuments = (language: string) =>
-  api.get<{ documents: Document[] }>(`/documents/${language}`).then(r => {
-    // Transform flat document list into categories
+  api.get<{ documents: Document[]; publications: PublicationRef[] }>(`/documents/${language}`).then(r => {
+    // Group documents by publication first, then by type for orphans
     const categories: Record<string, Document[]> = {};
+    const publications = r.data.publications || [];
+
+    // First pass: group chapters by publication
+    const publicationDocs: Record<string, Document[]> = {};
+    const orphanChapters: Document[] = [];
+    const otherDocs: Document[] = [];
+
     for (const doc of r.data.documents || []) {
+      if (doc.type === 'chapter' && doc.publication) {
+        // Chapter belongs to a publication
+        const pubKey = doc.publication.key;
+        if (!publicationDocs[pubKey]) {
+          publicationDocs[pubKey] = [];
+        }
+        publicationDocs[pubKey].push(doc);
+      } else if (doc.type === 'chapter') {
+        // Orphan chapter (not in any publication)
+        orphanChapters.push(doc);
+      } else {
+        // Non-chapter document
+        otherDocs.push(doc);
+      }
+    }
+
+    // Add publications as categories (with their chapters)
+    for (const pub of publications) {
+      const docs = publicationDocs[pub.key] || [];
+      if (docs.length > 0) {
+        // Use publication title as category name with icon hint
+        const categoryName = `📚 ${pub.title}`;
+        categories[categoryName] = docs;
+      }
+    }
+
+    // Add orphan chapters as separate category
+    if (orphanChapters.length > 0) {
+      categories['Standalone Chapters'] = orphanChapters;
+    }
+
+    // Group remaining documents by type
+    for (const doc of otherDocs) {
       const category = doc.type || 'other';
       if (!categories[category]) {
         categories[category] = [];
       }
       categories[category].push(doc);
     }
-    return { categories };
+
+    return { categories, publications };
   });
 
 export const getDocument = (path: string) =>
@@ -75,6 +121,15 @@ export const getQuality = () =>
 export const getFreshness = () =>
   api.get<FreshnessResponse>('/freshness').then(r => r.data);
 
+// Publications
+export const getPublicationsStatus = (language?: string) =>
+  api.get<PublicationsStatusResponse>('/publications/status', {
+    params: language ? { language } : undefined
+  }).then(r => r.data);
+
+export const getPublicationTranslations = () =>
+  api.get<PublicationTranslationsResponse>('/publications/translations').then(r => r.data);
+
 // Insights
 export const getInsights = () =>
   api.get<InsightsResponse>('/insights').then(r => r.data);
@@ -86,10 +141,58 @@ export const getInsightsPath = (type: string) =>
 export const getBuildStatus = () =>
   api.get<BuildStatus>('/build/status').then(r => r.data);
 
+export const startBuild = (options: {
+  formats: string[];
+  languages: string[];
+  force?: boolean;
+}) => api.post<BuildStartResponse>('/build/start', null, {
+  params: {
+    formats: options.formats.join(','),
+    languages: options.languages.join(','),
+    force: options.force || false,
+  }
+}).then(r => r.data);
+
+export const cancelBuild = () =>
+  api.post<{ status: string; message?: string }>('/build/cancel').then(r => r.data);
+
+export const getBuildOutputs = () =>
+  api.get<BuildOutputsResponse>('/build/outputs').then(r => r.data);
+
+// Legacy alias for backward compatibility
 export const triggerBuild = (options: {
   formats: string[];
   languages: string[];
-}) => api.post<{ status: string; message: string }>('/build', options).then(r => r.data);
+}) => startBuild(options);
+
+// Publish configuration
+export interface PublishConfig {
+  publish_path: string;
+  desktop_deliverables: boolean;
+  default_path: string;
+  desktop_path: string;
+  project_name: string;
+}
+
+export interface PublishStartResponse {
+  status: string;
+  output_dir: string;
+  include_fonts: boolean;
+  include_diagrams: boolean;
+  include_videos: boolean;
+}
+
+export const getPublishConfig = () =>
+  api.get<PublishConfig>('/build/publish-config').then(r => r.data);
+
+export const startPublish = (options?: {
+  output_dir?: string;
+  include_fonts?: boolean;
+  include_diagrams?: boolean;
+  include_videos?: boolean;
+}) => api.post<PublishStartResponse>('/build/publish', null, {
+  params: options
+}).then(r => r.data);
 
 // Audit Log
 export const getAuditLog = (limit = 50) =>
@@ -386,6 +489,39 @@ export const getFlowGraph = (options?: {
 }) =>
   api.get<FlowGraphResponse>('/hierarchy/flow-graph', { params: options }).then(r => r.data);
 
+// Unified graph response type
+export interface UnifiedGraphNode {
+  id: string;
+  label: string;
+  type: string;
+  doc_type: string;
+  lifecycle: string;
+  is_stale: boolean;
+  language: string;
+}
+
+export interface UnifiedGraphEdge {
+  source: string;
+  target: string;
+  type: string;
+  label: string;
+  is_stale: boolean;
+}
+
+export interface UnifiedGraphResponse {
+  nodes: UnifiedGraphNode[];
+  edges: UnifiedGraphEdge[];
+  summary: {
+    node_count: number;
+    edge_count: number;
+    edge_types: Record<string, number>;
+  };
+}
+
+// Get unified graph with all relationship types
+export const getUnifiedGraph = (language?: string) =>
+  api.get<UnifiedGraphResponse>('/hierarchy/unified-graph', { params: { language } }).then(r => r.data);
+
 // ============== BRAND VOICE API ==============
 
 export interface VoiceStyle {
@@ -618,5 +754,82 @@ export const deleteBrandNote = (noteId: string) =>
 // Get complete brand guide
 export const getBrandGuide = () =>
   api.get<BrandGuideResponse>('/brand/guide').then(r => r.data);
+
+// ============== SETTINGS API ==============
+
+import type {
+  SettingsResponse,
+  SettingsDefaultsResponse,
+  SettingsProjectResponse,
+  SettingsUpdateRequest,
+  SettingsUpdateResponse,
+  SettingsValidationResponse,
+  EnvSettings,
+} from './types';
+
+// Get all settings with source annotations
+export const getSettings = () =>
+  api.get<SettingsResponse>('/settings').then(r => r.data);
+
+// Get frozen default values
+export const getSettingsDefaults = () =>
+  api.get<SettingsDefaultsResponse>('/settings/defaults').then(r => r.data);
+
+// Get project.yaml settings only
+export const getSettingsProject = () =>
+  api.get<SettingsProjectResponse>('/settings/project').then(r => r.data);
+
+// Get environment variables status
+export const getSettingsEnv = () =>
+  api.get<EnvSettings>('/settings/env').then(r => r.data);
+
+// Update project.yaml section
+export const updateSettings = (request: SettingsUpdateRequest) =>
+  api.put<SettingsUpdateResponse>('/settings/project', request).then(r => r.data);
+
+// Validate settings before saving
+export const validateSettings = (request: SettingsUpdateRequest) =>
+  api.post<SettingsValidationResponse>('/settings/validate', request).then(r => r.data);
+
+// ============== UNIFIED BUILD API ==============
+
+import type {
+  BuildPublicationsResponse,
+  UnifiedBuildRequest,
+  UnifiedBuildResponse,
+  PublishConfig as PublishConfigType,
+} from './types';
+
+// Get publications available for building
+export const getBuildPublications = () =>
+  api.get<BuildPublicationsResponse>('/build/publications').then(r => r.data);
+
+// Get available layout presets
+export interface LayoutPreset {
+  name: string;
+  description: string;
+  template: string;
+  formats: string[];
+  features: Record<string, boolean>;
+  maxWidth: string;
+  fontScale: number;
+  lineHeight: number;
+}
+
+export interface BuildPresetsResponse {
+  presets: LayoutPreset[];
+  default: string;
+}
+
+export const getBuildPresets = () =>
+  api.get<BuildPresetsResponse>('/build/presets').then(r => r.data);
+
+// Start unified build (optionally with publish)
+export const startUnifiedBuild = (request: UnifiedBuildRequest) =>
+  api.post<UnifiedBuildResponse>('/build/unified', request).then(r => r.data);
+
+// Get publish configuration
+export const getPublishConfiguration = () =>
+  api.get<PublishConfigType>('/build/publish-config').then(r => r.data);
 
 export default api;

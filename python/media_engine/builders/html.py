@@ -11,18 +11,21 @@ Features:
 - Responsive design
 - Dark mode support
 - PDF-ready styling
+- Template system with presets (Tier 1-3)
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Dict, List, Optional, Any
 
 import markdown
 from jinja2 import Template
 
 if TYPE_CHECKING:
     from ..brand import BrandContext
+    from ..core.project import Project
     from ..core.theme import Theme
+    from ..templates import LayoutPreset, TemplateRegistry
 
 
 # Professional HTML template with theme support
@@ -256,6 +259,30 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             color: var(--color-accent);
         }
 
+        /* Anchor Links (permalink symbols) - hide by default, show on hover */
+        .anchor {
+            opacity: 0;
+            font-size: 0.8em;
+            margin-left: 0.3em;
+            text-decoration: none;
+            color: var(--color-muted);
+            transition: opacity 0.2s ease;
+        }
+
+        h1:hover .anchor,
+        h2:hover .anchor,
+        h3:hover .anchor,
+        h4:hover .anchor,
+        h5:hover .anchor,
+        h6:hover .anchor {
+            opacity: 0.5;
+        }
+
+        .anchor:hover {
+            opacity: 1 !important;
+            color: var(--color-accent);
+        }
+
         /* Print Styles */
         @media print {
             body {
@@ -341,25 +368,58 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 class HTMLConfig:
     """Configuration for HTML generation."""
 
+    # Basic options
     include_toc: bool = False
     footer: str = ""
     lang: str = "en"
     use_local_fonts: bool = True  # Link to local fonts.css instead of relying on system fonts
     fonts_css_path: str = "../shared/fonts.css"
 
+    # Template system options (Tier 2-3)
+    preset: str = None  # Preset name: documentation, ebook, report, article, minimal
+    template: str = None  # Custom template name (overrides preset)
+
+    # Additional context for templates
+    project_name: str = ""
+    logo: str = ""
+    author: str = ""
+    description: str = ""
+    subtitle: str = ""
+
+    # Navigation (for documentation preset)
+    nav_items: str = ""
+    breadcrumbs: str = ""
+
+    # Document metadata
+    meta: Dict[str, Any] = field(default_factory=dict)
+
+    # Custom CSS to inject
+    custom_css: str = ""
+
+    # Feature overrides (override preset defaults)
+    feature_overrides: Dict[str, bool] = field(default_factory=dict)
+
 
 class HTMLBuilder:
     """Builds HTML documents with theme styling."""
 
-    def __init__(self, theme: "Theme" = None, brand: "BrandContext" = None):
+    def __init__(
+        self,
+        theme: "Theme" = None,
+        brand: "BrandContext" = None,
+        project: "Project" = None,
+    ):
         """
         Initialize HTML builder.
 
         Args:
             theme: Legacy Theme for styling (deprecated, use brand instead)
             brand: BrandContext for unified brand access (recommended)
+            project: Project for template lookup (enables Tier 3 templates)
         """
         self.brand = brand
+        self.project = project
+        self._template_registry = None
 
         if brand:
             # Convert BrandContext to Theme for template compatibility
@@ -369,7 +429,8 @@ class HTMLBuilder:
 
             self.theme = theme or COPPER_AND_CREAM
 
-        self.template = Template(HTML_TEMPLATE)
+        # Legacy template (fallback)
+        self._legacy_template = Template(HTML_TEMPLATE)
 
         # Markdown processor with extensions
         self.md = markdown.Markdown(
@@ -389,10 +450,50 @@ class HTMLBuilder:
                 "toc": {
                     "permalink": True,
                     "permalink_class": "anchor",
-                    "toc_depth": 1,  # Only H1 (chapters) in TOC
+                    "toc_depth": 3,  # H1-H3 in TOC
                 },
             },
         )
+
+    @property
+    def template_registry(self) -> "TemplateRegistry":
+        """Get or create template registry (lazy loading)."""
+        if self._template_registry is None:
+            from ..templates import TemplateRegistry
+
+            self._template_registry = TemplateRegistry(self.project)
+        return self._template_registry
+
+    def _get_preset(self, name: str) -> Optional["LayoutPreset"]:
+        """Get a preset by name."""
+        from ..templates import get_preset
+
+        return get_preset(name)
+
+    def _get_features(self, config: HTMLConfig) -> Dict[str, bool]:
+        """Get feature flags from preset and overrides."""
+        from ..templates import PresetFeatures
+
+        # Start with default features
+        features = PresetFeatures()
+
+        # Apply preset features if specified
+        if config.preset:
+            preset = self._get_preset(config.preset)
+            if preset:
+                features = preset.features
+
+        # Apply feature overrides
+        feature_dict = features.to_dict()
+        for key, value in config.feature_overrides.items():
+            if key in feature_dict:
+                feature_dict[key] = value
+
+        # Legacy compatibility: include_toc maps to toc feature
+        if config.include_toc:
+            feature_dict["toc"] = True
+
+        return feature_dict
 
     def build(
         self,
@@ -421,11 +522,38 @@ class HTMLBuilder:
 
         # Get TOC if enabled
         toc_html = ""
-        if config.include_toc and hasattr(self.md, "toc"):
+        features = self._get_features(config)
+        if (config.include_toc or features.get("toc")) and hasattr(self.md, "toc"):
             toc_html = self.md.toc
 
-        # Render template
-        html = self.template.render(
+        # Determine which template to use
+        template_name = config.template
+        preset = None
+
+        if not template_name and config.preset:
+            preset = self._get_preset(config.preset)
+            if preset:
+                template_name = preset.template
+
+        # Try to use template system (Tier 2-3)
+        if template_name:
+            try:
+                template = self.template_registry.get_template("html", template_name)
+                return self._render_with_template(
+                    template=template,
+                    content=html_content,
+                    title=title,
+                    config=config,
+                    features=features,
+                    preset=preset,
+                    toc_html=toc_html,
+                )
+            except Exception:
+                # Fall back to legacy template if template not found
+                pass
+
+        # Fallback: Legacy template (Tier 1)
+        html = self._legacy_template.render(
             title=title,
             theme=self.theme,
             content=html_content,
@@ -437,6 +565,53 @@ class HTMLBuilder:
         )
 
         return html
+
+    def _render_with_template(
+        self,
+        template,
+        content: str,
+        title: str,
+        config: HTMLConfig,
+        features: Dict[str, bool],
+        preset: Optional["LayoutPreset"],
+        toc_html: str,
+    ) -> str:
+        """Render content using the template system."""
+        # Build template context
+        context = {
+            # Core content
+            "content": content,
+            "title": title,
+            "toc": toc_html,
+
+            # Theme/styling
+            "theme": self.theme,
+            "features": features,
+            "preset": preset,
+
+            # Config options
+            "lang": config.lang,
+            "use_local_fonts": config.use_local_fonts,
+            "fonts_css_path": config.fonts_css_path,
+            "custom_css": config.custom_css,
+
+            # Document metadata
+            "project_name": config.project_name,
+            "logo": config.logo,
+            "author": config.author,
+            "description": config.description,
+            "subtitle": config.subtitle,
+            "meta": config.meta,
+
+            # Navigation
+            "nav_items": config.nav_items,
+            "breadcrumbs": config.breadcrumbs,
+
+            # Footer
+            "footer_content": config.footer,
+        }
+
+        return template.render(**context)
 
     def build_from_file(
         self,
@@ -456,6 +631,9 @@ class HTMLBuilder:
             HTML string
         """
         content = source_path.read_text()
+
+        # Strip YAML frontmatter if present
+        content = self._strip_frontmatter(content)
 
         # Extract title from first H1 if not provided
         if not title:
@@ -491,6 +669,8 @@ class HTMLBuilder:
         for path in source_paths:
             if path.exists():
                 content = path.read_text()
+                # Strip YAML frontmatter if present
+                content = self._strip_frontmatter(content)
                 combined_content.append(content)
 
         return self.build(
@@ -498,6 +678,23 @@ class HTMLBuilder:
             title,
             config,
         )
+
+    def _strip_frontmatter(self, content: str) -> str:
+        """
+        Strip YAML frontmatter from Markdown content.
+
+        Args:
+            content: Markdown content that may have frontmatter
+
+        Returns:
+            Content without frontmatter
+        """
+        import re
+
+        # Match YAML frontmatter: starts with ---, ends with ---
+        # Must be at the start of the document
+        frontmatter_pattern = r'^---\s*\n.*?\n---\s*\n'
+        return re.sub(frontmatter_pattern, '', content, count=1, flags=re.DOTALL)
 
     def save(
         self,

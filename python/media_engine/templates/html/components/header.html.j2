@@ -1,0 +1,34 @@
+{# Header Component #}
+<header class="site-header">
+    <div class="header-container">
+        {% if logo %}
+        <a href="/" class="logo">
+            <img src="{{ logo }}" alt="{{ logo_alt | default('Logo') }}">
+        </a>
+        {% endif %}
+        
+        <div class="header-title">
+            {% if title %}<span class="title">{{ title }}</span>{% endif %}
+        </div>
+        
+        {% if nav_items %}
+        <nav class="header-nav" aria-label="Main navigation">
+            <ul>
+                {% for item in nav_items %}
+                <li>
+                    <a href="{{ item.url }}"{% if item.active %} class="active"{% endif %}>
+                        {{ item.label }}
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% if show_search %}
+        <div class="header-search">
+            <input type="search" placeholder="Search..." aria-label="Search">
+        </div>
+        {% endif %}
+    </div>
+</header>

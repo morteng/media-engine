@@ -32,6 +32,14 @@ export interface ProjectStatus {
   };
 }
 
+export interface PublicationRef {
+  key: string;
+  title: string;
+  pub_type: 'book' | 'deck' | 'spreadsheet' | 'report';
+  item_count: number;
+  item_label: 'chapters' | 'slides' | 'sources';
+}
+
 export interface Document {
   path: string;
   filename: string;
@@ -39,6 +47,7 @@ export interface Document {
   type: 'chapter' | 'deliverable' | 'script' | 'slides' | 'diagram' | 'data' | 'demo';
   language: string;
   frontmatter?: Record<string, unknown>;
+  publication?: PublicationRef | null;  // Which publication this doc belongs to
 }
 
 export interface DocumentContent {
@@ -233,11 +242,59 @@ export interface GraphLink {
   weight: number;
 }
 
+export interface BuildLogEntry {
+  timestamp: string;
+  message: string;
+  level: 'info' | 'success' | 'warning' | 'error';
+}
+
+export interface BuildOutput {
+  path: string;
+  name: string;
+  format: string;
+  language: string;
+  size: number;
+  modified: string;
+}
+
+export interface FreshnessWarning {
+  stale: number;
+  expired: number;
+  message: string;
+}
+
 export interface BuildStatus {
-  isBuilding: boolean;
+  active: boolean;
+  progress: number;
+  logs: BuildLogEntry[];
+  last_build: string | null;
+  freshness_warning: FreshnessWarning | null;
+  outputs: BuildOutput[];
+  // Deprecated - keeping for backward compatibility
+  isBuilding?: boolean;
   lastBuild?: string;
   lastBuildStatus?: 'success' | 'failed';
-  availableFormats: string[];
+  availableFormats?: string[];
+}
+
+export interface BuildStartResponse {
+  status: 'started' | 'error';
+  formats: string[];
+  languages: string[];
+  force: boolean;
+  message?: string;
+}
+
+export interface BuildOutputsResponse {
+  outputs: BuildOutput[];
+}
+
+export interface DeliverableConfig {
+  output_dir: string;
+  package_name: string;
+  include_source: boolean;
+  create_zip: boolean;
+  version_folders: boolean;
 }
 
 export interface AuditLogEntry {
@@ -713,4 +770,409 @@ export interface FlowGraphResponse {
   levels: FlowGraphLevel[];
   staleness_summary: StalenessSummary;
   error?: string;
+}
+
+// ============== SETTINGS TYPES ==============
+
+export type SettingSource = 'default' | 'project' | 'env';
+
+export interface SettingValue<T = unknown> {
+  value: T;
+  source: SettingSource;
+  default: T;
+  editable: boolean;
+  description: string;
+  category: string;
+  type?: string;
+  is_set?: boolean;  // For env vars
+  sensitive?: boolean;  // For env vars
+}
+
+export interface ProjectSettings {
+  name: SettingValue<string>;
+  description: SettingValue<string>;
+  source_language: SettingValue<string>;
+  languages: SettingValue<string[]>;
+}
+
+export interface VideoSettings {
+  width: SettingValue<number>;
+  height: SettingValue<number>;
+  fps: SettingValue<number>;
+}
+
+export interface VoiceoverSettings {
+  provider: SettingValue<string>;
+  stability: SettingValue<number>;
+  similarity_boost: SettingValue<number>;
+}
+
+export interface QualitySettings {
+  freshness_default_days: SettingValue<number>;
+  max_sentence_words: SettingValue<number>;
+}
+
+export interface PathsSettings {
+  content: SettingValue<string>;
+  assets: SettingValue<string>;
+  output: SettingValue<string>;
+  publish?: SettingValue<string>;
+  desktop_deliverables?: SettingValue<boolean>;
+}
+
+export interface EnvSettings {
+  [key: string]: SettingValue<string>;
+}
+
+export interface SettingsResponse {
+  project: ProjectSettings;
+  video: VideoSettings;
+  voiceover: VoiceoverSettings;
+  quality: QualitySettings;
+  paths: PathsSettings;
+  environment: EnvSettings;
+}
+
+export interface SettingsDefaultsResponse {
+  video: Record<string, SettingValue>;
+  voiceover: Record<string, SettingValue>;
+  quality: Record<string, SettingValue>;
+  web: Record<string, SettingValue>;
+  network: Record<string, SettingValue>;
+  cache: Record<string, SettingValue>;
+  cli: Record<string, SettingValue>;
+}
+
+export interface SettingsProjectResponse {
+  path: string;
+  config: Record<string, unknown>;
+  last_modified: string;
+}
+
+export interface SettingsUpdateRequest {
+  section: 'project' | 'video' | 'voiceover' | 'quality' | 'paths' | 'localization';
+  updates: Record<string, unknown>;
+}
+
+export interface SettingsUpdateResponse {
+  status: 'success' | 'error';
+  section: string;
+  updated_fields: string[];
+  backup_path?: string;
+  requires_reload?: boolean;
+}
+
+export interface SettingsValidationResponse {
+  valid: boolean;
+  errors: Record<string, string>;
+}
+
+// ============== PUBLICATIONS TYPES ==============
+
+export interface PublicationOutput {
+  format: string;
+  template: string;
+  filename: string;
+  single_file: boolean;
+  toc: boolean;
+}
+
+export interface PublicationChapter {
+  path: string;
+  required: boolean;
+  sections: string[];
+}
+
+export interface PublicationMetadata {
+  version: string;
+  status: string;
+  author: string;
+  copyright: string;
+  license: string;
+  isbn: string | null;
+  edition: string;
+  publication_date: string | null;
+  target_audience: string;
+  reading_time: string;
+}
+
+export interface PublicationValidation {
+  is_valid: boolean;
+  issues: string[];
+  chapter_count: number;
+  missing_chapters: number;
+  translation_current: boolean;
+  source_changed: boolean;
+}
+
+export interface Publication {
+  key: string;
+  title: string;
+  subtitle: string;
+  language: string;
+  status: string;
+  version: string;
+  chapter_count: number;
+  output_formats: string[];
+  is_translation: boolean;
+  source_document: string | null;
+}
+
+export interface PublicationDetail extends Publication {
+  description: string;
+  metadata: PublicationMetadata;
+  chapters: PublicationChapter[];
+  outputs: PublicationOutput[];
+  source_hash: string | null;
+  validation: PublicationValidation;
+  assets: string[];
+  related: string[];
+}
+
+export interface PublicationsResponse {
+  publications: Publication[];
+  total: number;
+}
+
+export interface PublicationStatusItem {
+  key: string;
+  title: string;
+  language: string;
+  pub_type: 'book' | 'deck' | 'spreadsheet' | 'report';
+  status: string;
+  is_valid: boolean;
+  issues_count: number;
+  item_count: number;
+  item_label: 'chapters' | 'slides' | 'sources';
+  chapter_count: number;
+  slide_count: number;
+  data_source_count: number;
+  missing_chapters: number;
+  is_translation: boolean;
+  translation_current: boolean;
+  source_changed: boolean;
+}
+
+export interface PublicationsStatusResponse {
+  publications: PublicationStatusItem[];
+  summary: {
+    total: number;
+    valid: number;
+    invalid: number;
+    translations_current: number;
+    translations_outdated: number;
+    total_issues: number;
+  };
+}
+
+export interface PublicationTranslationPair {
+  source: {
+    key: string;
+    title: string;
+    language: string;
+    content_hash: string;
+  };
+  translation: {
+    key: string;
+    title: string;
+    language: string;
+    source_hash: string | null;
+  };
+  sync_status: {
+    is_current: boolean;
+    source_changed: boolean;
+    needs_update: boolean;
+  };
+}
+
+export interface PublicationTranslationsResponse {
+  pairs: PublicationTranslationPair[];
+  total: number;
+  outdated: number;
+}
+
+// ============== AI WORKSPACE TYPES ==============
+
+export interface AISession {
+  id: string;
+  task_id: string;
+  status: 'active' | 'paused' | 'completed' | 'failed';
+  started_at: string;
+  last_active?: string;
+  completed_at?: string;
+  progress: {
+    total_steps: number;
+    completed_steps: number;
+    current_step?: string;
+  };
+  changes: Array<{
+    type: string;
+    path: string;
+    description: string;
+    timestamp: string;
+  }>;
+}
+
+export interface AISessionsResponse {
+  sessions: AISession[];
+  active_count: number;
+  total_count: number;
+}
+
+export type NoteType =
+  | 'uncertainty'
+  | 'suggestion'
+  | 'human_review'
+  | 'decision'
+  | 'todo'
+  | 'warning'
+  | 'info';
+
+export interface AINote {
+  id: string;
+  type: NoteType;
+  content: string;
+  context?: string;
+  document_path?: string;
+  created_at: string;
+  resolved: boolean;
+  resolved_at?: string;
+  resolution?: string;
+}
+
+export interface AINotesResponse {
+  notes: AINote[];
+  unresolved_count: number;
+  total_count: number;
+}
+
+export interface AITask {
+  id: string;
+  type: string;
+  description: string;
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  status: 'pending' | 'claimed' | 'in_progress' | 'completed' | 'failed';
+  created_at: string;
+  claimed_by?: string;
+  claimed_at?: string;
+  completed_at?: string;
+  document_path?: string;
+  context?: Record<string, unknown>;
+}
+
+export interface AITaskQueueResponse {
+  tasks: AITask[];
+  pending_count: number;
+  in_progress_count: number;
+}
+
+export interface AIResearchEntry {
+  key: string;
+  value: unknown;
+  context?: string;
+  tags: string[];
+  created_at: string;
+  updated_at: string;
+  is_stale: boolean;
+  confidence?: number;
+}
+
+export interface AIResearchResponse {
+  entries: AIResearchEntry[];
+  stale_count: number;
+  total_count: number;
+}
+
+export interface AIDecision {
+  id: string;
+  decision: string;
+  rationale: string;
+  context: string;
+  document_path?: string;
+  session_id?: string;
+  created_at: string;
+}
+
+export interface AIDecisionsResponse {
+  decisions: AIDecision[];
+  total_count: number;
+}
+
+export interface AIContextData {
+  project: {
+    name: string;
+    languages: string[];
+    document_count: number;
+  };
+  publications: {
+    total: number;
+    valid: number;
+    stale: number;
+  };
+  active_session?: {
+    id: string;
+    task_id: string;
+    progress: number;
+  };
+  pending_tasks: number;
+  unresolved_notes: number;
+  stale_research: number;
+  recent_decisions: number;
+  health_score: number;
+  last_refresh: string;
+}
+
+export interface AIContextResponse {
+  context: AIContextData;
+  success: boolean;
+}
+
+// ============== UNIFIED BUILD TYPES ==============
+
+export interface PublicationBuildInfo {
+  key: string;
+  title: string;
+  pub_type: 'book' | 'deck' | 'spreadsheet' | 'report';
+  languages: string[];
+  formats: string[];  // Available formats from publication config
+  lastBuilt?: string;
+  isStale?: boolean;
+}
+
+export interface BuildPublicationsResponse {
+  publications: PublicationBuildInfo[];
+  projectLanguages: string[];
+}
+
+export interface UnifiedBuildPublication {
+  key: string;
+  formats: string[];
+  languages: string[];
+}
+
+export interface UnifiedBuildRequest {
+  publications: UnifiedBuildPublication[];
+  outputDir?: string;
+  includeFonts?: boolean;
+  includeDiagrams?: boolean;
+  includeVideos?: boolean;
+  includeNavigation?: boolean;
+  publish?: boolean;  // If true, package after building
+  preset?: string;    // Layout preset for HTML output (documentation, ebook, report, etc.)
+}
+
+export interface UnifiedBuildResponse {
+  status: 'started' | 'error';
+  publications: UnifiedBuildPublication[];
+  publish: boolean;
+  outputDir?: string;
+  message?: string;
+}
+
+export interface PublishConfig {
+  publishDir: string;
+  defaultDir: string;
+  desktopDir: string;
+  useDesktop: boolean;
+  projectName: string;
 }

@@ -52,7 +52,7 @@ from .settings import (
     get_default,
 )
 from .status import get_project_dashboard, print_dashboard
-from .templates import DocumentTemplate, render_document
+from .templates import TemplateRegistry, LayoutPreset, get_preset, PRESETS
 from .validation import ValidationReport, validate_project
 
 # Advanced analysis modules (lazy imports to avoid heavy dependencies)
@@ -125,8 +125,10 @@ __all__ = [
     "Document",
     "DocumentCollection",
     # Templates
-    "DocumentTemplate",
-    "render_document",
+    "TemplateRegistry",
+    "LayoutPreset",
+    "get_preset",
+    "PRESETS",
     # Assets
     "download_google_fonts",
     "bundle_project_assets",

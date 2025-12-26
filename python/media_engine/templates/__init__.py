@@ -1,60 +1,65 @@
 """
 Media Engine Templates Module
 
-Professional HTML templates with:
-- Sidebar navigation
-- Theme toggle (light/dark)
-- Reading progress bar
-- Print-optimized styles
-- Self-contained offline support
+Three-tier template system for output generation:
+
+Tier 1: Zero-Config (Brand-Driven)
+    - Automatic styling from brand.yaml
+    - No template configuration needed
+    - Works out of the box
+
+Tier 2: Preset-Based Customization
+    - Layout presets: documentation, ebook, report, presentation
+    - Feature toggles: toc, navigation, print_friendly
+    - Configure in publication.yaml
+
+Tier 3: Full Template Control
+    - Custom Jinja2 templates in project templates/ directory
+    - Component overrides
+    - Full control over output structure
+
+Usage:
+    from media_engine.templates import TemplateRegistry, get_preset
+
+    # Get preset configuration
+    preset = get_preset("documentation")
+
+    # Load template
+    registry = TemplateRegistry(project)
+    template = registry.get_template("html", preset.template)
 """
 
+from .registry import (
+    TemplateRegistry,
+    TemplateInfo,
+    get_builtin_templates,
+    get_template_path,
+)
+from .presets import (
+    LayoutPreset,
+    PresetFeatures,
+    get_preset,
+    get_all_presets,
+    PRESETS,
+)
 from .components import (
-    BackToTop,
-    ReadingProgress,
-    Sidebar,
-    ThemeToggle,
-)
-from .html_document import (
-    ChapterConfig,
-    CoverConfig,
-    DocumentTemplate,
-    render_document,
-)
-from .html_index import (
-    DeliverableCategory,
-    DeliverableItem,
-    FormatLink,
-    IndexTemplate,
-    LanguageInfo,
-    render_language_index,
-    render_project_index,
-)
-from .html_presentation import (
-    PresentationTemplate,
-    Slide,
-    build_presentation_from_yaml,
-    render_presentation,
+    ComponentRegistry,
+    render_component,
 )
 
 __all__ = [
-    "DocumentTemplate",
-    "CoverConfig",
-    "ChapterConfig",
-    "render_document",
-    "IndexTemplate",
-    "render_language_index",
-    "render_project_index",
-    "DeliverableCategory",
-    "DeliverableItem",
-    "FormatLink",
-    "LanguageInfo",
-    "PresentationTemplate",
-    "Slide",
-    "build_presentation_from_yaml",
-    "render_presentation",
-    "ThemeToggle",
-    "ReadingProgress",
-    "BackToTop",
-    "Sidebar",
+    # Registry
+    "TemplateRegistry",
+    "TemplateInfo",
+    "get_builtin_templates",
+    "get_template_path",
+    # Presets
+    "LayoutPreset",
+    "PresetFeatures",
+    "get_preset",
+    "get_all_presets",
+    "PRESETS",
+    # Components
+    "ComponentRegistry",
+    "render_component",
 ]

@@ -1,0 +1,240 @@
+{# Article Template - Single-page article layout #}
+{% extends "base.html.j2" %}
+
+{% block css_layout %}
+{{ super() }}
+
+/* Article-specific layout */
+.article-container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: var(--spacing-2xl) var(--spacing-lg);
+}
+
+.article-header {
+    text-align: center;
+    margin-bottom: var(--spacing-2xl);
+    padding-bottom: var(--spacing-xl);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.article-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: var(--spacing-md);
+    border-bottom: none;
+}
+
+.article-meta {
+    color: var(--color-muted);
+    font-size: 0.9rem;
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-lg);
+}
+
+.article-meta .author {
+    font-weight: 500;
+}
+
+.article-meta .date::before {
+    content: "•";
+    margin-right: var(--spacing-lg);
+}
+
+.article-meta .reading-time::before {
+    content: "•";
+    margin-right: var(--spacing-lg);
+}
+
+/* Featured image */
+.featured-image {
+    margin: 0 calc(-1 * var(--spacing-lg));
+    margin-bottom: var(--spacing-2xl);
+}
+
+.featured-image img {
+    width: 100%;
+    border-radius: 0;
+    margin: 0;
+}
+
+.featured-image figcaption {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    margin-top: var(--spacing-sm);
+    font-style: italic;
+}
+
+/* Lead paragraph */
+.article-content > p:first-of-type {
+    font-size: 1.2rem;
+    color: var(--color-secondary);
+    line-height: 1.6;
+}
+
+/* Pull quote in article */
+.article-content blockquote.pullquote {
+    font-size: 1.5rem;
+    font-style: italic;
+    color: var(--color-primary);
+    text-align: center;
+    margin: var(--spacing-2xl) 0;
+    padding: var(--spacing-lg) 0;
+    border-left: none;
+    border-top: 2px solid var(--color-accent);
+    border-bottom: 2px solid var(--color-accent);
+}
+{% endblock %}
+
+{% block css_components %}
+{{ super() }}
+
+/* Article author bio */
+.author-bio {
+    display: flex;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-xl);
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 8px;
+    margin-top: var(--spacing-2xl);
+}
+
+.author-bio .avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.author-bio .name {
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+}
+
+.author-bio .bio {
+    font-size: 0.9rem;
+    color: var(--color-muted);
+}
+
+/* Share buttons */
+.share-buttons {
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: center;
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--color-border);
+}
+
+.share-buttons a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--color-muted);
+    border-bottom: none;
+}
+
+.share-buttons a:hover {
+    background: var(--color-accent);
+    color: white;
+}
+
+/* Related articles */
+.related-articles {
+    margin-top: var(--spacing-2xl);
+    padding-top: var(--spacing-xl);
+    border-top: 1px solid var(--color-border);
+}
+
+.related-articles h3 {
+    margin-top: 0;
+}
+
+.related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.related-card {
+    padding: var(--spacing-md);
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 8px;
+}
+
+.related-card h4 {
+    margin: 0 0 var(--spacing-sm) 0;
+    font-size: 1rem;
+}
+
+.related-card a {
+    color: var(--color-text);
+    border-bottom: none;
+}
+
+.related-card a:hover {
+    color: var(--color-accent);
+}
+{% endblock %}
+
+{% block main %}
+<article class="article-container">
+    <header class="article-header">
+        <h1>{{ title }}</h1>
+        <div class="article-meta">
+            {% if author %}<span class="author">{{ author }}</span>{% endif %}
+            {% if date %}<span class="date">{{ date }}</span>{% endif %}
+            {% if reading_time %}<span class="reading-time">{{ reading_time }} min read</span>{% endif %}
+        </div>
+    </header>
+    
+    {% if featured_image %}
+    <figure class="featured-image">
+        <img src="{{ featured_image }}" alt="{{ featured_image_alt | default('') }}">
+        {% if featured_image_caption %}
+        <figcaption>{{ featured_image_caption }}</figcaption>
+        {% endif %}
+    </figure>
+    {% endif %}
+    
+    <div class="article-content">
+        {% block content %}
+        {{ content }}
+        {% endblock %}
+    </div>
+    
+    {% if author_bio %}
+    <aside class="author-bio">
+        {% if author_avatar %}<img src="{{ author_avatar }}" alt="" class="avatar">{% endif %}
+        <div>
+            <div class="name">{{ author }}</div>
+            <div class="bio">{{ author_bio }}</div>
+        </div>
+    </aside>
+    {% endif %}
+    
+    {% if related_articles %}
+    <aside class="related-articles">
+        <h3>Related Articles</h3>
+        <div class="related-grid">
+            {% for article in related_articles %}
+            <div class="related-card">
+                <h4><a href="{{ article.url }}">{{ article.title }}</a></h4>
+            </div>
+            {% endfor %}
+        </div>
+    </aside>
+    {% endif %}
+    
+    {% if features.footer %}
+    <footer class="footer">
+        {{ footer_content | default('') }}
+    </footer>
+    {% endif %}
+</article>
+{% endblock %}

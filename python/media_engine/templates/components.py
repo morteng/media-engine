@@ -1,308 +1,205 @@
 """
-Reusable HTML Components
+Template Components
 
-Components for building professional HTML documents:
-- Theme toggle button
-- Reading progress bar
-- Back to top button
-- Sidebar navigation
+Reusable template components for building output documents.
+Components can be overridden by placing custom versions in project templates/components/.
 """
 
-from dataclasses import dataclass
-from typing import List
+from pathlib import Path
+from typing import TYPE_CHECKING, Dict, Any, Optional
+
+from jinja2 import Environment, FileSystemLoader, ChoiceLoader
+
+if TYPE_CHECKING:
+    from ..core.project import Project
+    from ..brand import BrandContext
 
 
-@dataclass
-class ThemeToggle:
-    """Theme toggle button component."""
-
-    default_theme: str = "dark"
-
-    def render(self) -> str:
-        return """
-<button class="topbar-btn" id="theme-toggle">
-    <span id="theme-icon">☀️</span>
-    <span id="theme-text">Light</span>
-</button>
-"""
-
-    def render_script(self) -> str:
-        return f"""
-const themeToggle = document.getElementById('theme-toggle');
-const themeIcon = document.getElementById('theme-icon');
-const themeText = document.getElementById('theme-text');
-
-function setTheme(theme) {{
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-    if (theme === 'light') {{
-        themeIcon.textContent = '🌙';
-        themeText.textContent = 'Dark';
-    }} else {{
-        themeIcon.textContent = '☀️';
-        themeText.textContent = 'Light';
-    }}
-}}
-
-const savedTheme = localStorage.getItem('theme') || '{self.default_theme}';
-setTheme(savedTheme);
-
-themeToggle.addEventListener('click', () => {{
-    const current = document.documentElement.getAttribute('data-theme');
-    setTheme(current === 'light' ? 'dark' : 'light');
-}});
-"""
-
-
-@dataclass
-class ReadingProgress:
-    """Reading progress bar component."""
-
-    def render(self) -> str:
-        return """
-<div class="progress-bar">
-    <div class="progress-bar-fill" id="progress"></div>
-</div>
-"""
-
-    def render_script(self) -> str:
-        return """
-const progressBar = document.getElementById('progress');
-window.addEventListener('scroll', () => {
-    const scrollTop = window.scrollY;
-    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    const progress = (scrollTop / docHeight) * 100;
-    progressBar.style.width = progress + '%';
-});
-"""
-
-    def render_css(self) -> str:
-        return """
-.progress-bar {
-    position: fixed;
-    top: 0;
-    left: 280px;
-    right: 0;
-    height: 3px;
-    background: var(--bg-tertiary);
-    z-index: 200;
-}
-
-.progress-bar-fill {
-    height: 100%;
-    background: var(--accent-color);
-    width: 0%;
-    transition: width 0.1s ease;
-}
-"""
-
-
-@dataclass
-class BackToTop:
-    """Back to top button component."""
-
-    def render(self) -> str:
-        return """
-<button class="back-to-top" id="back-to-top">↑</button>
-"""
-
-    def render_script(self) -> str:
-        return """
-const backToTop = document.getElementById('back-to-top');
-window.addEventListener('scroll', () => {
-    if (window.scrollY > 300) {
-        backToTop.classList.add('visible');
-    } else {
-        backToTop.classList.remove('visible');
-    }
-});
-backToTop.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-});
-"""
-
-    def render_css(self) -> str:
-        return """
-.back-to-top {
-    position: fixed;
-    bottom: 32px;
-    right: 32px;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: var(--accent-color);
-    color: white;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.2s ease;
-    font-size: 20px;
-}
-
-.back-to-top.visible {
-    opacity: 1;
-    visibility: visible;
-}
-
-.back-to-top:hover {
-    background: var(--accent-hover);
-    transform: translateY(-2px);
-}
-"""
+class ComponentRegistry:
+    """
+    Registry for template components.
+    
+    Components are small, reusable template fragments like:
+    - header: Page header with logo and navigation
+    - footer: Page footer with copyright and links
+    - toc: Table of contents
+    - nav: Navigation sidebar
+    - callout: Alert/info boxes
+    - code_block: Styled code blocks
+    """
+    
+    BUILTIN_COMPONENTS = [
+        "header",
+        "footer",
+        "toc",
+        "nav",
+        "callout",
+        "code_block",
+        "breadcrumbs",
+        "search",
+        "pagination",
+    ]
+    
+    def __init__(self, project: "Project" = None, brand: "BrandContext" = None):
+        """
+        Initialize component registry.
+        
+        Args:
+            project: Project for finding custom components
+            brand: BrandContext for styling
+        """
+        self.project = project
+        self.brand = brand
+        
+        # Build loader chain
+        loaders = []
+        
+        # Custom components (highest priority)
+        if project:
+            custom_path = project.root / "templates" / "components"
+            if custom_path.exists():
+                loaders.append(FileSystemLoader(str(custom_path)))
+        
+        # Built-in components
+        builtin_path = Path(__file__).parent / "html" / "components"
+        if builtin_path.exists():
+            loaders.append(FileSystemLoader(str(builtin_path)))
+        
+        self.env = Environment(
+            loader=ChoiceLoader(loaders) if loaders else None,
+            autoescape=True,
+            trim_blocks=True,
+            lstrip_blocks=True,
+        )
+    
+    def render(self, name: str, **context) -> str:
+        """
+        Render a component.
+        
+        Args:
+            name: Component name
+            **context: Template context
+            
+        Returns:
+            Rendered HTML string
+        """
+        try:
+            template = self.env.get_template(f"{name}.html.j2")
+            return template.render(**context)
+        except Exception:
+            # Return empty string if component not found
+            return ""
+    
+    def has_component(self, name: str) -> bool:
+        """Check if a component exists."""
+        try:
+            self.env.get_template(f"{name}.html.j2")
+            return True
+        except Exception:
+            return False
+    
+    def list_components(self) -> list:
+        """List all available components."""
+        components = []
+        
+        # Check for custom components
+        if self.project:
+            custom_path = self.project.root / "templates" / "components"
+            if custom_path.exists():
+                for f in custom_path.glob("*.html.j2"):
+                    components.append({
+                        "name": f.stem.replace(".html", ""),
+                        "source": "custom",
+                        "path": f,
+                    })
+        
+        # Add built-in components
+        for name in self.BUILTIN_COMPONENTS:
+            if name not in [c["name"] for c in components]:
+                components.append({
+                    "name": name,
+                    "source": "builtin",
+                })
+        
+        return components
 
 
-@dataclass
-class TocItem:
-    """Table of contents item."""
+def render_component(
+    name: str,
+    project: "Project" = None,
+    brand: "BrandContext" = None,
+    **context,
+) -> str:
+    """
+    Convenience function to render a component.
+    
+    Args:
+        name: Component name
+        project: Optional project for custom components
+        brand: Optional brand for styling
+        **context: Template context
+        
+    Returns:
+        Rendered HTML string
+    """
+    registry = ComponentRegistry(project, brand)
+    return registry.render(name, **context)
 
-    id: str
-    title: str
-    level: int = 1
+
+# Pre-built component renderers for common use cases
+def render_header(
+    title: str,
+    logo: Optional[str] = None,
+    nav_items: list = None,
+    brand: "BrandContext" = None,
+) -> str:
+    """Render a page header component."""
+    return render_component(
+        "header",
+        title=title,
+        logo=logo,
+        nav_items=nav_items or [],
+        brand=brand,
+    )
 
 
-@dataclass
-class Sidebar:
-    """Sidebar navigation component."""
+def render_footer(
+    copyright_text: str = "",
+    links: list = None,
+    brand: "BrandContext" = None,
+) -> str:
+    """Render a page footer component."""
+    return render_component(
+        "footer",
+        copyright_text=copyright_text,
+        links=links or [],
+        brand=brand,
+    )
 
-    title: str = ""
-    version: str = ""
-    logo_path: str = None
-    items: List[TocItem] = None
 
-    def __post_init__(self):
-        if self.items is None:
-            self.items = []
+def render_toc(
+    headings: list,
+    max_depth: int = 3,
+    include_numbers: bool = False,
+) -> str:
+    """Render a table of contents component."""
+    return render_component(
+        "toc",
+        headings=headings,
+        max_depth=max_depth,
+        include_numbers=include_numbers,
+    )
 
-    def render(self) -> str:
-        items_html = ""
-        for item in self.items:
-            indent = "  " * (item.level - 1)
-            items_html += f'''
-<li class="toc-item toc-level-{item.level}" data-chapter="{item.id}">
-    <a class="toc-link" href="#{item.id}">{indent}{item.title}</a>
-</li>
-'''
 
-        logo_html = ""
-        if self.logo_path:
-            logo_html = f'<img src="{self.logo_path}" alt="Logo" class="sidebar-logo">'
-
-        return f"""
-<nav class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-        {logo_html}
-        <div class="sidebar-title">{self.title}</div>
-        {f'<div class="sidebar-version">Version {self.version}</div>' if self.version else ""}
-    </div>
-    <ul class="toc">
-        {items_html}
-    </ul>
-</nav>
-"""
-
-    def render_script(self) -> str:
-        return """
-const tocItems = document.querySelectorAll('.toc-item');
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            tocItems.forEach(item => item.classList.remove('active'));
-            const id = entry.target.id;
-            const tocItem = document.querySelector(`.toc-item[data-chapter="${id}"]`);
-            if (tocItem) tocItem.classList.add('active');
-        }
-    });
-}, { rootMargin: '-80px 0px -70% 0px' });
-
-document.querySelectorAll('.chapter, h2[id], h3[id]').forEach(section => {
-    observer.observe(section);
-});
-"""
-
-    def render_css(self) -> str:
-        return """
-.sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 280px;
-    height: 100vh;
-    background: var(--bg-secondary);
-    border-right: 1px solid var(--border-color);
-    overflow-y: auto;
-    padding: 24px 0;
-    z-index: 100;
-}
-
-.sidebar-header {
-    padding: 0 20px 20px;
-    border-bottom: 1px solid var(--border-color);
-    margin-bottom: 16px;
-}
-
-.sidebar-logo {
-    max-width: 120px;
-    height: auto;
-    margin-bottom: 12px;
-}
-
-.sidebar-title {
-    font-family: var(--font-heading);
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.sidebar-version {
-    font-size: 12px;
-    color: var(--text-muted);
-}
-
-.toc {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.toc-item {
-    border-left: 2px solid transparent;
-}
-
-.toc-item.active {
-    border-left-color: var(--accent-color);
-    background: var(--accent-light);
-}
-
-.toc-link {
-    display: block;
-    padding: 8px 20px;
-    color: var(--text-secondary);
-    text-decoration: none;
-    font-size: 14px;
-    transition: all 0.15s ease;
-}
-
-.toc-link:hover {
-    color: var(--accent-color);
-    background: var(--bg-tertiary);
-}
-
-.toc-item.active .toc-link {
-    color: var(--accent-color);
-    font-weight: 500;
-}
-
-.toc-level-2 .toc-link {
-    padding-left: 32px;
-    font-size: 13px;
-}
-
-.toc-level-3 .toc-link {
-    padding-left: 44px;
-    font-size: 12px;
-}
-"""
+def render_callout(
+    type: str,  # info, warning, success, error
+    title: str = "",
+    content: str = "",
+) -> str:
+    """Render a callout/alert component."""
+    return render_component(
+        "callout",
+        type=type,
+        title=title,
+        content=content,
+    )
