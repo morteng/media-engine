@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "project": "Media Engine Demo",
-  "last_scan": "2025-12-27T13:07:57.839817",
+  "last_scan": "2025-12-27T17:53:39.783536",
   "items": {
     "content/en/chapters/04_quality_checks.md": {
       "path": "content/en/chapters/04_quality_checks.md",
@@ -10,7 +10,7 @@
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
       "last_modified": "2025-12-24T02:22:46.861804",
-      "last_checked": "2025-12-27T13:07:57.798174",
+      "last_checked": "2025-12-27T17:53:39.739339",
       "content_hash": "3f0e0efa9a442538",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -23,7 +23,7 @@
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
       "last_modified": "2025-12-24T00:24:05.424987",
-      "last_checked": "2025-12-27T13:07:57.798174",
+      "last_checked": "2025-12-27T17:53:39.739339",
       "content_hash": "ef289304cb159518",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -36,7 +36,7 @@
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
       "last_modified": "2025-12-16T16:12:29.962211",
-      "last_checked": "2025-12-27T13:07:57.798174",
+      "last_checked": "2025-12-27T17:53:39.739339",
       "content_hash": "0684658a25ff9334",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -49,7 +49,7 @@
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
       "last_modified": "2025-12-24T13:07:56.396694",
-      "last_checked": "2025-12-27T13:07:57.798174",
+      "last_checked": "2025-12-27T17:53:39.739339",
       "content_hash": "2007c14ced678b18",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -62,7 +62,7 @@
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
       "last_modified": "2025-12-24T13:00:59.177562",
-      "last_checked": "2025-12-27T13:07:57.798174",
+      "last_checked": "2025-12-27T17:53:39.739339",
       "content_hash": "b1068c9540105764",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -75,7 +75,7 @@
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
       "last_modified": "2025-12-24T02:49:48.345967",
-      "last_checked": "2025-12-27T13:07:57.798174",
+      "last_checked": "2025-12-27T17:53:39.739339",
       "content_hash": "377bd082f782b33f",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -88,7 +88,7 @@
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
       "last_modified": "2025-12-20T14:15:37.232057",
-      "last_checked": "2025-12-27T13:07:57.798174",
+      "last_checked": "2025-12-27T17:53:39.739339",
       "content_hash": "30e9b169966df107",
       "freshness_status": "claims_issue",
       "freshness_days": null,
@@ -105,7 +105,7 @@
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
       "last_modified": "2025-12-24T00:24:08.005489",
-      "last_checked": "2025-12-27T13:07:57.798174",
+      "last_checked": "2025-12-27T17:53:39.739339",
       "content_hash": "f2f278220fcf8ae5",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -118,7 +118,7 @@
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
       "last_modified": "2025-12-16T16:50:39.145441",
-      "last_checked": "2025-12-27T13:07:57.798174",
+      "last_checked": "2025-12-27T17:53:39.739339",
       "content_hash": "331814e5fe0f84d6",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -131,7 +131,7 @@
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
       "last_modified": "2025-12-23T14:18:37.358085",
-      "last_checked": "2025-12-27T13:07:57.798174",
+      "last_checked": "2025-12-27T17:53:39.739339",
       "content_hash": "851b16ed698df084",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -144,7 +144,7 @@
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
       "last_modified": "2025-12-24T13:07:55.877911",
-      "last_checked": "2025-12-27T13:07:57.798174",
+      "last_checked": "2025-12-27T17:53:39.739339",
       "content_hash": "6986582216bc291d",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -157,7 +157,7 @@
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
       "last_modified": "2025-12-16T16:02:11.720273",
-      "last_checked": "2025-12-27T13:07:57.798174",
+      "last_checked": "2025-12-27T17:53:39.739339",
       "content_hash": "ea03c3506f079cb9",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -170,7 +170,7 @@
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
       "last_modified": "2025-12-23T20:49:20.433058",
-      "last_checked": "2025-12-27T13:07:57.798174",
+      "last_checked": "2025-12-27T17:53:39.739339",
       "content_hash": "4616b3a3bde76a5f",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -183,7 +183,7 @@
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
       "last_modified": "2025-12-23T14:18:37.428032",
-      "last_checked": "2025-12-27T13:07:57.798174",
+      "last_checked": "2025-12-27T17:53:39.739339",
       "content_hash": "381e1df4ab3651e2",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -196,7 +196,7 @@
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
       "last_modified": "2025-12-23T20:49:21.022951",
-      "last_checked": "2025-12-27T13:07:57.798174",
+      "last_checked": "2025-12-27T17:53:39.739339",
       "content_hash": "084b5112cccc43f6",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -209,7 +209,7 @@
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
       "last_modified": "2025-12-16T16:02:11.724234",
-      "last_checked": "2025-12-27T13:07:57.798174",
+      "last_checked": "2025-12-27T17:53:39.739339",
       "content_hash": "ba016205f6fbeff1",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -222,7 +222,7 @@
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
       "last_modified": "2025-12-16T16:02:11.721214",
-      "last_checked": "2025-12-27T13:07:57.798174",
+      "last_checked": "2025-12-27T17:53:39.739339",
       "content_hash": "4c222538602317b3",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -232,9 +232,9 @@
       "path": "content/en/scripts/walkthrough.yaml",
       "type": "source_document",
       "depends_on": [],
-      "last_modified": "2025-12-20T17:09:45.347214",
-      "last_checked": "2025-12-27T13:07:57.798174",
-      "content_hash": "7aa578fca8711a8a",
+      "last_modified": "2025-12-27T15:24:20.309753",
+      "last_checked": "2025-12-27T17:53:39.739339",
+      "content_hash": "f2adca36376ca707",
       "freshness_status": "fresh",
       "freshness_days": null,
       "metadata": {}
@@ -244,7 +244,7 @@
       "type": "source_document",
       "depends_on": [],
       "last_modified": "2025-12-16T13:12:09.763515",
-      "last_checked": "2025-12-27T13:07:57.798174",
+      "last_checked": "2025-12-27T17:53:39.739339",
       "content_hash": "df9a7798ee9cccb7",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -255,7 +255,7 @@
       "type": "source_document",
       "depends_on": [],
       "last_modified": "2025-12-16T16:49:07.645527",
-      "last_checked": "2025-12-27T13:07:57.798174",
+      "last_checked": "2025-12-27T17:53:39.739339",
       "content_hash": "fb42ef2a62a1b5a1",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -266,7 +266,7 @@
       "type": "theme",
       "depends_on": [],
       "last_modified": "2025-12-16T13:12:09.767283",
-      "last_checked": "2025-12-27T13:07:57.798174",
+      "last_checked": "2025-12-27T17:53:39.739339",
       "content_hash": "8dd73987176c62ad",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -277,7 +277,7 @@
       "type": "config",
       "depends_on": [],
       "last_modified": "2025-12-26T17:26:39.725557",
-      "last_checked": "2025-12-27T13:07:57.798174",
+      "last_checked": "2025-12-27T17:53:39.739339",
       "content_hash": "07ed2cd62f22c1ce",
       "freshness_status": "fresh",
       "freshness_days": null,

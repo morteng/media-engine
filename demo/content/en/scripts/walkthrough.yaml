@@ -1,13 +1,13 @@
 # Media Engine Walkthrough
 # A complete tour of Media Engine's capabilities
-# Duration: ~100 seconds | Resolution: 1920x1080 @ 60fps
+# Duration: ~120 seconds | Resolution: 1920x1080 @ 60fps
 
 title: "Media Engine Walkthrough"
 description: "Complete tour of the agent-operated media production framework"
 language: "en"
 
 metadata:
-  version: "2.0.0"
+  version: "3.1.0"
   status: "production"
 
 narrator:
@@ -20,6 +20,10 @@ output:
     height: 1080
   framerate: 60
   filename: "media-engine-walkthrough"
+
+# Demo clips are captured from dashboard states defined in demos/dashboard.yaml
+# Clips should be pre-rendered and placed in public/demos/
+demo_base_path: "demos/"
 
 scenes:
   # ============================================================
@@ -51,150 +55,164 @@ scenes:
       glow: true
 
   # ============================================================
-  # DASHBOARD OVERVIEW (0:12 - 0:22)
+  # DASHBOARD OVERVIEW (0:12 - 0:22) - SPLIT SCREEN
   # ============================================================
   - id: dashboard-overview
     name: "Dashboard Overview"
-    type: feature
+    type: split
     duration: 10
-    voiceover: "The dashboard gives you complete visibility. See document counts, translation status, quality scores, and content freshness at a glance."
+    title: "Complete Visibility"
+    text: "Track everything in one place"
+    voiceover: "The dashboard gives you complete visibility. Track your health score, publications status, AI workspace activity, and content metrics at a glance."
+    demo:
+      state: dashboard_overview
+      clipPath: "demos/dashboard_overview.mp4"
     visual:
-      background: grid
       transition_in: fade
-      feature_card:
-        icon: dashboard
-        highlight: blue
-      metrics:
-        - Documents
-        - Languages
-        - Translations
-        - Quality
-        - Freshness
-
-  # ============================================================
-  # INSIGHTS (0:22 - 0:32)
-  # ============================================================
-  - id: insights
-    name: "Project Insights"
-    type: feature
-    duration: 10
-    voiceover: "The Insights tab shows your project health score. Track freshness, translation coverage, consistency, and more. Get actionable recommendations automatically."
-    visual:
-      background: particles
-      transition_in: slide-left
-      feature_card:
-        icon: chart
+      split_screen:
+        demo_on_left: true
+        split_angle: 15
+        demo_width: 58
         highlight: cyan
-      metrics:
-        - Health Score
-        - Freshness
-        - Translation
-        - Consistency
-        - Readability
+        bullets:
+          - "Health Score tracking"
+          - "Publications status"
+          - "AI Workspace activity"
+          - "Content metrics"
 
   # ============================================================
-  # CONTENT PREVIEW (0:32 - 0:42)
+  # CONTENT & HIERARCHY (0:22 - 0:34) - SPLIT SCREEN
   # ============================================================
   - id: content
-    name: "Rich Content Preview"
-    type: feature
-    duration: 10
-    voiceover: "Browse documents with beautiful rendered previews. Toggle between preview, source, and edit modes. View frontmatter metadata, and manage translations across languages."
+    name: "Content Management"
+    type: split
+    duration: 12
+    title: "Content Browser"
+    text: "Navigate your documents visually"
+    voiceover: "Browse documents with rich previews. Toggle between preview, source, and edit modes. Visualize your content hierarchy with tree, flow, graph, and panel views. Navigate document relationships effortlessly."
+    demo:
+      state: content_hierarchy_graph
+      clipPath: "demos/content_hierarchy_graph.mp4"
     visual:
-      background: dark
       transition_in: slide-left
-      feature_card:
-        icon: folder
-        highlight: blue
-      highlights:
-        - Markdown Preview
-        - Edit Mode
-        - Frontmatter Display
-        - Multi-language
-
-  # ============================================================
-  # MEDIA GALLERY (0:42 - 0:50)
-  # ============================================================
-  - id: media
-    name: "Media Gallery"
-    type: feature
-    duration: 8
-    voiceover: "All your media in one place. Browse videos, audio files, and demos with instant previews. Filter by type, play directly in the browser."
-    visual:
-      background: gradient
-      transition_in: slide-left
-      feature_card:
-        icon: media
+      split_screen:
+        demo_on_left: true
+        split_angle: 12
+        demo_width: 60
         highlight: purple
-      highlights:
-        - Video Preview
-        - Audio Player
-        - Type Filtering
-        - File Details
+        bullets:
+          - "Rich document previews"
+          - "Tree, flow, graph views"
+          - "Edit mode toggle"
+          - "Relationship visualization"
 
   # ============================================================
-  # QUALITY CHECKS (0:50 - 1:00)
+  # QUALITY CHECKS (0:34 - 0:44) - SPLIT SCREEN
   # ============================================================
   - id: quality
     name: "Quality Assurance"
-    type: feature
+    type: split
     duration: 10
-    voiceover: "Quality checks run automatically. Catch broken links, readability issues, stale content, and security concerns before they reach production."
+    title: "Quality Dashboard"
+    text: "Built-in quality gates"
+    voiceover: "Quality checks run automatically. See your health score with component breakdowns for freshness, translations, and consistency. Analyze with the knowledge graph and catch issues before production."
+    demo:
+      state: quality_overview
+      clipPath: "demos/quality_overview.mp4"
     visual:
-      background: pulse
       transition_in: slide-left
-      feature_card:
-        icon: shield
-        highlight: purple
-      metrics:
-        - Links Valid
-        - Readable
-        - Fresh
-        - Secure
+      split_screen:
+        demo_on_left: false
+        split_angle: 15
+        demo_width: 55
+        highlight: neon
+        bullets:
+          - "Health score breakdown"
+          - "Freshness tracking"
+          - "Translation coverage"
+          - "Knowledge graph analysis"
 
   # ============================================================
-  # BUILD SYSTEM (0:52 - 1:02)
+  # BRAND SYSTEM (0:44 - 0:52) - SPLIT SCREEN
+  # ============================================================
+  - id: brand
+    name: "Brand System"
+    type: split
+    duration: 8
+    title: "Brand Identity"
+    text: "One source of truth"
+    voiceover: "Manage your complete brand identity. Colors, typography, logos, and voice guidelines in one place. Every output stays on brand automatically."
+    demo:
+      state: brand_design
+      clipPath: "demos/brand_design.mp4"
+    visual:
+      transition_in: slide-left
+      split_screen:
+        demo_on_left: true
+        split_angle: 18
+        demo_width: 55
+        highlight: hot
+        bullets:
+          - "Color palettes"
+          - "Typography system"
+          - "Logo variants"
+          - "Voice guidelines"
+
+  # ============================================================
+  # BUILD SYSTEM (0:52 - 1:04) - SPLIT SCREEN
   # ============================================================
   - id: build
-    name: "Build System"
-    type: feature
-    duration: 10
-    voiceover: "Ready to publish? Select your output formats. HTML, PDF, PowerPoint, Excel. Choose languages, click build, and watch your content transform."
+    name: "Build & Publish"
+    type: split
+    duration: 12
+    title: "One-Click Publishing"
+    text: "Multiple formats, instant output"
+    voiceover: "Ready to publish? Select publications, choose formats and languages. HTML, PDF, PowerPoint, Excel. Configure output options, click build, and watch your content transform into polished deliverables."
+    demo:
+      state: build_page
+      clipPath: "demos/build_page.mp4"
     visual:
-      background: grid
       transition_in: slice
-      feature_card:
-        icon: build
-        highlight: green
-      icons:
-        - HTML
-        - PDF
-        - PPTX
-        - XLSX
-        - MP4
+      split_screen:
+        demo_on_left: false
+        split_angle: 15
+        demo_width: 58
+        highlight: cyan
+        bullets:
+          - "Publication selection"
+          - "Format toggles: HTML, PDF, PPTX, XLSX"
+          - "Multi-language output"
+          - "Real-time build progress"
 
   # ============================================================
-  # AI INTEGRATION (1:02 - 1:12)
+  # AI WORKSPACE (1:04 - 1:18) - SPLIT SCREEN
   # ============================================================
-  - id: ai-integration
-    name: "AI Agent Integration"
-    type: feature
-    duration: 10
-    voiceover: "Connect AI agents through MCP. Twenty plus tools let you manage content, run quality checks, and trigger builds conversationally. Works with Claude Desktop out of the box."
+  - id: ai-workspace
+    name: "AI Workspace"
+    type: split
+    duration: 14
+    title: "Agent Collaboration"
+    text: "AI-native content production"
+    voiceover: "The AI Workspace is your command center for agent collaboration. Track sessions, manage task queues, store research findings, and capture decisions. Connect via MCP with twenty-plus tools for Claude Desktop integration."
+    demo:
+      state: ai_overview
+      clipPath: "demos/ai_overview.mp4"
     visual:
-      background: particles
       transition_in: diagonal-split
-      feature_card:
-        icon: ai
-        highlight: hot
-      pipeline:
-        - Claude Desktop
-        - MCP Server
-        - Media Engine
-        - All Outputs
+      split_screen:
+        demo_on_left: true
+        split_angle: 15
+        demo_width: 55
+        highlight: purple
+        bullets:
+          - "Session tracking"
+          - "Task queue management"
+          - "Research storage"
+          - "Decision capture"
+          - "20+ MCP tools"
 
   # ============================================================
-  # VIDEO PIPELINE (1:12 - 1:20)
+  # VIDEO PIPELINE (1:18 - 1:26)
   # ============================================================
   - id: video
     name: "Video Production"
@@ -214,7 +232,7 @@ scenes:
         - Motion Graphics
 
   # ============================================================
-  # INSTALLATION (1:20 - 1:25)
+  # INSTALLATION (1:26 - 1:31)
   # ============================================================
   - id: install
     name: "Get Started"
@@ -230,7 +248,7 @@ scenes:
           - "media-engine dashboard"
 
   # ============================================================
-  # CLOSING (1:25 - 1:32)
+  # CLOSING (1:31 - 1:38)
   # ============================================================
   - id: closing
     name: "Media Engine"

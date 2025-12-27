@@ -8,7 +8,7 @@ description: |
   automatically derived from key documentation sections.
 
 metadata:
-  version: "1.0.0"
+  version: "2.0.0"
   status: draft
   author: "Media Engine Team"
   copyright: "2024 Media Engine Project"
@@ -69,10 +69,21 @@ slides:
       title: "Media Formats"
       extract: media  # Video, Audio, Diagrams
 
+  - type: content
+    title: "Diagram Generation"
+    source: chapters/06_diagrams.md
+    extract: key_points
+    max_points: 4
+
   - type: image
     title: "Architecture"
-    source: diagrams/architecture.yaml
+    source: diagrams/architecture.d2
     caption: "Media Engine Architecture"
+
+  - type: image
+    title: "Video Pipeline"
+    source: diagrams/video_pipeline.d2
+    caption: "From script to rendered video"
 
   - type: content
     title: "Security & Validation"
@@ -85,6 +96,22 @@ slides:
     source: chapters/14_integrations.md
     extract: key_points
     max_points: 4
+
+  - type: content
+    title: "Advanced Analysis"
+    source: chapters/15_analysis.md
+    extract: key_points
+    max_points: 4
+
+  - type: image
+    title: "AI Workspace"
+    source: diagrams/ai_workspace.d2
+    caption: "Agent collaboration hub"
+
+  - type: image
+    title: "Brand System"
+    source: diagrams/brand_system.d2
+    caption: "Consistent identity everywhere"
 
   - type: quote
     title: "Why Media Engine?"

@@ -1,0 +1,122 @@
+# Dashboard Navigation Structure
+# Render with: d2 --sketch dashboard.d2 dashboard.svg
+
+direction: down
+
+# Main Dashboard
+dashboard: "🖥️ Media Engine Dashboard" {
+  shape: rectangle
+  style: {
+    fill: "#1e293b"
+    stroke: "#475569"
+    stroke-width: 2
+    font-color: "#f8fafc"
+    border-radius: 12
+  }
+}
+
+# Navigation Sections
+nav: Navigation {
+  style: {
+    fill: "#f8fafc"
+    stroke: "#e2e8f0"
+    stroke-width: 1
+    border-radius: 8
+  }
+
+  # Overview Section
+  overview: "📊 Overview" {
+    style: {
+      fill: "#dbeafe"
+      stroke: "#3b82f6"
+      border-radius: 6
+    }
+
+    home: Dashboard
+    build: "Build & Publish"
+  }
+
+  # Content Section
+  content: "📄 Content" {
+    style: {
+      fill: "#dcfce7"
+      stroke: "#22c55e"
+      border-radius: 6
+    }
+
+    docs: Documents
+    hierarchy: "Hierarchy (4 views)"
+    translations: Translations
+    video: Video
+    media: Media
+  }
+
+  # Quality Section
+  quality: "🛡️ Quality" {
+    style: {
+      fill: "#fef3c7"
+      stroke: "#f59e0b"
+      border-radius: 6
+    }
+
+    score: "Overview (Health Score)"
+    analysis: "Analysis (Graph)"
+    activity: "Activity (Audit)"
+  }
+
+  # Brand Section
+  brand: "🎨 Brand" {
+    style: {
+      fill: "#fce7f3"
+      stroke: "#ec4899"
+      border-radius: 6
+    }
+
+    design: Design System
+    voice: "Voice & Guidelines"
+  }
+
+  # AI Workspace Section
+  ai: "✨ AI Workspace" {
+    style: {
+      fill: "#e0e7ff"
+      stroke: "#6366f1"
+      border-radius: 6
+    }
+
+    sessions: Sessions
+    notes: Notes
+    queue: Task Queue
+    research: Research
+    decisions: Decisions
+  }
+
+  # Settings Section
+  settings: "⚙️ Settings" {
+    style: {
+      fill: "#f1f5f9"
+      stroke: "#64748b"
+      border-radius: 6
+    }
+
+    theme: Theme
+    project: Project Config
+    paths: Paths
+  }
+}
+
+# Connection
+dashboard -> nav
+
+# Feature callouts
+realtime: "🔴 Real-time WebSocket Updates" {
+  shape: text
+  style.font-size: 11
+  style.italic: true
+}
+
+graphs: "📈 Reagraph Visualizations" {
+  shape: text
+  style.font-size: 11
+  style.italic: true
+}

@@ -1,0 +1,142 @@
+# Dashboard Demo Definition
+# Defines named states for video capture with setup actions
+
+name: "Media Engine Dashboard"
+url: "http://localhost:8080"
+
+viewport:
+  width: 1920
+  height: 1080
+
+metadata:
+  description: "Dashboard demo for walkthrough video"
+  version: "1.0.0"
+
+states:
+  # Overview Section
+  dashboard_overview:
+    description: "Main dashboard with health score and publications"
+    setup: |
+      // Navigate to dashboard
+      window.location.hash = '/';
+      await new Promise(r => setTimeout(r, 500));
+    wait_for: ".card"
+
+  build_page:
+    description: "Build & Publish page with publication selection"
+    setup: |
+      window.location.hash = '/build';
+      await new Promise(r => setTimeout(r, 500));
+    wait_for: "[data-testid='publication-card']"
+
+  # Content Section
+  content_documents:
+    description: "Document browser with preview"
+    setup: |
+      window.location.hash = '/content';
+      await new Promise(r => setTimeout(r, 500));
+    wait_for: ".document-tree"
+
+  content_hierarchy_tree:
+    description: "Hierarchy view - tree mode"
+    setup: |
+      window.location.hash = '/content/hierarchy';
+      await new Promise(r => setTimeout(r, 300));
+      // Click tree view button
+      document.querySelector('[data-view="tree"]')?.click();
+      await new Promise(r => setTimeout(r, 300));
+    wait_for: ".hierarchy-tree"
+
+  content_hierarchy_graph:
+    description: "Hierarchy view - graph mode"
+    setup: |
+      window.location.hash = '/content/hierarchy';
+      await new Promise(r => setTimeout(r, 300));
+      // Click graph view button
+      document.querySelector('[data-view="graph"]')?.click();
+      await new Promise(r => setTimeout(r, 500));
+    wait_for: "canvas"
+
+  content_translations:
+    description: "Translation coverage matrix"
+    setup: |
+      window.location.hash = '/content/translations';
+      await new Promise(r => setTimeout(r, 500));
+    wait_for: ".translation-matrix"
+
+  # Quality Section
+  quality_overview:
+    description: "Quality overview with health score ring"
+    setup: |
+      window.location.hash = '/quality';
+      await new Promise(r => setTimeout(r, 500));
+    wait_for: ".health-score"
+
+  quality_analysis:
+    description: "Quality analysis with knowledge graph"
+    setup: |
+      window.location.hash = '/quality/analysis';
+      await new Promise(r => setTimeout(r, 500));
+    wait_for: "canvas"
+
+  # Brand Section
+  brand_design:
+    description: "Brand design system - colors and typography"
+    setup: |
+      window.location.hash = '/brand';
+      await new Promise(r => setTimeout(r, 500));
+    wait_for: ".color-palette"
+
+  brand_voice:
+    description: "Brand voice and guidelines"
+    setup: |
+      window.location.hash = '/brand/voice';
+      await new Promise(r => setTimeout(r, 500));
+    wait_for: ".voice-guidelines"
+
+  # AI Workspace Section
+  ai_overview:
+    description: "AI Workspace overview"
+    setup: |
+      window.location.hash = '/ai-assist';
+      await new Promise(r => setTimeout(r, 500));
+    wait_for: ".ai-context"
+
+  ai_sessions:
+    description: "AI session tracking"
+    setup: |
+      window.location.hash = '/ai-assist/sessions';
+      await new Promise(r => setTimeout(r, 500));
+    wait_for: ".session-list"
+
+  ai_queue:
+    description: "AI task queue"
+    setup: |
+      window.location.hash = '/ai-assist/queue';
+      await new Promise(r => setTimeout(r, 500));
+    wait_for: ".task-queue"
+
+# Sequences for multi-state captures (smooth transitions)
+sequences:
+  content_tour:
+    description: "Tour through content section"
+    states:
+      - content_documents
+      - content_hierarchy_tree
+      - content_hierarchy_graph
+    transition_delay: 1.0
+
+  quality_tour:
+    description: "Tour through quality section"
+    states:
+      - quality_overview
+      - quality_analysis
+    transition_delay: 1.0
+
+  ai_tour:
+    description: "Tour through AI workspace"
+    states:
+      - ai_overview
+      - ai_sessions
+      - ai_queue
+    transition_delay: 1.0

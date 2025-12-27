@@ -1,0 +1,135 @@
+# AI Workspace - Agent Collaboration Hub
+# Render with: d2 --sketch ai_workspace.d2 ai_workspace.svg
+
+direction: down
+
+# AI Agent Entry
+agent: "🤖 AI Agent" {
+  shape: person
+  style: {
+    fill: "#e0e7ff"
+    stroke: "#4f46e5"
+    stroke-width: 2
+  }
+}
+
+# Context Provider
+context: "📋 AI Context" {
+  shape: rectangle
+  style: {
+    fill: "#dbeafe"
+    stroke: "#2563eb"
+    stroke-width: 2
+    border-radius: 8
+  }
+
+  project: Project State
+  history: Past Decisions
+  queue: Pending Tasks
+}
+
+# Session Tracking
+session: "🔄 Session" {
+  shape: rectangle
+  style: {
+    fill: "#fef3c7"
+    stroke: "#d97706"
+    stroke-width: 2
+    border-radius: 8
+  }
+
+  start: Start Session
+  progress: Record Progress
+  changes: Track Changes
+  complete: Complete
+}
+
+# Work Components
+work: Work Management {
+  style: {
+    fill: "#fce7f3"
+    stroke: "#db2777"
+    stroke-width: 2
+    border-radius: 10
+  }
+
+  tasks: "📋 Task Queue" {
+    style.fill: "#fbcfe8"
+  }
+
+  notes: "📝 Notes" {
+    style.fill: "#fbcfe8"
+  }
+
+  decisions: "✅ Decisions" {
+    style.fill: "#fbcfe8"
+  }
+
+  research: "🔬 Research" {
+    style.fill: "#fbcfe8"
+  }
+}
+
+# Persistence
+storage: "💾 Persistence" {
+  shape: cylinder
+  style: {
+    fill: "#d1fae5"
+    stroke: "#059669"
+    stroke-width: 2
+  }
+}
+
+# Human Collaboration
+human: "👤 Human Review" {
+  shape: person
+  style: {
+    fill: "#fef3c7"
+    stroke: "#d97706"
+    stroke-width: 2
+  }
+}
+
+# Connections
+agent -> context: get context {
+  style.stroke: "#4f46e5"
+}
+
+context -> session: start work {
+  style.stroke: "#2563eb"
+}
+
+session -> work.tasks: claim task {
+  style.stroke: "#d97706"
+}
+
+session -> work.notes: add notes {
+  style.stroke: "#d97706"
+}
+
+session -> work.decisions: record {
+  style.stroke: "#d97706"
+}
+
+session -> work.research: store {
+  style.stroke: "#d97706"
+}
+
+work -> storage: persist {
+  style.stroke: "#059669"
+}
+
+work.notes -> human: flag for review {
+  style.stroke: "#db2777"
+  style.stroke-dash: 3
+}
+
+human -> work.notes: resolve {
+  style.stroke: "#d97706"
+  style.stroke-dash: 3
+}
+
+storage -> context: load history {
+  style.stroke: "#059669"
+  style.stroke-dash: 3
+}

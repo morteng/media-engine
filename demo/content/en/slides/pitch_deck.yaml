@@ -3,6 +3,7 @@
 
 title: "Media Engine"
 subtitle: "Agent-Operated Media Production"
+version: "2.1.0"
 
 slides:
   - type: title
@@ -28,12 +29,18 @@ slides:
     title: "The Solution"
     subtitle: "Automated media generation"
 
+  - type: image
+    title: "Write Once, Publish Everywhere"
+    image: assets/images/transformation.png
+    caption: "Simple inputs transform into professional outputs"
+    notes: "Show the transformation diagram - inputs on left, outputs on right"
+
   - type: content
     title: "Media Engine Automates Production"
     bullets:
       - "Write content once in Markdown"
-      - "Define data in YAML"
-      - "Let AI handle formatting and production"
+      - "Define data and scripts in YAML"
+      - "AI handles formatting and production"
       - "Smart caching avoids redundant work"
       - "Multi-language support built-in"
 
@@ -50,7 +57,7 @@ slides:
       - "Auto-styled HTML/PDF"
       - "AI-generated voiceovers"
       - "Slides from YAML"
-      - "Machine translation"
+      - "Hash-based translation tracking"
 
   - type: content
     title: "Output Formats"
@@ -61,6 +68,55 @@ slides:
       - "XLSX - Excel spreadsheets"
       - "MP4 - Videos with voiceover"
       - "VTT - Captions and subtitles"
+
+  - type: image
+    title: "System Architecture"
+    image: assets/images/architecture.png
+    caption: "Publication-centric workflow from content to deliverables"
+    notes: "Show how content flows through the system"
+
+  - type: section
+    title: "Key Features"
+    subtitle: "What sets Media Engine apart"
+
+  - type: content
+    title: "Publications System"
+    bullets:
+      - "Define deliverables as publications"
+      - "Book, deck, video, report, website types"
+      - "Component-based composition"
+      - "Multi-language variants"
+      - "Real-time build progress"
+
+  - type: image
+    title: "Video Production Pipeline"
+    image: assets/images/video_pipeline.png
+    caption: "From YAML script to rendered video with AI voiceover"
+    notes: "Show the video pipeline with smart caching"
+
+  - type: content
+    title: "AI Workspace"
+    bullets:
+      - "Session tracking for continuity"
+      - "Task queue with priorities"
+      - "Research storage and notes"
+      - "Decision history with reasoning"
+      - "MCP integration for Claude Desktop"
+
+  - type: image
+    title: "Brand System"
+    image: assets/images/brand_system.png
+    caption: "Single source of truth for consistent identity"
+    notes: "Show how brand.yaml flows to all outputs"
+
+  - type: content
+    title: "Brand Features"
+    bullets:
+      - "Complete brand identity in YAML"
+      - "Colors, typography, logos"
+      - "Voice and tone guidelines"
+      - "Dark mode support"
+      - "Consistent styling everywhere"
 
   - type: quote
     quote: "AI handles the busywork. You make the calls."
@@ -75,7 +131,7 @@ slides:
     bullets:
       - "Install: pip install media-engine"
       - "Initialize: media-engine init"
-      - "Add content to content/ directory"
+      - "Launch: media-engine dashboard"
       - "Build: media-engine build"
       - "Publish: media-engine publish"
     notes: "Call to action"

@@ -3,7 +3,7 @@
 
 title: "Media Engine"
 subtitle: "Agent-Operated Media Production"
-version: "1.0.0"
+version: "2.0.0"
 author: "Media Engine Team"
 
 slides:
@@ -45,14 +45,20 @@ slides:
     bullets:
       - "Markdown content with YAML frontmatter"
       - "Version tracking and dependency graphs"
-      - "Multi-language support with translation tracking"
-      - "Document status workflow (draft → published)"
+      - "Multi-language support with hash-based translation tracking"
+      - "Document lifecycle workflow (draft to published)"
       - "Full-text search indexing"
       - "Schema validation for metadata"
     notes: "CMS capabilities - foundation of the system"
 
+  - type: image
+    title: "Input to Output"
+    image: assets/images/transformation.png
+    caption: "Write once, publish everywhere"
+    notes: "Visual transformation diagram"
+
   - type: two_column
-    title: "Input → Output"
+    title: "What You Write vs What You Get"
     left_title: "You Write"
     left_bullets:
       - "Markdown documents"
@@ -76,9 +82,39 @@ slides:
       - "PDF: Print-ready documents via WeasyPrint"
       - "PPTX: PowerPoint from YAML definitions"
       - "XLSX: Excel with formulas and charts"
-      - "Diagrams: Box-and-arrow technical illustrations"
-      - "Videos: Full production pipeline"
+      - "Diagrams: Multi-engine (matplotlib, d2, excalidraw)"
+      - "Videos: Full production pipeline with voiceover"
     notes: "Builder capabilities in detail"
+
+  # ============================================================
+  # PUBLICATIONS SYSTEM
+  # ============================================================
+
+  - type: section
+    title: "Publications System"
+    subtitle: "Deliverable-Centric Architecture"
+
+  - type: content
+    title: "Publication Types"
+    bullets:
+      - "Book: Multi-chapter documentation"
+      - "Deck: PowerPoint presentations"
+      - "Video: Scripted video productions"
+      - "Report: Formatted PDF reports"
+      - "Website: Static site generation"
+      - "Package: Bundled deliverables"
+    notes: "Supported publication types"
+
+  - type: content
+    title: "Publication Features"
+    bullets:
+      - "Component-based composition"
+      - "Multi-language variants"
+      - "Format selection (PDF, HTML, PPTX, XLSX)"
+      - "Automatic validation and status tracking"
+      - "Freshness monitoring"
+      - "Build progress with real-time updates"
+    notes: "Publications capabilities"
 
   # ============================================================
   # VIDEO PRODUCTION
@@ -88,8 +124,14 @@ slides:
     title: "Video Production"
     subtitle: "From Script to Screen"
 
-  - type: content
+  - type: image
     title: "Video Production Pipeline"
+    image: assets/images/video_pipeline.png
+    caption: "YAML script to rendered video with smart caching"
+    notes: "Visual of video pipeline"
+
+  - type: content
+    title: "Video Features"
     bullets:
       - "Define videos in YAML scripts"
       - "AI voiceover generation (ElevenLabs TTS)"
@@ -110,16 +152,41 @@ slides:
       - "Backgrounds: Animated gradient backgrounds"
     notes: "Remotion component library"
 
+  # ============================================================
+  # BRAND SYSTEM
+  # ============================================================
+
+  - type: section
+    title: "Brand System"
+    subtitle: "Consistent Identity Everywhere"
+
+  - type: image
+    title: "Brand System Architecture"
+    image: assets/images/brand_system.png
+    caption: "Single source of truth for all outputs"
+    notes: "Visual of brand flow"
+
   - type: content
-    title: "Video Script Structure"
+    title: "Brand Configuration"
     bullets:
-      - "Metadata: title, language, duration"
-      - "Scenes: intro, content, demo, outro"
-      - "Visual configs: backgrounds, animations"
-      - "Voiceover text per scene"
-      - "Transition specifications"
-      - "Caption styling options"
-    notes: "YAML script anatomy"
+      - "Color palettes with semantic tokens"
+      - "Typography system with font families"
+      - "Logo variants (primary, dark, square, icons)"
+      - "Spacing, borders, and shadow scales"
+      - "Dark mode support throughout"
+      - "Single YAML source of truth"
+    notes: "Brand system configuration"
+
+  - type: content
+    title: "Voice & Tone"
+    bullets:
+      - "Voice guidelines by document type"
+      - "Audience-specific tone profiles"
+      - "Terminology consistency checking"
+      - "Brand voice validation"
+      - "Per-language audio voice mapping"
+      - "Mascot and personality definition"
+    notes: "Brand voice system"
 
   # ============================================================
   # QUALITY & SECURITY
@@ -130,15 +197,15 @@ slides:
     subtitle: "Built-In Assurance"
 
   - type: content
-    title: "Quality Checks"
+    title: "Quality Dashboard"
     bullets:
-      - "Readability scoring (Flesch, Fog, SMOG)"
-      - "Link validation (internal and external)"
-      - "Reference verification"
-      - "Content freshness tracking"
-      - "Schema validation for frontmatter"
-      - "Gap analysis for missing content"
-    notes: "Quality assurance features"
+      - "Health score with component breakdown"
+      - "Freshness, translation, completeness metrics"
+      - "Readability scoring (Flesch, Fog, SMOG, LIX)"
+      - "Knowledge graph visualization"
+      - "Issue tracking with severity levels"
+      - "Stale content identification"
+    notes: "Quality dashboard features"
 
   - type: content
     title: "Security Scanning"
@@ -156,11 +223,47 @@ slides:
     bullets:
       - "Full audit logging"
       - "Document provenance tracking"
-      - "Approval workflow (draft → review → approved → published)"
+      - "Approval workflow (draft to published)"
       - "Reviewer assignment and tracking"
       - "Change history with timestamps"
       - "Compliance-ready audit trails"
     notes: "Governance and compliance features"
+
+  # ============================================================
+  # AI WORKSPACE
+  # ============================================================
+
+  - type: section
+    title: "AI Workspace"
+    subtitle: "Agent Collaboration Hub"
+
+  - type: image
+    title: "AI Workspace Flow"
+    image: assets/images/ai_workspace.png
+    caption: "Complete agent collaboration system"
+    notes: "Visual of AI workspace components"
+
+  - type: content
+    title: "AI Session Management"
+    bullets:
+      - "Track AI agent work sessions"
+      - "Record progress steps and changes"
+      - "Capture decisions with reasoning"
+      - "Session history for continuity"
+      - "Pause and resume capabilities"
+      - "Session export and reporting"
+    notes: "AI session tracking"
+
+  - type: content
+    title: "Task Queue & Research"
+    bullets:
+      - "Structured task queue with priorities"
+      - "Task claiming and completion tracking"
+      - "Research storage with persistence"
+      - "Notes for human-AI collaboration"
+      - "Decision history with rationale"
+      - "Context provider for new sessions"
+    notes: "AI task and research management"
 
   # ============================================================
   # DEVELOPER EXPERIENCE
@@ -176,43 +279,38 @@ slides:
       - "media-engine status - Project overview"
       - "media-engine build - Generate all outputs"
       - "media-engine quality - Run quality checks"
-      - "media-engine translation - Manage translations"
-      - "media-engine security - Security scanning"
+      - "media-engine publications list - View publications"
+      - "media-engine diagrams build - Generate diagrams"
       - "media-engine dashboard - Launch web UI"
     notes: "CLI commands"
 
   - type: content
     title: "MCP Server (AI Agents)"
     bullets:
-      - "20+ tools exposed via MCP protocol"
+      - "26 tool modules with 100+ tools"
       - "Works with Claude Desktop"
-      - "Content: read, update, search documents"
-      - "Build: trigger HTML, PDF, PPTX generation"
-      - "Quality: run checks, validate project"
-      - "Cache: manage build caching"
+      - "Full AI context and session management"
+      - "Content CRUD operations"
+      - "Build, quality, and publication tools"
+      - "Research and notes persistence"
     notes: "AI agent integration"
 
   - type: content
     title: "Web Dashboard"
     bullets:
-      - "Translation matrix visualization"
-      - "Quality issue tracking"
-      - "Build controls and status"
+      - "7 main pages with sub-tabs"
       - "Real-time updates via WebSocket"
-      - "Responsive design for all devices"
-      - "No installation required (browser-based)"
+      - "Hierarchy visualization (4 view modes)"
+      - "Publication management and building"
+      - "AI Workspace with sessions and queue"
+      - "Brand system editor"
     notes: "Web dashboard features"
 
-  - type: content
-    title: "Python API"
-    bullets:
-      - "from media_engine import find_project"
-      - "Project.load() for programmatic access"
-      - "Builder classes for each output format"
-      - "Quality check functions"
-      - "Async-ready throughout"
-      - "Type hints on all functions"
-    notes: "Programmatic usage"
+  - type: image
+    title: "Dashboard Navigation"
+    image: assets/images/dashboard.png
+    caption: "Complete dashboard structure"
+    notes: "Visual of dashboard navigation"
 
   # ============================================================
   # GETTING STARTED
@@ -238,8 +336,8 @@ slides:
     bullets:
       - "1. media-engine init  # Initialize project"
       - "2. Add content to content/ directory"
-      - "3. media-engine build  # Generate outputs"
-      - "4. media-engine quality  # Check quality"
+      - "3. media-engine dashboard  # Launch UI"
+      - "4. media-engine build  # Generate outputs"
       - "5. media-engine publish  # Package deliverables"
     notes: "Getting started workflow"
 
@@ -247,11 +345,11 @@ slides:
     title: "Project Structure"
     bullets:
       - "project.yaml - Project configuration"
-      - "theme.yaml - Design system"
-      - "schema.yaml - Frontmatter validation"
+      - "brand.yaml - Brand identity and voice"
+      - "theme.yaml - Design tokens"
       - "content/en/ - English content"
-      - "content/no/ - Norwegian content"
-      - "assets/ - Media files"
+      - "content/en/publications/ - Publication definitions"
+      - "assets/ - Media files and logos"
     notes: "File structure overview"
 
   # ============================================================
@@ -274,8 +372,8 @@ slides:
     right_title: "With Media Engine"
     right_bullets:
       - "Automated generation"
-      - "Consistent theming"
-      - "Translation tracking"
+      - "Consistent branding"
+      - "Hash-based translation tracking"
       - "Script-to-video pipeline"
       - "Built-in quality gates"
     notes: "Value proposition comparison"

@@ -1,0 +1,108 @@
+# Video Production Pipeline
+# Render with: d2 --sketch video_pipeline.d2 video_pipeline.svg
+
+direction: right
+
+# Input
+script: "📜 YAML Script" {
+  shape: document
+  style: {
+    fill: "#dbeafe"
+    stroke: "#2563eb"
+    stroke-width: 2
+    border-radius: 8
+  }
+}
+
+# Parallel Processing
+parallel: Parallel Generation {
+  style: {
+    fill: "#fef3c7"
+    stroke: "#d97706"
+    stroke-width: 2
+    border-radius: 10
+  }
+
+  voiceover: "🎙️ Voiceover" {
+    shape: rectangle
+    style.fill: "#fde68a"
+  }
+
+  captions: "📝 Captions" {
+    shape: rectangle
+    style.fill: "#fde68a"
+  }
+
+  props: "⚙️ Remotion Props" {
+    shape: rectangle
+    style.fill: "#fde68a"
+  }
+}
+
+# External Services
+elevenlabs: "ElevenLabs API" {
+  shape: cloud
+  style: {
+    fill: "#e0e7ff"
+    stroke: "#4f46e5"
+    stroke-width: 2
+  }
+}
+
+cache: "💾 Audio Cache" {
+  shape: cylinder
+  style: {
+    fill: "#d1fae5"
+    stroke: "#059669"
+    stroke-width: 2
+  }
+}
+
+# Rendering
+remotion: "🎬 Remotion" {
+  shape: hexagon
+  style: {
+    fill: "#fce7f3"
+    stroke: "#db2777"
+    stroke-width: 2
+  }
+}
+
+# Outputs
+outputs: Outputs {
+  style: {
+    fill: "#dcfce7"
+    stroke: "#16a34a"
+    stroke-width: 2
+    border-radius: 10
+  }
+
+  mp4: "📹 MP4" {
+    style.fill: "#bbf7d0"
+  }
+
+  mp3: "🔊 MP3" {
+    style.fill: "#bbf7d0"
+  }
+
+  vtt: "📄 VTT" {
+    style.fill: "#bbf7d0"
+  }
+}
+
+# Flow
+script -> parallel.voiceover: scenes
+script -> parallel.captions: text
+script -> parallel.props: config
+
+parallel.voiceover -> elevenlabs: TTS request
+elevenlabs -> cache: audio segments
+cache -> outputs.mp3
+
+parallel.captions -> outputs.vtt: WebVTT
+
+parallel.props -> remotion
+cache -> remotion: audio
+remotion -> outputs.mp4: render
+
+# Cache note removed - near not supported by dagre layout

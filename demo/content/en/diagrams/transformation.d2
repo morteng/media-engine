@@ -1,0 +1,94 @@
+# Input to Output Transformation
+# Simple visual for pitch deck
+# Render with: d2 --sketch transformation.d2 transformation.svg
+
+direction: right
+
+# Inputs
+inputs: "You Write" {
+  style: {
+    fill: "#dbeafe"
+    stroke: "#2563eb"
+    stroke-width: 2
+    border-radius: 12
+  }
+
+  md: "📄 Markdown" {
+    style.fill: "#bfdbfe"
+  }
+
+  yaml: "📋 YAML Data" {
+    style.fill: "#bfdbfe"
+  }
+
+  scripts: "🎬 Video Scripts" {
+    style.fill: "#bfdbfe"
+  }
+
+  slides: "📊 Slide Defs" {
+    style.fill: "#bfdbfe"
+  }
+
+  diagrams: "📐 Diagrams" {
+    style.fill: "#bfdbfe"
+  }
+}
+
+# Media Engine (center)
+engine: "⚡ Media Engine" {
+  shape: hexagon
+  style: {
+    fill: "#fef3c7"
+    stroke: "#d97706"
+    stroke-width: 3
+    font-size: 18
+    bold: true
+  }
+}
+
+# Outputs
+outputs: "You Get" {
+  style: {
+    fill: "#dcfce7"
+    stroke: "#16a34a"
+    stroke-width: 2
+    border-radius: 12
+  }
+
+  html: "🌐 HTML Docs" {
+    style.fill: "#bbf7d0"
+  }
+
+  pdf: "📕 PDF Reports" {
+    style.fill: "#bbf7d0"
+  }
+
+  pptx: "📊 PowerPoint" {
+    style.fill: "#bbf7d0"
+  }
+
+  xlsx: "📈 Excel" {
+    style.fill: "#bbf7d0"
+  }
+
+  video: "🎥 MP4 Video" {
+    style.fill: "#bbf7d0"
+  }
+}
+
+# Connections
+inputs -> engine: {
+  style: {
+    stroke: "#2563eb"
+    stroke-width: 3
+  }
+}
+
+engine -> outputs: {
+  style: {
+    stroke: "#16a34a"
+    stroke-width: 3
+  }
+}
+
+# Tagline removed - not supported by dagre layout

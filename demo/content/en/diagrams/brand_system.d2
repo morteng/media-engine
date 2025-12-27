@@ -1,0 +1,124 @@
+# Brand System - Single Source of Truth
+# Render with: d2 --sketch brand_system.d2 brand_system.svg
+
+direction: down
+
+# Brand YAML
+brand: "📋 brand.yaml" {
+  shape: document
+  style: {
+    fill: "#fce7f3"
+    stroke: "#db2777"
+    stroke-width: 2
+    font-size: 16
+    bold: true
+  }
+}
+
+# Brand Components
+components: Brand Components {
+  style: {
+    fill: "#fdf2f8"
+    stroke: "#ec4899"
+    stroke-width: 1
+    border-radius: 10
+  }
+
+  colors: "🎨 Colors" {
+    style.fill: "#fbcfe8"
+
+    primary: Primary
+    accent: Accent
+    semantic: Semantic
+    dark: Dark Mode
+  }
+
+  typography: "🔤 Typography" {
+    style.fill: "#fbcfe8"
+
+    heading: Headings
+    body: Body Text
+    code: Code
+  }
+
+  logos: "🖼️ Logos" {
+    style.fill: "#fbcfe8"
+
+    primary_logo: Primary
+    dark_logo: Dark
+    icon_logo: Icon
+    mascot: Mascot
+  }
+
+  voice: "🗣️ Voice" {
+    style.fill: "#fbcfe8"
+
+    tone: Tone
+    audience: Audience
+    terms: Terminology
+  }
+}
+
+# Brand Context
+context: "⚙️ BrandContext" {
+  shape: hexagon
+  style: {
+    fill: "#e0e7ff"
+    stroke: "#6366f1"
+    stroke-width: 2
+  }
+}
+
+# Outputs
+outputs: All Outputs {
+  style: {
+    fill: "#dcfce7"
+    stroke: "#16a34a"
+    stroke-width: 1
+    border-radius: 10
+  }
+
+  html: "🌐 HTML" {
+    style.fill: "#bbf7d0"
+  }
+
+  pdf: "📕 PDF" {
+    style.fill: "#bbf7d0"
+  }
+
+  pptx: "📊 PPTX" {
+    style.fill: "#bbf7d0"
+  }
+
+  video: "🎥 Video" {
+    style.fill: "#bbf7d0"
+  }
+
+  diagrams: "📐 Diagrams" {
+    style.fill: "#bbf7d0"
+  }
+}
+
+# Connections
+brand -> components
+
+components.colors -> context
+components.typography -> context
+components.logos -> context
+components.voice -> context
+
+context -> outputs.html: themed
+context -> outputs.pdf: styled
+context -> outputs.pptx: branded
+context -> outputs.video: voice
+context -> outputs.diagrams: colors
+
+# Note
+note: "Consistent identity\nacross all outputs" {
+  shape: text
+  style: {
+    font-size: 12
+    italic: true
+    bold: true
+  }
+}

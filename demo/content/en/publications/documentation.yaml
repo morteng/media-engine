@@ -121,8 +121,13 @@ back_matter:
 
 # Related assets to include
 assets:
-  - diagrams/architecture.yaml
-  - diagrams/video_pipeline.yaml
+  - diagrams/architecture.d2
+  - diagrams/workflow.d2
+  - diagrams/video_pipeline.d2
+  - diagrams/ai_workspace.d2
+  - diagrams/brand_system.d2
+  - diagrams/transformation.d2
+  - diagrams/dashboard.d2
 
 # Translation tracking
 translations:
