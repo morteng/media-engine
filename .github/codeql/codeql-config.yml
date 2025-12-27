@@ -1,0 +1,17 @@
+name: "Media Engine CodeQL Config"
+
+queries:
+  - uses: security-and-quality
+
+paths-ignore:
+  - '**/test/**'
+  - '**/tests/**'
+  - '**/*.test.ts'
+  - '**/*.test.tsx'
+  - '**/*.spec.ts'
+  - '**/node_modules/**'
+  - '**/.venv/**'
+  - '**/dist/**'
+  - '**/build/**'
+  - '**/playwright-report/**'
+  - '**/test-results/**'

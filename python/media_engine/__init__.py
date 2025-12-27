@@ -28,7 +28,7 @@ Advanced Analysis Modules:
     readability.norwegian: Norwegian LIX readability analysis
 """
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"  # x-release-please-version
 
 # Re-export commonly used items
 from .assets import bundle_project_assets, download_google_fonts

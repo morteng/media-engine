@@ -116,7 +116,43 @@ infrastructure:
   ci_cd:
     tool: github-actions
     config_path: ".github/workflows/"
+    workflows:
+      - ci.yml         # Comprehensive CI (tests, linting, coverage, security)
+      - release.yml    # Release Please automation
     docs: "https://docs.github.com/en/actions"
+
+  release:
+    tool: release-please
+    config_file: "release-please-config.json"
+    manifest_file: ".release-please-manifest.json"
+    docs: "https://github.com/googleapis/release-please"
+
+  dependency_updates:
+    tool: dependabot
+    config_file: ".github/dependabot.yml"
+    docs: "https://docs.github.com/en/code-security/dependabot"
+
+  security_scanning:
+    tool: codeql
+    config_file: ".github/codeql/codeql-config.yml"
+    docs: "https://codeql.github.com/"
+
+# -----------------------------------------------------------------------------
+# Project Management Tools
+# -----------------------------------------------------------------------------
+project_management:
+  github_cli:
+    tool: gh
+    issue_list: "gh issue list --state open"
+    pr_list: "gh pr list --state open"
+    release_list: "gh release list"
+    docs: "https://cli.github.com/"
+
+  commits:
+    tool: commitlint
+    config_file: ".commitlintrc.json"
+    format: "conventional-commits"
+    docs: "https://commitlint.js.org/"
 
 # -----------------------------------------------------------------------------
 # Pre-commit Checks (in order)
@@ -156,6 +192,6 @@ pre_release_checks:
 # Metadata
 # -----------------------------------------------------------------------------
 metadata:
-  version: "1.0.0"
-  last_updated: "2025-12-16"
+  version: "1.1.0"
+  last_updated: "2025-12-27"
   maintainer: "media-engine team"

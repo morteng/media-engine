@@ -1,6 +1,6 @@
 [project]
 name = "media-engine"
-version = "1.0.0"
+version = "1.0.0"  # x-release-please-version
 description = "Agent-based media production framework for automated content generation"
 readme = "README.md"
 requires-python = ">=3.11"

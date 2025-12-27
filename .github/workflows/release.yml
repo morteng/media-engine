@@ -1,0 +1,76 @@
+# Media Engine Release Automation
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    name: Release Please
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  # Build and attach artifacts on release
+  build-artifacts:
+    name: Build Release Artifacts
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install build tools
+        run: uv pip install build --system
+
+      - name: Build Python package
+        run: python -m build
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build dashboard
+        run: |
+          cd dashboard
+          npm ci
+          npm run build
+
+      - name: Create release archive
+        run: |
+          mkdir -p release-artifacts
+          cp -r dist/* release-artifacts/ 2>/dev/null || true
+          cp -r dashboard/dist release-artifacts/dashboard-dist 2>/dev/null || true
+          tar -czvf media-engine-${{ needs.release-please.outputs.version }}.tar.gz release-artifacts/
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.release-please.outputs.tag_name }}
+          files: |
+            media-engine-${{ needs.release-please.outputs.version }}.tar.gz
+            dist/*.whl
+            dist/*.tar.gz
