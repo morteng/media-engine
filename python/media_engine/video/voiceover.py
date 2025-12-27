@@ -47,10 +47,27 @@ class VoiceoverResult:
 
 
 def get_api_key() -> str:
-    """Get ElevenLabs API key from environment."""
+    """Get ElevenLabs API key from environment.
+
+    Searches for .env file in current directory and parent directories.
+    """
     from dotenv import load_dotenv
 
+    # Try loading from current directory first
     load_dotenv()
+
+    # If not found, search up to find project .env file
+    if not (os.environ.get("ELEVEN_LABS_API_KEY") or os.environ.get("ELEVENLABS_API_KEY")):
+        cwd = Path.cwd()
+        for parent in [cwd] + list(cwd.parents):
+            env_file = parent / ".env"
+            if env_file.exists():
+                load_dotenv(env_file)
+                break
+            # Stop at typical project boundaries
+            if (parent / "project.yaml").exists() or (parent / "pyproject.toml").exists():
+                load_dotenv(env_file)  # Try loading even if .env doesn't exist (will be no-op)
+                break
 
     key = os.environ.get("ELEVEN_LABS_API_KEY") or os.environ.get("ELEVENLABS_API_KEY")
     if not key:

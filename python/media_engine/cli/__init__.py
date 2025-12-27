@@ -409,6 +409,19 @@ def main():
     demos_build.add_argument("--output", "-o", help="Output directory")
     demos_build.add_argument("--json", action="store_true", help="Output as JSON")
 
+    demos_definitions = demos_subparsers.add_parser("definitions", help="List demo definitions")
+    demos_definitions.add_argument("--json", action="store_true", help="Output as JSON")
+
+    demos_capture = demos_subparsers.add_parser("capture", help="Capture demo video clips")
+    demos_capture.add_argument("--definition", "-d", help="Demo definition YAML file")
+    demos_capture.add_argument("--script", "-s", help="Video script to capture states for")
+    demos_capture.add_argument("--output", "-o", help="Output directory")
+    demos_capture.add_argument("--states", nargs="+", help="Specific states to capture")
+    demos_capture.add_argument("--duration", type=float, default=5.0, help="Duration per state (seconds)")
+    demos_capture.add_argument("--fps", type=int, default=30, help="Frames per second")
+    demos_capture.add_argument("--no-headless", action="store_true", help="Show browser window")
+    demos_capture.add_argument("--json", action="store_true", help="Output as JSON")
+
     # diagrams
     diagrams_parser = subparsers.add_parser("diagrams", help="Diagram generation and management")
     diagrams_subparsers = diagrams_parser.add_subparsers(dest="diagrams_command")
