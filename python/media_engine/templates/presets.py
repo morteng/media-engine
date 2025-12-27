@@ -13,34 +13,34 @@ from typing import Dict, List, Optional
 @dataclass
 class PresetFeatures:
     """Feature toggles for a preset."""
-    
+
     # Navigation & Structure
     toc: bool = True
     navigation: bool = True
     breadcrumbs: bool = False
     search: bool = False
-    
+
     # Content Features
     code_highlighting: bool = True
     callouts: bool = True
     footnotes: bool = True
-    
+
     # Visual Features
     dark_mode: bool = True
     print_friendly: bool = True
     responsive: bool = True
-    
+
     # Interactivity
     collapsible_sections: bool = False
     copy_code_buttons: bool = True
     anchor_links: bool = True
-    
+
     # Layout Options
     sidebar: bool = False
     header: bool = True
     footer: bool = True
     cover_page: bool = False
-    
+
     def to_dict(self) -> Dict:
         """Convert to dictionary."""
         return {
@@ -68,29 +68,29 @@ class PresetFeatures:
 class LayoutPreset:
     """
     Layout preset configuration.
-    
+
     Presets provide pre-configured layouts for different document types.
     """
-    
+
     name: str
     description: str
     template: str  # Template name to use
     features: PresetFeatures = field(default_factory=PresetFeatures)
-    
+
     # Styling overrides
     max_width: str = "800px"
     font_scale: float = 1.0
     line_height: float = 1.7
-    
+
     # Format-specific settings
     formats: List[str] = field(default_factory=lambda: ["html", "pdf"])
-    
+
     # CSS classes to add to body
     body_classes: List[str] = field(default_factory=list)
-    
+
     # Additional CSS
     custom_css: str = ""
-    
+
     def __post_init__(self):
         if isinstance(self.features, dict):
             self.features = PresetFeatures(**self.features)
@@ -115,7 +115,7 @@ PRESETS: Dict[str, LayoutPreset] = {
         max_width="1200px",
         body_classes=["docs-layout", "sidebar-visible"],
     ),
-    
+
     "ebook": LayoutPreset(
         name="ebook",
         description="Book-style layout with chapters and pagination",
@@ -133,7 +133,7 @@ PRESETS: Dict[str, LayoutPreset] = {
         line_height=1.8,
         body_classes=["ebook-layout"],
     ),
-    
+
     "report": LayoutPreset(
         name="report",
         description="Professional report format",
@@ -149,7 +149,7 @@ PRESETS: Dict[str, LayoutPreset] = {
         max_width="800px",
         body_classes=["report-layout"],
     ),
-    
+
     "article": LayoutPreset(
         name="article",
         description="Single-page article layout",
@@ -165,7 +165,7 @@ PRESETS: Dict[str, LayoutPreset] = {
         line_height=1.8,
         body_classes=["article-layout"],
     ),
-    
+
     "presentation": LayoutPreset(
         name="presentation",
         description="Web-based presentation slides",
@@ -180,7 +180,7 @@ PRESETS: Dict[str, LayoutPreset] = {
         formats=["html"],
         body_classes=["presentation-layout"],
     ),
-    
+
     "minimal": LayoutPreset(
         name="minimal",
         description="Clean, minimal layout with no extras",
@@ -202,10 +202,10 @@ PRESETS: Dict[str, LayoutPreset] = {
 def get_preset(name: str) -> Optional[LayoutPreset]:
     """
     Get a preset by name.
-    
+
     Args:
         name: Preset name
-        
+
     Returns:
         LayoutPreset or None if not found
     """
@@ -224,19 +224,19 @@ def create_custom_preset(
 ) -> LayoutPreset:
     """
     Create a custom preset based on an existing one.
-    
+
     Args:
         base: Base preset name to extend
         name: Name for the custom preset
         **overrides: Values to override
-        
+
     Returns:
         New LayoutPreset with overrides applied
     """
     base_preset = get_preset(base)
     if not base_preset:
         base_preset = PRESETS["minimal"]
-    
+
     # Create new preset with overrides
     preset_dict = {
         "name": name,
@@ -249,11 +249,11 @@ def create_custom_preset(
         "body_classes": overrides.get("body_classes", base_preset.body_classes.copy()),
         "custom_css": overrides.get("custom_css", base_preset.custom_css),
     }
-    
+
     # Handle features
     if "features" in overrides:
         preset_dict["features"] = overrides["features"]
     else:
         preset_dict["features"] = base_preset.features
-    
+
     return LayoutPreset(**preset_dict)

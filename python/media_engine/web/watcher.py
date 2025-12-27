@@ -7,11 +7,10 @@ to connected dashboard clients via WebSocket.
 
 import asyncio
 import logging
-import threading
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Optional
+from typing import TYPE_CHECKING, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -203,15 +202,29 @@ class FileWatcher:
         except Exception as e:
             logger.debug(f"Could not notify preprocessor: {e}")
 
-        # Perform incremental registry updates
+        # Perform incremental registry updates and broadcast results
         try:
-            from .incremental import process_file_changes
             from ..core.project import find_project
+            from .incremental import process_file_changes
 
             project = find_project(self.project_root)
             if project:
                 update_result = process_file_changes(events, project)
                 logger.debug(f"Incremental updates: {update_result}")
+
+                # Broadcast registry update summary
+                if update_result.get("documents_updated", 0) > 0 or \
+                   update_result.get("documents_created", 0) > 0 or \
+                   update_result.get("documents_deleted", 0) > 0:
+                    await self.connection_manager.broadcast({
+                        "type": "registry_update",
+                        "timestamp": datetime.now().isoformat(),
+                        "documents_updated": update_result.get("documents_updated", 0),
+                        "documents_created": update_result.get("documents_created", 0),
+                        "documents_deleted": update_result.get("documents_deleted", 0),
+                        "documents_affected": update_result.get("documents_affected", 0),
+                        "refresh": ["hierarchy", "dependencies", "translations", "quality"],
+                    })
         except Exception as e:
             logger.debug(f"Could not perform incremental updates: {e}")
 

@@ -140,6 +140,7 @@ class MediaEngineMCPServer:
         # Import tool registration functions
         from .tools import (
             ai,
+            ai_context,
             audit,
             batch,
             brand,
@@ -148,12 +149,15 @@ class MediaEngineMCPServer:
             claude,
             context,
             dependencies,
+            diagrams,
             documents,
             hierarchy,
             notes,
             project,
             provenance,
+            publications,
             quality,
+            relationships,
             reports,
             search,
             session,
@@ -171,12 +175,15 @@ class MediaEngineMCPServer:
         reports.register_report_tools(self.mcp, self)  # Comprehensive quality reports
         search.register_search_tools(self.mcp, self)
         build.register_build_tools(self.mcp, self)
+        diagrams.register_diagram_tools(self.mcp, self)
         cache.register_cache_tools(self.mcp, self)
         audit.register_audit_tools(self.mcp, self)
         provenance.register_provenance_tools(self.mcp, self)
         notes.register_notes_tools(self.mcp, self)
         hierarchy.register_hierarchy_tools(self.mcp, self)  # Document hierarchy & info flow
         dependencies.register_dependency_tools(self.mcp, self)  # Hash-based dependency tracking
+        relationships.register_relationship_tools(self.mcp, self)  # Unified relationship registry
+        publications.register_publication_tools(self.mcp, self)  # Composite document publications
 
         # Enhanced AI agent tools
         context.register_context_tools(self.mcp, self)
@@ -185,6 +192,7 @@ class MediaEngineMCPServer:
         session.register_session_tools(self.mcp, self)
         claude.register_claude_tools(self.mcp, self)
         ai.register_ai_tools(self.mcp, self)
+        ai_context.register_ai_context_tools(self.mcp, self)  # AI context & session management
         webhooks.register_webhook_tools(self.mcp, self)
 
     def _register_resources(self):

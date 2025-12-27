@@ -1,14 +1,13 @@
 """
 Incremental Registry Updates
 
-Updates content registries incrementally when files change,
-avoiding full rescans for better performance.
+Updates the unified registry when files change, avoiding full rescans.
+Integrates with the RegistryManager singleton for thread-safe updates.
 """
 
 import logging
-from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Set
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from ..core.project import Project
@@ -18,22 +17,32 @@ logger = logging.getLogger(__name__)
 
 class IncrementalUpdater:
     """
-    Handles incremental updates to project registries.
+    Handles incremental updates to the unified registry.
 
     When files change:
-    - Updates freshness registry for changed files
-    - Updates translation status for changed translations
-    - Updates dependency hashes for changed dependencies
-    - Marks affected documents as potentially stale
+    - Updates document nodes and relationships
+    - Propagates staleness to affected documents
+    - Emits change events for WebSocket notifications
     """
 
     def __init__(self, project: "Project"):
         self.project = project
-        self._pending_updates: Set[str] = set()
+        self._manager = None
+
+    @property
+    def manager(self):
+        """Lazy-load the registry manager."""
+        if self._manager is None:
+            from ..relationships import get_registry_manager, init_registry_manager
+
+            self._manager = get_registry_manager(self.project)
+            if self._manager is None:
+                self._manager = init_registry_manager(self.project)
+        return self._manager
 
     def on_file_change(self, changes: list[dict]) -> dict:
         """
-        Process file changes and update registries incrementally.
+        Process file changes and update the unified registry.
 
         Args:
             changes: List of change events from file watcher
@@ -43,214 +52,70 @@ class IncrementalUpdater:
             Summary of updates performed
         """
         result = {
-            "freshness_updated": 0,
-            "translations_updated": 0,
-            "dependencies_updated": 0,
-            "documents_marked_stale": 0,
+            "documents_updated": 0,
+            "documents_deleted": 0,
+            "documents_created": 0,
+            "documents_affected": 0,
             "errors": [],
         }
 
-        # Group changes by type for efficient processing
-        created = []
-        modified = []
-        deleted = []
-
+        # Filter to content files only
+        content_changes = []
         for change in changes:
             path = Path(change["path"])
-            event_type = change.get("type", "modified")
 
-            if event_type == "created":
-                created.append(path)
-            elif event_type == "deleted":
-                deleted.append(path)
-            else:
-                modified.append(path)
+            # Only process content files
+            if not self._is_content_file(path):
+                continue
 
-        # Process deletions first
-        for path in deleted:
-            try:
-                self._handle_deletion(path, result)
-            except Exception as e:
-                result["errors"].append(f"Delete {path}: {e}")
+            content_changes.append(change)
 
-        # Process creations (new files)
-        for path in created:
-            try:
-                self._handle_creation(path, result)
-            except Exception as e:
-                result["errors"].append(f"Create {path}: {e}")
+        if not content_changes:
+            return result
 
-        # Process modifications
-        for path in modified:
-            try:
-                self._handle_modification(path, result)
-            except Exception as e:
-                result["errors"].append(f"Modify {path}: {e}")
+        # Process changes through the manager
+        try:
+            change_infos = self.manager.on_files_changed(content_changes)
+
+            for info in change_infos:
+                if info.change_type == "deleted":
+                    result["documents_deleted"] += 1
+                elif info.change_type == "created":
+                    result["documents_created"] += 1
+                else:
+                    result["documents_updated"] += 1
+
+                result["documents_affected"] += len(info.affected_documents)
+
+        except Exception as e:
+            logger.error(f"Failed to process changes: {e}")
+            result["errors"].append(str(e))
 
         logger.debug(
-            f"Incremental update: {result['freshness_updated']} freshness, "
-            f"{result['translations_updated']} translations, "
-            f"{result['dependencies_updated']} dependencies"
+            f"Incremental update: {result['documents_updated']} updated, "
+            f"{result['documents_created']} created, "
+            f"{result['documents_deleted']} deleted, "
+            f"{result['documents_affected']} affected"
         )
 
         return result
 
-    def _handle_deletion(self, path: Path, result: dict) -> None:
-        """Handle a deleted file."""
-        # Update freshness registry
-        try:
-            from ..freshness import FreshnessRegistry
-
-            registry = FreshnessRegistry(self.project)
-            rel_path = str(self._get_relative_path(path))
-
-            if rel_path in registry.items:
-                del registry.items[rel_path]
-                registry.save()
-                result["freshness_updated"] += 1
-        except Exception as e:
-            logger.debug(f"Could not update freshness for deletion: {e}")
-
-        # Update dependency hashes
-        try:
-            from ..dependencies.hashes import DependencyHashTracker
-
-            tracker = DependencyHashTracker(self.project)
-            tracker.remove_document(path)
-            result["dependencies_updated"] += 1
-        except Exception as e:
-            logger.debug(f"Could not update dependencies for deletion: {e}")
-
-    def _handle_creation(self, path: Path, result: dict) -> None:
-        """Handle a newly created file."""
-        # Determine content type
-        content_type = self._classify_path(path)
-        if not content_type:
-            return
-
-        # Register in freshness
-        try:
-            from ..freshness import FreshnessRegistry
-            from ..freshness.types import ContentType
-
-            registry = FreshnessRegistry(self.project)
-            registry.register(
-                path=path,
-                content_type=ContentType(content_type),
-            )
-            registry.save()
-            result["freshness_updated"] += 1
-        except Exception as e:
-            logger.debug(f"Could not register in freshness: {e}")
-
-        # Register dependencies if it's a document
-        if path.suffix == ".md":
-            try:
-                from ..dependencies.hashes import DependencyHashTracker
-
-                tracker = DependencyHashTracker(self.project)
-                tracker.register_document(path)
-                result["dependencies_updated"] += 1
-            except Exception as e:
-                logger.debug(f"Could not register dependencies: {e}")
-
-    def _handle_modification(self, path: Path, result: dict) -> None:
-        """Handle a modified file."""
-        # Update freshness registry
-        try:
-            from ..freshness import FreshnessRegistry
-
-            registry = FreshnessRegistry(self.project)
-            rel_path = str(self._get_relative_path(path))
-
-            if rel_path in registry.items:
-                item = registry.items[rel_path]
-                # Update hash and timestamp
-                item.content_hash = registry._compute_hash(path)
-                item.last_modified = datetime.fromtimestamp(path.stat().st_mtime)
-                item.last_checked = datetime.now()
-                item.freshness_status = registry._compute_freshness(item)
-                registry.save()
-                result["freshness_updated"] += 1
-        except Exception as e:
-            logger.debug(f"Could not update freshness: {e}")
-
-        # Update translation status if it's a translation
-        try:
-            if self._is_translation(path):
-                from ..cms.translation import TranslationTracker
-
-                tracker = TranslationTracker(self.project)
-                status = tracker.get_status_for_file(path)
-                if status:
-                    result["translations_updated"] += 1
-        except Exception as e:
-            logger.debug(f"Could not update translation status: {e}")
-
-        # Update dependency hashes
-        try:
-            from ..dependencies.hashes import DependencyHashTracker
-
-            tracker = DependencyHashTracker(self.project)
-
-            # Update the document's own hash
-            tracker.update_document_hash(path)
-
-            # Check if any documents that depend on this one are now stale
-            stale_dependents = tracker.check_dependents(path)
-            result["documents_marked_stale"] += len(stale_dependents)
-            result["dependencies_updated"] += 1
-        except Exception as e:
-            logger.debug(f"Could not update dependencies: {e}")
-
-    def _get_relative_path(self, path: Path) -> Path:
-        """Get path relative to project root."""
-        try:
-            if path.is_absolute():
-                return path.relative_to(self.project.root)
-            return path
-        except ValueError:
-            return path
-
-    def _classify_path(self, path: Path) -> Optional[str]:
-        """Classify a file path into a content type."""
-        rel_path = str(self._get_relative_path(path))
-
-        # Check if under content directory
-        if not rel_path.startswith("content/"):
-            return None
-
-        suffix = path.suffix.lower()
-
-        if suffix == ".md":
-            if "/scripts/" in rel_path:
-                return "video_script"
-            return "source_document"
-        elif suffix in (".yaml", ".yml"):
-            if "/scripts/" in rel_path:
-                return "video_script"
-            return "source_document"
-        elif suffix in (".mp4", ".webm"):
-            return "video_render"
-        elif suffix in (".mp3", ".wav"):
-            return "voiceover_audio"
-        elif suffix in (".png", ".jpg", ".jpeg", ".svg"):
-            return "image_asset"
-
-        return None
-
-    def _is_translation(self, path: Path) -> bool:
-        """Check if a file is a translation document."""
-        if path.suffix != ".md":
+    def _is_content_file(self, path: Path) -> bool:
+        """Check if a file is a content file we should track."""
+        # Check suffix
+        if path.suffix.lower() not in (".md", ".yaml", ".yml"):
             return False
 
-        rel_path = str(self._get_relative_path(path))
+        # Check if under content directory
+        try:
+            rel_path = path.relative_to(self.project.root)
+            return str(rel_path).startswith("content/")
+        except ValueError:
+            return False
 
-        # Get source language from project
-        source_lang = getattr(self.project, "source_language", "en")
-
-        # If it's not in the source language directory, it might be a translation
-        return f"/content/{source_lang}/" not in f"/{rel_path}/"
+    def refresh_all(self) -> dict:
+        """Force a full refresh of the registry."""
+        return self.manager.refresh()
 
 
 # Global instance
@@ -273,3 +138,9 @@ def process_file_changes(changes: list[dict], project: "Project") -> dict:
     if updater:
         return updater.on_file_change(changes)
     return {"error": "No updater available"}
+
+
+def reset_updater():
+    """Reset the global updater (for testing)."""
+    global _updater
+    _updater = None

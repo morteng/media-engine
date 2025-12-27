@@ -4,8 +4,10 @@ Content Scanner
 Auto-discovers and registers content from standard project locations.
 """
 
+from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 import yaml
 
@@ -14,6 +16,68 @@ from .types import ContentType
 
 if TYPE_CHECKING:
     from ..core.project import Project
+
+
+@dataclass
+class StaleDocument:
+    """Represents a stale document with its age information."""
+
+    path: Path
+    last_modified: datetime
+    days_since_update: int
+
+
+class FreshnessScanner:
+    """
+    Scanner for finding stale content in a project.
+
+    Provides compatibility with legacy freshness tracking API while using
+    the new ContentRegistry under the hood.
+    """
+
+    def __init__(self, project: "Project"):
+        """Initialize scanner with a project."""
+        self.project = project
+
+    def find_stale(self, days: int = 30) -> List[StaleDocument]:
+        """
+        Find documents that haven't been updated in the given number of days.
+
+        Args:
+            days: Number of days after which content is considered stale
+
+        Returns:
+            List of StaleDocument objects for stale content
+        """
+        from datetime import timedelta
+
+        stale = []
+        now = datetime.now()
+        threshold = now - timedelta(days=days)
+
+        # Scan all markdown files in content directory
+        content_dir = self.project.content_dir
+        if not content_dir.exists():
+            return stale
+
+        for md_file in content_dir.rglob("*.md"):
+            try:
+                mtime = datetime.fromtimestamp(md_file.stat().st_mtime)
+                if mtime < threshold:
+                    days_old = (now - mtime).days
+                    stale.append(
+                        StaleDocument(
+                            path=md_file,
+                            last_modified=mtime,
+                            days_since_update=days_old,
+                        )
+                    )
+            except (OSError, ValueError):
+                continue
+
+        # Sort by age (oldest first)
+        stale.sort(key=lambda x: x.days_since_update, reverse=True)
+        return stale
 
 
 def scan_project(project: "Project", registry: ContentRegistry) -> int:

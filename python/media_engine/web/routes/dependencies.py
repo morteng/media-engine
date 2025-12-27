@@ -1,5 +1,7 @@
 """
 Dependencies API routes.
+
+Uses the Unified Registry (cached) for efficient queries.
 """
 
 from typing import TYPE_CHECKING, Callable
@@ -19,163 +21,236 @@ def register_dependencies_routes(
     """Register dependency-related routes."""
     from pathlib import Path
 
+    def _get_registry():
+        """Get the cached registry manager."""
+        from ...relationships import get_registry_manager, init_registry_manager
+
+        project = get_project()
+        if not project:
+            return None, None
+
+        registry_manager = get_registry_manager(project)
+        if registry_manager is None:
+            registry_manager = init_registry_manager(project)
+
+        return project, registry_manager
+
     @router.get("/api/dependencies")
     async def get_dependencies():
-        """Get all content dependencies."""
-        project = get_project()
+        """Get all document dependencies from the unified registry."""
+        project, registry_manager = _get_registry()
+        if not project:
+            return {"error": "No project found", "items": [], "tree": [], "stats": {}}
 
-        try:
-            from ...freshness import ContentRegistry, scan_project
+        registry = registry_manager.registry
 
-            registry = ContentRegistry(project)
-            registry.load()
-            if not registry.items:
-                scan_project(project, registry)
-                registry.save()
+        # Build dependency data from unified registry
+        items = []
+        for node in registry.all_nodes():
+            # Get outgoing edges (what this document depends on)
+            outgoing = registry.get_outgoing_edges(node.path)
+            depends_on = [str(e.target) for e in outgoing]
 
-            # Build dependency data
-            items = []
-            for path, item in registry.items.items():
-                items.append(
-                    {
-                        "path": str(item.path),
-                        "type": item.content_type.value,
-                        "status": item.freshness_status.value,
-                        "depends_on": [str(d) for d in item.depends_on],
-                        "dependents": [],  # Will be populated below
-                    }
-                )
+            # Get incoming edges (what depends on this document)
+            incoming = registry.get_incoming_edges(node.path)
+            dependents = [str(e.source) for e in incoming]
 
-            # Build reverse dependency map (what depends on this item)
-            path_to_idx = {item["path"]: i for i, item in enumerate(items)}
-            for item in items:
-                for dep in item["depends_on"]:
-                    if dep in path_to_idx:
-                        items[path_to_idx[dep]]["dependents"].append(item["path"])
+            items.append({
+                "path": str(node.path),
+                "title": node.title,
+                "type": node.doc_type or "document",
+                "lifecycle": node.lifecycle,
+                "is_stale": node.is_stale,
+                "language": node.language,
+                "depends_on": depends_on,
+                "dependents": dependents,
+            })
 
-            # Build tree structure
-            tree = build_dependency_tree(items)
+        # Build tree structure by type
+        tree = _build_dependency_tree(items)
 
-            return {
-                "items": items,
-                "tree": tree,
-                "stats": {
-                    "total": len(items),
-                    "with_deps": len([i for i in items if i["depends_on"]]),
-                    "roots": len([i for i in items if not i["depends_on"]]),
-                },
-            }
-
-        except Exception as e:
-            return {
-                "items": [],
-                "tree": [],
-                "stats": {"total": 0, "with_deps": 0, "roots": 0},
-                "error": str(e),
-            }
+        return {
+            "items": items,
+            "tree": tree,
+            "stats": {
+                "total": len(items),
+                "with_deps": len([i for i in items if i["depends_on"]]),
+                "roots": len([i for i in items if not i["depends_on"]]),
+                "stale": len([i for i in items if i.get("is_stale")]),
+            },
+        }
 
     @router.get("/api/dependencies/impact/{path:path}")
     async def get_dependency_impact(path: str):
-        """Get items affected if a file changes."""
-        project = get_project()
+        """Get documents affected if a file changes."""
+        project, registry_manager = _get_registry()
+        if not project:
+            return {"error": "No project found", "source": path, "affected": [], "count": 0}
 
-        try:
-            from ...freshness import ContentRegistry
+        # Resolve path
+        doc_path = Path(path)
+        if not doc_path.is_absolute():
+            doc_path = project.content_dir / path
 
-            registry = ContentRegistry(project)
-            registry.load()
+        # Get impact set from registry
+        affected_paths = registry_manager.get_impact(doc_path)
 
-            affected = registry.get_impact(Path(path))
+        # Build response with node details
+        affected = []
+        for affected_path in affected_paths:
+            node = registry_manager.get_node(affected_path)
+            if node:
+                affected.append({
+                    "path": str(affected_path),
+                    "title": node.title,
+                    "type": node.doc_type or "document",
+                    "is_stale": node.is_stale,
+                })
 
-            return {
-                "source": path,
-                "affected": [
-                    {
-                        "path": str(item.path),
-                        "type": item.content_type.value,
-                        "status": item.freshness_status.value,
-                    }
-                    for item in affected
-                ],
-                "count": len(affected),
-            }
+        return {
+            "source": path,
+            "affected": affected,
+            "count": len(affected),
+        }
 
-        except Exception as e:
-            return {
-                "source": path,
-                "affected": [],
-                "count": 0,
-                "error": str(e),
-            }
+    @router.get("/api/dependencies/graph")
+    async def get_dependency_graph(language: str = None):
+        """
+        Get full dependency graph for visualization.
+
+        Returns nodes and edges suitable for graph rendering.
+        """
+        project, registry_manager = _get_registry()
+        if not project:
+            return {"error": "No project found", "nodes": [], "edges": []}
+
+        registry = registry_manager.registry
+
+        nodes = []
+        edges = []
+
+        for node in registry.all_nodes():
+            # Filter by language if specified
+            if language and node.language and node.language != language:
+                continue
+
+            nodes.append({
+                "id": str(node.path),
+                "label": node.title or node.path.stem,
+                "type": node.doc_type or "document",
+                "lifecycle": node.lifecycle,
+                "is_stale": node.is_stale,
+                "language": node.language,
+            })
+
+            # Add edges
+            for edge in registry.get_outgoing_edges(node.path):
+                edges.append({
+                    "source": str(edge.source),
+                    "target": str(edge.target),
+                    "type": edge.edge_type.value,
+                    "is_stale": edge.is_stale,
+                })
+
+        return {
+            "nodes": nodes,
+            "edges": edges,
+            "stats": {
+                "node_count": len(nodes),
+                "edge_count": len(edges),
+            },
+        }
+
+    @router.get("/api/dependencies/stale")
+    async def get_stale_dependencies():
+        """Get all documents with stale dependencies."""
+        project, registry_manager = _get_registry()
+        if not project:
+            return {"error": "No project found", "stale": []}
+
+        stale_docs = registry_manager.get_stale_documents()
+
+        return {
+            "count": len(stale_docs),
+            "stale": [
+                {
+                    "path": str(doc.path),
+                    "title": doc.title,
+                    "reasons": doc.stale_reasons,
+                    "language": doc.language,
+                }
+                for doc in stale_docs
+            ],
+        }
+
+    @router.post("/api/dependencies/mark-fresh/{path:path}")
+    async def mark_dependency_fresh(path: str):
+        """Mark a document's dependencies as reviewed/fresh."""
+        project, registry_manager = _get_registry()
+        if not project:
+            return {"error": "No project found"}
+
+        doc_path = Path(path)
+        if not doc_path.is_absolute():
+            doc_path = project.content_dir / path
+
+        registry_manager.mark_fresh(doc_path)
+
+        return {"status": "marked_fresh", "path": str(doc_path)}
 
     @router.get("/api/dependencies/files")
     async def get_trackable_files():
         """Get list of files that can be selected for impact analysis."""
-        project = get_project()
+        project, registry_manager = _get_registry()
+        if not project:
+            return {"files": []}
+
+        registry = registry_manager.registry
 
         files = []
+        for node in registry.all_nodes():
+            files.append({
+                "path": str(node.path.relative_to(project.root)),
+                "name": node.path.name,
+                "title": node.title,
+                "type": node.doc_type or "document",
+                "language": node.language,
+            })
 
-        # Scan key directories
-        scan_dirs = [
-            ("content", project.content_dir),
-            ("theme", project.root),
-            ("deliverables", project.root / "docs" / "deliverables"),
-        ]
-
-        for category, base_dir in scan_dirs:
-            if not base_dir.exists():
-                continue
-
-            for ext in ["*.md", "*.yaml", "*.yml", "*.css", "*.js", "*.html", "*.svg"]:
-                for f in base_dir.rglob(ext):
-                    if ".git" in str(f) or "node_modules" in str(f):
-                        continue
-                    files.append(
-                        {
-                            "path": str(f.relative_to(project.root)),
-                            "name": f.name,
-                            "category": category,
-                        }
-                    )
-
-        # Sort by category and name
-        files.sort(key=lambda x: (x["category"], x["name"]))
+        # Sort by type and name
+        files.sort(key=lambda x: (x.get("type", ""), x["name"]))
 
         return {"files": files[:500]}  # Limit to 500
 
 
-def build_dependency_tree(items):
+def _build_dependency_tree(items: list) -> list:
     """Build a tree structure from flat dependency list."""
-    # Find root items (no dependencies)
-    [i for i in items if not i["depends_on"]]
-
     # Group items by type for better organization
     by_type = {}
     for item in items:
-        item_type = item["type"]
+        item_type = item.get("type", "document")
         if item_type not in by_type:
             by_type[item_type] = []
         by_type[item_type].append(item)
 
     tree = []
     for type_name, type_items in sorted(by_type.items()):
-        tree.append(
-            {
-                "type": "group",
-                "name": type_name.replace("_", " ").title(),
-                "count": len(type_items),
-                "children": [
-                    {
-                        "type": "item",
-                        "path": i["path"],
-                        "item_type": i["type"],
-                        "status": i["status"],
-                        "deps_count": len(i["depends_on"]),
-                        "dependents_count": len(i["dependents"]),
-                    }
-                    for i in sorted(type_items, key=lambda x: x["path"])
-                ],
-            }
-        )
+        tree.append({
+            "type": "group",
+            "name": type_name.replace("_", " ").title(),
+            "count": len(type_items),
+            "children": [
+                {
+                    "type": "item",
+                    "path": i["path"],
+                    "title": i.get("title"),
+                    "item_type": i.get("type"),
+                    "is_stale": i.get("is_stale", False),
+                    "deps_count": len(i.get("depends_on", [])),
+                    "dependents_count": len(i.get("dependents", [])),
+                }
+                for i in sorted(type_items, key=lambda x: x["path"])
+            ],
+        })
 
     return tree

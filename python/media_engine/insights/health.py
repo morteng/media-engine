@@ -391,15 +391,15 @@ class HealthScorer:
         self, frontmatter: dict, body: str, issues: list[HealthIssue], doc_path: Path
     ) -> float:
         """Score based on status/content consistency."""
-        from .incomplete import INCOMPLETE_PATTERNS
+        from .incomplete import IncompleteTracker
 
         status = frontmatter.get("status", "draft")
         score = 100.0
 
-        # Check for incomplete markers
-        incomplete_count = 0
-        for pattern in INCOMPLETE_PATTERNS.values():
-            incomplete_count += len(pattern.findall(body))
+        # Check for incomplete markers using proper tracker with filtering
+        tracker = IncompleteTracker(self.project)
+        incomplete_items = tracker.scan_document(doc_path)
+        incomplete_count = len(incomplete_items)
 
         if status in ("final", "published", "approved") and incomplete_count > 0:
             issues.append(

@@ -48,26 +48,10 @@ from .profile import (
     Identity,
     LegalInfo,
 )
-from .voice import (
-    DEFAULT_VOICE_PROFILE,
-    AudioVoice,
-    AudioVoiceProfile,
-    AudioVoiceSettings,
-    TermPreference,
-    VoiceProfile,
-    VoiceProfileOverride,
-    VoiceStyle,
-)
-from .voice_checker import (
-    VoiceCheckResult,
-    VoiceConsistencyChecker,
-    VoiceIssue,
-    check_document_voice,
-)
 from .resolver import (
     BrandContextResolver,
-    ResolvedBrandContext,
     ResolutionStep,
+    ResolvedBrandContext,
     resolve_brand_context,
 )
 from .tokens import (
@@ -85,6 +69,22 @@ from .typography import (
     LetterSpacing,
     LineHeight,
     Typography,
+)
+from .voice import (
+    DEFAULT_VOICE_PROFILE,
+    AudioVoice,
+    AudioVoiceProfile,
+    AudioVoiceSettings,
+    TermPreference,
+    VoiceProfile,
+    VoiceProfileOverride,
+    VoiceStyle,
+)
+from .voice_checker import (
+    VoiceCheckResult,
+    VoiceConsistencyChecker,
+    VoiceIssue,
+    check_document_voice,
 )
 
 __all__ = [

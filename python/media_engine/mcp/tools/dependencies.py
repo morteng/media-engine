@@ -1,6 +1,21 @@
-"""Dependency tracking MCP tools with hash-based change detection."""
+"""Dependency tracking MCP tools using the UnifiedRegistry via RegistryManager."""
 
 import json
+
+
+def _get_registry_manager(server_instance):
+    """Get or create the RegistryManager for the project."""
+    from ...relationships import get_registry_manager, init_registry_manager
+
+    project = server_instance.project
+    if not project:
+        return None
+
+    registry_manager = get_registry_manager(project)
+    if registry_manager is None:
+        registry_manager = init_registry_manager(project)
+
+    return registry_manager
 
 
 def register_dependency_tools(mcp, server_instance):
@@ -20,12 +35,11 @@ def register_dependency_tools(mcp, server_instance):
         Returns:
             Dependency status showing current/stale state for each dependency.
         """
-        from ...dependencies import DependencyHashTracker
-
-        if not server_instance.project:
+        manager = _get_registry_manager(server_instance)
+        if not manager:
             return json.dumps({"error": "No project found"}, indent=2)
 
-        tracker = DependencyHashTracker(server_instance.project)
+        registry = manager.registry
 
         if document_path:
             try:
@@ -33,45 +47,56 @@ def register_dependency_tools(mcp, server_instance):
             except ValueError as e:
                 return json.dumps({"error": str(e)}, indent=2)
 
-            status = tracker.check_document(validated_path)
+            node = registry.get_node(validated_path)
+            if not node:
+                return json.dumps({"error": f"Document not found: {document_path}"}, indent=2)
+
+            edges = registry.get_outgoing_edges(validated_path)
+            stale_edges = [e for e in edges if e.is_stale]
 
             return json.dumps(
                 {
-                    "path": str(status.path),
-                    "title": status.title,
-                    "total_dependencies": status.total_dependencies,
-                    "stale_dependencies": status.stale_dependencies,
-                    "is_stale": status.is_stale,
+                    "path": str(validated_path),
+                    "title": node.title or validated_path.stem,
+                    "total_dependencies": len(edges),
+                    "stale_dependencies": len(stale_edges),
+                    "is_stale": node.is_stale,
                     "dependencies": [
                         {
-                            "target": d.target_path,
-                            "type": d.dep_type,
-                            "recorded_hash": d.recorded_hash,
-                            "current_hash": d.current_hash,
-                            "is_stale": d.is_stale,
+                            "target": str(e.target),
+                            "type": e.edge_type.value,
+                            "source_hash": e.source_hash,
+                            "target_hash": e.target_hash,
+                            "is_stale": e.is_stale,
+                            "stale_reason": e.stale_reason,
                         }
-                        for d in status.dependencies
+                        for e in edges
                     ],
                 },
                 indent=2,
             )
         else:
-            statuses = tracker.get_all_statuses()
+            # Show all documents
+            statuses = []
+            for node in registry.all_nodes():
+                edges = registry.get_outgoing_edges(node.path)
+                stale_edges = [e for e in edges if e.is_stale]
+
+                statuses.append({
+                    "path": str(node.path),
+                    "title": node.title or node.path.stem,
+                    "total_deps": len(edges),
+                    "stale_deps": len(stale_edges),
+                    "is_stale": node.is_stale,
+                })
+
+            stale_count = sum(1 for s in statuses if s["is_stale"])
 
             return json.dumps(
                 {
                     "total_documents": len(statuses),
-                    "documents_with_stale_deps": sum(1 for s in statuses if s.is_stale),
-                    "documents": [
-                        {
-                            "path": str(s.path),
-                            "title": s.title,
-                            "total_deps": s.total_dependencies,
-                            "stale_deps": s.stale_dependencies,
-                            "is_stale": s.is_stale,
-                        }
-                        for s in statuses
-                    ],
+                    "documents_with_stale_deps": stale_count,
+                    "documents": statuses,
                 },
                 indent=2,
             )
@@ -84,35 +109,37 @@ def register_dependency_tools(mcp, server_instance):
         Returns documents whose dependent content has changed
         since they were last reviewed.
         """
-        from ...dependencies import DependencyHashTracker
-
-        if not server_instance.project:
+        manager = _get_registry_manager(server_instance)
+        if not manager:
             return json.dumps({"error": "No project found"}, indent=2)
 
-        tracker = DependencyHashTracker(server_instance.project)
-        stale = tracker.get_all_stale()
+        stale_docs = manager.get_stale_documents()
+
+        stale_list = []
+        for doc in stale_docs:
+            edges = manager.registry.get_outgoing_edges(doc.path)
+            stale_edges = [e for e in edges if e.is_stale]
+
+            stale_list.append({
+                "path": str(doc.path),
+                "title": doc.title,
+                "stale_count": len(stale_edges),
+                "stale_deps": [
+                    {
+                        "target": str(e.target),
+                        "type": e.edge_type.value,
+                        "old_hash": e.source_hash,
+                        "new_hash": e.target_hash,
+                        "reason": e.stale_reason,
+                    }
+                    for e in stale_edges
+                ],
+            })
 
         return json.dumps(
             {
-                "count": len(stale),
-                "stale_documents": [
-                    {
-                        "path": str(s.path),
-                        "title": s.title,
-                        "stale_count": s.stale_dependencies,
-                        "stale_deps": [
-                            {
-                                "target": d.target_path,
-                                "type": d.dep_type,
-                                "old_hash": d.recorded_hash,
-                                "new_hash": d.current_hash,
-                            }
-                            for d in s.dependencies
-                            if d.is_stale
-                        ],
-                    }
-                    for s in stale
-                ],
+                "count": len(stale_list),
+                "stale_documents": stale_list,
             },
             indent=2,
         )
@@ -131,9 +158,8 @@ def register_dependency_tools(mcp, server_instance):
         Returns:
             Result with number of dependencies updated.
         """
-        from ...dependencies import DependencyHashTracker
-
-        if not server_instance.project:
+        manager = _get_registry_manager(server_instance)
+        if not manager:
             return json.dumps({"error": "No project found"}, indent=2)
 
         try:
@@ -141,16 +167,15 @@ def register_dependency_tools(mcp, server_instance):
         except ValueError as e:
             return json.dumps({"error": str(e)}, indent=2)
 
-        tracker = DependencyHashTracker(server_instance.project)
-        updated = tracker.mark_current(validated_path)
-
+        # Mark the document and its edges as fresh
+        manager.mark_fresh(validated_path)
         server_instance._invalidate_cache()
 
         return json.dumps(
             {
                 "status": "updated",
                 "document": str(validated_path),
-                "dependencies_updated": updated,
+                "message": "Document and dependencies marked as current",
             },
             indent=2,
         )
@@ -169,30 +194,27 @@ def register_dependency_tools(mcp, server_instance):
         Returns:
             Summary of refreshed dependencies.
         """
-        from ...dependencies import DependencyGraph, DependencyHashTracker
-
-        if not server_instance.project:
+        manager = _get_registry_manager(server_instance)
+        if not manager:
             return json.dumps({"error": "No project found"}, indent=2)
 
-        graph = DependencyGraph(server_instance.project)
-        graph.refresh()
+        result = manager.refresh()
+        report = manager.registry.generate_report()
 
-        report = graph.generate_report()
-
-        result = {
+        output = {
             "status": "refreshed",
             "summary": report["summary"],
-            "by_type": report["by_type"],
+            "by_type": report.get("by_type", {}),
+            "elapsed_seconds": result.get("elapsed_seconds", 0),
         }
 
         if sync_hashes:
-            tracker = DependencyHashTracker(server_instance.project)
-            synced = tracker.sync_from_graph(graph)
-            result["hashes_synced"] = synced
+            manager.mark_all_fresh()
+            output["hashes_synced"] = True
 
         server_instance._invalidate_cache()
 
-        return json.dumps(result, indent=2)
+        return json.dumps(output, indent=2)
 
     @mcp.tool()
     async def dependency_report() -> str:
@@ -202,21 +224,47 @@ def register_dependency_tools(mcp, server_instance):
         Provides overview of all document dependencies, stale items,
         and dependency types.
         """
-        from ...dependencies import DependencyGraph, DependencyHashTracker
-
-        if not server_instance.project:
+        manager = _get_registry_manager(server_instance)
+        if not manager:
             return json.dumps({"error": "No project found"}, indent=2)
 
-        graph = DependencyGraph(server_instance.project)
-        tracker = DependencyHashTracker(server_instance.project)
+        registry = manager.registry
+        report = registry.generate_report()
 
-        graph_report = graph.generate_report()
-        hash_report = tracker.generate_report()
+        # Add staleness summary
+        stale_docs = manager.get_stale_documents()
+
+        # Count edges by type
+        edge_types = {}
+        stale_edges = 0
+        total_edges = 0
+
+        for node in registry.all_nodes():
+            edges = registry.get_outgoing_edges(node.path)
+            for edge in edges:
+                total_edges += 1
+                edge_type = edge.edge_type.value
+                edge_types[edge_type] = edge_types.get(edge_type, 0) + 1
+                if edge.is_stale:
+                    stale_edges += 1
 
         return json.dumps(
             {
-                "dependency_graph": graph_report,
-                "hash_tracking": hash_report,
+                "dependency_graph": {
+                    "total_documents": report["summary"]["total_documents"],
+                    "total_relationships": report["summary"]["total_relationships"],
+                    "roots": report["summary"]["root_documents"],
+                    "orphans": report["summary"]["orphan_documents"],
+                    "by_type": edge_types,
+                },
+                "staleness": {
+                    "stale_documents": len(stale_docs),
+                    "stale_edges": stale_edges,
+                    "total_edges": total_edges,
+                    "freshness_percentage": round(
+                        (total_edges - stale_edges) / total_edges * 100, 1
+                    ) if total_edges > 0 else 100,
+                },
             },
             indent=2,
         )

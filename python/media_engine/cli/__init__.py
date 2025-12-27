@@ -32,6 +32,7 @@ from .commands import (
     cmd_dashboard,
     cmd_demos,
     cmd_deps,
+    cmd_diagrams,
     cmd_duplicates,
     cmd_freshness,
     cmd_gaps,
@@ -48,9 +49,11 @@ from .commands import (
     cmd_parity,
     cmd_path,
     cmd_provenance,
+    cmd_publications,
     cmd_publish,
     cmd_quality,
     cmd_readability,
+    cmd_relationships,
     cmd_release,
     cmd_search,
     cmd_security,
@@ -217,6 +220,10 @@ def main():
 
     trans_outdated = trans_subparsers.add_parser("outdated", help="Show outdated translations")
     trans_outdated.add_argument("--json", action="store_true", help="Output as JSON")
+    trans_outdated.add_argument(
+        "--detailed", "-d", action="store_true",
+        help="Show section-level changes (which sections need review)"
+    )
 
     trans_missing = trans_subparsers.add_parser("missing", help="Show missing translations")
     trans_missing.add_argument("--lang", help="Target language (default: no)")
@@ -402,6 +409,36 @@ def main():
     demos_build.add_argument("--output", "-o", help="Output directory")
     demos_build.add_argument("--json", action="store_true", help="Output as JSON")
 
+    # diagrams
+    diagrams_parser = subparsers.add_parser("diagrams", help="Diagram generation and management")
+    diagrams_subparsers = diagrams_parser.add_subparsers(dest="diagrams_command")
+
+    diagrams_build = diagrams_subparsers.add_parser("build", help="Build diagrams")
+    diagrams_build.add_argument("--lang", help="Build for specific languages (comma-separated)")
+    diagrams_build.add_argument("--engine", help="Override engine (matplotlib, d2, excalidraw)")
+    diagrams_build.add_argument("--dark", action="store_true", help="Generate dark mode only")
+    diagrams_build.add_argument("--output", "-o", help="Output directory")
+    diagrams_build.add_argument("--json", action="store_true", help="Output as JSON")
+
+    diagrams_list = diagrams_subparsers.add_parser("list", help="List diagrams in project")
+    diagrams_list.add_argument("--lang", help="Filter by language")
+    diagrams_list.add_argument("--json", action="store_true", help="Output as JSON")
+
+    diagrams_engines = diagrams_subparsers.add_parser("engines", help="List available diagram engines")
+    diagrams_engines.add_argument("--json", action="store_true", help="Output as JSON")
+
+    diagrams_preview = diagrams_subparsers.add_parser("preview", help="Preview a diagram")
+    diagrams_preview.add_argument("file", help="Path to diagram YAML file")
+    diagrams_preview.add_argument("--render", action="store_true", help="Render to file")
+    diagrams_preview.add_argument("--engine", help="Override engine")
+    diagrams_preview.add_argument("--dark", action="store_true", help="Use dark mode")
+    diagrams_preview.add_argument("--output", "-o", help="Output directory")
+    diagrams_preview.add_argument("--open", action="store_true", help="Open after rendering")
+
+    diagrams_info = diagrams_subparsers.add_parser("info", help="Show diagram file info")
+    diagrams_info.add_argument("file", help="Path to diagram YAML file")
+    diagrams_info.add_argument("--json", action="store_true", help="Output as JSON")
+
     # freshness
     fresh_parser = subparsers.add_parser("freshness", help="Content freshness tracking")
     fresh_parser.add_argument("--scan", action="store_true", help="Scan and register all content")
@@ -458,6 +495,41 @@ def main():
     hier_coverage = hier_subparsers.add_parser("coverage", help="Analyze documentation coverage")
     hier_coverage.add_argument("--json", action="store_true", help="Output as JSON")
     hier_coverage.add_argument("--suggest", action="store_true", help="Show gap suggestions")
+
+    # relationships (unified relationship registry)
+    rel_parser = subparsers.add_parser("relationships", help="Unified relationship registry")
+    rel_subparsers = rel_parser.add_subparsers(dest="relationships_command")
+
+    rel_status = rel_subparsers.add_parser("status", help="Show relationship summary")
+    rel_status.add_argument("--json", action="store_true", help="Output as JSON")
+
+    rel_subparsers.add_parser("refresh", help="Rebuild relationship graph")
+
+    rel_stale = rel_subparsers.add_parser("stale", help="Show stale documents")
+    rel_stale.add_argument("--type", help="Filter by edge type")
+    rel_stale.add_argument("--json", action="store_true", help="Output as JSON")
+
+    rel_impact = rel_subparsers.add_parser("impact", help="Analyze change impact")
+    rel_impact.add_argument("--document", "-d", required=True, help="Document path")
+    rel_impact.add_argument("--json", action="store_true", help="Output as JSON")
+
+    rel_graph = rel_subparsers.add_parser("graph", help="Export relationship graph")
+    rel_graph.add_argument(
+        "--format", choices=["dot", "mermaid", "json"], default="dot", help="Export format"
+    )
+    rel_graph.add_argument("--output", "-o", help="Output file path")
+    rel_graph.add_argument("--type", help="Filter by edge types (comma-separated)")
+
+    rel_sync = rel_subparsers.add_parser("sync", help="Mark relationships as fresh")
+    rel_sync.add_argument("--document", "-d", help="Specific document to sync")
+    rel_sync.add_argument("--all", action="store_true", help="Sync all documents")
+
+    rel_anchors = rel_subparsers.add_parser("anchors", help="Show consistency anchors")
+    rel_anchors.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # publications (deliverable management)
+    from .commands.publications import add_publications_parser
+    add_publications_parser(subparsers)
 
     # ============== INSIGHTS COMMANDS ==============
 
@@ -643,8 +715,11 @@ def main():
         "security": cmd_security,
         "changelog": cmd_changelog,
         "demos": cmd_demos,
+        "diagrams": cmd_diagrams,
         "freshness": cmd_freshness,
         "hierarchy": cmd_hierarchy,
+        "relationships": cmd_relationships,
+        "publications": cmd_publications,
         # Insights commands
         "health": cmd_health,
         "stats": cmd_stats,

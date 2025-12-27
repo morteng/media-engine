@@ -1,10 +1,14 @@
 """
 Tests for translation tracking functionality.
+
+The translation system uses content hash comparison for automatic change detection.
+When source content changes, translations are automatically flagged as outdated.
 """
 
 import pytest
 from media_engine.cms.document import Document
 from media_engine.cms.translation import TranslationTracker
+from media_engine.core.hashing import compute_content_hash
 from media_engine.core.project import Project
 
 
@@ -36,29 +40,33 @@ paths:
 """)
 
     # Create source document
+    source_content = """# Introduction
+
+This is the source document.
+"""
     source_doc = temp_dir / "content/en/chapters/01_intro.md"
-    source_doc.write_text("""---
+    source_doc.write_text(f"""---
 title: "Introduction"
 version: "1.0.0"
 status: "final"
 last_modified: "2025-12-16"
 ---
 
-# Introduction
+{source_content}""")
 
-This is the source document.
-""")
+    # Compute content hash for the source
+    source_hash = compute_content_hash(source_content)
 
-    # Create translated document (current with source)
+    # Create translated document (current with source) - includes source_content_hash
     trans_doc = temp_dir / "content/no/chapters/01_intro.md"
-    trans_doc.write_text("""---
+    trans_doc.write_text(f"""---
 title: "Introduksjon"
 version: "1.0.0"
 status: "final"
 last_modified: "2025-12-16"
 language: "no"
 source_document: "en/chapters/01_intro.md"
-source_version: "1.0.0"
+source_content_hash: "{source_hash}"
 ---
 
 # Introduksjon
@@ -94,7 +102,7 @@ paths:
   content: "content"
 """)
 
-    # Create source document (version 2.0.0)
+    # Create source document (UPDATED content)
     source_doc = temp_dir / "content/en/chapters/01_intro.md"
     source_doc.write_text("""---
 title: "Introduction"
@@ -108,16 +116,17 @@ last_modified: "2025-12-16"
 This is the UPDATED source document.
 """)
 
-    # Create translated document (translated from version 1.0.0)
+    # Create translated document with OLD hash (simulating translation from old content)
+    old_hash = "oldhash12345678"  # Different from current source hash
     trans_doc = temp_dir / "content/no/chapters/01_intro.md"
-    trans_doc.write_text("""---
+    trans_doc.write_text(f"""---
 title: "Introduksjon"
 version: "1.0.0"
 status: "final"
 last_modified: "2025-12-15"
 language: "no"
 source_document: "en/chapters/01_intro.md"
-source_version: "1.0.0"
+source_content_hash: "{old_hash}"
 ---
 
 # Introduksjon
@@ -141,29 +150,30 @@ class TestTranslationTracker:
         assert source.title == "Introduction"
         assert trans.title == "Introduksjon"
 
-    def test_not_outdated_when_versions_match(self, translation_project):
-        """Test that matching versions show as current."""
+    def test_not_outdated_when_hashes_match(self, translation_project):
+        """Test that matching hashes show as current."""
         tracker = TranslationTracker(translation_project)
         statuses = tracker.get_all_statuses()
 
         assert len(statuses) == 1
         status = statuses[0]
         assert not status.is_outdated
-        assert status.source_version == "1.0.0"
-        assert status.translated_version == "1.0.0"
         assert status.status_label == "current"
+        # Hash fields should be populated
+        assert status.source_content_hash
+        assert status.translated_from_hash
 
     def test_detects_outdated_when_source_updated(self, outdated_translation_project):
-        """Test that tracker detects outdated translations."""
+        """Test that tracker detects outdated translations via hash mismatch."""
         tracker = TranslationTracker(outdated_translation_project)
         outdated = tracker.get_outdated_translations()
 
         assert len(outdated) == 1
         status = outdated[0]
         assert status.is_outdated
-        assert status.source_version == "2.0.0"
-        assert status.translated_version == "1.0.0"
         assert status.status_label == "outdated"
+        # Hash mismatch is the cause
+        assert status.source_content_hash != status.translated_from_hash
 
     def test_get_sync_status_groups_by_language(self, translation_project):
         """Test that sync status is grouped by language."""
@@ -188,32 +198,46 @@ class TestTranslationTracker:
         assert status.target_language == "no"
         assert not status.is_outdated
 
+    def test_to_dict_serialization(self, translation_project):
+        """Test that TranslationStatus.to_dict() works correctly."""
+        tracker = TranslationTracker(translation_project)
+        statuses = tracker.get_all_statuses()
+
+        assert len(statuses) == 1
+        status_dict = statuses[0].to_dict()
+
+        assert "source_path" in status_dict
+        assert "translation_path" in status_dict
+        assert "source_content_hash" in status_dict
+        assert "translated_from_hash" in status_dict
+        assert "is_outdated" in status_dict
+        assert "status" in status_dict
+        assert status_dict["status"] == "current"
+
 
 class TestBidirectionalSync:
     """Tests for bidirectional translation sync scenarios."""
 
     def test_source_update_marks_translation_outdated(self, translation_project):
-        """Test that updating source marks translation as outdated."""
+        """Test that updating source content marks translation as outdated."""
         tracker = TranslationTracker(translation_project)
 
-        # Initially not outdated
+        # Initially not outdated (hashes match)
         outdated = tracker.get_outdated_translations()
         assert len(outdated) == 0
 
-        # Update source version
+        # Update source content (which changes its hash)
         source_path = translation_project.content_dir / "en/chapters/01_intro.md"
         source_doc = Document.load(source_path)
-        source_doc.increment_version("minor")  # 1.0.0 -> 1.1.0
+        source_doc.content = "# Introduction\n\nThis is UPDATED content that will change the hash.\n"
         source_doc.save()
 
         # Refresh tracker
         tracker.refresh()
 
-        # Now should be outdated
+        # Now should be outdated because source hash changed
         outdated = tracker.get_outdated_translations()
         assert len(outdated) == 1
-        assert outdated[0].source_version == "1.1.0"
-        assert outdated[0].translated_version == "1.0.0"
 
     def test_translation_update_preserves_source_link(self, translation_project):
         """Test that updating translation preserves source document link."""
@@ -232,8 +256,8 @@ class TestBidirectionalSync:
         assert trans_doc_reloaded.metadata.get("source_document") == "en/chapters/01_intro.md"
         assert trans_doc_reloaded.metadata.get("language") == "no"
 
-    def test_mark_synced_updates_source_version(self, outdated_translation_project):
-        """Test that mark_synced updates the source_version field."""
+    def test_mark_synced_updates_source_hash(self, outdated_translation_project):
+        """Test that mark_synced updates the source_content_hash field."""
         tracker = TranslationTracker(outdated_translation_project)
 
         # Initially outdated
@@ -243,11 +267,16 @@ class TestBidirectionalSync:
         # Load translation and mark synced
         trans_path = outdated_translation_project.content_dir / "no/chapters/01_intro.md"
         trans_doc = Document.load(trans_path)
+
+        # Record old hash
+        old_hash = trans_doc.metadata.get("source_content_hash")
+
         tracker.mark_synced(trans_doc)
 
-        # Reload and check
+        # Reload and check hash was updated
         trans_doc_reloaded = Document.load(trans_path)
-        assert trans_doc_reloaded.metadata.get("source_version") == "2.0.0"
+        new_hash = trans_doc_reloaded.metadata.get("source_content_hash")
+        assert new_hash != old_hash
 
         # Refresh tracker and check no longer outdated
         tracker.refresh()
@@ -309,7 +338,7 @@ status: "final"
 last_modified: "2025-12-16"
 language: "no"
 source_document: "en/chapters/01_intro.md"
-source_version: "1.0.0"
+source_content_hash: "somehash12345678"
 ---
 # Introduksjon
 """)
@@ -323,26 +352,55 @@ source_version: "1.0.0"
         assert missing[0].title == "Features"
 
 
-class TestVersionComparison:
-    """Tests for version comparison logic."""
+class TestHashBasedTracking:
+    """Tests for hash-based translation tracking."""
 
-    def test_version_comparison(self, translation_project):
-        """Test version comparison logic."""
-        tracker = TranslationTracker(translation_project)
+    def test_empty_hash_marks_outdated(self, temp_dir):
+        """Test that missing source_content_hash marks translation as outdated."""
+        # Create project structure
+        (temp_dir / "content/en/chapters").mkdir(parents=True)
+        (temp_dir / "content/no/chapters").mkdir(parents=True)
 
-        # Test equal versions
-        assert tracker._compare_versions("1.0.0", "1.0.0") == 0
+        # Create project.yaml
+        project_yaml = temp_dir / "project.yaml"
+        project_yaml.write_text("""
+project:
+  name: "Hash Test"
 
-        # Test greater versions
-        assert tracker._compare_versions("2.0.0", "1.0.0") > 0
-        assert tracker._compare_versions("1.1.0", "1.0.0") > 0
-        assert tracker._compare_versions("1.0.1", "1.0.0") > 0
+localization:
+  source_language: "en"
+  languages:
+    en:
+      name: "English"
+    "no":
+      name: "Norwegian"
 
-        # Test lesser versions
-        assert tracker._compare_versions("1.0.0", "2.0.0") < 0
-        assert tracker._compare_versions("1.0.0", "1.1.0") < 0
-        assert tracker._compare_versions("1.0.0", "1.0.1") < 0
+paths:
+  content: "content"
+""")
 
-        # Test partial versions
-        assert tracker._compare_versions("1.0", "1.0.0") == 0
-        assert tracker._compare_versions("1", "1.0.0") == 0
+        # Create source document
+        (temp_dir / "content/en/chapters/01_intro.md").write_text("""---
+title: "Introduction"
+---
+# Introduction
+""")
+
+        # Create translation WITHOUT source_content_hash
+        (temp_dir / "content/no/chapters/01_intro.md").write_text("""---
+title: "Introduksjon"
+language: "no"
+source_document: "en/chapters/01_intro.md"
+---
+# Introduksjon
+""")
+
+        project = Project.load(temp_dir)
+        tracker = TranslationTracker(project)
+
+        statuses = tracker.get_all_statuses()
+        assert len(statuses) == 1
+
+        # Should be outdated because no hash recorded
+        assert statuses[0].is_outdated
+        assert statuses[0].translated_from_hash == ""

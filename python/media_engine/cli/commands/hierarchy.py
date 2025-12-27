@@ -1,7 +1,8 @@
-"""Hierarchy commands - document hierarchy and information flow."""
+"""Hierarchy commands - document hierarchy using the Unified Relationship Registry."""
 
 import json
 import sys
+from pathlib import Path
 
 from rich import box
 from rich.console import Console
@@ -21,58 +22,57 @@ def cmd_hierarchy(args):
         console.print("[red]No project.yaml found[/red]")
         sys.exit(1)
 
-    # Import here to avoid circular imports
-    from ...hierarchy import HierarchyGraph, HierarchyValidator, StalenessChecker
+    from ...relationships import get_registry_manager, init_registry_manager
 
-    graph = HierarchyGraph(project)
+    registry_manager = get_registry_manager(project)
+    if registry_manager is None:
+        registry_manager = init_registry_manager(project)
 
     # Handle subcommands
     if hasattr(args, "hierarchy_command"):
         if args.hierarchy_command == "status":
-            _show_status(graph, args)
+            _show_status(registry_manager, args)
         elif args.hierarchy_command == "tree":
-            _show_tree(graph, args)
+            _show_tree(registry_manager, args)
         elif args.hierarchy_command == "stale":
-            _show_stale(graph, args)
+            _show_stale(registry_manager, args)
         elif args.hierarchy_command == "validate":
-            _validate_hierarchy(graph, args)
+            _validate_hierarchy(registry_manager, args)
         elif args.hierarchy_command == "refresh":
-            _refresh_hierarchy(graph, args)
+            _refresh_hierarchy(registry_manager, args)
         elif args.hierarchy_command == "nav":
-            _show_navigation(graph, args)
+            _show_navigation(registry_manager, args)
         elif args.hierarchy_command == "anchors":
-            _show_anchors(graph, args)
+            _show_anchors(registry_manager, args)
         elif args.hierarchy_command == "impact":
-            _show_impact(graph, args)
+            _show_impact(registry_manager, args)
         elif args.hierarchy_command == "coverage":
-            _show_coverage(graph, args)
+            _show_coverage(registry_manager, args)
         else:
-            _show_status(graph, args)
+            _show_status(registry_manager, args)
     else:
-        _show_status(graph, args)
+        _show_status(registry_manager, args)
 
 
-def _show_status(graph, args):
+def _show_status(manager, args):
     """Show hierarchy status overview."""
-    report = graph.registry.generate_report()
+    report = manager.registry.generate_report()
 
     if hasattr(args, "json") and args.json:
         print(json.dumps(report, indent=2))
         return
 
-    # Summary panel
     summary = report["summary"]
-    by_type = report.get("by_type", {})
-    by_lifecycle = report.get("by_lifecycle", {})
 
-    summary_text = f"""[bold]Total documents:[/bold] {summary['total_nodes']}
-[bold]Root documents:[/bold] {summary['root_count']}
-[yellow]Stale documents:[/yellow] {summary['stale_count']}
-[bold]Consistency anchors:[/bold] {summary['anchor_count']}"""
+    summary_text = f"""[bold]Total documents:[/bold] {summary['total_documents']}
+[bold]Root documents:[/bold] {summary['root_documents']}
+[yellow]Stale documents:[/yellow] {summary['stale_documents']}
+[bold]Consistency anchors:[/bold] {summary['anchors']}"""
 
     console.print(Panel(summary_text, title="Document Hierarchy", expand=False))
 
     # Type breakdown
+    by_type = report.get("by_doc_type", {})
     if by_type:
         console.print("\n[bold]By Document Type:[/bold]")
         type_table = Table(show_header=False, box=box.SIMPLE)
@@ -83,6 +83,7 @@ def _show_status(graph, args):
         console.print(type_table)
 
     # Lifecycle breakdown
+    by_lifecycle = report.get("by_lifecycle", {})
     if by_lifecycle:
         console.print("\n[bold]By Lifecycle:[/bold]")
         lifecycle_table = Table(show_header=False, box=box.SIMPLE)
@@ -93,254 +94,305 @@ def _show_status(graph, args):
         console.print(lifecycle_table)
 
 
-def _show_tree(graph, args):
+def _show_tree(manager, args):
     """Show hierarchy as ASCII tree."""
+    registry = manager.registry
+
     root_path = None
     if hasattr(args, "root") and args.root:
-        from pathlib import Path
-
         root_path = Path(args.root)
 
     if hasattr(args, "dot") and args.dot:
         # Output DOT format for Graphviz
-        print(graph.to_dot())
+        print(_generate_dot(registry))
         return
 
-    # ASCII tree
-    tree_str = graph.to_tree_string(root_path)
-
-    if not tree_str.strip():
+    # Build tree structure
+    roots = registry.get_roots()
+    if not roots:
         console.print("[yellow]No hierarchy data found. Run 'media-engine hierarchy refresh' first.[/yellow]")
         return
 
-    console.print(Panel(tree_str, title="Document Hierarchy Tree", expand=False))
+    # Filter to specific root if specified
+    if root_path:
+        matching_roots = [r for r in roots if str(root_path) in str(r)]
+        if matching_roots:
+            roots = matching_roots
+
+    # Build Rich tree
+    for root in sorted(roots):
+        tree = _build_rich_tree(registry, root)
+        if tree:
+            console.print(tree)
+            console.print()
 
 
-def _show_stale(graph, args):
+def _build_rich_tree(registry, root_path, visited=None) -> Tree:
+    """Build a Rich Tree from registry hierarchy."""
+    if visited is None:
+        visited = set()
+
+    path_str = str(root_path)
+    if path_str in visited:
+        return None
+    visited.add(path_str)
+
+    node = registry.get_node(root_path)
+    if not node:
+        return None
+
+    # Create tree node with status indicator
+    status = "[red]●[/red] " if node.is_stale else "[green]●[/green] "
+    title = node.title or root_path.stem
+    label = f"{status}[bold]{title}[/bold] [dim]({root_path.name})[/dim]"
+
+    tree = Tree(label)
+
+    # Add children
+    children = registry.get_children(root_path)
+    for child_path in sorted(children):
+        child_tree = _build_rich_tree(registry, child_path, visited.copy())
+        if child_tree:
+            tree.add(child_tree)
+
+    return tree
+
+
+def _show_stale(manager, args):
     """Show stale documents."""
-    from ...hierarchy import StalenessChecker
-
-    checker = StalenessChecker(graph)
-    report = checker.check_all()
+    stale_docs = manager.get_stale_documents()
 
     if hasattr(args, "json") and args.json:
-        print(json.dumps(report.to_dict(), indent=2))
+        output = [
+            {
+                "path": str(doc.path),
+                "title": doc.title,
+                "reasons": doc.stale_reasons,
+            }
+            for doc in stale_docs
+        ]
+        print(json.dumps(output, indent=2))
         return
 
-    # Summary
-    summary_text = f"""[bold]Total documents:[/bold] {report.total_documents}
-[yellow]Stale documents:[/yellow] {report.stale_count}
-[dim]Stale percentage:[/dim] {report.stale_percentage:.1f}%"""
+    total_docs = len(list(manager.registry.all_nodes()))
+    stale_count = len(stale_docs)
+    stale_pct = (stale_count / total_docs * 100) if total_docs > 0 else 0
+
+    summary_text = f"""[bold]Total documents:[/bold] {total_docs}
+[yellow]Stale documents:[/yellow] {stale_count}
+[dim]Stale percentage:[/dim] {stale_pct:.1f}%"""
 
     console.print(Panel(summary_text, title="Staleness Report", expand=False))
 
-    # Stale documents table
-    if report.stale_documents:
+    if stale_docs:
         console.print("\n[bold]Stale Documents:[/bold]")
         table = Table(box=box.ROUNDED)
         table.add_column("Document", style="cyan")
-        table.add_column("Reason", style="yellow")
-        table.add_column("Stale Sources")
+        table.add_column("Reasons", style="yellow")
 
-        for info in report.stale_documents:
-            sources = ", ".join(str(s.name) for s in info.stale_sources[:3])
-            if len(info.stale_sources) > 3:
-                sources += f" (+{len(info.stale_sources) - 3} more)"
+        for doc in stale_docs:
+            reasons = ", ".join(doc.stale_reasons[:3]) if doc.stale_reasons else "-"
+            if doc.stale_reasons and len(doc.stale_reasons) > 3:
+                reasons += f" (+{len(doc.stale_reasons) - 3} more)"
             table.add_row(
-                str(info.document.name),
-                info.reason.value,
-                sources or "-",
+                doc.title or doc.path.name,
+                reasons,
             )
 
         console.print(table)
-
-    # By reason breakdown
-    if report.by_reason:
-        console.print("\n[bold]By Reason:[/bold]")
-        for reason, count in report.by_reason.items():
-            console.print(f"  {reason}: {count}")
+    else:
+        console.print("\n[green]✓ No stale documents[/green]")
 
 
-def _validate_hierarchy(graph, args):
+def _validate_hierarchy(manager, args):
     """Validate hierarchy structure."""
-    from ...hierarchy import HierarchyValidator
+    registry = manager.registry
 
-    validator = HierarchyValidator(graph)
-    result = validator.validate_all()
+    errors = []
+    warnings = []
+
+    # Check for circular references
+    for node in registry.all_nodes():
+        ancestors = registry.get_ancestors(node.path)
+        if node.path in ancestors:
+            errors.append({
+                "type": "circular_reference",
+                "document": str(node.path),
+                "message": "Document is its own ancestor"
+            })
+
+    # Check for orphan references
+    for node in registry.all_nodes():
+        for edge in registry.get_outgoing_edges(node.path):
+            target_node = registry.get_node(edge.target)
+            if not target_node:
+                warnings.append({
+                    "type": "broken_reference",
+                    "document": str(node.path),
+                    "message": f"References non-existent document: {edge.target}"
+                })
 
     if hasattr(args, "json") and args.json:
-        print(json.dumps(result.to_dict(), indent=2))
+        print(json.dumps({
+            "is_valid": len(errors) == 0,
+            "error_count": len(errors),
+            "warning_count": len(warnings),
+            "errors": errors,
+            "warnings": warnings,
+        }, indent=2))
         return
 
-    # Summary
-    status = "[green]Valid[/green]" if result.is_valid else "[red]Invalid[/red]"
+    status = "[green]Valid[/green]" if not errors else "[red]Invalid[/red]"
     summary_text = f"""[bold]Status:[/bold] {status}
-[red]Errors:[/red] {result.error_count}
-[yellow]Warnings:[/yellow] {result.warning_count}"""
+[red]Errors:[/red] {len(errors)}
+[yellow]Warnings:[/yellow] {len(warnings)}"""
 
     console.print(Panel(summary_text, title="Hierarchy Validation", expand=False))
 
-    # Errors table
-    if result.errors:
+    if errors:
         console.print("\n[bold red]Errors:[/bold red]")
-        for error in result.errors:
-            console.print(f"  [red]•[/red] [{error.error_type}] {error.document.name}: {error.message}")
+        for error in errors:
+            console.print(f"  [red]•[/red] [{error['type']}] {Path(error['document']).name}: {error['message']}")
 
-    # Warnings table
-    if result.warnings:
+    if warnings:
         console.print("\n[bold yellow]Warnings:[/bold yellow]")
-        for warning in result.warnings:
-            console.print(f"  [yellow]•[/yellow] [{warning.error_type}] {warning.document.name}: {warning.message}")
+        for warning in warnings:
+            console.print(f"  [yellow]•[/yellow] [{warning['type']}] {Path(warning['document']).name}: {warning['message']}")
 
-    if result.is_valid and not result.warnings:
+    if not errors and not warnings:
         console.print("\n[green]✓ Hierarchy is valid with no warnings[/green]")
 
 
-def _refresh_hierarchy(graph, args):
+def _refresh_hierarchy(manager, args):
     """Refresh hierarchy from document frontmatter."""
-    console.print("[bold]Refreshing hierarchy from documents...[/bold]")
+    console.print("[bold]Refreshing registry from documents...[/bold]")
 
-    graph.refresh()
-    report = graph.registry.generate_report()
+    result = manager.refresh()
 
-    console.print(f"[green]✓[/green] Loaded {report['summary']['total_nodes']} documents")
-    console.print(f"[green]✓[/green] Found {report['summary']['root_count']} root documents")
-    console.print(f"[green]✓[/green] Registered {report['summary']['anchor_count']} consistency anchors")
+    console.print(f"[green]✓[/green] Loaded {result['documents']} documents")
+    console.print(f"[green]✓[/green] Found {result['relationships']} relationships")
+    console.print(f"[green]✓[/green] Elapsed: {result['elapsed_seconds']:.2f}s")
 
 
-def _show_navigation(graph, args):
+def _show_navigation(manager, args):
     """Show navigation context for a document."""
-    from pathlib import Path
-
     if not hasattr(args, "document") or not args.document:
         console.print("[red]Please specify a document path with --document[/red]")
         sys.exit(1)
 
+    registry = manager.registry
     doc_path = Path(args.document)
-    context = graph.get_navigation_context(doc_path)
 
-    if not context:
+    # Resolve path
+    if not doc_path.is_absolute():
+        doc_path = manager.project.content_dir / args.document
+        if not doc_path.exists():
+            doc_path = doc_path.with_suffix(".md")
+
+    node = registry.get_node(doc_path)
+    if not node:
         console.print(f"[red]Document not found in hierarchy: {doc_path}[/red]")
         sys.exit(1)
 
+    # Get navigation info
+    parent = registry.get_parent(doc_path)
+    children = registry.get_children(doc_path)
+    ancestors = registry.get_ancestors(doc_path)
+    siblings = registry.get_children(parent) if parent else []
+    siblings = [s for s in siblings if s != doc_path]
+
+    # Get position in siblings
+    all_siblings = registry.get_children(parent) if parent else []
+    position = 1
+    for i, s in enumerate(sorted(all_siblings)):
+        if s == doc_path:
+            position = i + 1
+            break
+
     if hasattr(args, "json") and args.json:
-        print(json.dumps(context.to_dict(), indent=2))
+        print(json.dumps({
+            "path": str(doc_path),
+            "title": node.title,
+            "position": position,
+            "total_siblings": len(all_siblings),
+            "parent": str(parent) if parent else None,
+            "ancestors": [str(a) for a in ancestors],
+            "children": [str(c) for c in children],
+            "siblings": [str(s) for s in siblings],
+        }, indent=2))
         return
 
     # Breadcrumbs
-    breadcrumb_str = graph.format_breadcrumb_string(doc_path)
+    breadcrumb_parts = []
+    for ancestor in reversed(ancestors):
+        ancestor_node = registry.get_node(ancestor)
+        if ancestor_node:
+            breadcrumb_parts.append(ancestor_node.title or ancestor.stem)
+    breadcrumb_parts.append(node.title or doc_path.stem)
+    breadcrumb_str = " > ".join(breadcrumb_parts)
+
     console.print(Panel(breadcrumb_str, title="Breadcrumbs", expand=False))
 
     # Navigation info
-    nav_text = f"""[bold]Title:[/bold] {context.title}
-[bold]Position:[/bold] {context.position_in_siblings} of {context.total_siblings}"""
+    nav_text = f"""[bold]Title:[/bold] {node.title}
+[bold]Position:[/bold] {position} of {len(all_siblings)}"""
 
-    if context.parent:
-        nav_text += f"\n[bold]Parent:[/bold] {context.parent.title}"
+    if parent:
+        parent_node = registry.get_node(parent)
+        parent_title = parent_node.title if parent_node else parent.stem
+        nav_text += f"\n[bold]Parent:[/bold] {parent_title}"
 
-    if context.previous_sibling:
-        nav_text += f"\n[bold]Previous:[/bold] {context.previous_sibling.name}"
-
-    if context.next_sibling:
-        nav_text += f"\n[bold]Next:[/bold] {context.next_sibling.name}"
+    # Previous/Next siblings
+    sorted_siblings = sorted(all_siblings)
+    idx = sorted_siblings.index(doc_path) if doc_path in sorted_siblings else -1
+    if idx > 0:
+        prev_node = registry.get_node(sorted_siblings[idx - 1])
+        nav_text += f"\n[bold]Previous:[/bold] {prev_node.title if prev_node else sorted_siblings[idx-1].stem}"
+    if idx >= 0 and idx < len(sorted_siblings) - 1:
+        next_node = registry.get_node(sorted_siblings[idx + 1])
+        nav_text += f"\n[bold]Next:[/bold] {next_node.title if next_node else sorted_siblings[idx+1].stem}"
 
     console.print(Panel(nav_text, title="Navigation", expand=False))
 
-    # Children
-    if context.children:
+    if children:
         console.print("\n[bold]Children:[/bold]")
-        for child in context.children:
-            console.print(f"  • {child.title} ({child.path.name})")
+        for child in sorted(children):
+            child_node = registry.get_node(child)
+            child_title = child_node.title if child_node else child.stem
+            console.print(f"  • {child_title} ({child.name})")
 
 
-def _show_anchors(graph, args):
+def _show_anchors(manager, args):
     """Show consistency anchors."""
-    from pathlib import Path
+    registry = manager.registry
 
-    from ...hierarchy import AnchorRegistry
+    # Load anchor data from registry file
+    if registry.data_path.exists():
+        with open(registry.data_path) as f:
+            data = json.load(f)
+        anchors_data = data.get("anchors", {})
+    else:
+        anchors_data = {}
 
-    anchor_registry = AnchorRegistry(graph.registry)
-    anchor_registry.build()
-
-    if hasattr(args, "validate") and args.validate:
-        # Validate references
-        result = anchor_registry.validate_references()
-
-        if hasattr(args, "json") and args.json:
-            print(
-                json.dumps(
-                    {
-                        "valid": result.valid,
-                        "missing_anchors": [
-                            {"ref_doc": str(r), "anchor": a, "source": str(s)}
-                            for r, a, s in result.missing_anchors
-                        ],
-                        "value_mismatches": [
-                            {"ref_doc": str(r), "anchor": a, "expected": e, "actual": act}
-                            for r, a, e, act in result.value_mismatches
-                        ],
-                        "orphan_references": [
-                            {"ref_doc": str(r), "anchor": a}
-                            for r, a in result.orphan_references
-                        ],
-                    },
-                    indent=2,
-                )
-            )
-            return
-
-        status = "[green]Valid[/green]" if result.valid else "[red]Invalid[/red]"
-        console.print(Panel(f"[bold]Anchor References:[/bold] {status}", title="Anchor Validation", expand=False))
-
-        if result.missing_anchors:
-            console.print("\n[bold red]Missing Anchors:[/bold red]")
-            for ref_doc, anchor, source in result.missing_anchors:
-                console.print(f"  [red]•[/red] {ref_doc.name} references '{anchor}' in {source} (not found)")
-
-        if result.orphan_references:
-            console.print("\n[bold yellow]Orphan References:[/bold yellow]")
-            for ref_doc, anchor in result.orphan_references:
-                console.print(f"  [yellow]•[/yellow] {ref_doc.name} references '{anchor}' (source document not found)")
-
-        if result.value_mismatches:
-            console.print("\n[bold yellow]Value Mismatches:[/bold yellow]")
-            for ref_doc, anchor, expected, actual in result.value_mismatches:
-                console.print(f"  [yellow]•[/yellow] {ref_doc.name}:{anchor} expected '{expected}', actual '{actual}'")
-
-        if result.valid and not result.value_mismatches:
-            console.print("\n[green]All anchor references are valid[/green]")
-        return
-
-    # Default: show all anchors
     if hasattr(args, "json") and args.json:
-        summary = anchor_registry.get_impact_summary()
-        anchors = []
-        for anchor in anchor_registry.get_all_anchors():
-            refs = anchor_registry.get_referencing_documents(anchor.document_path, anchor.name)
-            anchors.append(
-                {
-                    "name": anchor.name,
-                    "value": anchor.value,
-                    "document": str(anchor.document_path),
-                    "description": anchor.description,
-                    "referenced_by": [str(r) for r in refs],
-                }
-            )
-        print(json.dumps({"summary": summary, "anchors": anchors}, indent=2))
+        print(json.dumps(anchors_data, indent=2))
         return
 
-    summary = anchor_registry.get_impact_summary()
+    if not anchors_data:
+        console.print("[dim]No anchors defined[/dim]")
+        return
+
+    summary = {
+        "total_anchors": len(anchors_data),
+        "total_references": sum(len(a.get("referenced_in", [])) for a in anchors_data.values()),
+    }
 
     summary_text = f"""[bold]Total anchors:[/bold] {summary['total_anchors']}
-[bold]Total references:[/bold] {summary['total_references']}
-[bold]Documents with anchors:[/bold] {summary['documents_with_anchors']}
-[bold]Documents with refs:[/bold] {summary['documents_with_refs']}"""
+[bold]Total references:[/bold] {summary['total_references']}"""
 
     console.print(Panel(summary_text, title="Consistency Anchors", expand=False))
 
-    # Anchor table
-    all_anchors = anchor_registry.get_all_anchors()
-    if all_anchors:
+    if anchors_data:
         console.print("\n[bold]Defined Anchors:[/bold]")
         table = Table(box=box.ROUNDED)
         table.add_column("Anchor", style="cyan")
@@ -348,205 +400,147 @@ def _show_anchors(graph, args):
         table.add_column("Document")
         table.add_column("Referenced By", justify="right")
 
-        for anchor in all_anchors:
-            refs = anchor_registry.get_referencing_documents(anchor.document_path, anchor.name)
-            value_str = str(anchor.value)
+        for anchor_id, anchor in anchors_data.items():
+            defined_in = Path(anchor.get("defined_in", "")).name
+            refs = len(anchor.get("referenced_in", []))
+            value_str = str(anchor.get("value", ""))
             if len(value_str) > 30:
                 value_str = value_str[:27] + "..."
-            table.add_row(
-                anchor.name,
-                value_str,
-                anchor.document_path.name if hasattr(anchor.document_path, "name") else str(anchor.document_path),
-                str(len(refs)),
-            )
+
+            table.add_row(anchor_id, value_str, defined_in, str(refs))
 
         console.print(table)
 
-    # Most referenced
-    if summary.get("most_referenced"):
-        console.print("\n[bold]Most Referenced:[/bold]")
-        for key, count in summary["most_referenced"][:5]:
-            doc, anchor = key.rsplit(":", 1)
-            console.print(f"  {anchor} ({Path(doc).name}): {count} refs")
 
-
-def _show_impact(graph, args):
+def _show_impact(manager, args):
     """Show impact analysis for a document change."""
-    from pathlib import Path
-
-    from ...hierarchy import ImpactAnalyzer
-
     if not hasattr(args, "document") or not args.document:
         console.print("[red]Please specify a document path with --document[/red]")
         sys.exit(1)
 
-    # Resolve document path
+    registry = manager.registry
     doc_path = Path(args.document)
+
+    # Resolve path
     if not doc_path.is_absolute():
-        # Try to find the document in the registry
-        found = False
-        for node_path in graph.registry._nodes:
-            if node_path.endswith(str(doc_path)) or str(doc_path) in node_path:
-                doc_path = Path(node_path)
-                found = True
+        # Try to find in registry
+        for node in registry.all_nodes():
+            if str(doc_path) in str(node.path) or node.path.name == args.document:
+                doc_path = node.path
                 break
-        if not found:
-            # Fall back to resolving relative to CWD
-            doc_path = doc_path.resolve()
+        else:
+            doc_path = manager.project.content_dir / args.document
+            if not doc_path.exists():
+                doc_path = doc_path.with_suffix(".md")
 
-    analyzer = ImpactAnalyzer(graph)
-
-    # Analyze change type
-    change_type = getattr(args, "change_type", "content") or "content"
-    description = getattr(args, "description", "") or f"Change to {doc_path.name}"
-
-    if change_type == "delete":
-        report = analyzer.analyze_deletion(doc_path)
-    else:
-        report = analyzer.analyze_change(doc_path, change_type, description)
+    # Get impact set
+    affected = manager.get_impact(doc_path)
 
     if hasattr(args, "json") and args.json:
-        print(json.dumps(report.to_dict(), indent=2))
+        print(json.dumps({
+            "changed_document": str(doc_path),
+            "total_impacted": len(affected),
+            "affected": [str(p) for p in affected],
+        }, indent=2))
         return
 
-    # Summary panel
-    status = "[red]Critical impacts![/red]" if report.has_critical else "[green]No critical impacts[/green]"
-    summary_text = f"""[bold]Changed document:[/bold] {report.changed_document.name}
-[bold]Change type:[/bold] {report.change_type}
-[bold]Total impacted:[/bold] {report.total_impacted}
-{status}"""
+    summary_text = f"""[bold]Changed document:[/bold] {doc_path.name}
+[bold]Total impacted:[/bold] {len(affected)}"""
 
     console.print(Panel(summary_text, title="Impact Analysis", expand=False))
 
-    # By severity
-    by_sev = report.by_severity
-    if any(v > 0 for v in by_sev.values()):
-        console.print("\n[bold]By Severity:[/bold]")
-        if by_sev["critical"] > 0:
-            console.print(f"  [red]Critical:[/red] {by_sev['critical']}")
-        if by_sev["high"] > 0:
-            console.print(f"  [yellow]High:[/yellow] {by_sev['high']}")
-        if by_sev["medium"] > 0:
-            console.print(f"  [blue]Medium:[/blue] {by_sev['medium']}")
-        if by_sev["low"] > 0:
-            console.print(f"  [dim]Low:[/dim] {by_sev['low']}")
-
-    # Impacted documents table
-    if report.impacted_documents:
+    if affected:
         console.print("\n[bold]Impacted Documents:[/bold]")
         table = Table(box=box.ROUNDED)
         table.add_column("Document", style="cyan")
         table.add_column("Type")
-        table.add_column("Severity")
-        table.add_column("Reason")
-        table.add_column("Action")
+        table.add_column("Relationship")
 
-        severity_styles = {
-            "critical": "red",
-            "high": "yellow",
-            "medium": "blue",
-            "low": "dim",
-        }
+        for affected_path in sorted(affected):
+            node = registry.get_node(affected_path)
+            if node:
+                # Find what relationship connects them
+                edges = registry.get_outgoing_edges(affected_path)
+                rel_types = [e.edge_type.value for e in edges if e.target == doc_path]
 
-        for item in report.impacted_documents:
-            style = severity_styles.get(item.severity.value, "white")
-            table.add_row(
-                str(item.path.name) if hasattr(item.path, "name") else str(item.path),
-                item.impact_type.value,
-                f"[{style}]{item.severity.value}[/{style}]",
-                item.reason[:40] + "..." if len(item.reason) > 40 else item.reason,
-                item.suggested_action[:30] + "..." if len(item.suggested_action) > 30 else item.suggested_action,
-            )
+                table.add_row(
+                    node.title or affected_path.name,
+                    node.doc_type or "document",
+                    ", ".join(rel_types) if rel_types else "-",
+                )
 
         console.print(table)
+    else:
+        console.print("\n[green]No documents are impacted by changes to this file.[/green]")
 
 
-def _show_coverage(graph, args):
+def _show_coverage(manager, args):
     """Show coverage analysis."""
-    from ...hierarchy import CoverageAnalyzer
+    registry = manager.registry
 
-    analyzer = CoverageAnalyzer(graph)
-    report = analyzer.analyze()
+    # Calculate coverage metrics
+    all_nodes = list(registry.all_nodes())
+    total = len(all_nodes)
+    roots = len(registry.get_roots())
+    orphans = len([n for n in all_nodes if not registry.get_parent(n.path) and not registry.get_children(n.path)])
+    with_deps = len([n for n in all_nodes if registry.get_outgoing_edges(n.path)])
+
+    coverage_score = ((total - orphans) / total * 100) if total > 0 else 0
 
     if hasattr(args, "json") and args.json:
-        print(json.dumps(report.to_dict(), indent=2))
+        print(json.dumps({
+            "coverage_score": coverage_score,
+            "total_documents": total,
+            "root_documents": roots,
+            "orphan_documents": orphans,
+            "documents_with_dependencies": with_deps,
+        }, indent=2))
         return
 
-    # Summary panel
-    score_color = "green" if report.coverage_score >= 80 else "yellow" if report.coverage_score >= 60 else "red"
-    summary_text = f"""[bold]Coverage Score:[/bold] [{score_color}]{report.coverage_score:.1f}%[/{score_color}]
-[bold]Total documents:[/bold] {report.total_documents}
-[bold]Source documents:[/bold] {report.source_documents}
-[bold]Derived documents:[/bold] {report.derived_documents}
-[bold]Orphan documents:[/bold] {report.orphan_documents}
-[bold]Total gaps:[/bold] {len(report.gaps)}"""
+    score_color = "green" if coverage_score >= 80 else "yellow" if coverage_score >= 60 else "red"
+    summary_text = f"""[bold]Coverage Score:[/bold] [{score_color}]{coverage_score:.1f}%[/{score_color}]
+[bold]Total documents:[/bold] {total}
+[bold]Root documents:[/bold] {roots}
+[bold]Orphan documents:[/bold] {orphans}
+[bold]With dependencies:[/bold] {with_deps}"""
 
     console.print(Panel(summary_text, title="Documentation Coverage", expand=False))
 
-    # Gaps by severity
-    if report.gaps:
-        console.print("\n[bold]Gaps by Priority:[/bold]")
-        critical = len([g for g in report.gaps if g.priority == "critical"])
-        high = len([g for g in report.gaps if g.priority == "high"])
-        medium = len([g for g in report.gaps if g.priority == "medium"])
-        low = len([g for g in report.gaps if g.priority == "low"])
 
-        if critical > 0:
-            console.print(f"  [red]Critical:[/red] {critical}")
-        if high > 0:
-            console.print(f"  [yellow]High:[/yellow] {high}")
-        if medium > 0:
-            console.print(f"  [blue]Medium:[/blue] {medium}")
-        if low > 0:
-            console.print(f"  [dim]Low:[/dim] {low}")
+def _generate_dot(registry) -> str:
+    """Generate DOT format for Graphviz."""
+    lines = ["digraph hierarchy {"]
+    lines.append("  rankdir=TB;")
+    lines.append("  node [shape=box, fontname=Arial];")
+    lines.append("  edge [fontname=Arial, fontsize=10];")
 
-    # Gaps table
-    if report.gaps:
-        console.print("\n[bold]Coverage Gaps:[/bold]")
-        table = Table(box=box.ROUNDED)
-        table.add_column("Type", style="cyan")
-        table.add_column("Expected")
-        table.add_column("Source")
-        table.add_column("Suggested Path")
-        table.add_column("Priority")
+    colors = {
+        "parent": "black",
+        "implements": "green",
+        "extends": "blue",
+        "summarizes": "purple",
+        "translates": "orange",
+        "references": "gray",
+    }
 
-        priority_styles = {
-            "critical": "red",
-            "high": "yellow",
-            "medium": "blue",
-            "low": "dim",
-        }
+    for node in registry.all_nodes():
+        for edge in registry.get_outgoing_edges(node.path):
+            source = node.path.stem
+            target = edge.target.stem
+            edge_type = edge.edge_type.value
+            color = colors.get(edge_type, "gray")
+            style = ", style=dashed" if edge.is_stale else ""
 
-        for gap in report.gaps[:20]:  # Limit to 20
-            style = priority_styles.get(gap.priority, "white")
-            table.add_row(
-                gap.gap_type,
-                gap.expected_doc_type.value if hasattr(gap.expected_doc_type, "value") else str(gap.expected_doc_type),
-                str(gap.should_derive_from.name) if hasattr(gap.should_derive_from, "name") else str(gap.should_derive_from)[:30],
-                gap.suggested_path[:30] + "..." if len(gap.suggested_path) > 30 else gap.suggested_path,
-                f"[{style}]{gap.priority}[/{style}]",
-            )
+            lines.append(f'  "{source}" -> "{target}" [color={color}, label="{edge_type}"{style}];')
 
-        console.print(table)
-
-        if len(report.gaps) > 20:
-            console.print(f"\n[dim]...and {len(report.gaps) - 20} more gaps[/dim]")
-
-    # Suggestions
-    if hasattr(args, "suggest") and args.suggest:
-        suggestions = analyzer.get_suggestions()
-        if suggestions:
-            console.print("\n[bold]Suggestions:[/bold]")
-            for s in suggestions[:10]:
-                console.print(f"  [cyan]{s['priority']}[/cyan]: Create {s['target']}")
-                console.print(f"     Reason: {s['reason']}")
+    lines.append("}")
+    return "\n".join(lines)
 
 
 def setup_parser(subparsers):
     """Setup the hierarchy command parser."""
     parser = subparsers.add_parser("hierarchy", help="Document hierarchy management")
 
-    # Add subparsers for hierarchy commands
     hierarchy_subparsers = parser.add_subparsers(dest="hierarchy_command")
 
     # status
@@ -567,7 +561,7 @@ def setup_parser(subparsers):
     validate_parser.add_argument("--json", action="store_true", help="Output as JSON")
 
     # refresh
-    refresh_parser = hierarchy_subparsers.add_parser("refresh", help="Refresh hierarchy from documents")
+    hierarchy_subparsers.add_parser("refresh", help="Refresh hierarchy from documents")
 
     # nav
     nav_parser = hierarchy_subparsers.add_parser("nav", help="Show navigation context for a document")
@@ -577,25 +571,15 @@ def setup_parser(subparsers):
     # anchors
     anchors_parser = hierarchy_subparsers.add_parser("anchors", help="Show consistency anchors")
     anchors_parser.add_argument("--json", action="store_true", help="Output as JSON")
-    anchors_parser.add_argument("--validate", action="store_true", help="Validate anchor references")
 
     # impact
     impact_parser = hierarchy_subparsers.add_parser("impact", help="Analyze impact of document changes")
     impact_parser.add_argument("--document", "-d", required=True, help="Document path to analyze")
-    impact_parser.add_argument(
-        "--change-type",
-        "-t",
-        choices=["content", "metadata", "delete", "anchor"],
-        default="content",
-        help="Type of change (default: content)",
-    )
-    impact_parser.add_argument("--description", help="Description of the change")
     impact_parser.add_argument("--json", action="store_true", help="Output as JSON")
 
     # coverage
     coverage_parser = hierarchy_subparsers.add_parser("coverage", help="Analyze documentation coverage")
     coverage_parser.add_argument("--json", action="store_true", help="Output as JSON")
-    coverage_parser.add_argument("--suggest", action="store_true", help="Show suggestions for filling gaps")
 
     parser.set_defaults(func=cmd_hierarchy)
     return parser

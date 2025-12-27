@@ -2,17 +2,15 @@
 
 from pathlib import Path
 
-import pytest
-
 from media_engine.brand import (
-    BrandContextResolver,
     DEFAULT_VOICE_PROFILE,
     AudioVoice,
     AudioVoiceProfile,
     AudioVoiceSettings,
+    BrandContextResolver,
     BrandProfile,
-    ResolvedBrandContext,
     ResolutionStep,
+    ResolvedBrandContext,
     TermPreference,
     VoiceCheckResult,
     VoiceConsistencyChecker,
@@ -21,7 +19,6 @@ from media_engine.brand import (
     VoiceProfileOverride,
     VoiceStyle,
     check_document_voice,
-    resolve_brand_context,
 )
 
 
@@ -570,7 +567,7 @@ class TestVoiceConsistencyChecker:
         checker = VoiceConsistencyChecker(voice_profile=profile)
         result = checker.check_content(content, Path("test.md"))
         # Should flag passive voice
-        passive_issues = [i for i in result.issues if i.type == "passive_voice"]
+        [i for i in result.issues if i.type == "passive_voice"]
         # This content has significant passive voice
         assert result.metrics["passive_count"] > 0
 

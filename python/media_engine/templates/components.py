@@ -6,19 +6,19 @@ Components can be overridden by placing custom versions in project templates/com
 """
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Any, Optional
+from typing import TYPE_CHECKING, Optional
 
-from jinja2 import Environment, FileSystemLoader, ChoiceLoader
+from jinja2 import ChoiceLoader, Environment, FileSystemLoader
 
 if TYPE_CHECKING:
-    from ..core.project import Project
     from ..brand import BrandContext
+    from ..core.project import Project
 
 
 class ComponentRegistry:
     """
     Registry for template components.
-    
+
     Components are small, reusable template fragments like:
     - header: Page header with logo and navigation
     - footer: Page footer with copyright and links
@@ -27,7 +27,7 @@ class ComponentRegistry:
     - callout: Alert/info boxes
     - code_block: Styled code blocks
     """
-    
+
     BUILTIN_COMPONENTS = [
         "header",
         "footer",
@@ -39,47 +39,47 @@ class ComponentRegistry:
         "search",
         "pagination",
     ]
-    
+
     def __init__(self, project: "Project" = None, brand: "BrandContext" = None):
         """
         Initialize component registry.
-        
+
         Args:
             project: Project for finding custom components
             brand: BrandContext for styling
         """
         self.project = project
         self.brand = brand
-        
+
         # Build loader chain
         loaders = []
-        
+
         # Custom components (highest priority)
         if project:
             custom_path = project.root / "templates" / "components"
             if custom_path.exists():
                 loaders.append(FileSystemLoader(str(custom_path)))
-        
+
         # Built-in components
         builtin_path = Path(__file__).parent / "html" / "components"
         if builtin_path.exists():
             loaders.append(FileSystemLoader(str(builtin_path)))
-        
+
         self.env = Environment(
             loader=ChoiceLoader(loaders) if loaders else None,
             autoescape=True,
             trim_blocks=True,
             lstrip_blocks=True,
         )
-    
+
     def render(self, name: str, **context) -> str:
         """
         Render a component.
-        
+
         Args:
             name: Component name
             **context: Template context
-            
+
         Returns:
             Rendered HTML string
         """
@@ -89,7 +89,7 @@ class ComponentRegistry:
         except Exception:
             # Return empty string if component not found
             return ""
-    
+
     def has_component(self, name: str) -> bool:
         """Check if a component exists."""
         try:
@@ -97,11 +97,11 @@ class ComponentRegistry:
             return True
         except Exception:
             return False
-    
+
     def list_components(self) -> list:
         """List all available components."""
         components = []
-        
+
         # Check for custom components
         if self.project:
             custom_path = self.project.root / "templates" / "components"
@@ -112,7 +112,7 @@ class ComponentRegistry:
                         "source": "custom",
                         "path": f,
                     })
-        
+
         # Add built-in components
         for name in self.BUILTIN_COMPONENTS:
             if name not in [c["name"] for c in components]:
@@ -120,7 +120,7 @@ class ComponentRegistry:
                     "name": name,
                     "source": "builtin",
                 })
-        
+
         return components
 
 
@@ -132,13 +132,13 @@ def render_component(
 ) -> str:
     """
     Convenience function to render a component.
-    
+
     Args:
         name: Component name
         project: Optional project for custom components
         brand: Optional brand for styling
         **context: Template context
-        
+
     Returns:
         Rendered HTML string
     """

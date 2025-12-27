@@ -137,6 +137,8 @@ class QualityDefaults:
     """Default quality check thresholds."""
 
     # Readability
+    target_reading_level: str = "high_school"  # elementary, middle_school, high_school, college, graduate
+    target_lix_level: str = "medium"  # very_easy, easy, medium, difficult, very_difficult (Norwegian)
     max_sentence_words: int = 25
     max_complex_word_percent: float = 15.0
     complex_word_syllables: int = 3  # Words with 3+ syllables are complex

@@ -63,6 +63,45 @@ def bundle_project_assets(
     shared_dir.mkdir(exist_ok=True)
     result.shared_dir = shared_dir
 
+    # Copy template assets (CSS, JS for index pages)
+    template_assets_dir = Path(__file__).parent.parent / "templates" / "assets"
+    if template_assets_dir.exists():
+        assets_dest = shared_dir / "assets"
+        if assets_dest.exists():
+            shutil.rmtree(assets_dest)
+        shutil.copytree(template_assets_dir, assets_dest)
+        asset_count = sum(1 for _ in assets_dest.rglob("*") if _.is_file())
+        result.files_copied += asset_count
+        if console_output:
+            console.print(f"  [green]✓[/green] Copied {asset_count} template assets")
+
+    # Copy brand assets (logo, favicon) from project brand folder
+    brand_dir = project.root / "brand" / "logos"
+    if brand_dir.exists():
+        # Copy favicon (prefer 32px icon)
+        favicon_src = brand_dir / "icon-32.png"
+        if not favicon_src.exists():
+            favicon_src = brand_dir / "icon-64.png"
+        if favicon_src.exists():
+            shutil.copy2(favicon_src, shared_dir / "favicon.png")
+            result.files_copied += 1
+            if console_output:
+                console.print("  [green]✓[/green] Copied favicon")
+
+        # Copy main logo
+        logo_src = brand_dir / "logo.png"
+        if logo_src.exists():
+            shutil.copy2(logo_src, shared_dir / "logo.png")
+            result.files_copied += 1
+            if console_output:
+                console.print("  [green]✓[/green] Copied logo")
+
+        # Copy dark variant for light mode display
+        logo_dark_src = brand_dir / "logo-dark.png"
+        if logo_dark_src.exists():
+            shutil.copy2(logo_dark_src, shared_dir / "logo-light.png")
+            result.files_copied += 1
+
     # Download and bundle fonts
     if include_fonts:
         if console_output:
@@ -103,17 +142,25 @@ def bundle_project_assets(
             console.print("  [bold]Copying video deliverables...[/bold]")
 
         for lang in project.languages:
-            assets_videos = project.assets_dir / "videos" / lang
-            if assets_videos.exists():
-                videos_dest = output_dir / lang / "videos"
-                videos_dest.mkdir(parents=True, exist_ok=True)
+            # Check multiple locations for videos
+            video_sources = [
+                project.output_dir / lang / "videos",  # output/en/videos/
+                project.assets_dir / "videos" / lang,  # assets/videos/en/
+                project.assets_dir / "videos",  # assets/videos/ (no lang subdir)
+            ]
 
-                # Copy all MP4 files from the assets/videos/{lang} folder
-                # Skip temp files and files with .temp in the name
-                for video_file in assets_videos.glob("*.mp4"):
-                    if video_file.is_file() and ".temp" not in video_file.name:
-                        shutil.copy2(video_file, videos_dest / video_file.name)
-                        result.files_copied += 1
+            for videos_src in video_sources:
+                if videos_src.exists():
+                    videos_dest = output_dir / lang / "videos"
+                    videos_dest.mkdir(parents=True, exist_ok=True)
+
+                    # Copy all MP4 files
+                    # Skip temp files and files with .temp in the name
+                    for video_file in videos_src.glob("*.mp4"):
+                        if video_file.is_file() and ".temp" not in video_file.name:
+                            shutil.copy2(video_file, videos_dest / video_file.name)
+                            result.files_copied += 1
+                    break  # Found videos in this location, skip other sources
 
     # Copy project logo if exists
     # Search in priority order, looking for common patterns

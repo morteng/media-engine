@@ -651,13 +651,15 @@ def _validate_action(project, action: str, target: str, params: dict) -> dict:
     if action == "delete_document":
         result["warnings"].append("Document deletion is permanent")
 
-        # Check for dependents
+        # Check for dependents using UnifiedRegistry
         try:
-            from ...dependencies import DependencyGraph
+            from ...relationships import get_registry_manager, init_registry_manager
 
-            graph = DependencyGraph(project)
-            graph.refresh()
-            dependents = graph.get_dependents(Path(target))
+            registry_manager = get_registry_manager(project)
+            if registry_manager is None:
+                registry_manager = init_registry_manager(project)
+
+            dependents = registry_manager.registry.get_impact(Path(target))
 
             if dependents:
                 result["warnings"].append(f"{len(dependents)} documents depend on this document")

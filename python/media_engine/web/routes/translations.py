@@ -11,6 +11,30 @@ if TYPE_CHECKING:
     from ..websocket import ConnectionManager
 
 
+def _get_cached_or_compute(key: str, compute_fn, max_age: float = 300):
+    """Helper to get cached data or compute it, then cache the result."""
+    import time
+
+    from ..preprocessor import get_preprocessor
+
+    preprocessor = get_preprocessor()
+    if preprocessor:
+        cached = preprocessor.get_cached(key, max_age_seconds=max_age)
+        if cached is not None:
+            return cached
+
+    # Compute the result
+    start = time.time()
+    result = compute_fn()
+    elapsed_ms = (time.time() - start) * 1000
+
+    # Store in cache for next time
+    if preprocessor:
+        preprocessor.cache.set(key, result, computation_time_ms=elapsed_ms)
+
+    return result
+
+
 def register_translation_routes(
     router: "APIRouter",
     get_project: Callable[[], "Project"],
@@ -24,29 +48,18 @@ def register_translation_routes(
     async def get_translations():
         """Get all translation statuses."""
         project = get_project()
-        tracker = TranslationTracker(project)
-        statuses = tracker.get_all_statuses()
 
-        return {
-            "total": len(statuses),
-            "current": sum(1 for s in statuses if not s.is_outdated),
-            "outdated": sum(1 for s in statuses if s.is_outdated),
-            "translations": [
-                {
-                    "source_path": str(s.source_path),
-                    "translation_path": str(s.translation_path),
-                    "source_title": s.source_title,
-                    "translation_title": s.translation_title,
-                    "source_language": s.source_language,
-                    "target_language": s.target_language,
-                    "source_version": s.source_version,
-                    "translated_version": s.translated_version,
-                    "is_outdated": s.is_outdated,
-                    "status": s.status_label,
-                }
-                for s in statuses
-            ],
-        }
+        def compute_translations():
+            tracker = TranslationTracker(project)
+            statuses = tracker.get_all_statuses()
+            return {
+                "total": len(statuses),
+                "current": sum(1 for s in statuses if not s.is_outdated),
+                "outdated": sum(1 for s in statuses if s.is_outdated),
+                "translations": [s.to_dict() for s in statuses],
+            }
+
+        return _get_cached_or_compute("translations", compute_translations, max_age=300)
 
     @router.get("/api/translations/matrix")
     async def get_translation_matrix():
@@ -84,7 +97,7 @@ def register_translation_routes(
                         row["translations"][lang] = {
                             "status": "outdated" if status.is_outdated else "current",
                             "path": str(status.translation_path),
-                            "translated_version": status.translated_version,
+                            "translated_from_hash": status.translated_from_hash,
                         }
                     else:
                         row["translations"][lang] = {

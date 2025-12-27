@@ -34,10 +34,10 @@ import asyncio
 from ..config.user_config import add_recent_project
 from ..core.project import Project, find_project
 from ..settings import WEB
+from .preprocessor import start_preprocessor, stop_preprocessor
 from .routes import register_routes
 from .watcher import start_watcher, stop_watcher
 from .websocket import ConnectionManager
-from .preprocessor import start_preprocessor, stop_preprocessor, get_preprocessor
 
 
 def create_app(project_path: Optional[Path] = None) -> "FastAPI":
@@ -104,6 +104,20 @@ def create_app(project_path: Optional[Path] = None) -> "FastAPI":
         assets_dir = static_dir / "assets"
         if assets_dir.exists():
             app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    # Mount brand assets from project if available at startup
+    try:
+        if project_path:
+            brand_dir = project_path / "brand"
+        else:
+            # Try to find project to get brand dir
+            temp_project = find_project()
+            brand_dir = temp_project.root / "brand" if temp_project else None
+
+        if brand_dir and brand_dir.exists():
+            app.mount("/brand", StaticFiles(directory=brand_dir), name="brand")
+    except Exception:
+        pass  # Brand assets are optional
 
     # Register all routes
     register_routes(app, get_project, manager, static_dir, set_project)

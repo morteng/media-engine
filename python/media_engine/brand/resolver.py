@@ -169,7 +169,7 @@ class BrandContextResolver:
                 current_voice = self._apply_dict_override(current_voice, brand_overrides)
                 resolution_chain.append(
                     ResolutionStep(
-                        source=f"ancestor",
+                        source="ancestor",
                         path=ancestor_path,
                         overrides=brand_overrides,
                     )

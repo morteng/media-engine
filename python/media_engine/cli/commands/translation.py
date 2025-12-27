@@ -98,6 +98,11 @@ def _translation_status(tracker, args):
 
 def _translation_outdated(tracker, args):
     """Show only outdated translations (source content has changed)."""
+    # Use detailed method if --detailed flag is set
+    if getattr(args, "detailed", False):
+        _translation_outdated_detailed(tracker, args)
+        return
+
     outdated = tracker.get_outdated_translations()
 
     if args.json:
@@ -140,6 +145,88 @@ def _translation_outdated(tracker, args):
 
     console.print(table)
     console.print(f"\n[yellow]⚠ {len(outdated)} translation(s) need updating[/yellow]")
+
+
+def _translation_outdated_detailed(tracker, args):
+    """Show outdated translations with section-level change analysis."""
+    from rich.tree import Tree
+
+    outdated = tracker.get_outdated_with_details()
+
+    if args.json:
+        output = [s.to_dict() for s in outdated]
+        print(json.dumps(output, indent=2))
+        return
+
+    if not outdated:
+        console.print("[green]✓ No outdated translations[/green]")
+        return
+
+    console.print("\n[bold]Outdated Translations - Section Analysis[/bold]")
+    console.print("[dim]Showing which sections changed in the source document[/dim]\n")
+
+    total_changed = 0
+    total_unchanged = 0
+
+    for status in outdated:
+        # Create a tree for this translation
+        tree = Tree(
+            f"[bold cyan]{status.translation_title}[/bold cyan] "
+            f"[dim]({status.target_language})[/dim]"
+        )
+
+        if status.section_report:
+            report = status.section_report
+
+            # Add modified sections
+            if report.modified:
+                modified_branch = tree.add("[yellow]⚠ Modified sections[/yellow]")
+                for diff in report.modified:
+                    modified_branch.add(
+                        f"[yellow]{diff.heading}[/yellow] "
+                        f"[dim](lines {diff.new_line_range[0]}-{diff.new_line_range[1]})[/dim]"
+                    )
+                total_changed += len(report.modified)
+
+            # Add new sections
+            if report.added:
+                added_branch = tree.add("[green]+ New sections[/green]")
+                for diff in report.added:
+                    added_branch.add(
+                        f"[green]{diff.heading}[/green] "
+                        f"[dim](lines {diff.new_line_range[0]}-{diff.new_line_range[1]})[/dim]"
+                    )
+                total_changed += len(report.added)
+
+            # Add removed sections
+            if report.removed:
+                removed_branch = tree.add("[red]- Removed sections[/red]")
+                for diff in report.removed:
+                    removed_branch.add(f"[red]{diff.heading}[/red]")
+
+            # Summary of unchanged
+            if report.unchanged:
+                tree.add(
+                    f"[dim]✓ {len(report.unchanged)} section(s) unchanged[/dim]"
+                )
+                total_unchanged += len(report.unchanged)
+
+            # Show summary
+            tree.add(f"[dim]Summary: {report.change_summary}[/dim]")
+        else:
+            tree.add("[dim]Section-level analysis not available[/dim]")
+            tree.add("[dim]Run 'translation sync' to enable section tracking[/dim]")
+
+        console.print(tree)
+        console.print()
+
+    # Overall summary
+    console.print(f"[yellow]⚠ {len(outdated)} translation(s) need updating[/yellow]")
+    if total_changed > 0:
+        console.print(
+            f"[dim]Total: {total_changed} section(s) need review, "
+            f"{total_unchanged} unchanged[/dim]"
+        )
 
 
 def _translation_missing(tracker, project, args):
@@ -194,11 +281,19 @@ def _translation_sync(tracker, args):
         return
 
     synced = 0
+    section_synced = 0
     errors = []
 
     for status in to_sync:
         try:
             trans_doc = Document.load(status.translation_path)
+
+            # Store section hashes for detailed tracking
+            section_result = tracker.store_section_hashes(trans_doc)
+            if "error" not in section_result:
+                section_synced += section_result.get("section_count", 0)
+
+            # Also update content hash
             result = tracker.mark_synced(trans_doc)
             if "error" in result:
                 errors.append((status.translation_title, result["error"]))
@@ -208,6 +303,8 @@ def _translation_sync(tracker, args):
             errors.append((status.translation_title, str(e)))
 
     console.print(f"\n[green]✓ Synced {synced} translation(s)[/green]")
+    if section_synced > 0:
+        console.print(f"[dim]  Stored {section_synced} section hashes for detailed tracking[/dim]")
 
     if errors:
         console.print(f"[red]✗ {len(errors)} error(s):[/red]")

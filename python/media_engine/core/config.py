@@ -57,6 +57,15 @@ class FreshnessConfig:
 
 
 @dataclass
+class QualityConfig:
+    """Quality and readability settings."""
+
+    target_reading_level: str = QUALITY.target_reading_level  # elementary, middle_school, high_school, college, graduate
+    target_lix_level: str = QUALITY.target_lix_level  # very_easy, easy, medium, difficult, very_difficult (Norwegian)
+    max_sentence_words: int = QUALITY.max_sentence_words
+
+
+@dataclass
 class Config:
     """Project configuration."""
 
@@ -66,6 +75,7 @@ class Config:
     video: VideoConfig = field(default_factory=VideoConfig)
     paths: PathsConfig = field(default_factory=PathsConfig)
     freshness: FreshnessConfig = field(default_factory=FreshnessConfig)
+    quality: QualityConfig = field(default_factory=QualityConfig)
     extra: Dict[str, Any] = field(default_factory=dict)
 
     @classmethod
@@ -76,6 +86,7 @@ class Config:
         video = data.get("video", {})
         paths = data.get("paths", {})
         freshness = data.get("freshness", {})
+        quality = data.get("quality", {})
 
         return cls(
             name=project.get("name", "Untitled Project"),
@@ -107,10 +118,21 @@ class Config:
                 ),
                 scan_dirs=freshness.get("scan_dirs", []),
             ),
+            quality=QualityConfig(
+                target_reading_level=quality.get(
+                    "target_reading_level", QUALITY.target_reading_level
+                ),
+                target_lix_level=quality.get(
+                    "target_lix_level", QUALITY.target_lix_level
+                ),
+                max_sentence_words=quality.get(
+                    "max_sentence_words", QUALITY.max_sentence_words
+                ),
+            ),
             extra={
                 k: v
                 for k, v in data.items()
-                if k not in ("project", "voiceover", "video", "paths", "freshness")
+                if k not in ("project", "voiceover", "video", "paths", "freshness", "quality")
             },
         )
 

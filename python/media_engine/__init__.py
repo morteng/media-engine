@@ -52,7 +52,7 @@ from .settings import (
     get_default,
 )
 from .status import get_project_dashboard, print_dashboard
-from .templates import TemplateRegistry, LayoutPreset, get_preset, PRESETS
+from .templates import PRESETS, LayoutPreset, TemplateRegistry, get_preset
 from .validation import ValidationReport, validate_project
 
 # Advanced analysis modules (lazy imports to avoid heavy dependencies)

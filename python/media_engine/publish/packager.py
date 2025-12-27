@@ -149,37 +149,62 @@ def collect_deliverables(
     }
 
     # =========================================
-    # PROPOSAL - Main documentation
+    # DOCUMENTATION - Main documentation/publications
     # =========================================
-    proposal_items = []
+    doc_items = []
 
-    # Group proposal formats (HTML + PDF)
-    proposal_formats = []
-    proposal_html = lang_output / "proposal.html"
-    proposal_pdf = lang_output / "proposal.pdf"
+    # HTML doc display name mapping
+    DOC_NAMES = {
+        "proposal.html": "Full Proposal",
+        "documentation.html": "Documentation",
+        "quickstart.html": "Quick Start Guide",
+        "reference.html": "API Reference",
+        "guide.html": "User Guide",
+        "tutorial.html": "Tutorial",
+    }
 
-    if proposal_html.exists():
-        proposal_formats.append(FormatLink(file_type="html", path="proposal.html", label="View"))
-    if proposal_pdf.exists():
-        proposal_formats.append(FormatLink(file_type="pdf", path="proposal.pdf", label="PDF"))
+    # Find all HTML files (these are publications)
+    for html_file in sorted(lang_output.glob("*.html")):
+        # Skip index files
+        if html_file.name == "index.html":
+            continue
 
-    if proposal_formats:
-        proposal_items.append(
-            DeliverableItem(
-                name="Full Proposal",
-                path="",
-                description="Complete documentation",
-                icon="📖",
-                formats=proposal_formats,
-            )
+        display_name = DOC_NAMES.get(
+            html_file.name,
+            html_file.stem.replace("_", " ").replace("-", " ").title()
         )
 
-    if proposal_items:
+        # Check for PDF version
+        pdf_file = html_file.with_suffix(".pdf")
+        if pdf_file.exists():
+            doc_items.append(
+                DeliverableItem(
+                    name=display_name,
+                    path="",
+                    description="",
+                    icon="📄",
+                    formats=[
+                        FormatLink(file_type="html", path=html_file.name, label="View"),
+                        FormatLink(file_type="pdf", path=pdf_file.name, label="PDF"),
+                    ],
+                )
+            )
+        else:
+            doc_items.append(
+                DeliverableItem(
+                    name=display_name,
+                    path=html_file.name,
+                    icon="📄",
+                    file_type="html",
+                )
+            )
+
+    if doc_items:
         categories.append(
             DeliverableCategory(
-                name="Proposal",
-                icon="📖",
-                items=proposal_items,
+                name="Documentation",
+                icon="📚",
+                items=doc_items,
             )
         )
 
@@ -419,6 +444,9 @@ def generate_navigation_indexes(
             )
         )
 
+    # Single language = no back link needed
+    show_back_link = len(languages) > 1
+
     # Generate per-language indexes
     for lang_info in languages:
         lang_dir = output_dir / lang_info.code
@@ -443,6 +471,7 @@ def generate_navigation_indexes(
             categories=categories,
             theme=theme,
             logo_path=logo_path,
+            show_back_link=show_back_link,
         )
 
         index_path = lang_dir / "index.html"

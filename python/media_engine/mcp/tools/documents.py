@@ -360,22 +360,18 @@ def register_document_tools(mcp, server_instance):
         # Check for dependencies
         if check_dependencies:
             try:
-                from ...dependencies import DependencyGraph
+                from ...relationships import get_registry_manager, init_registry_manager
 
-                graph = DependencyGraph(project)
-                graph.refresh()
+                registry_manager = get_registry_manager(project)
+                if registry_manager is None:
+                    registry_manager = init_registry_manager(project)
 
                 # Find documents that depend on this one
-                dependents = []
-                rel_path = str(validated_path.relative_to(project.root))
-
-                for doc_path, deps in graph.graph.items():
-                    if rel_path in deps or validated_path.stem in deps:
-                        dependents.append(doc_path)
+                dependents = registry_manager.registry.get_impact(validated_path)
 
                 if dependents:
                     warnings.append(
-                        f"Found {len(dependents)} documents depending on this: {dependents[:5]}"
+                        f"Found {len(dependents)} documents depending on this: {[str(d) for d in list(dependents)[:5]]}"
                     )
             except Exception:
                 pass  # Dependency checking is optional

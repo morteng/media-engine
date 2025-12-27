@@ -34,7 +34,7 @@ def register_build_routes(
     @router.get("/api/build/presets")
     async def get_build_presets():
         """Get available layout presets for output generation."""
-        from ...templates import PRESETS, get_all_presets
+        from ...templates import get_all_presets
 
         presets = []
         for preset in get_all_presets():
@@ -61,6 +61,7 @@ def register_build_routes(
 
         project = get_project()
         publications = []
+        seen_bases = {}  # base_name -> publication info
 
         try:
             from ...cms.publication import PublicationRegistry
@@ -68,7 +69,6 @@ def register_build_routes(
             registry = PublicationRegistry(project)
 
             # Get all publications grouped by base name (across languages)
-            seen_bases = {}  # base_name -> publication info
 
             for lang in project.languages:
                 for pub in registry.list_publications(lang):
@@ -136,8 +136,73 @@ def register_build_routes(
 
             publications = list(seen_bases.values())
 
-        except Exception as e:
+        except Exception:
             # Fallback to simple format-based approach if no publications
+            pass
+
+        # Also include video scripts from scripts/ directories
+        try:
+            import yaml
+
+            for lang in project.languages:
+                scripts_dir = project.content_dir / lang / "scripts"
+                if scripts_dir.exists():
+                    for script_file in scripts_dir.glob("*.yaml"):
+                        if script_file.name.startswith("."):
+                            continue
+
+                        try:
+                            with open(script_file, "r") as f:
+                                script_data = yaml.safe_load(f)
+
+                            if not script_data:
+                                continue
+
+                            base_name = script_file.stem
+                            title = script_data.get("title", base_name.replace("_", " ").title())
+
+                            # Check if video output exists
+                            last_built = None
+                            is_stale = True
+                            output_name = script_data.get("output", {}).get("filename", base_name)
+                            video_path = project.output_dir / lang / f"{output_name}.mp4"
+                            if video_path.exists():
+                                mtime = datetime.fromtimestamp(video_path.stat().st_mtime)
+                                last_built = mtime.isoformat()
+                                is_stale = False
+
+                            # Count scenes
+                            scene_count = len(script_data.get("scenes", []))
+
+                            if base_name not in seen_bases:
+                                seen_bases[base_name] = {
+                                    "key": base_name,
+                                    "title": title,
+                                    "pub_type": "video",
+                                    "languages": [lang],
+                                    "formats": ["mp4"],
+                                    "lastBuilt": last_built,
+                                    "isStale": is_stale,
+                                    "chapterCount": scene_count,  # Use scenes as "chapters"
+                                }
+                            else:
+                                # Add language to existing script
+                                if lang not in seen_bases[base_name]["languages"]:
+                                    seen_bases[base_name]["languages"].append(lang)
+                                if not is_stale:
+                                    seen_bases[base_name]["isStale"] = False
+                                if last_built:
+                                    existing = seen_bases[base_name]["lastBuilt"]
+                                    if existing is None or last_built > existing:
+                                        seen_bases[base_name]["lastBuilt"] = last_built
+
+                        except Exception:
+                            continue
+
+            # Update publications list with video scripts
+            publications = list(seen_bases.values())
+
+        except Exception:
             pass
 
         return {

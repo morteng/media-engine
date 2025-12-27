@@ -41,8 +41,11 @@ Usage:
 """
 
 from .registry import ContentRegistry
-from .scanner import scan_project
+from .scanner import FreshnessScanner, scan_project
 from .types import ContentType, FreshnessReport, FreshnessStatus, TrackedItem
+
+# Backward-compatible aliases
+FreshnessRegistry = ContentRegistry
 
 __all__ = [
     "ContentRegistry",
@@ -51,4 +54,7 @@ __all__ = [
     "FreshnessStatus",
     "TrackedItem",
     "scan_project",
+    # Aliases
+    "FreshnessRegistry",
+    "FreshnessScanner",
 ]

@@ -407,3 +407,208 @@ def register_ai_routes(
         queue = TaskQueue(project.root)
 
         return queue.get_stats()
+
+    # ===== AI Context & Session Endpoints =====
+
+    @router.get("/api/ai/context")
+    async def get_ai_context():
+        """
+        Get comprehensive AI context for starting/continuing work.
+
+        Returns project status, work queue, sessions, notes, and research.
+        """
+        from ...ai import AIContext
+
+        project = get_project()
+        context = AIContext(project)
+        return context.get_full_context()
+
+    @router.get("/api/ai/context/document/{path:path}")
+    async def get_document_context(path: str):
+        """Get AI context for a specific document."""
+        from ...ai import AIContext
+
+        project = get_project()
+        context = AIContext(project)
+        return context.get_document_context(path)
+
+    @router.get("/api/ai/sessions")
+    async def list_sessions(status: Optional[str] = None):
+        """List AI sessions."""
+        from ...ai import SessionManager
+
+        project = get_project()
+        sessions = SessionManager(project.root)
+        all_sessions = sessions.list_sessions()
+
+        if status:
+            all_sessions = [s for s in all_sessions if s.status == status]
+
+        return {
+            "sessions": [
+                {
+                    "id": s.id,
+                    "status": s.status,
+                    "task_id": s.task_id,
+                    "started_at": s.started_at,
+                    "completed_at": s.completed_at,
+                    "steps_count": len(s.steps),
+                    "changes_count": len(s.changes),
+                    "decisions_count": len(s.decisions),
+                    "summary": s.summary,
+                }
+                for s in all_sessions
+            ],
+            "total": len(all_sessions),
+        }
+
+    @router.get("/api/ai/sessions/{session_id}")
+    async def get_session(session_id: str):
+        """Get session details."""
+        from ...ai import SessionManager
+
+        project = get_project()
+        sessions = SessionManager(project.root)
+        session = sessions.get_session(session_id)
+
+        if not session:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+
+        return {
+            "id": session.id,
+            "status": session.status,
+            "task_id": session.task_id,
+            "started_at": session.started_at,
+            "completed_at": session.completed_at,
+            "summary": session.summary,
+            "notes": session.notes,
+            "steps": [
+                {
+                    "description": s.description,
+                    "completed": s.completed,
+                    "timestamp": s.timestamp,
+                }
+                for s in session.steps
+            ],
+            "changes": [
+                {
+                    "file": c.file,
+                    "change_type": c.change_type,
+                    "timestamp": c.timestamp,
+                    "sections": c.sections,
+                }
+                for c in session.changes
+            ],
+            "decisions": [
+                {
+                    "question": d.question,
+                    "decision": d.decision,
+                    "reasoning": d.reasoning,
+                    "timestamp": d.timestamp,
+                    "scope": d.scope,
+                }
+                for d in session.decisions
+            ],
+        }
+
+    @router.get("/api/ai/notes")
+    async def get_ai_notes(
+        document: Optional[str] = None,
+        note_type: Optional[str] = None,
+        status: str = "open",
+    ):
+        """Get AI notes with filters."""
+        from ...ai import NotesManager, NoteStatus, NoteType
+
+        project = get_project()
+        notes_mgr = NotesManager(project.root)
+
+        nt = NoteType(note_type) if note_type else None
+        st = NoteStatus(status) if status else None
+
+        notes = notes_mgr.list_notes(
+            document=document,
+            note_type=nt,
+            status=st,
+        )
+
+        return {
+            "notes": [n.to_dict() for n in notes],
+            "total": len(notes),
+        }
+
+    @router.post("/api/ai/notes/{note_id}/resolve")
+    async def resolve_ai_note(note_id: str, resolution: str = ""):
+        """Resolve an AI note."""
+        from ...ai import NotesManager
+
+        project = get_project()
+        notes_mgr = NotesManager(project.root)
+        note = notes_mgr.resolve(note_id, resolution)
+
+        if note:
+            await manager.broadcast({
+                "type": "ai_note_resolved",
+                "note_id": note_id,
+            })
+            return {"success": True, "note_id": note.id}
+
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"Note {note_id} not found")
+
+    @router.get("/api/ai/research")
+    async def get_research(
+        topic: Optional[str] = None,
+        affects_document: Optional[str] = None,
+    ):
+        """Get stored research."""
+        from ...ai import ResearchStore
+
+        project = get_project()
+        store = ResearchStore(project.root)
+
+        if topic:
+            items = store.search(topic)
+        elif affects_document:
+            items = store.get_research_for_document(affects_document)
+        else:
+            items = store.list_items()
+
+        return {
+            "items": [
+                {
+                    "id": i.id,
+                    "topic": i.topic,
+                    "status": i.status.value,
+                    "updated_at": i.updated_at,
+                    "affects_documents": i.affects_documents,
+                    "content_preview": i.content[:500] if i.content else "",
+                }
+                for i in items
+            ],
+            "total": len(items),
+        }
+
+    @router.get("/api/ai/decisions")
+    async def get_decisions(scope: Optional[str] = None, limit: int = 20):
+        """Get past decisions for consistency."""
+        from ...ai import SessionManager
+
+        project = get_project()
+        sessions = SessionManager(project.root)
+        decisions = sessions.get_all_decisions(scope)[:limit]
+
+        return {
+            "decisions": [
+                {
+                    "question": d.question,
+                    "decision": d.decision,
+                    "reasoning": d.reasoning,
+                    "timestamp": d.timestamp,
+                    "scope": d.scope,
+                }
+                for d in decisions
+            ],
+            "total": len(decisions),
+        }

@@ -1,7 +1,8 @@
-"""Dependency tracking commands with hash-based change detection."""
+"""Dependency tracking commands using the Unified Relationship Registry."""
 
 import json
 import sys
+from pathlib import Path
 
 from rich import box
 from rich.console import Console
@@ -13,52 +14,58 @@ console = Console()
 
 
 def cmd_deps(args):
-    """Dependency tracking commands."""
+    """Dependency tracking commands using the unified registry."""
     project = find_project()
     if not project:
         console.print("[red]No project.yaml found[/red]")
         sys.exit(1)
 
-    from ...dependencies import DependencyGraph, DependencyHashTracker
+    from ...relationships import get_registry_manager, init_registry_manager
 
-    graph = DependencyGraph(project)
-    tracker = DependencyHashTracker(project)
+    registry_manager = get_registry_manager(project)
+    if registry_manager is None:
+        registry_manager = init_registry_manager(project)
 
     if args.deps_command == "status":
-        _deps_status(tracker, args)
+        _deps_status(registry_manager, args)
     elif args.deps_command == "stale":
-        _deps_stale(tracker, args)
+        _deps_stale(registry_manager, args)
     elif args.deps_command == "sync":
-        _deps_sync(graph, tracker, args)
+        _deps_sync(registry_manager, args)
     elif args.deps_command == "check":
-        _deps_check(tracker, args)
+        _deps_check(registry_manager, args)
     elif args.deps_command == "refresh":
-        _deps_refresh(graph, tracker, args)
+        _deps_refresh(registry_manager, args)
     else:
         console.print("[red]Unknown deps command[/red]")
         sys.exit(1)
 
 
-def _deps_status(tracker, args):
+def _deps_status(manager, args):
     """Show dependency status for all documents."""
-    statuses = tracker.get_all_statuses()
+    registry = manager.registry
+    stale_docs = manager.get_stale_documents()
+
+    # Build status list
+    statuses = []
+    for node in registry.all_nodes():
+        outgoing = registry.get_outgoing_edges(node.path)
+        stale_edges = [e for e in outgoing if e.is_stale]
+
+        statuses.append({
+            "path": str(node.path),
+            "title": node.title or node.path.stem,
+            "total_dependencies": len(outgoing),
+            "stale_dependencies": len(stale_edges),
+            "is_stale": node.is_stale,
+        })
 
     if args.json:
-        output = [
-            {
-                "path": str(s.path),
-                "title": s.title,
-                "total_dependencies": s.total_dependencies,
-                "stale_dependencies": s.stale_dependencies,
-                "is_stale": s.is_stale,
-            }
-            for s in statuses
-        ]
-        print(json.dumps(output, indent=2))
+        print(json.dumps(statuses, indent=2))
         return
 
     if not statuses:
-        console.print("[dim]No dependencies tracked yet. Run `media-engine deps sync` first.[/dim]")
+        console.print("[dim]No documents found. Run `media-engine deps refresh` first.[/dim]")
         return
 
     console.print("\n[bold]Dependency Status[/bold]")
@@ -69,180 +76,185 @@ def _deps_status(tracker, args):
     table.add_column("Stale", justify="center")
     table.add_column("Status", justify="center")
 
-    for status in sorted(statuses, key=lambda s: s.stale_dependencies, reverse=True):
-        status_color = "red" if status.is_stale else "green"
-        status_text = status.status_label
+    for status in sorted(statuses, key=lambda s: s["stale_dependencies"], reverse=True):
+        status_color = "red" if status["is_stale"] else "green"
+        status_text = "stale" if status["is_stale"] else "current"
 
         table.add_row(
-            status.title[:40],
-            str(status.total_dependencies),
-            str(status.stale_dependencies) if status.stale_dependencies > 0 else "-",
+            status["title"][:40],
+            str(status["total_dependencies"]),
+            str(status["stale_dependencies"]) if status["stale_dependencies"] > 0 else "-",
             f"[{status_color}]{status_text}[/{status_color}]",
         )
 
     console.print(table)
 
-    stale_count = sum(1 for s in statuses if s.is_stale)
+    stale_count = len(stale_docs)
     if stale_count > 0:
         console.print(f"\n[yellow]⚠ {stale_count} document(s) have stale dependencies[/yellow]")
     else:
         console.print("\n[green]✓ All dependencies are current[/green]")
 
 
-def _deps_stale(tracker, args):
+def _deps_stale(manager, args):
     """Show only documents with stale dependencies."""
-    stale = tracker.get_all_stale()
+    registry = manager.registry
+    stale_docs = manager.get_stale_documents()
 
     if args.json:
-        output = [
-            {
-                "path": str(s.path),
-                "title": s.title,
-                "stale_count": s.stale_dependencies,
+        output = []
+        for doc in stale_docs:
+            outgoing = registry.get_outgoing_edges(doc.path)
+            stale_edges = [e for e in outgoing if e.is_stale]
+
+            output.append({
+                "path": str(doc.path),
+                "title": doc.title,
+                "reasons": doc.stale_reasons,
+                "stale_count": len(stale_edges),
                 "stale_deps": [
                     {
-                        "target": d.target_path,
-                        "type": d.dep_type,
-                        "old_hash": d.recorded_hash[:8],
-                        "new_hash": d.current_hash[:8],
+                        "target": str(e.target),
+                        "type": e.edge_type.value,
+                        "reason": e.stale_reason,
                     }
-                    for d in s.dependencies
-                    if d.is_stale
+                    for e in stale_edges
                 ],
-            }
-            for s in stale
-        ]
+            })
         print(json.dumps(output, indent=2))
         return
 
-    if not stale:
+    if not stale_docs:
         console.print("[green]✓ No stale dependencies[/green]")
         return
 
     console.print("\n[bold]Documents with Stale Dependencies[/bold]")
     console.print("[dim]These documents reference content that has changed[/dim]\n")
 
-    for status in stale:
-        console.print(f"[cyan]{status.title}[/cyan]")
-        for dep in status.dependencies:
-            if dep.is_stale:
-                old_hash = dep.recorded_hash[:8] if dep.recorded_hash else "none"
-                new_hash = dep.current_hash[:8] if dep.current_hash else "none"
-                console.print(
-                    f"  └─ [{dep.dep_type}] {dep.target_path}"
-                )
-                console.print(
-                    f"     [dim]{old_hash} → {new_hash}[/dim]"
-                )
+    for doc in stale_docs:
+        console.print(f"[cyan]{doc.title or doc.path.stem}[/cyan]")
+
+        # Show stale edges
+        outgoing = registry.get_outgoing_edges(doc.path)
+        for edge in outgoing:
+            if edge.is_stale:
+                target_name = edge.target.name
+                edge_type = edge.edge_type.value
+                console.print(f"  └─ [{edge_type}] {target_name}")
+                if edge.stale_reason:
+                    console.print(f"     [dim]{edge.stale_reason}[/dim]")
+
+        # Show staleness reasons from node
+        if doc.stale_reasons:
+            console.print(f"  [dim]Reasons: {', '.join(doc.stale_reasons)}[/dim]")
+
         console.print()
 
-    console.print(f"[yellow]⚠ {len(stale)} document(s) need review[/yellow]")
+    console.print(f"[yellow]⚠ {len(stale_docs)} document(s) need review[/yellow]")
 
 
-def _deps_sync(graph, tracker, args):
-    """Sync dependency hashes from the dependency graph."""
-    if args.refresh:
-        console.print("[dim]Refreshing dependency graph...[/dim]")
-        graph.refresh()
-
+def _deps_sync(manager, args):
+    """Mark all dependencies as fresh (synced with current state)."""
     if args.dry_run:
-        report = graph.generate_report()
-        console.print("\n[bold]Dry Run - Would sync:[/bold]")
-        console.print(f"  Documents: {report['summary']['total_documents']}")
-        console.print(f"  Dependencies: {report['summary']['total_dependencies']}")
+        stale_docs = manager.get_stale_documents()
+        console.print("\n[bold]Dry Run - Would mark fresh:[/bold]")
+        console.print(f"  Stale documents: {len(stale_docs)}")
         return
 
-    console.print("[dim]Syncing dependency hashes...[/dim]")
-    synced = tracker.sync_from_graph(graph)
+    console.print("[dim]Marking all documents as fresh...[/dim]")
+    manager.mark_all_fresh()
 
-    console.print(f"\n[green]✓ Synced {synced} dependency hashes[/green]")
+    console.print("\n[green]✓ All documents marked as fresh[/green]")
 
 
-def _deps_check(tracker, args):
+def _deps_check(manager, args):
     """Check a specific document's dependencies."""
-    from pathlib import Path
-
     doc_path = Path(args.document).resolve()
+
+    if not doc_path.exists():
+        # Try relative to content dir
+        doc_path = manager.project.content_dir / args.document
+        if not doc_path.exists():
+            doc_path = doc_path.with_suffix(".md")
 
     if not doc_path.exists():
         console.print(f"[red]Document not found: {args.document}[/red]")
         sys.exit(1)
 
-    status = tracker.check_document(doc_path)
+    registry = manager.registry
+    node = registry.get_node(doc_path)
+    outgoing = registry.get_outgoing_edges(doc_path)
 
     if args.json:
         output = {
-            "path": str(status.path),
-            "title": status.title,
-            "total_dependencies": status.total_dependencies,
-            "stale_dependencies": status.stale_dependencies,
-            "is_stale": status.is_stale,
+            "path": str(doc_path),
+            "title": node.title if node else doc_path.stem,
+            "is_stale": node.is_stale if node else False,
+            "stale_reasons": node.stale_reasons if node else [],
+            "total_dependencies": len(outgoing),
+            "stale_dependencies": len([e for e in outgoing if e.is_stale]),
             "dependencies": [
                 {
-                    "target": d.target_path,
-                    "type": d.dep_type,
-                    "recorded_hash": d.recorded_hash,
-                    "current_hash": d.current_hash,
-                    "is_stale": d.is_stale,
+                    "target": str(e.target),
+                    "type": e.edge_type.value,
+                    "is_stale": e.is_stale,
+                    "stale_reason": e.stale_reason,
+                    "source_hash": e.source_hash,
+                    "target_hash": e.target_hash,
                 }
-                for d in status.dependencies
+                for e in outgoing
             ],
         }
         print(json.dumps(output, indent=2))
         return
 
-    console.print(f"\n[bold]{status.title}[/bold]")
-    console.print(f"[dim]{status.path}[/dim]\n")
+    title = node.title if node else doc_path.stem
+    console.print(f"\n[bold]{title}[/bold]")
+    console.print(f"[dim]{doc_path}[/dim]\n")
 
-    if not status.dependencies:
-        console.print("[dim]No dependencies tracked for this document[/dim]")
+    if not outgoing:
+        console.print("[dim]No dependencies for this document[/dim]")
         return
 
     table = Table(box=box.ROUNDED)
     table.add_column("Dependency", style="cyan")
     table.add_column("Type")
-    table.add_column("Recorded", justify="center")
-    table.add_column("Current", justify="center")
+    table.add_column("Target Hash", justify="center")
     table.add_column("Status", justify="center")
 
-    for dep in status.dependencies:
-        status_color = "red" if dep.is_stale else "green"
-        status_text = "stale" if dep.is_stale else "current"
+    stale_count = 0
+    for edge in outgoing:
+        status_color = "red" if edge.is_stale else "green"
+        status_text = "stale" if edge.is_stale else "current"
+        if edge.is_stale:
+            stale_count += 1
 
-        rec_hash = dep.recorded_hash[:8] if dep.recorded_hash else "-"
-        cur_hash = dep.current_hash[:8] if dep.current_hash else "-"
-
-        # Shorten the target path for display
-        target_name = Path(dep.target_path).name
+        target_hash = edge.target_hash[:8] if edge.target_hash else "-"
+        target_name = edge.target.name
 
         table.add_row(
             target_name,
-            dep.dep_type,
-            rec_hash,
-            cur_hash,
+            edge.edge_type.value,
+            target_hash,
             f"[{status_color}]{status_text}[/{status_color}]",
         )
 
     console.print(table)
 
-    if status.is_stale:
-        console.print(f"\n[yellow]⚠ {status.stale_dependencies} stale dependencies[/yellow]")
+    if stale_count > 0:
+        console.print(f"\n[yellow]⚠ {stale_count} stale dependencies[/yellow]")
     else:
         console.print("\n[green]✓ All dependencies current[/green]")
 
 
-def _deps_refresh(graph, tracker, args):
-    """Refresh dependency graph and sync hashes."""
-    console.print("[dim]Refreshing dependency graph...[/dim]")
-    graph.refresh()
+def _deps_refresh(manager, args):
+    """Refresh dependency graph and scan all documents."""
+    console.print("[dim]Refreshing unified registry...[/dim]")
 
-    report = graph.generate_report()
-    console.print(f"  Found {report['summary']['total_documents']} documents")
-    console.print(f"  Found {report['summary']['total_dependencies']} dependencies")
+    result = manager.refresh()
 
-    if not args.no_sync:
-        console.print("\n[dim]Syncing dependency hashes...[/dim]")
-        synced = tracker.sync_from_graph(graph)
-        console.print(f"  Synced {synced} hashes")
+    console.print(f"  Found {result['documents']} documents")
+    console.print(f"  Found {result['relationships']} relationships")
+    console.print(f"  Elapsed: {result['elapsed_seconds']:.2f}s")
 
-    console.print("\n[green]✓ Dependency graph refreshed[/green]")
+    console.print("\n[green]✓ Registry refreshed[/green]")

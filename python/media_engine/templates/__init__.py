@@ -29,22 +29,22 @@ Usage:
     template = registry.get_template("html", preset.template)
 """
 
-from .registry import (
-    TemplateRegistry,
-    TemplateInfo,
-    get_builtin_templates,
-    get_template_path,
-)
-from .presets import (
-    LayoutPreset,
-    PresetFeatures,
-    get_preset,
-    get_all_presets,
-    PRESETS,
-)
 from .components import (
     ComponentRegistry,
     render_component,
+)
+from .presets import (
+    PRESETS,
+    LayoutPreset,
+    PresetFeatures,
+    get_all_presets,
+    get_preset,
+)
+from .registry import (
+    TemplateInfo,
+    TemplateRegistry,
+    get_builtin_templates,
+    get_template_path,
 )
 
 __all__ = [

@@ -649,15 +649,16 @@ def _analyze_impact(project, target: str, change_type: str, description: str) ->
     # Find the target document
     target_path = Path(target)
 
-    # Check for dependents using dependency graph
+    # Check for dependents using UnifiedRegistry
     try:
-        from ...dependencies import DependencyGraph
+        from ...relationships import get_registry_manager, init_registry_manager
 
-        graph = DependencyGraph(project)
-        graph.refresh()
+        registry_manager = get_registry_manager(project)
+        if registry_manager is None:
+            registry_manager = init_registry_manager(project)
 
         # Get documents that depend on the target
-        dependents = graph.get_dependents(target_path)
+        dependents = registry_manager.registry.get_impact(target_path)
         for dep in dependents:
             impact["affected_documents"].append(
                 {
@@ -781,17 +782,22 @@ def _get_document_context(project, document_path: str) -> dict:
 
     # Dependencies
     try:
-        from ...dependencies import DependencyGraph
+        from ...relationships import get_registry_manager, init_registry_manager
 
-        graph = DependencyGraph(project)
-        graph.refresh()
+        registry_manager = get_registry_manager(project)
+        if registry_manager is None:
+            registry_manager = init_registry_manager(project)
 
-        context["dependencies"]["depends_on"] = [
-            str(p) for p in graph.get_dependencies(Path(document_path))
-        ]
-        context["dependencies"]["dependents"] = [
-            str(p) for p in graph.get_dependents(Path(document_path))
-        ]
+        registry = registry_manager.registry
+        doc_path = Path(document_path)
+
+        # Get outgoing edges (what this doc depends on)
+        outgoing = registry.get_outgoing_edges(doc_path)
+        context["dependencies"]["depends_on"] = [str(e.target) for e in outgoing]
+
+        # Get incoming edges (what depends on this doc)
+        dependents = registry.get_impact(doc_path)
+        context["dependencies"]["dependents"] = [str(p) for p in dependents]
     except Exception:
         pass
 

@@ -15,6 +15,17 @@ from .hashing import (
     verify_hash,
 )
 from .project import LanguageConfig, Project, find_project
+from .sections import (
+    ChangeType,
+    DocumentSections,
+    Section,
+    SectionChangeReport,
+    SectionDiff,
+    analyze_changes,
+    compare_sections,
+    parse_document_sections,
+    parse_sections,
+)
 from .theme import COPPER_AND_CREAM, ColorPalette, Theme, Typography, load_theme
 
 
@@ -61,4 +72,14 @@ __all__ = [
     "BrandProfile",
     "BrandContext",
     "load_brand_profile",
+    # Section-level tracking
+    "Section",
+    "SectionDiff",
+    "DocumentSections",
+    "SectionChangeReport",
+    "ChangeType",
+    "parse_sections",
+    "parse_document_sections",
+    "compare_sections",
+    "analyze_changes",
 ]

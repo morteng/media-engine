@@ -7,6 +7,8 @@ from .cache import cmd_cache
 from .content import cmd_changelog, cmd_gaps, cmd_links, cmd_readability, cmd_security
 from .dashboard import cmd_dashboard
 from .demos import cmd_demos
+from .deps import cmd_deps
+from .diagrams import cmd_diagrams
 from .freshness import cmd_freshness
 from .hierarchy import cmd_hierarchy
 from .init import cmd_init
@@ -26,13 +28,14 @@ from .integrity import cmd_integrity
 from .notes import cmd_notes
 from .pack import cmd_pack
 from .provenance import cmd_provenance
+from .publications import cmd_publications
 from .publish import cmd_publish
 from .quality import cmd_quality, cmd_stale
+from .relationships import cmd_relationships
 from .release import cmd_release
 from .search import cmd_index, cmd_search
 from .status import cmd_status
 from .translation import cmd_translation
-from .deps import cmd_deps
 from .validate import cmd_validate
 
 __all__ = [
@@ -62,8 +65,10 @@ __all__ = [
     "cmd_security",
     "cmd_changelog",
     "cmd_demos",
+    "cmd_diagrams",
     "cmd_freshness",
     "cmd_hierarchy",
+    "cmd_relationships",
     # Insights commands
     "cmd_health",
     "cmd_stats",
@@ -75,4 +80,6 @@ __all__ = [
     "cmd_velocity",
     "cmd_graph",
     "cmd_path",
+    # Publications
+    "cmd_publications",
 ]

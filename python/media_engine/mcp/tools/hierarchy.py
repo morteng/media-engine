@@ -1,6 +1,8 @@
 """
 MCP tools for document hierarchy and information flow.
 
+Uses the UnifiedRegistry via RegistryManager for all hierarchy operations.
+
 Provides tools for:
 - Hierarchy status and tree visualization
 - Staleness detection and propagation
@@ -10,7 +12,23 @@ Provides tools for:
 """
 
 import json
+from pathlib import Path
 from typing import Any
+
+
+def _get_registry_manager(server_instance):
+    """Get or create the RegistryManager for the project."""
+    from ...relationships import get_registry_manager, init_registry_manager
+
+    project = server_instance.project
+    if not project:
+        return None
+
+    registry_manager = get_registry_manager(project)
+    if registry_manager is None:
+        registry_manager = init_registry_manager(project)
+
+    return registry_manager
 
 
 def register_hierarchy_tools(mcp, server_instance) -> None:
@@ -29,13 +47,11 @@ def register_hierarchy_tools(mcp, server_instance) -> None:
     )
     def hierarchy_status() -> str:
         """Get hierarchy status overview."""
-        project = server_instance.project
-        if not project:
+        manager = _get_registry_manager(server_instance)
+        if not manager:
             return json.dumps({"error": "No project found"})
-        from ...hierarchy import HierarchyGraph
 
-        graph = HierarchyGraph(project)
-        report = graph.registry.generate_report()
+        report = manager.registry.generate_report()
 
         return json.dumps(report, indent=2)
 
@@ -49,22 +65,49 @@ def register_hierarchy_tools(mcp, server_instance) -> None:
     )
     def hierarchy_tree(root_path: str = None) -> str:
         """Get hierarchy as ASCII tree."""
-        project = server_instance.project
-        if not project:
+        manager = _get_registry_manager(server_instance)
+        if not manager:
             return json.dumps({"error": "No project found"})
-        from pathlib import Path
 
-        from ...hierarchy import HierarchyGraph
+        registry = manager.registry
 
-        graph = HierarchyGraph(project)
+        # Build tree from registry
+        lines = []
 
-        root = Path(root_path) if root_path else None
-        tree_str = graph.to_tree_string(root)
+        def _build_tree(node_path: Path, prefix: str = "", is_last: bool = True):
+            node = registry.get_node(node_path)
+            if not node:
+                return
 
-        if not tree_str.strip():
+            connector = "└── " if is_last else "├── "
+            title = node.title or node_path.stem
+            stale_marker = " [STALE]" if node.is_stale else ""
+
+            lines.append(f"{prefix}{connector}{title}{stale_marker}")
+
+            children = registry.get_children(node_path)
+            child_prefix = prefix + ("    " if is_last else "│   ")
+
+            for i, child_path in enumerate(children):
+                is_child_last = i == len(children) - 1
+                _build_tree(child_path, child_prefix, is_child_last)
+
+        if root_path:
+            root = Path(root_path)
+            if not root.is_absolute():
+                root = server_instance.project.content_dir / root
+            _build_tree(root, "", True)
+        else:
+            # Show all roots
+            roots = registry.get_roots()
+            for i, root in enumerate(roots):
+                is_last = i == len(roots) - 1
+                _build_tree(root, "", is_last)
+
+        if not lines:
             return "No hierarchy data found. Run hierarchy_refresh first."
 
-        return tree_str
+        return "\n".join(lines)
 
     @mcp.tool(
         description="""
@@ -79,21 +122,21 @@ def register_hierarchy_tools(mcp, server_instance) -> None:
     )
     def hierarchy_refresh() -> str:
         """Refresh hierarchy from documents."""
-        project = server_instance.project
-        if not project:
+        manager = _get_registry_manager(server_instance)
+        if not manager:
             return json.dumps({"error": "No project found"})
-        from ...hierarchy import HierarchyGraph
 
-        graph = HierarchyGraph(project)
-        graph.refresh()
-        report = graph.registry.generate_report()
+        result = manager.refresh()
+        report = manager.registry.generate_report()
 
         return json.dumps(
             {
                 "status": "refreshed",
-                "total_nodes": report["summary"]["total_nodes"],
-                "root_count": report["summary"]["root_count"],
-                "anchor_count": report["summary"]["anchor_count"],
+                "total_nodes": report["summary"]["total_documents"],
+                "root_count": report["summary"]["root_documents"],
+                "anchor_count": report["summary"]["anchors"],
+                "relationships": report["summary"]["total_relationships"],
+                "elapsed_seconds": result.get("elapsed_seconds", 0),
             },
             indent=2,
         )
@@ -112,16 +155,65 @@ def register_hierarchy_tools(mcp, server_instance) -> None:
     )
     def hierarchy_validate() -> str:
         """Validate hierarchy structure."""
-        project = server_instance.project
-        if not project:
+        manager = _get_registry_manager(server_instance)
+        if not manager:
             return json.dumps({"error": "No project found"})
-        from ...hierarchy import HierarchyGraph, HierarchyValidator
 
-        graph = HierarchyGraph(project)
-        validator = HierarchyValidator(graph)
-        result = validator.validate_all()
+        registry = manager.registry
+        issues = []
 
-        return json.dumps(result.to_dict(), indent=2)
+        # Check for circular references
+        for node in registry.all_nodes():
+            visited = set()
+            current = node.path
+            while current:
+                if current in visited:
+                    issues.append({
+                        "type": "circular_reference",
+                        "document": str(node.path),
+                        "message": f"Circular parent reference detected at {current}",
+                    })
+                    break
+                visited.add(current)
+                parent = registry.get_parent(current)
+                current = parent
+
+        # Check for orphan documents (have parent ref but parent doesn't exist)
+        for node in registry.all_nodes():
+            edges = registry.get_outgoing_edges(node.path)
+            for edge in edges:
+                if edge.edge_type.value == "parent":
+                    if not registry.get_node(edge.target):
+                        issues.append({
+                            "type": "orphan_parent",
+                            "document": str(node.path),
+                            "message": f"Parent document not found: {edge.target}",
+                        })
+
+        # Check for stale edges
+        stale_count = 0
+        for node in registry.all_nodes():
+            edges = registry.get_outgoing_edges(node.path)
+            for edge in edges:
+                if edge.is_stale:
+                    stale_count += 1
+                    issues.append({
+                        "type": "stale_edge",
+                        "document": str(node.path),
+                        "target": str(edge.target),
+                        "edge_type": edge.edge_type.value,
+                        "reason": edge.stale_reason,
+                    })
+
+        return json.dumps(
+            {
+                "valid": len(issues) == 0,
+                "issue_count": len(issues),
+                "stale_edges": stale_count,
+                "issues": issues[:50],  # Limit to 50 issues
+            },
+            indent=2,
+        )
 
     @mcp.tool(
         description="""
@@ -139,20 +231,61 @@ def register_hierarchy_tools(mcp, server_instance) -> None:
     )
     def hierarchy_navigation(document_path: str) -> str:
         """Get navigation context for a document."""
-        project = server_instance.project
-        if not project:
+        manager = _get_registry_manager(server_instance)
+        if not manager:
             return json.dumps({"error": "No project found"})
-        from pathlib import Path
 
-        from ...hierarchy import HierarchyGraph
+        doc_path = Path(document_path)
+        if not doc_path.is_absolute():
+            doc_path = server_instance.project.content_dir / document_path
 
-        graph = HierarchyGraph(project)
-        context = graph.get_navigation_context(Path(document_path))
+        registry = manager.registry
+        node = registry.get_node(doc_path)
 
-        if not context:
+        if not node:
             return json.dumps({"error": f"Document not found in hierarchy: {document_path}"})
 
-        return json.dumps(context.to_dict(), indent=2)
+        # Build breadcrumbs
+        breadcrumbs = []
+        current = doc_path
+        while current:
+            n = registry.get_node(current)
+            if n:
+                breadcrumbs.insert(0, {"path": str(current), "title": n.title or current.stem})
+            parent = registry.get_parent(current)
+            current = parent
+
+        # Get siblings
+        parent_path = registry.get_parent(doc_path)
+        if parent_path:
+            siblings = registry.get_children(parent_path)
+        else:
+            siblings = registry.get_roots()
+
+        siblings = list(siblings)
+        position = siblings.index(doc_path) if doc_path in siblings else -1
+
+        prev_sibling = siblings[position - 1] if position > 0 else None
+        next_sibling = siblings[position + 1] if position < len(siblings) - 1 else None
+
+        # Get children
+        children = registry.get_children(doc_path)
+
+        return json.dumps(
+            {
+                "document": str(doc_path),
+                "title": node.title,
+                "breadcrumbs": breadcrumbs,
+                "parent": str(parent_path) if parent_path else None,
+                "children": [str(c) for c in children],
+                "siblings": [str(s) for s in siblings],
+                "position": position + 1,
+                "total_siblings": len(siblings),
+                "prev_sibling": str(prev_sibling) if prev_sibling else None,
+                "next_sibling": str(next_sibling) if next_sibling else None,
+            },
+            indent=2,
+        )
 
     @mcp.tool(
         description="""
@@ -168,16 +301,39 @@ def register_hierarchy_tools(mcp, server_instance) -> None:
     )
     def hierarchy_stale() -> str:
         """Get stale documents report."""
-        project = server_instance.project
-        if not project:
+        manager = _get_registry_manager(server_instance)
+        if not manager:
             return json.dumps({"error": "No project found"})
-        from ...hierarchy import HierarchyGraph, StalenessChecker
 
-        graph = HierarchyGraph(project)
-        checker = StalenessChecker(graph)
-        report = checker.check_all()
+        stale_docs = manager.get_stale_documents()
 
-        return json.dumps(report.to_dict(), indent=2)
+        stale_list = []
+        for doc in stale_docs:
+            edges = manager.registry.get_outgoing_edges(doc.path)
+            stale_edges = [e for e in edges if e.is_stale]
+
+            stale_list.append({
+                "path": str(doc.path),
+                "title": doc.title,
+                "is_stale": doc.is_stale,
+                "stale_reasons": doc.stale_reasons,
+                "stale_edges": [
+                    {
+                        "target": str(e.target),
+                        "type": e.edge_type.value,
+                        "reason": e.stale_reason,
+                    }
+                    for e in stale_edges
+                ],
+            })
+
+        return json.dumps(
+            {
+                "stale_count": len(stale_list),
+                "stale_documents": stale_list,
+            },
+            indent=2,
+        )
 
     @mcp.tool(
         description="""
@@ -195,32 +351,36 @@ def register_hierarchy_tools(mcp, server_instance) -> None:
         reason: str = "source_updated",
     ) -> str:
         """Mark a document as stale."""
-        project = server_instance.project
-        if not project:
+        manager = _get_registry_manager(server_instance)
+        if not manager:
             return json.dumps({"error": "No project found"})
-        from pathlib import Path
 
-        from ...hierarchy import HierarchyGraph, StalenessChecker, StalenessReason
+        doc_path = Path(document_path)
+        if not doc_path.is_absolute():
+            doc_path = server_instance.project.content_dir / document_path
 
-        graph = HierarchyGraph(project)
-        checker = StalenessChecker(graph)
+        # Mark the document stale via the registry
+        node = manager.registry.get_node(doc_path)
+        if not node:
+            return json.dumps({"error": f"Document not found: {document_path}"})
 
-        reason_map = {
-            "source_updated": StalenessReason.SOURCE_UPDATED,
-            "version_mismatch": StalenessReason.VERSION_MISMATCH,
-            "transitive": StalenessReason.TRANSITIVE,
-            "expired": StalenessReason.EXPIRED,
-            "anchor_changed": StalenessReason.ANCHOR_CHANGED,
-        }
+        # Add stale reason to node
+        if reason not in node.stale_reasons:
+            node.stale_reasons.append(reason)
+        node.is_stale = True
 
-        staleness_reason = reason_map.get(reason, StalenessReason.SOURCE_UPDATED)
-        result = checker.mark_stale(Path(document_path), staleness_reason)
+        # Propagate staleness through dependent documents
+        affected = manager.registry.get_impact(doc_path)
+
+        # Save registry
+        manager.registry.save()
 
         return json.dumps(
             {
-                "marked_stale": result,
-                "document": document_path,
+                "marked_stale": True,
+                "document": str(doc_path),
                 "reason": reason,
+                "affected_documents": len(affected),
             }
         )
 
@@ -239,50 +399,62 @@ def register_hierarchy_tools(mcp, server_instance) -> None:
     )
     def hierarchy_anchors(validate: bool = False) -> str:
         """Get consistency anchors."""
-        project = server_instance.project
-        if not project:
+        manager = _get_registry_manager(server_instance)
+        if not manager:
             return json.dumps({"error": "No project found"})
-        from ...hierarchy import AnchorRegistry, HierarchyGraph
 
-        graph = HierarchyGraph(project)
-        anchor_registry = AnchorRegistry(graph.registry)
-        anchor_registry.build()
+        # Get anchors from registry data
+        if manager.registry.data_path.exists():
+            import json as json_lib
+            with open(manager.registry.data_path) as f:
+                data = json_lib.load(f)
+            anchors_data = data.get("anchors", {})
+        else:
+            anchors_data = {}
 
-        summary = anchor_registry.get_impact_summary()
-
-        result: dict[str, Any] = {"summary": summary}
+        result: dict[str, Any] = {
+            "anchor_count": len(anchors_data),
+        }
 
         if validate:
-            validation = anchor_registry.validate_references()
+            # Check anchor references
+            missing = []
+            valid_count = 0
+
+            for anchor_id, anchor_info in anchors_data.items():
+                defined_in = anchor_info.get("defined_in")
+                anchor_info.get("referenced_in", [])
+
+                if defined_in and Path(defined_in).exists():
+                    valid_count += 1
+                else:
+                    missing.append({
+                        "anchor": anchor_id,
+                        "defined_in": defined_in,
+                        "reason": "source_not_found",
+                    })
+
             result["validation"] = {
-                "valid": validation.valid,
-                "missing_anchors": [
-                    {"ref_doc": str(r), "anchor": a, "source": str(s)}
-                    for r, a, s in validation.missing_anchors
-                ],
-                "value_mismatches": [
-                    {"ref_doc": str(r), "anchor": a, "expected": e, "actual": act}
-                    for r, a, e, act in validation.value_mismatches
-                ],
-                "orphan_references": [
-                    {"ref_doc": str(r), "anchor": a}
-                    for r, a in validation.orphan_references
-                ],
+                "valid": len(missing) == 0,
+                "valid_anchors": valid_count,
+                "missing_sources": missing,
             }
 
-        # List all anchors
+        # List anchors
         anchors = []
-        for anchor in anchor_registry.get_all_anchors():
-            refs = anchor_registry.get_referencing_documents(anchor.document_path, anchor.name)
-            anchors.append(
-                {
-                    "name": anchor.name,
-                    "value": anchor.value,
-                    "document": str(anchor.document_path),
-                    "description": anchor.description,
-                    "referenced_by_count": len(refs),
-                }
-            )
+        for anchor_id, anchor_info in anchors_data.items():
+            value = anchor_info.get("value", "")
+            if isinstance(value, str) and len(value) > 50:
+                value = value[:47] + "..."
+
+            anchors.append({
+                "id": anchor_id,
+                "value": value,
+                "value_type": anchor_info.get("value_type", "string"),
+                "defined_in": anchor_info.get("defined_in"),
+                "referenced_by_count": len(anchor_info.get("referenced_in", [])),
+            })
+
         result["anchors"] = anchors
 
         return json.dumps(result, indent=2)
@@ -310,26 +482,58 @@ def register_hierarchy_tools(mcp, server_instance) -> None:
         description: str = "",
     ) -> str:
         """Analyze impact of a document change."""
-        project = server_instance.project
-        if not project:
+        manager = _get_registry_manager(server_instance)
+        if not manager:
             return json.dumps({"error": "No project found"})
-        from pathlib import Path
 
-        from ...hierarchy import HierarchyGraph, ImpactAnalyzer
+        doc_path = Path(document_path)
+        if not doc_path.is_absolute():
+            doc_path = server_instance.project.content_dir / document_path
 
-        graph = HierarchyGraph(project)
-        analyzer = ImpactAnalyzer(graph)
+        registry = manager.registry
+        affected = registry.get_impact(doc_path)
 
-        if change_type == "delete":
-            report = analyzer.analyze_deletion(Path(document_path))
-        else:
-            report = analyzer.analyze_change(
-                Path(document_path),
-                change_type,
-                description or f"Change to {document_path}",
-            )
+        # Categorize affected documents
+        direct = []
+        translations = []
+        derivatives = []
+        children = []
 
-        return json.dumps(report.to_dict(), indent=2)
+        for affected_path in affected:
+            edges = registry.get_outgoing_edges(affected_path)
+            for edge in edges:
+                if str(edge.target) == str(doc_path):
+                    affected_node = registry.get_node(affected_path)
+                    title = affected_node.title if affected_node else affected_path.stem
+
+                    info = {
+                        "path": str(affected_path),
+                        "title": title,
+                        "relationship": edge.edge_type.value,
+                    }
+
+                    if edge.edge_type.value == "translates":
+                        translations.append(info)
+                    elif edge.edge_type.value in ("implements", "extends", "summarizes"):
+                        derivatives.append(info)
+                    elif edge.edge_type.value == "parent":
+                        children.append(info)
+                    else:
+                        direct.append(info)
+
+        return json.dumps(
+            {
+                "document": str(doc_path),
+                "change_type": change_type,
+                "description": description or f"Change to {doc_path.name}",
+                "total_affected": len(affected),
+                "direct_dependents": direct,
+                "translations": translations,
+                "derivatives": derivatives,
+                "children": children,
+            },
+            indent=2,
+        )
 
     @mcp.tool(
         description="""
@@ -348,18 +552,85 @@ def register_hierarchy_tools(mcp, server_instance) -> None:
     )
     def hierarchy_coverage(languages: str = None) -> str:
         """Analyze documentation coverage."""
-        project = server_instance.project
-        if not project:
+        manager = _get_registry_manager(server_instance)
+        if not manager:
             return json.dumps({"error": "No project found"})
-        from ...hierarchy import CoverageAnalyzer, HierarchyGraph
 
-        graph = HierarchyGraph(project)
-        analyzer = CoverageAnalyzer(graph)
+        registry = manager.registry
+        project = server_instance.project
 
-        lang_list = languages.split(",") if languages else None
-        report = analyzer.analyze(lang_list)
+        # Calculate coverage metrics
+        all_nodes = list(registry.all_nodes())
+        total_docs = len(all_nodes)
 
-        return json.dumps(report.to_dict(), indent=2)
+        # Count by type
+        by_type = {}
+        stale_count = 0
+        orphan_count = 0
+
+        for node in all_nodes:
+            doc_type = node.doc_type or "unknown"
+            by_type[doc_type] = by_type.get(doc_type, 0) + 1
+
+            if node.is_stale:
+                stale_count += 1
+
+            # Check if orphan (has parent ref but parent not found)
+            edges = registry.get_outgoing_edges(node.path)
+            for edge in edges:
+                if edge.edge_type.value == "parent":
+                    if not registry.get_node(edge.target):
+                        orphan_count += 1
+                        break
+
+        # Translation coverage
+        translation_coverage = {}
+        if languages:
+            lang_list = [l.strip() for l in languages.split(",")]
+            source_lang = project.source_language
+
+            # Get source documents
+            source_docs = [n for n in all_nodes
+                          if source_lang in str(n.path)]
+
+            for lang in lang_list:
+                if lang == source_lang:
+                    continue
+
+                translated = 0
+                for node in all_nodes:
+                    if lang in str(node.path):
+                        # Check if it's a translation
+                        edges = registry.get_outgoing_edges(node.path)
+                        for edge in edges:
+                            if edge.edge_type.value == "translates":
+                                translated += 1
+                                break
+
+                translation_coverage[lang] = {
+                    "translated": translated,
+                    "source_total": len(source_docs),
+                    "percentage": round(translated / len(source_docs) * 100, 1) if source_docs else 0,
+                }
+
+        # Calculate overall score
+        health_score = 100
+        if stale_count > 0:
+            health_score -= min(30, stale_count * 5)
+        if orphan_count > 0:
+            health_score -= min(20, orphan_count * 10)
+
+        return json.dumps(
+            {
+                "total_documents": total_docs,
+                "by_type": by_type,
+                "stale_documents": stale_count,
+                "orphan_documents": orphan_count,
+                "health_score": max(0, health_score),
+                "translation_coverage": translation_coverage,
+            },
+            indent=2,
+        )
 
     @mcp.tool(
         description="""
@@ -371,16 +642,58 @@ def register_hierarchy_tools(mcp, server_instance) -> None:
     )
     def hierarchy_coverage_suggestions() -> str:
         """Get coverage improvement suggestions."""
-        project = server_instance.project
-        if not project:
+        manager = _get_registry_manager(server_instance)
+        if not manager:
             return json.dumps({"error": "No project found"})
-        from ...hierarchy import CoverageAnalyzer, HierarchyGraph
 
-        graph = HierarchyGraph(project)
-        analyzer = CoverageAnalyzer(graph)
-        suggestions = analyzer.get_suggestions()
+        registry = manager.registry
+        suggestions = []
 
-        return json.dumps({"suggestions": suggestions}, indent=2)
+        # Find stale documents
+        for node in registry.all_nodes():
+            if node.is_stale:
+                suggestions.append({
+                    "priority": "high",
+                    "type": "stale_content",
+                    "document": str(node.path),
+                    "title": node.title,
+                    "suggestion": f"Review and update {node.title or node.path.stem}",
+                    "reasons": node.stale_reasons,
+                })
+
+        # Find orphan documents
+        for node in registry.all_nodes():
+            edges = registry.get_outgoing_edges(node.path)
+            for edge in edges:
+                if edge.edge_type.value == "parent":
+                    if not registry.get_node(edge.target):
+                        suggestions.append({
+                            "priority": "critical",
+                            "type": "missing_parent",
+                            "document": str(node.path),
+                            "title": node.title,
+                            "suggestion": f"Create missing parent: {edge.target.name}",
+                            "missing": str(edge.target),
+                        })
+
+        # Find documents without children that might need them
+        for node in registry.all_nodes():
+            if node.doc_type == "chapter":
+                children = registry.get_children(node.path)
+                if not children:
+                    suggestions.append({
+                        "priority": "low",
+                        "type": "no_children",
+                        "document": str(node.path),
+                        "title": node.title,
+                        "suggestion": f"Consider adding sub-content for {node.title or node.path.stem}",
+                    })
+
+        # Sort by priority
+        priority_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+        suggestions.sort(key=lambda x: priority_order.get(x["priority"], 4))
+
+        return json.dumps({"suggestions": suggestions[:50]}, indent=2)
 
     @mcp.tool(
         description="""
@@ -395,21 +708,49 @@ def register_hierarchy_tools(mcp, server_instance) -> None:
     )
     def hierarchy_derivation_chains(document_path: str) -> str:
         """Get derivation chains from a document."""
-        project = server_instance.project
-        if not project:
+        manager = _get_registry_manager(server_instance)
+        if not manager:
             return json.dumps({"error": "No project found"})
-        from pathlib import Path
 
-        from ...hierarchy import HierarchyGraph, ImpactAnalyzer
+        doc_path = Path(document_path)
+        if not doc_path.is_absolute():
+            doc_path = server_instance.project.content_dir / document_path
 
-        graph = HierarchyGraph(project)
-        analyzer = ImpactAnalyzer(graph)
-        chains = analyzer.get_impact_chain(Path(document_path))
+        registry = manager.registry
+
+        # Build chains by following derivation edges
+        chains = []
+
+        def _build_chain(current: Path, chain: list):
+            # Find documents that derive from current
+            derivations = []
+            for node in registry.all_nodes():
+                edges = registry.get_outgoing_edges(node.path)
+                for edge in edges:
+                    if str(edge.target) == str(current) and edge.edge_type.value in (
+                        "implements", "extends", "summarizes", "translates"
+                    ):
+                        derivations.append((node.path, edge.edge_type.value))
+
+            if not derivations:
+                if len(chain) > 1:  # Only add chains with at least 2 items
+                    chains.append(chain[:])
+                return
+
+            for deriv_path, edge_type in derivations:
+                chain.append({
+                    "path": str(deriv_path),
+                    "relationship": edge_type,
+                })
+                _build_chain(deriv_path, chain)
+                chain.pop()
+
+        _build_chain(doc_path, [{"path": str(doc_path), "relationship": "source"}])
 
         return json.dumps(
             {
-                "source": document_path,
-                "chains": [[str(p) for p in chain] for chain in chains],
+                "source": str(doc_path),
+                "chains": chains,
                 "chain_count": len(chains),
             },
             indent=2,

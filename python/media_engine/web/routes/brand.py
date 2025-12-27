@@ -564,7 +564,6 @@ def register_brand_routes(
     @router.get("/api/brand/file/{file_path:path}")
     async def get_brand_file(file_path: str) -> Dict[str, Any]:
         """Get a specific brand file with content (base64 for binary)."""
-        from fastapi.responses import Response
 
         project = get_project()
         if not project:

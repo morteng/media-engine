@@ -4,6 +4,11 @@ Translation tracking for multilingual document management.
 Tracks source documents and their translations, detecting when translations
 become outdated due to source document updates.
 
+Features:
+- Whole-document hash comparison for quick change detection
+- Section-level tracking to identify exactly which parts changed
+- Cross-language section matching using normalized headings
+
 Uses content hash comparison for automatic change detection - any source
 content change is automatically detected without manual version bumps.
 """
@@ -12,8 +17,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-from .document import Document
 from ..core.hashing import compute_content_hash
+from ..core.sections import (
+    DocumentSections,
+    SectionChangeReport,
+    analyze_changes,
+    parse_sections,
+)
+from .document import Document
 
 
 @dataclass
@@ -40,6 +51,101 @@ class TranslationStatus:
     def status_label(self) -> str:
         """Human-readable status label."""
         return "outdated" if self.is_outdated else "current"
+
+    def to_dict(self) -> dict:
+        """Convert to dictionary for serialization."""
+        return {
+            "source_path": str(self.source_path),
+            "translation_path": str(self.translation_path),
+            "source_language": self.source_language,
+            "target_language": self.target_language,
+            "source_title": self.source_title,
+            "translation_title": self.translation_title,
+            "source_content_hash": self.source_content_hash,
+            "translated_from_hash": self.translated_from_hash,
+            "is_outdated": self.is_outdated,
+            "status": self.status_label,
+            "source_last_modified": self.source_last_modified,
+            "translation_last_modified": self.translation_last_modified,
+        }
+
+
+@dataclass
+class DetailedTranslationStatus:
+    """
+    Detailed translation status with section-level change analysis.
+
+    Shows exactly which sections in the source changed, allowing
+    translators to focus only on affected sections.
+    """
+
+    # Basic status info
+    source_path: Path
+    translation_path: Path
+    source_language: str
+    target_language: str
+    source_title: str
+    translation_title: str
+    is_outdated: bool
+
+    # Section-level analysis
+    section_report: Optional[SectionChangeReport] = None
+
+    # Cached section data
+    source_sections: Optional[DocumentSections] = None
+    translation_sections: Optional[DocumentSections] = None
+
+    @property
+    def changed_section_count(self) -> int:
+        """Number of sections that changed."""
+        if not self.section_report:
+            return 0
+        return len(self.section_report.modified) + len(self.section_report.added)
+
+    @property
+    def unchanged_section_count(self) -> int:
+        """Number of sections that are still valid."""
+        if not self.section_report:
+            return 0
+        return len(self.section_report.unchanged)
+
+    @property
+    def changed_sections(self) -> list[str]:
+        """List of section headings that need translation review."""
+        if not self.section_report:
+            return []
+        return [d.heading for d in self.section_report.modified + self.section_report.added]
+
+    @property
+    def summary(self) -> str:
+        """Human-readable summary of changes."""
+        if not self.is_outdated:
+            return "Translation is current"
+        if not self.section_report:
+            return "Source changed (section analysis not available)"
+        return (
+            f"{self.changed_section_count} section(s) need review, "
+            f"{self.unchanged_section_count} unchanged"
+        )
+
+    def to_dict(self) -> dict:
+        """Convert to dictionary for serialization."""
+        result = {
+            "source_path": str(self.source_path),
+            "translation_path": str(self.translation_path),
+            "source_language": self.source_language,
+            "target_language": self.target_language,
+            "source_title": self.source_title,
+            "translation_title": self.translation_title,
+            "is_outdated": self.is_outdated,
+            "changed_section_count": self.changed_section_count,
+            "unchanged_section_count": self.unchanged_section_count,
+            "changed_sections": self.changed_sections,
+            "summary": self.summary,
+        }
+        if self.section_report:
+            result["section_report"] = self.section_report.to_dict()
+        return result
 
 
 class TranslationTracker:
@@ -329,3 +435,168 @@ class TranslationTracker:
         """Force refresh of cached document data."""
         self._loaded = False
         self._load_documents()
+
+    def get_detailed_status(
+        self, translation: Document, stored_section_hashes: Optional[dict[str, str]] = None
+    ) -> Optional[DetailedTranslationStatus]:
+        """
+        Get detailed translation status with section-level change analysis.
+
+        Compares the current source document sections against the section hashes
+        that were stored when the translation was made. This identifies exactly
+        which sections changed, so translators know which parts need review.
+
+        Args:
+            translation: Translation document to check
+            stored_section_hashes: Optional dict of section heading -> hash
+                that was stored when translation was made. If not provided,
+                will try to read from translation frontmatter.
+
+        Returns:
+            DetailedTranslationStatus with section-level analysis, or None
+            if not a translation
+        """
+        source_ref = translation.metadata.get("source_document")
+        if not source_ref:
+            return None
+
+        source_path = self._resolve_source_path(source_ref)
+        if not source_path or not source_path.exists():
+            return None
+
+        try:
+            source_doc = Document.load(source_path)
+        except Exception:
+            return None
+
+        # Compute current source content hash
+        current_source_hash = compute_content_hash(source_doc.content)
+        translated_from_hash = translation.metadata.get("source_content_hash", "")
+        is_outdated = translated_from_hash != current_source_hash
+
+        # Extract language codes
+        source_lang = self._extract_language(source_path)
+        target_lang = translation.metadata.get("language") or self._extract_language(
+            translation.path
+        )
+
+        # Parse current source sections
+        current_sections = parse_sections(source_doc.content)
+
+        # Get stored section hashes (from when translation was made)
+        if stored_section_hashes is None:
+            stored_section_hashes = translation.metadata.get("source_section_hashes", {})
+
+        # Build a "old" DocumentSections from stored hashes for comparison
+        section_report = None
+        if stored_section_hashes and is_outdated:
+            # Create minimal Section objects from stored hashes
+            from ..core.sections import DocumentSections, Section
+
+            old_sections = []
+            for heading, hash_val in stored_section_hashes.items():
+                old_sections.append(Section(
+                    heading=heading,
+                    level=1,  # Level doesn't matter for hash comparison
+                    content="",  # Content not needed for comparison
+                    content_hash=hash_val,
+                    line_start=0,
+                    line_end=0,
+                ))
+
+            old_doc_sections = DocumentSections(
+                sections=old_sections,
+                document_hash=translated_from_hash,
+            )
+
+            # Analyze changes
+            section_report = analyze_changes(
+                old_doc_sections,
+                current_sections,
+                use_normalized=False,  # Use exact heading match for same-language
+            )
+
+        return DetailedTranslationStatus(
+            source_path=source_path,
+            translation_path=translation.path,
+            source_language=source_lang,
+            target_language=target_lang,
+            source_title=source_doc.title,
+            translation_title=translation.title,
+            is_outdated=is_outdated,
+            section_report=section_report,
+            source_sections=current_sections,
+        )
+
+    def get_all_detailed_statuses(self) -> list[DetailedTranslationStatus]:
+        """
+        Get detailed status for all translations.
+
+        Returns:
+            List of DetailedTranslationStatus objects
+        """
+        self._load_documents()
+        statuses = []
+
+        for trans_doc in self._translations.values():
+            status = self.get_detailed_status(trans_doc)
+            if status:
+                statuses.append(status)
+
+        return statuses
+
+    def get_outdated_with_details(self) -> list[DetailedTranslationStatus]:
+        """
+        Get detailed status for outdated translations only.
+
+        Returns:
+            List of DetailedTranslationStatus for outdated translations
+        """
+        all_statuses = self.get_all_detailed_statuses()
+        return [s for s in all_statuses if s.is_outdated]
+
+    def store_section_hashes(self, translation: Document) -> dict:
+        """
+        Store current source section hashes in translation frontmatter.
+
+        Call this when marking a translation as synced to enable
+        section-level change tracking for future updates.
+
+        Args:
+            translation: Translation document to update
+
+        Returns:
+            Dict with the stored section hashes
+        """
+        source_ref = translation.metadata.get("source_document")
+        if not source_ref:
+            return {"error": "No source_document reference"}
+
+        source_path = self._resolve_source_path(source_ref)
+        if not source_path or not source_path.exists():
+            return {"error": f"Source not found: {source_ref}"}
+
+        try:
+            source_doc = Document.load(source_path)
+
+            # Parse source sections
+            sections = parse_sections(source_doc.content)
+
+            # Store section hashes
+            section_hashes = sections.get_hashes()
+            translation.metadata["source_section_hashes"] = section_hashes
+
+            # Also update the content hash
+            translation.metadata["source_content_hash"] = compute_content_hash(
+                source_doc.content
+            )
+
+            translation.save()
+
+            return {
+                "status": "stored",
+                "section_count": len(section_hashes),
+                "section_hashes": section_hashes,
+            }
+        except Exception as e:
+            return {"error": str(e)}

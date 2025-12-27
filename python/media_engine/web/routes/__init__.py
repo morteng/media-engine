@@ -55,6 +55,7 @@ def register_routes(
     from .build import register_build_routes
     from .core import register_core_routes, register_spa_catch_all
     from .dependencies import register_dependencies_routes
+    from .diagrams import register_diagram_routes
     from .documents import register_document_routes
     from .freshness import register_freshness_routes
     from .hierarchy import register_hierarchy_routes
@@ -62,10 +63,12 @@ def register_routes(
     from .media import register_media_routes
     from .notes import register_notes_routes
     from .provenance import register_provenance_routes
+    from .publications import register_publications_routes
     from .quality import register_quality_routes
     from .registry import register_registry_routes
     from .scene_notes import register_scene_notes_routes
     from .search import register_search_routes
+    from .settings import register_settings_routes
     from .translations import register_translation_routes
     from .websocket import register_websocket_routes
 
@@ -74,6 +77,7 @@ def register_routes(
 
     # Register all route modules
     register_core_routes(router, get_project, manager, static_dir, set_project)
+    register_settings_routes(router, get_project, manager)
     register_ai_routes(router, get_project, manager)
     register_brand_routes(router, get_project, manager)
     register_translation_routes(router, get_project, manager)
@@ -81,7 +85,9 @@ def register_routes(
     register_freshness_routes(router, get_project, manager)
     register_hierarchy_routes(router, get_project, manager)
     register_provenance_routes(router, get_project, manager)
+    register_publications_routes(router, get_project, manager)
     register_build_routes(router, get_project, manager)
+    register_diagram_routes(router, get_project, manager)
     register_search_routes(router, get_project, manager)
     register_dependencies_routes(router, get_project, manager)
     register_insights_routes(router, get_project, manager)

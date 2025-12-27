@@ -80,18 +80,47 @@ def register_document_routes(
         if language not in project.languages:
             raise HTTPException(404, f"Language '{language}' not found")
 
+        # Build publication membership map
+        from ...cms.publication import PublicationRegistry
+
+        publication_map = {}  # chapter_path -> publication_info
+        publications = []
+
+        try:
+            registry = PublicationRegistry(project)
+            for pub in registry.list_publications(language):
+                pub_info = {
+                    "key": f"{pub.language}/{pub.path.stem}",
+                    "title": pub.title,
+                    "pub_type": pub.pub_type,
+                    "item_count": pub.item_count,
+                    "item_label": pub.item_label,
+                }
+                publications.append(pub_info)
+
+                # Map chapters to their publication
+                for ch in pub.chapters:
+                    chapter_path = project.content_dir / language / ch.path
+                    publication_map[str(chapter_path)] = pub_info
+        except Exception:
+            pass  # Publication registry may not be available
+
         documents = []
 
         # Chapters
         for chapter in project.list_chapters(language):
             doc = Document.load(chapter)
+            chapter_path = str(chapter)
+            pub_info = publication_map.get(chapter_path)
+
             documents.append(
                 {
-                    "path": str(chapter),
+                    "path": chapter_path,
                     "filename": chapter.name,
                     "title": doc.title,
                     "type": "chapter",
                     "metadata": doc.metadata,
+                    "publication": pub_info,  # None if orphan chapter
                 }
             )
 
@@ -191,6 +220,7 @@ def register_document_routes(
         return {
             "language": language,
             "documents": documents,
+            "publications": publications,
         }
 
     @router.post("/api/document")

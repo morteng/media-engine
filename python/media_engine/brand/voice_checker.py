@@ -267,7 +267,6 @@ class VoiceConsistencyChecker:
         # Compare to expected tone
         if profile:
             expected_tone = profile.tone
-            formality_level = profile.formality_level
 
             # Map tones to expected formality
             tone_formality_map = {

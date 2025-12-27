@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 import yaml
 
-from ..settings import CACHE, CLI, DIRS, ENV
+from ..settings import CLI, DIRS, ENV
 from .config import Config
 from .hashing import compute_content_hash, compute_file_hash
 from .theme import Theme, load_theme
@@ -121,6 +121,21 @@ class Project:
         project._load_cache_manifest()
 
         return project
+
+    def reload_config(self) -> None:
+        """
+        Reload configuration from project.yaml.
+
+        Call this after project.yaml has been modified to pick up changes.
+        """
+        project_yaml = self.root / "project.yaml"
+        if project_yaml.exists():
+            with open(project_yaml, "r") as f:
+                data = yaml.safe_load(f) or {}
+        else:
+            data = {}
+
+        self.config = Config.from_dict(data)
 
     # === Convenience Properties ===
 
