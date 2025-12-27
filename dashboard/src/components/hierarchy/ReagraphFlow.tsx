@@ -30,8 +30,7 @@ export function ReagraphFlow({
   nodes,
   edges,
   stalenessSummary,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  selectedNode,  // TODO: Implement node highlighting when selected
+  selectedNode: _selectedNode,  // TODO: Implement node highlighting when selected
   onNodeClick,
   className = '',
   height = '100%',
