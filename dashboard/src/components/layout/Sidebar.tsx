@@ -27,13 +27,13 @@ const navSections = [
     items: [
       { path: '/content', icon: FileText, label: 'Content' },
       { path: '/quality', icon: Shield, label: 'Quality' },
+      { path: '/brand', icon: Palette, label: 'Brand' },
     ],
   },
   {
     title: 'Tools',
     items: [
       { path: '/ai-assist', icon: Sparkles, label: 'AI Workspace' },
-      { path: '/brand', icon: Palette, label: 'Brand' },
       { path: '/settings', icon: Settings, label: 'Settings' },
     ],
   },
