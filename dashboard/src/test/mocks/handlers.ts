@@ -574,4 +574,13 @@ export const handlers = [
   http.get('/api/video/assets', () => HttpResponse.json(mockVideoAssets)),
   http.get('/api/video/components', () => HttpResponse.json(mockMotionComponents)),
   http.get('/api/video/voices', () => HttpResponse.json(mockVideoVoices)),
+  http.get('/api/video/preview/config', () => HttpResponse.json({
+    enabled: true,
+    studio_url: 'http://localhost:3000',
+    studio_port: 3000,
+    compositions: ['Main', 'Intro', 'Outro'],
+    default_composition: 'Main',
+  })),
+  http.post('/api/video/preview/start', () => HttpResponse.json({ success: true, message: 'Server starting' })),
+  http.post('/api/video/voiceover/preview', () => HttpResponse.json({ audio_url: '/audio/preview.mp3' })),
 ];
