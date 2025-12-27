@@ -71,3 +71,6 @@ remotion/out/
 
 # Playwright MCP screenshots
 .playwright-mcp/
+
+# Media Engine local metadata (root-level)
+.media-engine/
