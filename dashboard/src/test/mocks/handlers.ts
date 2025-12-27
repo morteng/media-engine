@@ -254,10 +254,93 @@ export const mockFreshness = {
 };
 
 export const mockBuildStatus = {
+  active: false,
+  progress: 0,
+  logs: [],
+  last_build: '2025-01-15T10:30:00Z',
+  freshness_warning: null,
+  outputs: [
+    { path: 'dist/main.html', name: 'main.html', format: 'html', language: 'en', modified: '2025-01-15T10:30:00Z', size: 1024 },
+    { path: 'dist/main.pdf', name: 'main.pdf', format: 'pdf', language: 'en', modified: '2025-01-15T10:30:00Z', size: 2048 },
+  ],
+  // Legacy fields for backward compatibility
   isBuilding: false,
   lastBuild: '2025-01-15T10:30:00Z',
   lastBuildStatus: 'success',
   availableFormats: ['html', 'pdf', 'pptx'],
+};
+
+export const mockBuildPublications = {
+  publications: [
+    {
+      key: 'documentation',
+      title: 'Documentation',
+      pub_type: 'book',
+      formats: ['html', 'pdf'],
+      languages: ['en', 'no'],
+    },
+    {
+      key: 'pitch-deck',
+      title: 'Pitch Deck',
+      pub_type: 'deck',
+      formats: ['pptx', 'pdf'],
+      languages: ['en'],
+    },
+  ],
+  projectLanguages: ['en', 'no'],
+};
+
+export const mockPublications = {
+  publications: [
+    {
+      key: 'main',
+      name: 'Main Publication',
+      description: 'Primary publication',
+      formats: ['html', 'pdf', 'pptx'],
+      languages: ['en', 'no'],
+    },
+  ],
+};
+
+export const mockPublishConfig = {
+  publishDir: '/test/project/dist/Test Project',
+  defaultDir: '/test/project/dist/Test Project',
+  desktopDir: '~/Desktop/Test Project',
+  useDesktop: false,
+  projectName: 'Test Project',
+};
+
+export const mockBuildOutputs = {
+  outputs: [
+    { path: 'dist/main.html', name: 'main.html', format: 'html', language: 'en', modified: '2025-01-15T10:30:00Z', size: 1024 },
+    { path: 'dist/main.pdf', name: 'main.pdf', format: 'pdf', language: 'en', modified: '2025-01-15T10:30:00Z', size: 2048 },
+  ],
+};
+
+export const mockBuildPresets = {
+  presets: [
+    { id: 'default', name: 'Default', description: 'Standard layout' },
+    { id: 'minimal', name: 'Minimal', description: 'Minimal layout' },
+  ],
+  default: 'default',
+};
+
+export const mockAISessions = {
+  sessions: [],
+  active_session: null,
+};
+
+export const mockAINotes = {
+  notes: [],
+};
+
+export const mockAIQueue = {
+  queue: [],
+  processing: null,
+};
+
+export const mockAIResearch = {
+  research_items: [],
 };
 
 export const mockRecentProjects = {
@@ -322,10 +405,19 @@ export const handlers = [
 
   // Build
   http.get('/api/build/status', () => HttpResponse.json(mockBuildStatus)),
+  http.get('/api/build/publications', () => HttpResponse.json(mockBuildPublications)),
+  http.get('/api/build/publish-config', () => HttpResponse.json(mockPublishConfig)),
+  http.get('/api/build/outputs', () => HttpResponse.json(mockBuildOutputs)),
+  http.get('/api/build/presets', () => HttpResponse.json(mockBuildPresets)),
   http.post('/api/build', () => HttpResponse.json({ status: 'started', message: 'Build started' })),
+  http.post('/api/build/start', () => HttpResponse.json({ status: 'started', formats: ['html'], languages: ['en'] })),
+  http.post('/api/build/unified', () => HttpResponse.json({ status: 'started', publications: [], publish: true })),
 
   // Recent Projects
   http.get('/api/recent-projects', () => HttpResponse.json(mockRecentProjects)),
+
+  // Publications
+  http.get('/api/publications/status', () => HttpResponse.json(mockPublications)),
 
   // Scene Notes
   http.get('/api/scene-notes/:scriptPath', () => HttpResponse.json(mockSceneNotes)),
@@ -339,4 +431,10 @@ export const handlers = [
 
   // Media
   http.get('/api/media', () => HttpResponse.json({ files: [] })),
+
+  // AI
+  http.get('/api/ai/sessions', () => HttpResponse.json(mockAISessions)),
+  http.get('/api/ai/notes', () => HttpResponse.json(mockAINotes)),
+  http.get('/api/ai/queue', () => HttpResponse.json(mockAIQueue)),
+  http.get('/api/ai/research', () => HttpResponse.json(mockAIResearch)),
 ];
