@@ -5,6 +5,47 @@ Shared utilities for configuration, theming, and project management.
 """
 
 from .config import Config, FreshnessConfig, VideoConfig, VoiceoverConfig, load_config
+from .exceptions import (
+    # Base
+    MediaEngineError,
+    # Configuration
+    ConfigurationError,
+    ProjectNotFoundError,
+    InvalidConfigError,
+    MissingDependencyError,
+    # Documents
+    DocumentError,
+    DocumentNotFoundError,
+    DocumentLockedError,
+    DocumentValidationError,
+    DocumentParseError,
+    # Build
+    BuildError,
+    BuildDependencyError,
+    BuildOutputError,
+    # Sessions
+    SessionError,
+    SessionNotFoundError,
+    SessionConflictError,
+    CheckpointError,
+    # Translation
+    TranslationError,
+    TranslationOutdatedError,
+    TranslationMissingError,
+    # Quality
+    QualityError,
+    SecurityViolationError,
+    LinkValidationError,
+    # Approval
+    ApprovalError,
+    ApprovalRequiredError,
+    ApprovalRejectedError,
+    ApprovalTimeoutError,
+    # Utilities
+    error_from_dict,
+    is_recoverable,
+    get_error_suggestions,
+)
 from .hashing import (
     compute_content_hash,
     compute_document_hash,
@@ -82,4 +123,35 @@ __all__ = [
     "parse_document_sections",
     "compare_sections",
     "analyze_changes",
+    # Exceptions
+    "MediaEngineError",
+    "ConfigurationError",
+    "ProjectNotFoundError",
+    "InvalidConfigError",
+    "MissingDependencyError",
+    "DocumentError",
+    "DocumentNotFoundError",
+    "DocumentLockedError",
+    "DocumentValidationError",
+    "DocumentParseError",
+    "BuildError",
+    "BuildDependencyError",
+    "BuildOutputError",
+    "SessionError",
+    "SessionNotFoundError",
+    "SessionConflictError",
+    "CheckpointError",
+    "TranslationError",
+    "TranslationOutdatedError",
+    "TranslationMissingError",
+    "QualityError",
+    "SecurityViolationError",
+    "LinkValidationError",
+    "ApprovalError",
+    "ApprovalRequiredError",
+    "ApprovalRejectedError",
+    "ApprovalTimeoutError",
+    "error_from_dict",
+    "is_recoverable",
+    "get_error_suggestions",
 ]

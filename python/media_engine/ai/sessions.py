@@ -3,9 +3,18 @@ AI Session Management
 
 Tracks AI work sessions for continuity across conversations.
 Enables seamless handoff between sessions and progress tracking.
+
+Features:
+- Session lifecycle (active, paused, completed, abandoned)
+- Progress tracking with steps
+- Change tracking with before/after hashes
+- Decision recording with reasoning
+- Checkpoint support for granular rollback
 """
 
+import hashlib
 import json
+import shutil
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -106,6 +115,45 @@ class SessionDecision:
             reasoning=data.get("reasoning", ""),
             timestamp=data.get("timestamp", ""),
             scope=data.get("scope"),
+        )
+
+
+@dataclass
+class SessionCheckpoint:
+    """A checkpoint for session rollback.
+
+    Captures session state and optionally file snapshots
+    for granular rollback capability.
+    """
+    id: str
+    session_id: str
+    timestamp: str
+    label: str
+    step_index: int  # Progress step when checkpoint was created
+    files_snapshot: Dict[str, str] = field(default_factory=dict)  # path -> hash
+    notes: str = ""
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "id": self.id,
+            "session_id": self.session_id,
+            "timestamp": self.timestamp,
+            "label": self.label,
+            "step_index": self.step_index,
+            "files_snapshot": self.files_snapshot,
+            "notes": self.notes,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "SessionCheckpoint":
+        return cls(
+            id=data["id"],
+            session_id=data["session_id"],
+            timestamp=data.get("timestamp", ""),
+            label=data.get("label", ""),
+            step_index=data.get("step_index", 0),
+            files_snapshot=data.get("files_snapshot", {}),
+            notes=data.get("notes", ""),
         )
 
 
@@ -402,3 +450,250 @@ class SessionManager:
         # Sort by timestamp descending
         all_decisions.sort(key=lambda d: d.timestamp, reverse=True)
         return all_decisions
+
+    # -------------------------------------------------------------------------
+    # Checkpoint Management
+    # -------------------------------------------------------------------------
+
+    def _checkpoints_dir(self, session_id: str) -> Path:
+        """Get checkpoints directory for a session."""
+        return self.sessions_dir / "checkpoints" / session_id
+
+    def _checkpoint_path(self, session_id: str, checkpoint_id: str) -> Path:
+        """Get path for a specific checkpoint."""
+        return self._checkpoints_dir(session_id) / f"{checkpoint_id}.json"
+
+    def _file_backups_dir(self, session_id: str, checkpoint_id: str) -> Path:
+        """Get file backups directory for a checkpoint."""
+        return self._checkpoints_dir(session_id) / "backups" / checkpoint_id
+
+    def _compute_file_hash(self, file_path: Path) -> str:
+        """Compute SHA256 hash of a file."""
+        if not file_path.exists():
+            return ""
+        hasher = hashlib.sha256()
+        with open(file_path, "rb") as f:
+            for chunk in iter(lambda: f.read(8192), b""):
+                hasher.update(chunk)
+        return hasher.hexdigest()[:16]
+
+    def create_checkpoint(
+        self,
+        session_id: str,
+        label: str,
+        files_to_backup: Optional[List[str]] = None,
+        notes: str = "",
+    ) -> Optional[SessionCheckpoint]:
+        """
+        Create a checkpoint for potential rollback.
+
+        Args:
+            session_id: Session ID
+            label: Human-readable label for the checkpoint
+            files_to_backup: Optional list of file paths to backup for rollback
+            notes: Optional notes about this checkpoint
+
+        Returns:
+            SessionCheckpoint if created, None if session not found
+        """
+        session = self.get(session_id)
+        if not session:
+            return None
+
+        checkpoint_id = str(uuid.uuid4())[:12]
+        checkpoints_dir = self._checkpoints_dir(session_id)
+        checkpoints_dir.mkdir(parents=True, exist_ok=True)
+
+        # Determine current step index
+        step_index = len([s for s in session.progress if s.completed])
+
+        # Create file snapshots
+        files_snapshot: Dict[str, str] = {}
+        if files_to_backup:
+            backups_dir = self._file_backups_dir(session_id, checkpoint_id)
+            backups_dir.mkdir(parents=True, exist_ok=True)
+
+            for file_path in files_to_backup:
+                full_path = self.project_root / file_path
+                if full_path.exists():
+                    # Compute hash and backup file
+                    file_hash = self._compute_file_hash(full_path)
+                    files_snapshot[file_path] = file_hash
+
+                    # Copy file to backup
+                    backup_path = backups_dir / file_path.replace("/", "__")
+                    shutil.copy2(full_path, backup_path)
+
+        checkpoint = SessionCheckpoint(
+            id=checkpoint_id,
+            session_id=session_id,
+            timestamp=datetime.now().isoformat(),
+            label=label,
+            step_index=step_index,
+            files_snapshot=files_snapshot,
+            notes=notes,
+        )
+
+        # Save checkpoint
+        checkpoint_path = self._checkpoint_path(session_id, checkpoint_id)
+        with open(checkpoint_path, "w") as f:
+            json.dump(checkpoint.to_dict(), f, indent=2)
+
+        return checkpoint
+
+    def list_checkpoints(self, session_id: str) -> List[SessionCheckpoint]:
+        """List all checkpoints for a session, sorted by timestamp."""
+        checkpoints_dir = self._checkpoints_dir(session_id)
+        if not checkpoints_dir.exists():
+            return []
+
+        checkpoints = []
+        for path in checkpoints_dir.glob("*.json"):
+            try:
+                with open(path) as f:
+                    data = json.load(f)
+                checkpoints.append(SessionCheckpoint.from_dict(data))
+            except Exception:
+                continue
+
+        # Sort by timestamp
+        checkpoints.sort(key=lambda c: c.timestamp)
+        return checkpoints
+
+    def get_checkpoint(
+        self, session_id: str, checkpoint_id: str
+    ) -> Optional[SessionCheckpoint]:
+        """Get a specific checkpoint."""
+        path = self._checkpoint_path(session_id, checkpoint_id)
+        if not path.exists():
+            return None
+        try:
+            with open(path) as f:
+                data = json.load(f)
+            return SessionCheckpoint.from_dict(data)
+        except Exception:
+            return None
+
+    def rollback_to_checkpoint(
+        self,
+        session_id: str,
+        checkpoint_id: str,
+        restore_files: bool = True,
+    ) -> Dict[str, Any]:
+        """
+        Rollback a session to a checkpoint.
+
+        Args:
+            session_id: Session ID
+            checkpoint_id: Checkpoint ID to rollback to
+            restore_files: Whether to restore backed up files
+
+        Returns:
+            Dict with rollback status and details
+        """
+        session = self.get(session_id)
+        if not session:
+            return {"success": False, "error": "Session not found"}
+
+        checkpoint = self.get_checkpoint(session_id, checkpoint_id)
+        if not checkpoint:
+            return {"success": False, "error": "Checkpoint not found"}
+
+        result = {
+            "success": True,
+            "checkpoint_id": checkpoint_id,
+            "checkpoint_label": checkpoint.label,
+            "steps_rolled_back": 0,
+            "files_restored": [],
+            "files_failed": [],
+        }
+
+        # Rollback progress steps
+        steps_before = len(session.progress)
+        if checkpoint.step_index < len(session.progress):
+            # Mark steps after checkpoint as incomplete
+            for i in range(checkpoint.step_index, len(session.progress)):
+                session.progress[i].completed = False
+                session.progress[i].in_progress = False
+                session.progress[i].timestamp = None
+            result["steps_rolled_back"] = steps_before - checkpoint.step_index
+
+        # Restore files if requested
+        if restore_files and checkpoint.files_snapshot:
+            backups_dir = self._file_backups_dir(session_id, checkpoint_id)
+            for file_path, expected_hash in checkpoint.files_snapshot.items():
+                backup_path = backups_dir / file_path.replace("/", "__")
+                target_path = self.project_root / file_path
+
+                if backup_path.exists():
+                    try:
+                        # Ensure target directory exists
+                        target_path.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copy2(backup_path, target_path)
+                        result["files_restored"].append(file_path)
+                    except Exception as e:
+                        result["files_failed"].append({
+                            "path": file_path,
+                            "error": str(e),
+                        })
+                else:
+                    result["files_failed"].append({
+                        "path": file_path,
+                        "error": "Backup file not found",
+                    })
+
+        # Remove changes made after checkpoint
+        original_changes = len(session.changes_made)
+        session.changes_made = [
+            c for c in session.changes_made
+            if c.timestamp and c.timestamp <= checkpoint.timestamp
+        ]
+        result["changes_removed"] = original_changes - len(session.changes_made)
+
+        # Add note about rollback
+        session.notes = f"{session.notes}\n[Rolled back to checkpoint '{checkpoint.label}' at {datetime.now().isoformat()}]".strip()
+
+        self.save(session)
+        return result
+
+    def delete_checkpoint(self, session_id: str, checkpoint_id: str) -> bool:
+        """
+        Delete a checkpoint and its file backups.
+
+        Args:
+            session_id: Session ID
+            checkpoint_id: Checkpoint ID to delete
+
+        Returns:
+            True if deleted, False if not found
+        """
+        checkpoint_path = self._checkpoint_path(session_id, checkpoint_id)
+        if not checkpoint_path.exists():
+            return False
+
+        # Delete checkpoint file
+        checkpoint_path.unlink()
+
+        # Delete file backups
+        backups_dir = self._file_backups_dir(session_id, checkpoint_id)
+        if backups_dir.exists():
+            shutil.rmtree(backups_dir)
+
+        return True
+
+    def cleanup_session_checkpoints(self, session_id: str) -> int:
+        """
+        Remove all checkpoints for a session.
+
+        Useful when session is completed or abandoned.
+
+        Returns:
+            Number of checkpoints removed
+        """
+        checkpoints_dir = self._checkpoints_dir(session_id)
+        if not checkpoints_dir.exists():
+            return 0
+
+        count = len(list(checkpoints_dir.glob("*.json")))
+        shutil.rmtree(checkpoints_dir)
+        return count

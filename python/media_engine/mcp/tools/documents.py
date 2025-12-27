@@ -13,11 +13,27 @@ import shutil
 from datetime import date
 from pathlib import Path
 
+from .errors import (
+    format_error,
+    format_success,
+    mcp_error_handler,
+    require_project,
+    require_language,
+    require_path_exists,
+    check_document_lock,
+)
+from ...core.exceptions import (
+    DocumentNotFoundError,
+    DocumentValidationError,
+    ConfigurationError,
+)
+
 
 def register_document_tools(mcp, server_instance):
     """Register document-related MCP tools."""
 
     @mcp.tool()
+    @mcp_error_handler
     async def list_chapters(language: str = None) -> str:
         """
         List all chapters for a language.
@@ -27,15 +43,15 @@ def register_document_tools(mcp, server_instance):
 
         Returns list of chapters with titles and metadata.
         """
-        if not server_instance.project:
-            return json.dumps({"error": "No project found"}, indent=2)
+        if error := require_project(server_instance):
+            return error
 
         from ...cms.document import Document
 
         lang = language or server_instance.project.source_language
 
-        if lang not in server_instance.project.languages:
-            return json.dumps({"error": f"Language '{lang}' not configured"}, indent=2)
+        if error := require_language(server_instance, lang):
+            return error
 
         chapters = server_instance.project.list_chapters(lang)
         return json.dumps(
@@ -53,6 +69,7 @@ def register_document_tools(mcp, server_instance):
         )
 
     @mcp.tool()
+    @mcp_error_handler
     async def read_document(path: str) -> str:
         """
         Read a document's content and metadata.
@@ -64,13 +81,10 @@ def register_document_tools(mcp, server_instance):
         """
         from ...cms.document import Document
 
-        try:
-            validated_path = server_instance._validate_path(path)
-        except ValueError as e:
-            return json.dumps({"error": str(e)}, indent=2)
+        validated_path = server_instance._validate_path(path)
 
-        if not validated_path.exists():
-            return json.dumps({"error": f"Document not found: {path}"}, indent=2)
+        if error := require_path_exists(validated_path, "Document"):
+            return error
 
         doc = Document.load(validated_path)
         return json.dumps(
@@ -85,26 +99,34 @@ def register_document_tools(mcp, server_instance):
         )
 
     @mcp.tool()
-    async def update_document_metadata(path: str, updates: str) -> str:
+    @mcp_error_handler
+    async def update_document_metadata(
+        path: str,
+        updates: str,
+        session_id: str = None,
+    ) -> str:
         """
         Update a document's frontmatter metadata.
 
         Args:
             path: Path to document file
             updates: JSON string of metadata updates
+            session_id: Optional session ID for lock checking
 
         Example: update_document_metadata("doc.md", '{"status": "reviewed"}')
         """
         from ...cms.document import Document
 
-        try:
-            validated_path = server_instance._validate_path(path)
-            updates_dict = json.loads(updates)
-        except (ValueError, json.JSONDecodeError) as e:
-            return json.dumps({"error": str(e)}, indent=2)
+        validated_path = server_instance._validate_path(path)
+        updates_dict = json.loads(updates)
 
-        if not validated_path.exists():
-            return json.dumps({"error": f"Document not found: {path}"}, indent=2)
+        if error := require_path_exists(validated_path, "Document"):
+            return error
+
+        # Check for document lock
+        rel_path = str(validated_path.relative_to(server_instance.project.root))
+        if error := check_document_lock(server_instance, rel_path, session_id):
+            return error
 
         doc = Document.load(validated_path)
         doc.metadata.update(updates_dict)
@@ -268,11 +290,13 @@ def register_document_tools(mcp, server_instance):
         )
 
     @mcp.tool()
+    @mcp_error_handler
     async def update_document_content(
         path: str,
         content: str,
         update_modified: bool = True,
         increment_version: str = None,
+        session_id: str = None,
     ) -> str:
         """
         Update a document's content (body text).
@@ -282,19 +306,22 @@ def register_document_tools(mcp, server_instance):
             content: New markdown content (replaces existing body)
             update_modified: Whether to update last_modified date (default: True)
             increment_version: Version bump type - "major", "minor", "patch", or None
+            session_id: Optional session ID for lock checking
 
         Returns:
             Updated document info.
         """
         from ...cms.document import Document
 
-        try:
-            validated_path = server_instance._validate_path(path)
-        except ValueError as e:
-            return json.dumps({"error": str(e)}, indent=2)
+        validated_path = server_instance._validate_path(path)
 
-        if not validated_path.exists():
-            return json.dumps({"error": f"Document not found: {path}"}, indent=2)
+        if error := require_path_exists(validated_path, "Document"):
+            return error
+
+        # Check for document lock
+        rel_path = str(validated_path.relative_to(server_instance.project.root))
+        if error := check_document_lock(server_instance, rel_path, session_id):
+            return error
 
         doc = Document.load(validated_path)
         old_word_count = doc.word_count()

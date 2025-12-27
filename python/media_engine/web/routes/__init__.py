@@ -62,6 +62,7 @@ def register_routes(
     from .insights import register_insights_routes
     from .media import register_media_routes
     from .notes import register_notes_routes
+    from .observability import register_observability_routes
     from .provenance import register_provenance_routes
     from .publications import register_publications_routes
     from .quality import register_quality_routes
@@ -97,6 +98,7 @@ def register_routes(
     register_assets_routes(router, get_project, manager)
     register_media_routes(router, get_project, manager)
     register_notes_routes(router, get_project, manager)
+    register_observability_routes(router, get_project, manager)  # Agent introspection
     register_scene_notes_routes(router, get_project, manager)
     register_video_routes(router, get_project, manager)
     register_websocket_routes(router, get_project, manager)

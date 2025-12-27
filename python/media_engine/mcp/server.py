@@ -141,6 +141,7 @@ class MediaEngineMCPServer:
         from .tools import (
             ai,
             ai_context,
+            approval,
             audit,
             batch,
             brand,
@@ -150,8 +151,10 @@ class MediaEngineMCPServer:
             context,
             dependencies,
             diagrams,
+            diagnosis,
             documents,
             hierarchy,
+            locking,
             motion_design,
             notes,
             project,
@@ -196,6 +199,9 @@ class MediaEngineMCPServer:
         claude.register_claude_tools(self.mcp, self)
         ai.register_ai_tools(self.mcp, self)
         ai_context.register_ai_context_tools(self.mcp, self)  # AI context & session management
+        locking.register_locking_tools(self.mcp, self)  # Document locking for concurrent agents
+        approval.register_approval_tools(self.mcp, self)  # Human-in-the-loop approval gates
+        diagnosis.register_diagnosis_tools(self.mcp, self)  # Failure diagnosis & recovery
         webhooks.register_webhook_tools(self.mcp, self)
 
         # Video production tools (autonomous video producer agent)

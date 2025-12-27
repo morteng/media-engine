@@ -13,6 +13,7 @@ Provides REST API and WebSocket endpoints for:
 Uses centralized settings from media_engine.settings for defaults.
 """
 
+import os
 import webbrowser
 from pathlib import Path
 from typing import Optional
@@ -59,12 +60,26 @@ def create_app(project_path: Optional[Path] = None) -> "FastAPI":
         version="1.0.0",
     )
 
-    # CORS for development
+    # CORS configuration - secure by default
+    # Set MEDIA_ENGINE_CORS_ORIGINS to comma-separated list for production
+    # Example: MEDIA_ENGINE_CORS_ORIGINS=https://app.example.com,https://staging.example.com
+    cors_origins_env = os.getenv("MEDIA_ENGINE_CORS_ORIGINS", "")
+    if cors_origins_env:
+        cors_origins = [origin.strip() for origin in cors_origins_env.split(",") if origin.strip()]
+    else:
+        # Default: localhost only (secure for development)
+        cors_origins = [
+            "http://localhost:8080",
+            "http://localhost:5173",  # Vite dev server
+            "http://127.0.0.1:8080",
+            "http://127.0.0.1:5173",
+        ]
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=cors_origins,
         allow_credentials=True,
-        allow_methods=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
         allow_headers=["*"],
     )
 
