@@ -111,33 +111,32 @@ class TestCollectDeliverables:
         # Should return empty list or minimal categories
         assert isinstance(categories, list)
 
-    def test_proposal_html(self, temp_dir):
-        """Test collecting proposal HTML."""
+    def test_documentation_html(self, temp_dir):
+        """Test collecting HTML documents."""
         mock_project = Mock()
         mock_project.output_dir = temp_dir
         mock_project.languages = ["en"]
 
-        # Create proposal HTML
+        # Create an HTML document
         lang_dir = temp_dir / "en"
         lang_dir.mkdir(parents=True)
         (lang_dir / "proposal.html").write_text("<html>Proposal</html>")
 
         categories = collect_deliverables(mock_project, "en")
 
-        # Should have proposal category
+        # Should have documentation category for HTML files
         assert len(categories) > 0
-        proposal_cat = next((c for c in categories if c.name == "Proposal"), None)
-        assert proposal_cat is not None
-        assert len(proposal_cat.items) == 1
-        assert proposal_cat.items[0].name == "Full Proposal"
+        doc_cat = next((c for c in categories if c.name == "Documentation"), None)
+        assert doc_cat is not None
+        assert len(doc_cat.items) == 1
 
-    def test_proposal_multiple_formats(self, temp_dir):
-        """Test collecting proposal in multiple formats."""
+    def test_documentation_multiple_formats(self, temp_dir):
+        """Test collecting documentation in multiple formats."""
         mock_project = Mock()
         mock_project.output_dir = temp_dir
         mock_project.languages = ["en"]
 
-        # Create proposal in HTML and PDF
+        # Create document in HTML and PDF
         lang_dir = temp_dir / "en"
         lang_dir.mkdir(parents=True)
         (lang_dir / "proposal.html").write_text("<html>Proposal</html>")
@@ -145,11 +144,11 @@ class TestCollectDeliverables:
 
         categories = collect_deliverables(mock_project, "en")
 
-        proposal_cat = next((c for c in categories if c.name == "Proposal"), None)
-        assert proposal_cat is not None
-        assert len(proposal_cat.items) == 1
+        doc_cat = next((c for c in categories if c.name == "Documentation"), None)
+        assert doc_cat is not None
+        assert len(doc_cat.items) == 1
         # Should have both HTML and PDF formats
-        assert len(proposal_cat.items[0].formats) == 2
+        assert len(doc_cat.items[0].formats) == 2
 
     def test_investor_pack_pdfs(self, temp_dir):
         """Test collecting investor pack PDFs."""

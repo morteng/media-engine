@@ -13,17 +13,18 @@ Checks content for common issues:
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 import yaml
 from rich import box
 from rich.console import Console
 from rich.table import Table
 
+from ..settings.defaults import QUALITY as QUALITY_SETTINGS
+
 if TYPE_CHECKING:
     from ..brand.voice import VoiceProfile
     from ..core.project import Project
-    from ..hierarchy import HierarchyGraph
 
 console = Console()
 
@@ -60,10 +61,6 @@ class QualityReport:
         self.issues.append(issue)
         if issue.severity == "error":
             self.passed = False
-
-
-# Import placeholder patterns from centralized settings
-from ..settings.defaults import QUALITY as QUALITY_SETTINGS
 
 
 # Build pattern list with messages from centralized settings

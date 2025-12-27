@@ -6,7 +6,7 @@ The main container class that holds all brand configuration.
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from .colors import ColorSystem
 from .fonts import FontRegistry
@@ -22,6 +22,10 @@ from .tokens import (
 )
 from .typography import Typography
 from .voice import VoiceProfile
+
+if TYPE_CHECKING:
+    from ..core.theme import Theme
+    from .colors import BackgroundColors, BrandColors, DarkModeColors, TextColors
 
 
 @dataclass

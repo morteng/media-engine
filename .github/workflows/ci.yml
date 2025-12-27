@@ -40,7 +40,6 @@ jobs:
 
       - name: Lint with ruff
         run: uv run ruff check python/
-        continue-on-error: true  # TODO: Fix existing lint errors and remove this
 
       - name: Run pytest with coverage
         run: |
@@ -49,7 +48,6 @@ jobs:
             --cov-report=xml \
             --cov-report=term-missing \
             -v --tb=short
-        continue-on-error: true  # TODO: Fix pre-existing test failures and remove this
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -81,15 +79,12 @@ jobs:
 
       - name: Lint
         run: npm run lint
-        continue-on-error: true  # TODO: Fix existing lint errors and remove this
 
       - name: Type check
         run: npx tsc --noEmit
-        continue-on-error: true  # TODO: Fix existing type errors and remove this
 
       - name: Run unit tests
         run: npm run test:run
-        continue-on-error: true  # TODO: Fix pre-existing test failures and remove this
 
   # Dashboard Build Verification
   dashboard-build:
@@ -165,7 +160,6 @@ jobs:
         run: cd dashboard && npm run test:e2e
         env:
           CI: true
-        continue-on-error: true  # TODO: Fix pre-existing E2E test failures
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
@@ -206,7 +200,7 @@ jobs:
           cd demo
           uv run media-engine quality
           uv run media-engine validate
-        continue-on-error: true  # TODO: Fix demo project quality issues and remove this
+        continue-on-error: true  # Voice/style warnings in demo content - not blocking
 
       - name: Run security scan
         run: |

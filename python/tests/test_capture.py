@@ -578,6 +578,7 @@ class TestCaptureVideoIntegration:
     @pytest.mark.asyncio
     async def test_capture_video_skips_existing(self, temp_dir, capsys):
         """Test capture skips existing files when force=False."""
+        pytest.importorskip("playwright", reason="Playwright not installed")
         from media_engine.video.capture import capture_video
 
         # Create output directory and existing file

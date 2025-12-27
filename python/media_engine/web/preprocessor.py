@@ -7,8 +7,6 @@ watcher to invalidate cache incrementally.
 """
 
 import asyncio
-import hashlib
-import json
 import logging
 import threading
 import time
@@ -214,6 +212,31 @@ PREPROCESSOR_TASKS = {
         "depends_on": {"documents", "translations", "project", "quality"},
         "priority": 1,
     },
+    # Advanced analytics tasks (expensive - lower priority)
+    "semantic_analysis": {
+        "depends_on": {"documents"},
+        "priority": 6,
+    },
+    "knowledge_graph_enhanced": {
+        "depends_on": {"documents"},
+        "priority": 6,
+    },
+    "predictive_freshness": {
+        "depends_on": {"documents", "freshness"},
+        "priority": 7,
+    },
+    "enhanced_codesync": {
+        "depends_on": {"documents"},
+        "priority": 7,
+    },
+    "quality_summary": {
+        "depends_on": {"documents", "translations", "quality", "freshness"},
+        "priority": 2,  # High priority since it's on the main dashboard
+    },
+    "advanced_insights": {
+        "depends_on": {"documents"},
+        "priority": 8,  # Low priority - very expensive (~30 seconds)
+    },
 }
 
 
@@ -408,20 +431,34 @@ class BackgroundPreprocessor:
 
         elif task_name == "quality":
             from ..quality import run_quality_checks
-            issues = run_quality_checks(project)
+            report = run_quality_checks(project, console_output=False)
             return {
-                "total": len(issues),
-                "issues": [i.to_dict() for i in issues],
+                "total": len(report.issues),
+                "errors": report.error_count,
+                "warnings": report.warning_count,
+                "issues": [
+                    {
+                        "type": i.type,
+                        "severity": i.severity,
+                        "file_path": str(i.file_path) if i.file_path else None,
+                        "line": i.line,
+                        "message": i.message,
+                        "context": i.context,
+                    }
+                    for i in report.issues
+                ],
             }
 
         elif task_name == "freshness":
-            from ..freshness import FreshnessRegistry, FreshnessScanner
-            registry = FreshnessRegistry(project)
-            scanner = FreshnessScanner(project, registry)
-            stale = scanner.scan()
+            from ..freshness import FreshnessScanner
+            scanner = FreshnessScanner(project)
+            stale = scanner.find_stale(days=30)
             return {
                 "stale_count": len(stale),
-                "stale_items": [{"path": str(s.path), "days_stale": s.days_stale} for s in stale[:50]],
+                "stale_items": [
+                    {"path": str(s.path), "days_stale": s.days_since_update}
+                    for s in stale[:50]
+                ],
             }
 
         elif task_name == "incomplete":
@@ -490,6 +527,166 @@ class BackgroundPreprocessor:
 
         elif task_name == "project_status":
             return project.get_status()
+
+        elif task_name == "semantic_analysis":
+            try:
+                from ..semantic import SemanticAnalyzer
+                analyzer = SemanticAnalyzer(project)
+                dups = analyzer.find_near_duplicates(threshold=0.9)
+                return {
+                    "available": True,
+                    "near_duplicates": len(dups),
+                    "duplicates": [d.to_dict() for d in dups[:20]],
+                }
+            except ImportError:
+                return {"available": False, "reason": "semantic module not installed"}
+            except Exception as e:
+                return {"available": True, "error": str(e)}
+
+        elif task_name == "knowledge_graph_enhanced":
+            try:
+                from ..knowledge import KnowledgeGraph as EnhancedKG
+                kg = EnhancedKG(project)
+                kg.build()
+                orphans = kg.find_orphan_concepts()
+                return {
+                    "available": True,
+                    "orphan_count": len(orphans),
+                    "orphans": orphans[:20] if orphans else [],
+                    "node_count": kg.graph.number_of_nodes() if hasattr(kg, "graph") else 0,
+                    "edge_count": kg.graph.number_of_edges() if hasattr(kg, "graph") else 0,
+                }
+            except ImportError as e:
+                return {"available": False, "reason": f"networkx package required: {e}"}
+            except Exception as e:
+                return {"available": True, "error": str(e)}
+
+        elif task_name == "predictive_freshness":
+            try:
+                from ..freshness.predictive import FreshnessPredictor
+                predictor = FreshnessPredictor(project)
+                predictor.train_from_history(days=60)
+                predictions = predictor.predict_all()
+                high_risk = [p for p in predictions if p.risk_level in ("high", "critical")]
+                return {
+                    "available": True,
+                    "high_risk_count": len(high_risk),
+                    "predictions": [
+                        {
+                            "path": str(p.path),
+                            "risk_level": p.risk_level,
+                            "staleness_probability": round(p.staleness_risk, 2),
+                        }
+                        for p in high_risk[:20]
+                    ],
+                }
+            except ImportError:
+                return {"available": False, "reason": "predictive freshness module not installed"}
+            except Exception as e:
+                return {"available": True, "error": str(e)}
+
+        elif task_name == "enhanced_codesync":
+            try:
+                from ..codesync import EnhancedCodeSyncChecker
+                checker = EnhancedCodeSyncChecker(project)
+                report = checker.generate_summary()
+                total_issues = report.get("total_issues", 0)
+                return {
+                    "available": True,
+                    "total_issues": total_issues,
+                    "summary": report,
+                }
+            except ImportError:
+                return {"available": False, "reason": "codesync module not installed"}
+            except Exception as e:
+                return {"available": True, "error": str(e)}
+
+        elif task_name == "quality_summary":
+            # Comprehensive quality summary - aggregates multiple analyses
+            from ..insights import HealthScorer
+            summary = {
+                "overall_score": 0,
+                "grade": "N/A",
+                "status": "unknown",
+                "key_metrics": [],
+                "critical_issues": [],
+                "recommendations": [],
+                "advanced_available": {
+                    "semantic": False,
+                    "knowledge_graph": False,
+                    "norwegian_readability": False,
+                    "predictive_freshness": False,
+                    "enhanced_codesync": False,
+                    "advanced_analysis": False,
+                },
+                "advanced_highlights": {},
+            }
+
+            # Core health score
+            try:
+                scorer = HealthScorer(project)
+                health = scorer.score_project()
+                summary["overall_score"] = health.overall
+                summary["grade"] = health.grade
+                summary["status"] = health.status
+                summary["key_metrics"] = [
+                    {"name": k, "score": v}
+                    for k, v in health.components.items()
+                ]
+                summary["critical_issues"] = [
+                    i.to_dict() for i in health.issues if i.severity == "critical"
+                ][:5]
+                summary["recommendations"] = health.recommendations[:5]
+            except Exception as e:
+                summary["health_error"] = str(e)
+
+            # Use cached advanced analysis results if available
+            semantic = self.cache.get("semantic_analysis")
+            if semantic and semantic.status == CacheStatus.FRESH:
+                summary["advanced_available"]["semantic"] = semantic.data.get("available", False)
+                if semantic.data.get("near_duplicates", 0) > 0:
+                    summary["advanced_highlights"]["semantic"] = {
+                        "near_duplicates": semantic.data["near_duplicates"],
+                        "message": f"Found {semantic.data['near_duplicates']} near-duplicate content pairs",
+                    }
+
+            kg = self.cache.get("knowledge_graph_enhanced")
+            if kg and kg.status == CacheStatus.FRESH:
+                summary["advanced_available"]["knowledge_graph"] = kg.data.get("available", False)
+                if kg.data.get("orphan_count", 0) > 0:
+                    summary["advanced_highlights"]["knowledge_graph"] = {
+                        "orphan_concepts": kg.data["orphan_count"],
+                        "message": f"Found {kg.data['orphan_count']} orphan concepts without connections",
+                    }
+
+            pf = self.cache.get("predictive_freshness")
+            if pf and pf.status == CacheStatus.FRESH:
+                summary["advanced_available"]["predictive_freshness"] = pf.data.get("available", False)
+                if pf.data.get("high_risk_count", 0) > 0:
+                    summary["advanced_highlights"]["predictive_freshness"] = {
+                        "high_risk_count": pf.data["high_risk_count"],
+                        "message": f"{pf.data['high_risk_count']} documents predicted to become stale soon",
+                    }
+
+            cs = self.cache.get("enhanced_codesync")
+            if cs and cs.status == CacheStatus.FRESH:
+                summary["advanced_available"]["enhanced_codesync"] = cs.data.get("available", False)
+                if cs.data.get("total_issues", 0) > 0:
+                    summary["advanced_highlights"]["enhanced_codesync"] = {
+                        "issues": cs.data["total_issues"],
+                        "message": f"{cs.data['total_issues']} code-documentation sync issues found",
+                    }
+
+            # Check module availability without running full analysis
+            import importlib.util
+
+            if importlib.util.find_spec("media_engine.readability.norwegian"):
+                summary["advanced_available"]["norwegian_readability"] = True
+
+            if importlib.util.find_spec("media_engine.advanced"):
+                summary["advanced_available"]["advanced_analysis"] = True
+
+            return summary
 
         else:
             raise ValueError(f"Unknown task: {task_name}")

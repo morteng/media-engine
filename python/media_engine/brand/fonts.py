@@ -6,9 +6,12 @@ Manage font assets with support for Google Fonts and local files.
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from .typography import FontAsset
+
+if TYPE_CHECKING:
+    from .typography import Typography
 
 # Common fonts with their weight configurations
 COMMON_FONTS: Dict[str, List[int]] = {

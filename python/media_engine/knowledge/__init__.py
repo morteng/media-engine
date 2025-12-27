@@ -17,7 +17,6 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 try:
     import networkx as nx
@@ -224,6 +223,41 @@ class ConceptExtractor:
         r"from\s+\S+\s+import\s+(\w+)",  # Imports
     ]
 
+    # Stop words to exclude from concept extraction (common generic terms)
+    STOP_WORDS = {
+        # Generic English words often capitalized incorrectly
+        "the", "and", "for", "with", "from", "this", "that", "these", "those",
+        "engine", "engines", "format", "formats", "server", "servers",
+        "type", "types", "data", "file", "files", "system", "systems",
+        "example", "examples", "note", "notes", "warning", "error",
+        "output", "input", "result", "results", "value", "values",
+        "name", "names", "path", "paths", "source", "sources",
+        "target", "default", "option", "options", "config", "configuration",
+        "module", "modules", "package", "packages", "version", "versions",
+        "code", "text", "content", "document", "documents", "definition",
+        "research", "facts", "architecture", "overview", "introduction",
+        "production", "assets", "analysis", "walkthrough", "demo", "demos",
+        "showcase", "playground", "calculator", "comparison", "timeline", "quiz",
+        "cli", "api", "yaml", "json", "html", "css", "pdf", "pptx", "xlsx",
+        # Demo-related compound terms
+        "full architecture", "feature showcase", "cli playground", "pricing calculator",
+        "feature comparison", "code playground", "dashboard demo", "project timeline",
+        "feature quiz", "pitch deck", "github showcase", "health metrics", "api explorer",
+        "feature matrix", "roi calculator", "project form", "viz", "markdown",
+        # External references
+        "google", "norwegian", "english",
+        # Common technical terms
+        "python", "remotion", "gui", "project", "readme", "media", "query",
+        "sti", "iucn", "labrador",  # Various abbreviations and proper nouns
+        # Norwegian common words and section titles
+        "introduksjon", "kvalitetssikring", "søkindeksering", "ressurser",
+        "sikkerhet", "integrasjoner", "analyse", "validering", "publisering",
+        "gjennomgang", "arkitektur", "kalkulator", "innholdsstyring",
+        "videoproduksjon", "byggere", "diagrammer", "pakker",
+        # URL-like patterns
+        "http", "https", "www", "com", "org", "dev", "io",
+    }
+
     def __init__(self, min_term_length: int = 3):
         self.min_term_length = min_term_length
         self._compile_patterns()
@@ -233,6 +267,22 @@ class ConceptExtractor:
         self.def_patterns = [re.compile(p, re.MULTILINE) for p in self.DEFINITION_PATTERNS]
         self.ref_patterns = [re.compile(p) for p in self.REFERENCE_PATTERNS]
         self.code_patterns = [re.compile(p) for p in self.CODE_ENTITY_PATTERNS]
+        self._url_pattern = re.compile(r"^https?://|^www\.|\.com$|\.org$|\.dev$|\.io$|/")
+
+    def _is_valid_concept(self, term: str) -> bool:
+        """Check if a term should be considered a valid concept."""
+        if len(term) < self.min_term_length:
+            return False
+        # Check against stop words (case-insensitive)
+        if term.lower() in self.STOP_WORDS:
+            return False
+        # Filter out URL-like patterns
+        if self._url_pattern.search(term):
+            return False
+        # Filter out single common words that are just capitalized
+        if term.lower() in {"brand", "websocket", "spreadsheet", "overlay", "textreveal"}:
+            return False
+        return True
 
     def extract_definitions(self, content: str) -> list[dict]:
         """Extract concept definitions from content."""
@@ -243,7 +293,7 @@ class ConceptExtractor:
             for pattern in self.def_patterns:
                 for match in pattern.finditer(line):
                     term = match.group(1).strip()
-                    if len(term) >= self.min_term_length:
+                    if self._is_valid_concept(term):
                         definitions.append(
                             {
                                 "term": term,
@@ -263,7 +313,7 @@ class ConceptExtractor:
             for pattern in self.ref_patterns:
                 for match in pattern.finditer(line):
                     term = match.group(1).strip()
-                    if len(term) >= self.min_term_length:
+                    if self._is_valid_concept(term):
                         references.append(
                             {
                                 "term": term,
@@ -281,7 +331,7 @@ class ConceptExtractor:
         for pattern in self.code_patterns:
             for match in pattern.finditer(content):
                 term = match.group(1).strip()
-                if len(term) >= self.min_term_length:
+                if self._is_valid_concept(term):
                     entities.append(
                         {
                             "term": term,

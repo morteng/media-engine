@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from ..core.project import Project
+from ..settings.defaults import QUALITY as QUALITY_SETTINGS
 
 
 @dataclass
@@ -39,10 +40,6 @@ class IncompleteItem:
             "priority": self.priority,
             "context": self.context,
         }
-
-
-# Import base patterns from centralized settings
-from ..settings.defaults import QUALITY as QUALITY_SETTINGS
 
 
 def _build_incomplete_patterns() -> dict[str, re.Pattern]:

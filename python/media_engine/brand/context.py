@@ -7,11 +7,14 @@ This is the primary facade that builders should use.
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
 from .colors import hex_to_argb as _hex_to_argb
 from .colors import hex_to_rgb as _hex_to_rgb
 from .profile import BrandProfile
+
+if TYPE_CHECKING:
+    from ..core.theme import Theme
 
 
 @dataclass

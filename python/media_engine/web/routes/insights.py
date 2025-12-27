@@ -1,7 +1,7 @@
 """API routes for project insights."""
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Optional
+from typing import TYPE_CHECKING, Callable
 
 from fastapi import APIRouter, Query
 from fastapi.responses import PlainTextResponse
@@ -12,7 +12,9 @@ if TYPE_CHECKING:
 
 
 def _get_cached_or_compute(key: str, compute_fn, max_age: float = 300):
-    """Helper to get cached data or compute it."""
+    """Helper to get cached data or compute it, then cache the result."""
+    import time
+
     from ..preprocessor import get_preprocessor
 
     preprocessor = get_preprocessor()
@@ -21,8 +23,16 @@ def _get_cached_or_compute(key: str, compute_fn, max_age: float = 300):
         if cached is not None:
             return cached
 
-    # Fallback to direct computation
-    return compute_fn()
+    # Compute the result
+    start = time.time()
+    result = compute_fn()
+    elapsed_ms = (time.time() - start) * 1000
+
+    # Store in cache for next time
+    if preprocessor:
+        preprocessor.cache.set(key, result, computation_time_ms=elapsed_ms)
+
+    return result
 
 
 def _compute_graph(project):
@@ -59,7 +69,6 @@ def register_insights_routes(
             ConsistencyChecker,
             HealthScorer,
             IncompleteTracker,
-            KnowledgeGraph,
             ParityAnalyzer,
             StatisticsCollector,
             VelocityTracker,
@@ -157,14 +166,17 @@ def register_insights_routes(
 
         from ...insights import HealthScorer
 
-        scorer = HealthScorer(project)
-
         if document:
+            # Document-specific health is not cached (fast enough)
+            scorer = HealthScorer(project)
             health = scorer.score_document(Path(document))
+            return health.to_dict() if hasattr(health, "to_dict") else health
         else:
-            health = scorer.score_project()
-
-        return health.to_dict() if hasattr(health, "to_dict") else health
+            # Project-wide health uses caching
+            def compute_health():
+                scorer = HealthScorer(project)
+                return scorer.score_project().to_dict()
+            return _get_cached_or_compute("health", compute_health, max_age=300)
 
     @router.get("/api/insights/statistics")
     async def get_statistics():
@@ -175,10 +187,11 @@ def register_insights_routes(
 
         from ...insights import StatisticsCollector
 
-        collector = StatisticsCollector(project)
-        stats = collector.collect()
+        def compute_stats():
+            collector = StatisticsCollector(project)
+            return collector.collect().to_dict()
 
-        return stats.to_dict()
+        return _get_cached_or_compute("statistics", compute_stats, max_age=300)
 
     @router.get("/api/insights/stats")
     async def get_stats():
@@ -266,15 +279,17 @@ def register_insights_routes(
 
         from ...insights import KnowledgeGraph
 
-        graph = KnowledgeGraph(project)
-        graph.build_graph()
-
-        if format == "dot":
-            return PlainTextResponse(graph.export_dot(), media_type="text/plain")
-        elif format == "cytoscape":
-            return graph.export_cytoscape()
+        # For non-JSON formats, we need the actual graph object
+        if format in ("dot", "cytoscape"):
+            graph = KnowledgeGraph(project)
+            graph.build_graph()
+            if format == "dot":
+                return PlainTextResponse(graph.export_dot(), media_type="text/plain")
+            else:
+                return graph.export_cytoscape()
         else:
-            return graph.export_json()
+            # JSON format uses caching
+            return _get_cached_or_compute("graph", lambda: _compute_graph(project), max_age=300)
 
     @router.get("/api/insights/path")
     async def get_path(
@@ -309,13 +324,15 @@ def register_insights_routes(
 
         from ...insights import TerminologyChecker
 
-        checker = TerminologyChecker(project)
-        issues = checker.find_inconsistencies()
+        def compute_terms():
+            checker = TerminologyChecker(project)
+            issues = checker.find_inconsistencies()
+            return {
+                "total": len(issues),
+                "issues": [i.to_dict() for i in issues],
+            }
 
-        return {
-            "total": len(issues),
-            "issues": [i.to_dict() for i in issues],
-        }
+        return _get_cached_or_compute("terms", compute_terms, max_age=300)
 
     @router.get("/api/insights/terminology")
     async def get_terminology():
@@ -331,18 +348,21 @@ def register_insights_routes(
 
         from ...insights import DuplicateDetector
 
-        detector = DuplicateDetector(project)
+        def compute_duplicates():
+            detector = DuplicateDetector(project)
+            if exact_only:
+                matches = detector.find_exact_duplicates()
+            else:
+                report = detector.generate_report()
+                matches = report.exact_duplicates + report.similar_content
+            return {
+                "total": len(matches),
+                "matches": [m.to_dict() for m in matches],
+            }
 
-        if exact_only:
-            matches = detector.find_exact_duplicates()
-        else:
-            report = detector.generate_report()
-            matches = report.exact_duplicates + report.similar_content
-
-        return {
-            "total": len(matches),
-            "matches": [m.to_dict() for m in matches],
-        }
+        # Use different cache keys for exact_only vs full
+        cache_key = "duplicates_exact" if exact_only else "duplicates"
+        return _get_cached_or_compute(cache_key, compute_duplicates, max_age=300)
 
     @router.get("/api/insights/codesync")
     async def get_codesync():
@@ -373,217 +393,221 @@ def register_insights_routes(
         if not project:
             return {"error": "No project found"}
 
-        result = {
-            "semantic": None,
-            "llm_quality": None,
-            "knowledge_graph": None,
-            "norwegian_readability": None,
-            "predictive_freshness": None,
-            "enhanced_codesync": None,
-            "advanced_analysis": None,
-        }
-
-        # Semantic Analysis
-        try:
-            from ...semantic import SemanticAnalyzer
-
-            analyzer = SemanticAnalyzer(project)
-            duplicates = analyzer.find_near_duplicates(threshold=0.85)
-            drift = analyzer.detect_terminology_drift()
-            clusters = analyzer.cluster_content(n_clusters=5)
-            result["semantic"] = {
-                "available": True,
-                "near_duplicates": [d.to_dict() for d in duplicates[:10]],
-                "near_duplicate_count": len(duplicates),
-                "terminology_drift": [d.to_dict() for d in drift[:10]],
-                "drift_count": len(drift),
-                "clusters": [
-                    {"id": c.cluster_id, "theme": c.topic, "doc_count": len(c.documents)}
-                    for c in clusters
-                ],
-                "cluster_count": len(clusters),
+        def compute_advanced_insights():
+            result = {
+                "semantic": None,
+                "llm_quality": None,
+                "knowledge_graph": None,
+                "norwegian_readability": None,
+                "predictive_freshness": None,
+                "enhanced_codesync": None,
+                "advanced_analysis": None,
             }
-        except ImportError:
-            result["semantic"] = {"available": False, "reason": "semantic module not installed"}
-        except Exception as e:
-            result["semantic"] = {"available": True, "error": str(e)}
 
-        # Knowledge Graph (enhanced)
-        try:
-            from ...knowledge import KnowledgeGraph as EnhancedKG
+            # Semantic Analysis
+            try:
+                from ...semantic import SemanticAnalyzer
 
-            kg = EnhancedKG(project)
-            kg.build()
-            orphans = kg.find_orphan_concepts()
-            prereq_issues = kg.validate_prerequisites()
-            metrics = kg.compute_metrics()
-            result["knowledge_graph"] = {
-                "available": True,
-                "metrics": metrics.to_dict() if hasattr(metrics, "to_dict") else vars(metrics),
-                "orphan_concepts": [
-                    o.to_dict() if hasattr(o, "to_dict") else o for o in orphans[:10]
-                ],
-                "orphan_count": len(orphans),
-                "prerequisite_issues": [
-                    p.to_dict() if hasattr(p, "to_dict") else p for p in prereq_issues[:10]
-                ],
-                "prereq_issue_count": len(prereq_issues),
-            }
-        except ImportError as e:
-            result["knowledge_graph"] = {
-                "available": False,
-                "reason": f"networkx package required: {e}",
-            }
-        except Exception as e:
-            result["knowledge_graph"] = {"available": True, "error": str(e)}
-
-        # Norwegian Readability
-        try:
-            from ...readability.norwegian import NorwegianReadabilityChecker
-
-            checker = NorwegianReadabilityChecker()
-            project_results = checker.check_project(project, language="no")
-
-            if "error" not in project_results:
-                reports = project_results.get("documents", [])
-                avg_lix = project_results.get("summary", {}).get("average_lix", 0)
-                difficult_docs = [
-                    r for r in reports if r.get("lix_level") in ("difficult", "very_difficult")
-                ]
-                result["norwegian_readability"] = {
+                analyzer = SemanticAnalyzer(project)
+                duplicates = analyzer.find_near_duplicates(threshold=0.85)
+                drift = analyzer.detect_terminology_drift()
+                clusters = analyzer.cluster_content(n_clusters=5)
+                result["semantic"] = {
                     "available": True,
-                    "documents_analyzed": len(reports),
-                    "average_lix": round(avg_lix, 1),
-                    "difficulty_distribution": {},
-                    "difficult_documents": [
-                        {"path": r["file"], "lix": r["lix"], "level": r["lix_level"]}
-                        for r in difficult_docs[:10]
+                    "near_duplicates": [d.to_dict() for d in duplicates[:10]],
+                    "near_duplicate_count": len(duplicates),
+                    "terminology_drift": [d.to_dict() for d in drift[:10]],
+                    "drift_count": len(drift),
+                    "clusters": [
+                        {"id": c.cluster_id, "theme": c.topic, "doc_count": len(c.documents)}
+                        for c in clusters
                     ],
-                    "difficult_count": len(difficult_docs),
+                    "cluster_count": len(clusters),
                 }
-            else:
-                result["norwegian_readability"] = {
+            except ImportError:
+                result["semantic"] = {"available": False, "reason": "semantic module not installed"}
+            except Exception as e:
+                result["semantic"] = {"available": True, "error": str(e)}
+
+            # Knowledge Graph (enhanced)
+            try:
+                from ...knowledge import KnowledgeGraph as EnhancedKG
+
+                kg = EnhancedKG(project)
+                kg.build()
+                orphans = kg.find_orphan_concepts()
+                prereq_issues = kg.validate_prerequisites()
+                metrics = kg.compute_metrics()
+                result["knowledge_graph"] = {
                     "available": True,
-                    "message": project_results["error"],
+                    "metrics": metrics.to_dict() if hasattr(metrics, "to_dict") else vars(metrics),
+                    "orphan_concepts": [
+                        o.to_dict() if hasattr(o, "to_dict") else o for o in orphans[:10]
+                    ],
+                    "orphan_count": len(orphans),
+                    "prerequisite_issues": [
+                        p.to_dict() if hasattr(p, "to_dict") else p for p in prereq_issues[:10]
+                    ],
+                    "prereq_issue_count": len(prereq_issues),
                 }
-        except ImportError:
-            result["norwegian_readability"] = {
-                "available": False,
-                "reason": "norwegian readability module not installed",
-            }
-        except Exception as e:
-            result["norwegian_readability"] = {"available": True, "error": str(e)}
+            except ImportError as e:
+                result["knowledge_graph"] = {
+                    "available": False,
+                    "reason": f"networkx package required: {e}",
+                }
+            except Exception as e:
+                result["knowledge_graph"] = {"available": True, "error": str(e)}
 
-        # Predictive Freshness
-        try:
-            from ...freshness.predictive import FreshnessPredictor
+            # Norwegian Readability
+            try:
+                from ...readability.norwegian import NorwegianReadabilityChecker
 
-            predictor = FreshnessPredictor(project)
-            predictor.train()
-            report = predictor.generate_report()
-            predictions = report.predictions
-            high_risk = [p for p in predictions if p.risk_level in ("high", "critical")]
-            queue = report.review_priority_queue
-            result["predictive_freshness"] = {
-                "available": True,
-                "predictions_count": len(predictions),
-                "high_risk_count": len(high_risk),
-                "high_risk_documents": [
-                    {
-                        "path": str(p.path),
-                        "risk_level": p.risk_level,
-                        "staleness_probability": round(p.staleness_risk, 2),
-                        "days_until_stale": p.days_until_stale,
+                checker = NorwegianReadabilityChecker()
+                project_results = checker.check_project(project, language="no")
+
+                if "error" not in project_results:
+                    reports = project_results.get("documents", [])
+                    avg_lix = project_results.get("summary", {}).get("average_lix", 0)
+                    difficult_docs = [
+                        r for r in reports if r.get("lix_level") in ("difficult", "very_difficult")
+                    ]
+                    result["norwegian_readability"] = {
+                        "available": True,
+                        "documents_analyzed": len(reports),
+                        "average_lix": round(avg_lix, 1),
+                        "difficulty_distribution": {},
+                        "difficult_documents": [
+                            {"path": r["file"], "lix": r["lix"], "level": r["lix_level"]}
+                            for r in difficult_docs[:10]
+                        ],
+                        "difficult_count": len(difficult_docs),
                     }
-                    for p in high_risk[:10]
-                ],
-                "review_queue": [
-                    {
-                        "path": q["path"],
-                        "priority": q["risk"],
-                        "reason": q.get("recommendation", ""),
+                else:
+                    result["norwegian_readability"] = {
+                        "available": True,
+                        "message": project_results["error"],
                     }
-                    for q in queue[:10]
-                ]
-                if queue
-                else [],
-            }
-        except ImportError:
-            result["predictive_freshness"] = {
-                "available": False,
-                "reason": "predictive freshness module not installed",
-            }
-        except Exception as e:
-            result["predictive_freshness"] = {"available": True, "error": str(e)}
+            except ImportError:
+                result["norwegian_readability"] = {
+                    "available": False,
+                    "reason": "norwegian readability module not installed",
+                }
+            except Exception as e:
+                result["norwegian_readability"] = {"available": True, "error": str(e)}
 
-        # Enhanced CodeSync
-        try:
-            from ...codesync import EnhancedCodeSyncChecker, SyncIssueType
+            # Predictive Freshness
+            try:
+                from ...freshness.predictive import FreshnessPredictor
 
-            checker = EnhancedCodeSyncChecker(project)
-            summary = checker.generate_summary()
+                predictor = FreshnessPredictor(project)
+                predictor.train()
+                report = predictor.generate_report()
+                predictions = report.predictions
+                high_risk = [p for p in predictions if p.risk_level in ("high", "critical")]
+                queue = report.review_priority_queue
+                result["predictive_freshness"] = {
+                    "available": True,
+                    "predictions_count": len(predictions),
+                    "high_risk_count": len(high_risk),
+                    "high_risk_documents": [
+                        {
+                            "path": str(p.path),
+                            "risk_level": p.risk_level,
+                            "staleness_probability": round(p.staleness_risk, 2),
+                            "days_until_stale": p.days_until_stale,
+                        }
+                        for p in high_risk[:10]
+                    ],
+                    "review_queue": [
+                        {
+                            "path": q["path"],
+                            "priority": q["risk"],
+                            "reason": q.get("recommendation", ""),
+                        }
+                        for q in queue[:10]
+                    ]
+                    if queue
+                    else [],
+                }
+            except ImportError:
+                result["predictive_freshness"] = {
+                    "available": False,
+                    "reason": "predictive freshness module not installed",
+                }
+            except Exception as e:
+                result["predictive_freshness"] = {"available": True, "error": str(e)}
 
-            # Extract issues by type from all documents
-            all_issues = []
-            for doc in summary.get("documents", []):
-                for issue in doc.get("issues", []):
-                    issue["document"] = doc.get("document", "unknown")
-                    all_issues.append(issue)
+            # Enhanced CodeSync
+            try:
+                from ...codesync import EnhancedCodeSyncChecker
 
-            syntax_errors = [i for i in all_issues if i.get("issue_type") == "syntax_error"]
-            deprecated = [i for i in all_issues if i.get("issue_type") == "deprecated"]
-            api_issues = [i for i in all_issues if i.get("issue_type") == "api_changed"]
+                checker = EnhancedCodeSyncChecker(project)
+                summary = checker.generate_summary()
 
-            result["enhanced_codesync"] = {
-                "available": True,
-                "syntax_errors": syntax_errors[:10],
-                "syntax_error_count": len(syntax_errors),
-                "deprecated_patterns": deprecated[:10],
-                "deprecated_count": len(deprecated),
-                "api_issues": api_issues[:10],
-                "api_issue_count": len(api_issues),
-                "total_issues": len(syntax_errors) + len(deprecated) + len(api_issues),
-            }
-        except ImportError:
-            result["enhanced_codesync"] = {
-                "available": False,
-                "reason": "codesync module not installed",
-            }
-        except Exception as e:
-            result["enhanced_codesync"] = {"available": True, "error": str(e)}
+                # Extract issues by type from all documents
+                all_issues = []
+                for doc in summary.get("documents", []):
+                    for issue in doc.get("issues", []):
+                        issue["document"] = doc.get("document", "unknown")
+                        all_issues.append(issue)
 
-        # Advanced Analysis (audience drift, questions, style)
-        try:
-            from ...advanced import AdvancedAnalyzer
+                syntax_errors = [i for i in all_issues if i.get("issue_type") == "syntax_error"]
+                deprecated = [i for i in all_issues if i.get("issue_type") == "deprecated"]
+                api_issues = [i for i in all_issues if i.get("issue_type") == "api_changed"]
 
-            analyzer = AdvancedAnalyzer(project)
-            report = analyzer.analyze_project()
-            # Convert report to dict if it's a dataclass/object
-            if hasattr(report, "to_dict"):
-                report_dict = report.to_dict()
-            elif hasattr(report, "__dict__"):
-                report_dict = vars(report)
-            else:
-                report_dict = report if isinstance(report, dict) else {}
+                result["enhanced_codesync"] = {
+                    "available": True,
+                    "syntax_errors": syntax_errors[:10],
+                    "syntax_error_count": len(syntax_errors),
+                    "deprecated_patterns": deprecated[:10],
+                    "deprecated_count": len(deprecated),
+                    "api_issues": api_issues[:10],
+                    "api_issue_count": len(api_issues),
+                    "total_issues": len(syntax_errors) + len(deprecated) + len(api_issues),
+                }
+            except ImportError:
+                result["enhanced_codesync"] = {
+                    "available": False,
+                    "reason": "codesync module not installed",
+                }
+            except Exception as e:
+                result["enhanced_codesync"] = {"available": True, "error": str(e)}
 
-            result["advanced_analysis"] = {
-                "available": True,
-                "audience_drift": report_dict.get("audience_drift", []),
-                "question_coverage": report_dict.get("question_coverage", []),
-                "cross_references": report_dict.get("cross_reference_metrics", []),
-                "structure_analysis": report_dict.get("structure_analyses", []),
-                "style_consistency": report_dict.get("style_consistency", []),
-                "overall_quality_score": report_dict.get("overall_quality_score", 0),
-            }
-        except ImportError:
-            result["advanced_analysis"] = {
-                "available": False,
-                "reason": "advanced module not installed",
-            }
-        except Exception as e:
-            result["advanced_analysis"] = {"available": True, "error": str(e)}
+            # Advanced Analysis (audience drift, questions, style)
+            try:
+                from ...advanced import AdvancedAnalyzer
 
-        return result
+                analyzer = AdvancedAnalyzer(project)
+                report = analyzer.analyze_project()
+                # Convert report to dict if it's a dataclass/object
+                if hasattr(report, "to_dict"):
+                    report_dict = report.to_dict()
+                elif hasattr(report, "__dict__"):
+                    report_dict = vars(report)
+                else:
+                    report_dict = report if isinstance(report, dict) else {}
+
+                result["advanced_analysis"] = {
+                    "available": True,
+                    "audience_drift": report_dict.get("audience_drift", []),
+                    "question_coverage": report_dict.get("question_coverage", []),
+                    "cross_references": report_dict.get("cross_reference_metrics", []),
+                    "structure_analysis": report_dict.get("structure_analyses", []),
+                    "style_consistency": report_dict.get("style_consistency", []),
+                    "overall_quality_score": report_dict.get("overall_quality_score", 0),
+                }
+            except ImportError:
+                result["advanced_analysis"] = {
+                    "available": False,
+                    "reason": "advanced module not installed",
+                }
+            except Exception as e:
+                result["advanced_analysis"] = {"available": True, "error": str(e)}
+
+            return result
+
+        # Use caching - this is a very expensive operation (30+ seconds)
+        return _get_cached_or_compute("advanced_insights", compute_advanced_insights, max_age=600)
 
     @router.get("/api/insights/semantic")
     async def get_semantic_analysis(
@@ -925,130 +949,109 @@ def register_insights_routes(
         if not project:
             return {"error": "No project found"}
 
-        from ...insights import (
-            HealthScorer,
-        )
+        # Use caching - this is an expensive operation
+        def compute_quality_summary():
+            from ...insights import HealthScorer
 
-        summary = {
-            "overall_score": 0,
-            "grade": "N/A",
-            "status": "unknown",
-            "key_metrics": [],
-            "critical_issues": [],
-            "recommendations": [],
-            "advanced_available": {
-                "semantic": False,
-                "knowledge_graph": False,
-                "norwegian_readability": False,
-                "predictive_freshness": False,
-                "enhanced_codesync": False,
-                "advanced_analysis": False,
-            },
-            "advanced_highlights": {},
-        }
+            summary = {
+                "overall_score": 0,
+                "grade": "N/A",
+                "status": "unknown",
+                "key_metrics": [],
+                "critical_issues": [],
+                "recommendations": [],
+                "advanced_available": {
+                    "semantic": False,
+                    "knowledge_graph": False,
+                    "norwegian_readability": False,
+                    "predictive_freshness": False,
+                    "enhanced_codesync": False,
+                    "advanced_analysis": False,
+                },
+                "advanced_highlights": {},
+            }
 
-        # Core health score
-        try:
-            scorer = HealthScorer(project)
-            health = scorer.score_project()
-            summary["overall_score"] = health.overall
-            summary["grade"] = health.grade
-            summary["status"] = health.status
-            summary["key_metrics"] = [
-                {"name": k, "score": v, "weight": health.weights.get(k, 0)}
-                for k, v in health.components.items()
-            ]
-            summary["critical_issues"] = [
-                i.to_dict() for i in health.issues if i.severity == "critical"
-            ][:5]
-            summary["recommendations"] = health.recommendations[:5]
-        except Exception as e:
-            summary["health_error"] = str(e)
+            # Core health score (use cached if available)
+            try:
+                health_cached = _get_cached_or_compute(
+                    "health",
+                    lambda: HealthScorer(project).score_project().to_dict(),
+                    max_age=300,
+                )
+                if isinstance(health_cached, dict) and "overall" in health_cached:
+                    summary["overall_score"] = health_cached.get("overall", 0)
+                    summary["grade"] = health_cached.get("grade", "N/A")
+                    summary["status"] = health_cached.get("status", "unknown")
+                    # Components don't have weights in the cached format
+                    summary["key_metrics"] = [
+                        {"name": k, "score": v}
+                        for k, v in health_cached.get("components", {}).items()
+                    ]
+                    issues = health_cached.get("issues", [])
+                    summary["critical_issues"] = [
+                        i for i in issues if isinstance(i, dict) and i.get("severity") == "critical"
+                    ][:5]
+                    summary["recommendations"] = health_cached.get("recommendations", [])[:5]
+            except Exception as e:
+                summary["health_error"] = str(e)
 
-        # Check advanced module availability and get highlights
-        try:
-            from ...semantic import SemanticAnalyzer
+            # Use cached advanced analysis results
+            from ..preprocessor import get_preprocessor
+            preprocessor = get_preprocessor()
 
-            summary["advanced_available"]["semantic"] = True
-            analyzer = SemanticAnalyzer(project)
-            dups = analyzer.find_near_duplicates(threshold=0.9)
-            if dups:
-                summary["advanced_highlights"]["semantic"] = {
-                    "near_duplicates": len(dups),
-                    "message": f"Found {len(dups)} near-duplicate content pairs",
-                }
-        except ImportError:
-            pass
-        except Exception:
-            summary["advanced_available"]["semantic"] = True
+            if preprocessor:
+                # Semantic analysis
+                semantic = preprocessor.cache.get("semantic_analysis")
+                if semantic and semantic.data:
+                    summary["advanced_available"]["semantic"] = semantic.data.get("available", False)
+                    if semantic.data.get("near_duplicates", 0) > 0:
+                        summary["advanced_highlights"]["semantic"] = {
+                            "near_duplicates": semantic.data["near_duplicates"],
+                            "message": f"Found {semantic.data['near_duplicates']} near-duplicate content pairs",
+                        }
 
-        try:
-            from ...knowledge import KnowledgeGraph as EnhancedKG
+                # Knowledge graph
+                kg = preprocessor.cache.get("knowledge_graph_enhanced")
+                if kg and kg.data:
+                    summary["advanced_available"]["knowledge_graph"] = kg.data.get("available", False)
+                    if kg.data.get("orphan_count", 0) > 0:
+                        summary["advanced_highlights"]["knowledge_graph"] = {
+                            "orphan_concepts": kg.data["orphan_count"],
+                            "message": f"Found {kg.data['orphan_count']} orphan concepts without connections",
+                        }
 
-            summary["advanced_available"]["knowledge_graph"] = True
-            kg = EnhancedKG(project)
-            kg.build()
-            orphans = kg.find_orphan_concepts()
-            if orphans:
-                summary["advanced_highlights"]["knowledge_graph"] = {
-                    "orphan_concepts": len(orphans),
-                    "message": f"Found {len(orphans)} orphan concepts without connections",
-                }
-        except ImportError:
-            pass
-        except Exception:
-            summary["advanced_available"]["knowledge_graph"] = True
+                # Predictive freshness
+                pf = preprocessor.cache.get("predictive_freshness")
+                if pf and pf.data:
+                    summary["advanced_available"]["predictive_freshness"] = pf.data.get("available", False)
+                    if pf.data.get("high_risk_count", 0) > 0:
+                        summary["advanced_highlights"]["predictive_freshness"] = {
+                            "high_risk_count": pf.data["high_risk_count"],
+                            "message": f"{pf.data['high_risk_count']} documents predicted to become stale soon",
+                        }
 
-        try:
-            from ...readability.norwegian import NorwegianReadabilityChecker
+                # Enhanced codesync
+                cs = preprocessor.cache.get("enhanced_codesync")
+                if cs and cs.data:
+                    summary["advanced_available"]["enhanced_codesync"] = cs.data.get("available", False)
+                    if cs.data.get("total_issues", 0) > 0:
+                        summary["advanced_highlights"]["enhanced_codesync"] = {
+                            "issues": cs.data["total_issues"],
+                            "message": f"{cs.data['total_issues']} code-documentation sync issues found",
+                        }
 
-            summary["advanced_available"]["norwegian_readability"] = True
-        except ImportError:
-            pass
+            # Check module availability (cheap imports only)
+            import importlib.util
 
-        try:
-            from ...freshness.predictive import FreshnessPredictor
+            if importlib.util.find_spec("media_engine.readability.norwegian"):
+                summary["advanced_available"]["norwegian_readability"] = True
 
-            summary["advanced_available"]["predictive_freshness"] = True
-            predictor = FreshnessPredictor(project)
-            predictor.train_from_history(days=60)
-            predictions = predictor.predict_all()
-            high_risk = [p for p in predictions if p.risk_level in ("high", "critical")]
-            if high_risk:
-                summary["advanced_highlights"]["predictive_freshness"] = {
-                    "high_risk_count": len(high_risk),
-                    "message": f"{len(high_risk)} documents predicted to become stale soon",
-                }
-        except ImportError:
-            pass
-        except Exception:
-            summary["advanced_available"]["predictive_freshness"] = True
+            if importlib.util.find_spec("media_engine.advanced"):
+                summary["advanced_available"]["advanced_analysis"] = True
 
-        try:
-            from ...codesync import EnhancedCodeSyncChecker
+            return summary
 
-            summary["advanced_available"]["enhanced_codesync"] = True
-            checker = EnhancedCodeSyncChecker(project)
-            report = checker.generate_summary()
-            total_issues = report.get("total_issues", 0)
-            if total_issues > 0:
-                summary["advanced_highlights"]["enhanced_codesync"] = {
-                    "issues": total_issues,
-                    "message": f"{total_issues} code-documentation sync issues found",
-                }
-        except ImportError:
-            pass
-        except Exception:
-            summary["advanced_available"]["enhanced_codesync"] = True
-
-        try:
-            from ...advanced import AdvancedAnalyzer
-
-            summary["advanced_available"]["advanced_analysis"] = True
-        except ImportError:
-            pass
-
-        return summary
+        return _get_cached_or_compute("quality_summary", compute_quality_summary, max_age=120)
 
     @router.get("/api/insights/comprehensive")
     async def get_comprehensive():

@@ -11,11 +11,10 @@ Advanced semantic analysis using embeddings and NLP techniques:
 Requires: sentence-transformers (optional, falls back to TF-IDF)
 """
 
-import hashlib
 import math
 import re
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
