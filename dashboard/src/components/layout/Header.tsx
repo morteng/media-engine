@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useProject, useRecentProjects, useOpenProject, useBrowseProject } from '@/hooks/useApi';
+import { useProject, useRecentProjects, useOpenProject, useBrowseProject, useRemoveRecentProject } from '@/hooks/useApi';
 import { useSidebar, useSettings } from '@/contexts';
 import { ConnectionStatus } from '@/components/ui';
 import {
@@ -13,6 +13,7 @@ import {
   Menu,
   PanelLeft,
   PanelLeftClose,
+  X,
 } from 'lucide-react';
 
 export function Header() {
@@ -20,6 +21,7 @@ export function Header() {
   const { data: recentProjects } = useRecentProjects();
   const openProject = useOpenProject();
   const browseProject = useBrowseProject();
+  const removeRecentProject = useRemoveRecentProject();
   const { isMobile, isCollapsed, toggleMobileMenu, toggleSidebar } = useSidebar();
   const { toggleTheme, isDark } = useSettings();
 
@@ -80,7 +82,17 @@ export function Header() {
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
             onClick={() => setProjectMenuOpen(!projectMenuOpen)}
           >
-            <span className="flex items-center justify-center w-7 h-7 rounded bg-gradient-to-br from-primary to-secondary text-white text-xs font-bold">
+            <img
+              src="/brand/logos/icon-64.png"
+              alt="Capy"
+              className="w-7 h-7 rounded-lg"
+              onError={(e) => {
+                // Fallback to text if image fails
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+              }}
+            />
+            <span className="hidden items-center justify-center w-7 h-7 rounded bg-gradient-to-br from-primary to-secondary text-white text-xs font-bold">
               ME
             </span>
             <span className="max-w-[150px] truncate hidden sm:inline font-medium">{project?.name || 'Media Engine'}</span>
@@ -103,16 +115,27 @@ export function Header() {
                   <span className="text-xs font-semibold uppercase tracking-wider text-base-content/50">Recent Projects</span>
                   <div className="mt-1 space-y-1">
                     {recent.slice(0, 5).map((p) => (
-                      <button
-                        key={p.path}
-                        className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-base-content/70 hover:bg-base-300 hover:text-base-content transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        onClick={() => handleOpenProject(p.path)}
-                        disabled={!p.exists}
-                      >
-                        <Clock size={14} />
-                        <span className="flex-1 truncate text-left">{p.name}</span>
-                        {!p.exists && <span className="badge badge-error badge-xs">Missing</span>}
-                      </button>
+                      <div key={p.path} className="flex items-center gap-1 group">
+                        <button
+                          className="flex items-center gap-2 flex-1 px-3 py-2 rounded-lg text-sm text-base-content/70 hover:bg-base-300 hover:text-base-content transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          onClick={() => handleOpenProject(p.path)}
+                          disabled={!p.exists}
+                        >
+                          <Clock size={14} />
+                          <span className="flex-1 truncate text-left">{p.name}</span>
+                          {!p.exists && <span className="badge badge-error badge-xs">Missing</span>}
+                        </button>
+                        <button
+                          className="p-1.5 rounded-lg text-base-content/30 hover:text-error hover:bg-error/10 transition-colors opacity-0 group-hover:opacity-100"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeRecentProject.mutate(p.path);
+                          }}
+                          title="Remove from recent"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
                     ))}
                   </div>
                 </div>

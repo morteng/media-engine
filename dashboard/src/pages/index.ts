@@ -9,3 +9,5 @@ export { AIAssist } from './AIAssist';
 export { SearchPage } from './Search';
 export { Brand } from './Brand';
 export { Settings } from './Settings';
+export { default as Publications } from './Publications';
+export { default as AIWorkspace } from './AIWorkspace';

@@ -1,5 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import {
   useInsights,
   useFreshness,
@@ -7,10 +7,11 @@ import {
   useAuditLog,
 } from '@/hooks/useApi';
 import { useSettings } from '@/contexts';
-import { SubTabs } from '@/components/ui/SubTabs';
+import { SubTabs, ExpandableSection } from '@/components/ui';
 import { InfoTooltip, METRIC_EXPLANATIONS } from '@/components/ui/InfoTooltip';
 import {
   GraphCanvas,
+  GraphErrorBoundary,
   toReagraphNodesFromKnowledgeGraph,
   toReagraphEdgesFromKnowledgeGraph,
   knowledgeGraphLegend,
@@ -21,7 +22,6 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
-  XCircle,
   Brain,
   Network,
   BookOpen,
@@ -29,7 +29,6 @@ import {
   TrendingUp,
   GitCommit,
   FileText,
-  Layers,
   Target,
   Zap,
   Activity as ActivityIcon,
@@ -38,47 +37,14 @@ import {
   Link2,
   HelpCircle,
   BarChart3,
-  RefreshCw,
-  ChevronDown,
-  ChevronRight,
 } from 'lucide-react';
 
+// Simplified to 3 tabs
 const tabs = [
-  { path: '', label: 'Quality' },
-  { path: 'semantic', label: 'Semantic' },
-  { path: 'knowledge', label: 'Knowledge' },
-  { path: 'readability', label: 'Readability' },
-  { path: 'freshness', label: 'Freshness' },
-  { path: 'codesync', label: 'Code Sync' },
-  { path: 'advanced', label: 'Advanced' },
+  { path: '', label: 'Overview' },
+  { path: 'analysis', label: 'Analysis' },
   { path: 'activity', label: 'Activity' },
 ];
-
-// Helper component for unavailable modules
-function ModuleUnavailable({ name, reason }: { name: string; reason?: string }) {
-  return (
-    <div className="card bg-base-200">
-      <div className="card-body items-center text-center py-12">
-        <Zap size={48} className="text-base-content/30 mb-4" />
-        <h3 className="text-lg font-semibold">{name} Not Available</h3>
-        <p className="text-base-content/60">{reason || 'Install optional dependencies to enable this feature'}</p>
-      </div>
-    </div>
-  );
-}
-
-// Helper component for module errors
-function ModuleError({ name, error }: { name: string; error: string }) {
-  return (
-    <div className="card bg-base-200 border border-error/30">
-      <div className="card-body items-center text-center py-12">
-        <AlertCircle size={48} className="text-error mb-4" />
-        <h3 className="text-lg font-semibold">Error Loading {name}</h3>
-        <p className="text-base-content/60">{error}</p>
-      </div>
-    </div>
-  );
-}
 
 // Loading component
 function Loading({ message }: { message: string }) {
@@ -92,12 +58,12 @@ function Loading({ message }: { message: string }) {
   );
 }
 
-// Quality Checks View
-function QualityView() {
+// ============== OVERVIEW TAB ==============
+function OverviewView() {
   const { data: insights, isLoading } = useInsights();
 
   if (isLoading) {
-    return <Loading message="Loading quality checks..." />;
+    return <Loading message="Loading quality overview..." />;
   }
 
   const health = insights?.health;
@@ -136,7 +102,13 @@ function QualityView() {
           <div className="card-body p-4 flex-row items-center gap-4">
             <AlertCircle size={20} className="text-error" />
             <span className="text-2xl font-bold">{errorCount}</span>
-            <span className="text-base-content/60">Critical</span>
+            <span className="text-base-content/60 flex items-center gap-1">
+              Critical
+              <InfoTooltip
+                title="Critical Issues"
+                content="Blocking issues that must be resolved before publishing. Includes broken links, missing required content, and validation errors."
+              />
+            </span>
           </div>
         </div>
         <div className={`card bg-base-200 ${warningCount > 0 ? 'border border-warning/30' : ''}`}>
@@ -150,7 +122,10 @@ function QualityView() {
           <div className="card-body p-4 flex-row items-center gap-4">
             <CheckCircle size={20} className="text-success" />
             <span className="text-2xl font-bold">{health?.document_count ?? 0}</span>
-            <span className="text-base-content/60">Documents</span>
+            <span className="text-base-content/60 flex items-center gap-1">
+              Documents
+              <InfoTooltip {...METRIC_EXPLANATIONS.documentCount} />
+            </span>
           </div>
         </div>
       </div>
@@ -227,178 +202,17 @@ function QualityView() {
   );
 }
 
-// Semantic Analysis View
-function SemanticView() {
-  const { data: advanced, isLoading } = useAdvancedInsights();
-
-  if (isLoading) {
-    return <Loading message="Loading semantic analysis..." />;
-  }
-
-  const semantic = advanced?.semantic;
-
-  if (!semantic?.available) {
-    return <ModuleUnavailable name="Semantic Analysis" reason={semantic?.reason} />;
-  }
-
-  if (semantic?.error) {
-    return <ModuleError name="Semantic Analysis" error={semantic.error} />;
-  }
-
-  return (
-    <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="card bg-base-200">
-          <div className="card-body p-4 items-center text-center">
-            <Copy size={24} className="text-warning" />
-            <span className="text-2xl font-bold">{semantic.near_duplicate_count ?? 0}</span>
-            <span className="text-sm text-base-content/60 flex items-center gap-1">
-              Near Duplicates
-              <InfoTooltip {...METRIC_EXPLANATIONS.semanticDuplicates} />
-            </span>
-          </div>
-        </div>
-        <div className="card bg-base-200">
-          <div className="card-body p-4 items-center text-center">
-            <TrendingUp size={24} className="text-primary" />
-            <span className="text-2xl font-bold">{semantic.drift_count ?? 0}</span>
-            <span className="text-sm text-base-content/60 flex items-center gap-1">
-              Terminology Drift
-              <InfoTooltip {...METRIC_EXPLANATIONS.terminologyDrift} />
-            </span>
-          </div>
-        </div>
-        <div className="card bg-base-200">
-          <div className="card-body p-4 items-center text-center">
-            <Layers size={24} className="text-success" />
-            <span className="text-2xl font-bold">{semantic.cluster_count ?? 0}</span>
-            <span className="text-sm text-base-content/60">Content Clusters</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Near Duplicates */}
-      <div className="card bg-base-200">
-        <div className="card-body">
-          <h3 className="card-title text-lg">Near-Duplicate Content</h3>
-          <p className="text-sm text-base-content/60 mb-4">Semantically similar document pairs</p>
-          {semantic.near_duplicates && semantic.near_duplicates.length > 0 ? (
-            <div className="space-y-3">
-              {semantic.near_duplicates.map((dup, idx) => (
-                <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-base-300">
-                  <FileText size={14} className="text-base-content/60 flex-shrink-0" />
-                  <span className="text-sm truncate">{dup.doc1_path}</span>
-                  <span className="text-base-content/50">~</span>
-                  <span className="text-sm truncate">{dup.doc2_path}</span>
-                  <div className="badge badge-warning badge-sm ml-auto">{Math.round(dup.similarity * 100)}%</div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <CheckCircle size={24} className="text-success mx-auto mb-2" />
-              <p className="text-sm text-base-content/60">No near-duplicate content found</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Terminology Drift */}
-      <div className="card bg-base-200">
-        <div className="card-body">
-          <h3 className="card-title text-lg">Terminology Drift</h3>
-          <p className="text-sm text-base-content/60 mb-4">Inconsistent term usage across documents</p>
-          {semantic.terminology_drift && semantic.terminology_drift.length > 0 ? (
-            <div className="space-y-3">
-              {semantic.terminology_drift.map((drift, idx) => (
-                <div key={idx} className="p-3 rounded-lg bg-base-300 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="badge badge-primary">{drift.term}</div>
-                    <span className="text-sm text-base-content/60">
-                      Drift: {typeof drift.drift_score === 'number' && !isNaN(drift.drift_score)
-                        ? `${Math.round(drift.drift_score * 100)}%`
-                        : 'N/A'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-base-content/70">{drift.old_usage || 'N/A'}</span>
-                    <span className="text-base-content/50">vs</span>
-                    <span className="text-base-content/70">{drift.new_usage || 'N/A'}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <CheckCircle size={24} className="text-success mx-auto mb-2" />
-              <p className="text-sm text-base-content/60">Terminology is consistent across documents</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Content Clusters */}
-      <div className="card bg-base-200">
-        <div className="card-body">
-          <h3 className="card-title text-lg">Content Clusters</h3>
-          <p className="text-sm text-base-content/60 mb-4">Thematic groupings of related content</p>
-          {semantic.clusters && semantic.clusters.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {semantic.clusters.map((cluster, idx) => (
-                <div key={idx} className="p-4 rounded-lg bg-base-300">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Layers size={16} className="text-primary" />
-                    <span className="font-medium">{cluster.theme || `Cluster ${cluster.cluster_id}`}</span>
-                  </div>
-                  <span className="text-sm text-base-content/60">{cluster.doc_count} documents</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <Layers size={24} className="text-base-content/30 mx-auto mb-2" />
-              <p className="text-sm text-base-content/60">Not enough content for clustering</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Knowledge Graph View
-function KnowledgeView() {
+// ============== ANALYSIS TAB (Consolidated from 6 tabs) ==============
+function AnalysisView() {
   const { data: advanced, isLoading: advancedLoading } = useAdvancedInsights();
   const { data: insights, isLoading: insightsLoading } = useInsights();
+  const { data: freshness, isLoading: freshnessLoading } = useFreshness();
   const { isDark } = useSettings();
-  const [showGraph, setShowGraph] = useState(true);
 
-  if (advancedLoading || insightsLoading) {
-    return <Loading message="Loading knowledge graph..." />;
-  }
+  const isLoading = advancedLoading || insightsLoading || freshnessLoading;
 
-  const kg = advanced?.knowledge_graph;
+  // Memoize graph data conversion
   const graphData = insights?.graph;
-
-  if (!kg?.available) {
-    return <ModuleUnavailable name="Knowledge Graph" reason={kg?.reason} />;
-  }
-
-  if (kg?.error) {
-    return <ModuleError name="Knowledge Graph" error={kg.error} />;
-  }
-
-  const metrics = kg.metrics;
-  // API returns total_nodes/total_edges, fallback to node_count/edge_count for compatibility
-  const nodeCount = metrics?.total_nodes ?? metrics?.node_count ?? kg.node_count ?? 0;
-  const edgeCount = metrics?.total_edges ?? metrics?.edge_count ?? kg.edge_count ?? 0;
-  // API returns clustering_coefficient, fallback to density
-  const density = metrics?.clustering_coefficient ?? metrics?.density ?? 0;
-  // API returns avg_connections_per_doc, fallback to avg_connections
-  const avgConnections = metrics?.avg_connections_per_doc ?? metrics?.avg_connections ?? 0;
-
-  // Convert graph data to Reagraph format
   const reagraphNodes = useMemo(() => {
     if (!graphData?.nodes) return [];
     return toReagraphNodesFromKnowledgeGraph(graphData.nodes, isDark);
@@ -409,741 +223,438 @@ function KnowledgeView() {
     return toReagraphEdgesFromKnowledgeGraph(graphData.links);
   }, [graphData?.links]);
 
-  return (
-    <div className="space-y-6">
-      {/* Graph Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="card bg-base-200">
-          <div className="card-body p-4 items-center text-center">
-            <Network size={24} className="text-primary" />
-            <span className="text-2xl font-bold">{nodeCount}</span>
-            <span className="text-sm text-base-content/60">Nodes</span>
-          </div>
-        </div>
-        <div className="card bg-base-200">
-          <div className="card-body p-4 items-center text-center">
-            <Link2 size={24} className="text-success" />
-            <span className="text-2xl font-bold">{edgeCount}</span>
-            <span className="text-sm text-base-content/60">Edges</span>
-          </div>
-        </div>
-        <div className={`card bg-base-200 ${kg.orphan_count && kg.orphan_count > 0 ? 'border border-warning/30' : ''}`}>
-          <div className="card-body p-4 items-center text-center">
-            <AlertTriangle size={24} className="text-warning" />
-            <span className="text-2xl font-bold">{kg.orphan_count ?? 0}</span>
-            <span className="text-sm text-base-content/60 flex items-center gap-1">
-              Orphans
-              <InfoTooltip {...METRIC_EXPLANATIONS.orphanConcepts} />
-            </span>
-          </div>
-        </div>
-        <div className={`card bg-base-200 ${kg.prereq_issue_count && kg.prereq_issue_count > 0 ? 'border border-error/30' : ''}`}>
-          <div className="card-body p-4 items-center text-center">
-            <AlertCircle size={24} className="text-error" />
-            <span className="text-2xl font-bold">{kg.prereq_issue_count ?? 0}</span>
-            <span className="text-sm text-base-content/60 flex items-center gap-1">
-              Prereq Issues
-              <InfoTooltip {...METRIC_EXPLANATIONS.prerequisiteIssues} />
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Interactive Knowledge Graph */}
-      {reagraphNodes.length > 0 && (
-        <div className="card bg-base-200">
-          <div className="card-body p-0">
-            <button
-              className="flex items-center justify-between w-full p-4 hover:bg-base-300/50 transition-colors"
-              onClick={() => setShowGraph(!showGraph)}
-            >
-              <div className="flex items-center gap-2">
-                <Network size={20} className="text-primary" />
-                <h3 className="card-title text-lg m-0">Interactive Knowledge Graph</h3>
-                <span className="badge badge-ghost badge-sm">{reagraphNodes.length} nodes</span>
-              </div>
-              {showGraph ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-            </button>
-            {showGraph && (
-              <div className="px-4 pb-4">
-                <p className="text-sm text-base-content/60 mb-3">
-                  Explore document relationships. Drag to pan, scroll to zoom, click nodes for details.
-                </p>
-                <GraphCanvas
-                  nodes={reagraphNodes}
-                  edges={reagraphEdges}
-                  height={450}
-                  showToolbar={true}
-                  showLegend={true}
-                  legendItems={knowledgeGraphLegend}
-                  layoutType="forceDirected2d"
-                  onNodeClick={(node) => {
-                    console.log('Node clicked:', node);
-                  }}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Graph Metrics Detail */}
-      {metrics && (
-        <div className="card bg-base-200">
-          <div className="card-body">
-            <h3 className="card-title text-lg">Graph Metrics</h3>
-            <p className="text-sm text-base-content/60 mb-4">Knowledge structure analysis</p>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold">{(density * 100).toFixed(1)}%</div>
-                <div className="text-sm text-base-content/60">Clustering</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold">{avgConnections.toFixed(1)}</div>
-                <div className="text-sm text-base-content/60">Avg Connections</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold">{metrics.document_count ?? metrics.hub_count ?? 0}</div>
-                <div className="text-sm text-base-content/60">Documents</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Orphan Concepts */}
-      <div className="card bg-base-200">
-        <div className="card-body">
-          <h3 className="card-title text-lg">Orphan Concepts</h3>
-          <p className="text-sm text-base-content/60 mb-4">Concepts without connections to other content</p>
-          {kg.orphan_concepts && kg.orphan_concepts.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {kg.orphan_concepts.slice(0, 10).map((orphan, idx) => {
-                // Handle both string and object formats from API
-                const conceptName = typeof orphan === 'string' ? orphan : (orphan as { concept?: string })?.concept ?? 'Unknown';
-                return (
-                  <div key={idx} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-base-300 text-sm">
-                    <Brain size={14} className="text-warning" />
-                    <span>{conceptName}</span>
-                  </div>
-                );
-              })}
-              {kg.orphan_concepts.length > 10 && (
-                <span className="text-sm text-base-content/60 self-center">+{kg.orphan_concepts.length - 10} more</span>
-              )}
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <CheckCircle size={24} className="text-success mx-auto mb-2" />
-              <p className="text-sm text-base-content/60">All concepts are well-connected</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Prerequisite Issues */}
-      <div className="card bg-base-200">
-        <div className="card-body">
-          <h3 className="card-title text-lg">Prerequisite Issues</h3>
-          <p className="text-sm text-base-content/60 mb-4">Missing or circular prerequisites</p>
-          {kg.prerequisite_issues && kg.prerequisite_issues.length > 0 ? (
-            <div className="space-y-2">
-              {kg.prerequisite_issues.slice(0, 10).map((issue, idx) => {
-                // Handle both API formats: missing_prereq (string) or missing_prerequisites (array)
-                const missingPrereq = issue.missing_prereq ?? issue.missing_prerequisites;
-                const hasMissing = missingPrereq && (Array.isArray(missingPrereq) ? missingPrereq.length > 0 : true);
-                const missingCount = Array.isArray(missingPrereq) ? missingPrereq.length : (missingPrereq ? 1 : 0);
-                const hasCircular = (issue.circular_dependencies?.length ?? 0) > 0;
-                return (
-                  <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-base-300">
-                    <AlertCircle size={14} className="text-error flex-shrink-0" />
-                    <span className="text-sm truncate flex-1">{issue.document}</span>
-                    {hasMissing && (
-                      <div className="badge badge-warning badge-sm">{missingCount} missing</div>
-                    )}
-                    {hasCircular && (
-                      <div className="badge badge-error badge-sm">circular</div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <CheckCircle size={24} className="text-success mx-auto mb-2" />
-              <p className="text-sm text-base-content/60">All prerequisites are properly defined</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Readability View
-function ReadabilityView() {
-  const { data: advanced, isLoading } = useAdvancedInsights();
-  const { data: insights } = useInsights();
-
   if (isLoading) {
-    return <Loading message="Loading readability analysis..." />;
+    return <Loading message="Loading analysis modules..." />;
   }
 
+  const semantic = advanced?.semantic;
+  const kg = advanced?.knowledge_graph;
   const norwegian = advanced?.norwegian_readability;
-  const generalReadability = insights?.health?.components?.readability ?? 0;
+  const predictive = advanced?.predictive_freshness;
+  const codesync = advanced?.enhanced_codesync;
+  const analysis = advanced?.advanced_analysis;
+
+  // Calculate summary metrics
+  const totalItems = freshness?.total_items ?? 0;
+  const freshCount = freshness?.fresh_count ?? 0;
+  const freshPercent = totalItems > 0 ? Math.round((freshCount / totalItems) * 100) : 0;
 
   return (
-    <div className="space-y-6">
-      {/* General Readability Score */}
-      <div className="card bg-gradient-to-br from-base-200 to-base-300 border border-base-300">
-        <div className="card-body">
-          <h3 className="card-title text-lg mb-4">Overall Readability</h3>
-          <div className="flex items-center gap-6">
-            <BookOpen size={40} className={generalReadability >= 80 ? 'text-success' : 'text-warning'} />
-            <div className="flex-1">
-              <div className="text-4xl font-bold">{Math.round(generalReadability)}</div>
-              <div className="text-base-content/60">Readability Score</div>
-            </div>
-            <div className={`badge badge-lg ${generalReadability >= 80 ? 'badge-success' : generalReadability >= 60 ? 'badge-warning' : 'badge-error'}`}>
-              {generalReadability >= 80 ? 'Excellent' : generalReadability >= 60 ? 'Good' : 'Needs Work'}
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="space-y-4">
+      <p className="text-base-content/60 mb-2">
+        Expand each section to view detailed analysis. Modules with issues show warning badges.
+      </p>
 
-      {/* Norwegian LIX */}
-      {norwegian?.available ? (
-        <>
-          <div className="card bg-base-200">
-            <div className="card-body">
-              <h3 className="card-title text-lg">Norwegian LIX Analysis</h3>
-              <p className="text-sm text-base-content/60 mb-4">Scandinavian readability standard</p>
-              <div className="flex items-center gap-6 mb-4">
-                <div className="text-center">
-                  <div className="text-4xl font-bold">{norwegian.average_lix?.toFixed(1) ?? 'N/A'}</div>
-                  <div className="text-sm text-base-content/60">Average LIX</div>
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm text-base-content/60 mb-2">Analyzed {norwegian.documents_analyzed ?? 0} documents</p>
-                  <div className="flex flex-wrap gap-2 text-xs">
-                    <span className="px-2 py-1 rounded bg-success/20 text-success">&lt;25 Very Easy</span>
-                    <span className="px-2 py-1 rounded bg-success/10 text-success/80">25-34 Easy</span>
-                    <span className="px-2 py-1 rounded bg-warning/20 text-warning">35-44 Medium</span>
-                    <span className="px-2 py-1 rounded bg-error/20 text-error">45-54 Difficult</span>
-                    <span className="px-2 py-1 rounded bg-error/30 text-error">&gt;54 Very Difficult</span>
-                  </div>
+      {/* Semantic Analysis */}
+      <ExpandableSection
+        title="Semantic Analysis"
+        description="Content similarity, duplicates, and terminology consistency"
+        icon={<Copy size={20} />}
+        tooltip={METRIC_EXPLANATIONS.semanticDuplicates}
+        statusBadge={(semantic?.near_duplicate_count ?? 0) > 0 ? 'warning' : undefined}
+        statusCount={semantic?.near_duplicate_count}
+      >
+        {!semantic?.available ? (
+          <div className="text-center py-6 text-base-content/60">
+            <Zap size={24} className="mx-auto mb-2 opacity-30" />
+            <p>{semantic?.reason || 'Semantic analysis not available'}</p>
+          </div>
+        ) : semantic?.error ? (
+          <div className="text-center py-6 text-error">
+            <AlertCircle size={24} className="mx-auto mb-2" />
+            <p>{semantic.error}</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Metrics */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center p-3 rounded-lg bg-base-300">
+                <div className="text-2xl font-bold text-warning">{semantic.near_duplicate_count ?? 0}</div>
+                <div className="text-xs text-base-content/60 flex items-center justify-center gap-1">
+                  Near Duplicates
+                  <InfoTooltip {...METRIC_EXPLANATIONS.semanticDuplicates} />
                 </div>
               </div>
+              <div className="text-center p-3 rounded-lg bg-base-300">
+                <div className="text-2xl font-bold text-primary">{semantic.drift_count ?? 0}</div>
+                <div className="text-xs text-base-content/60 flex items-center justify-center gap-1">
+                  Terminology Drift
+                  <InfoTooltip {...METRIC_EXPLANATIONS.terminologyDrift} />
+                </div>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-base-300">
+                <div className="text-2xl font-bold text-success">{semantic.cluster_count ?? 0}</div>
+                <div className="text-xs text-base-content/60">Content Clusters</div>
+              </div>
             </div>
-          </div>
 
-          {/* Difficult Documents */}
-          {norwegian.difficult_documents && norwegian.difficult_documents.length > 0 && (
-            <div className="card bg-base-200">
-              <div className="card-body">
-                <h3 className="card-title text-lg">Difficult Documents</h3>
-                <p className="text-sm text-base-content/60 mb-4">
-                  {norwegian.difficult_count ?? norwegian.difficult_documents.length} documents need simplification
-                </p>
+            {/* Near Duplicates */}
+            {semantic.near_duplicates && semantic.near_duplicates.length > 0 && (
+              <div className="pt-4 border-t border-base-300">
+                <h4 className="font-medium mb-2">Near-Duplicate Pairs</h4>
                 <div className="space-y-2">
-                  {norwegian.difficult_documents.map((doc, idx) => (
-                    <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-base-300">
+                  {semantic.near_duplicates.slice(0, 5).map((dup, idx) => (
+                    <div key={idx} className="flex items-center gap-2 p-2 rounded bg-base-300 text-sm">
                       <FileText size={14} className="text-base-content/60 flex-shrink-0" />
-                      <span className="text-sm truncate flex-1">{doc.path}</span>
-                      <div className={`badge badge-sm ${doc.difficulty_level === 'very_difficult' ? 'badge-error' : 'badge-warning'}`}>
-                        LIX: {doc.lix_score}
-                      </div>
-                      <span className="text-xs text-base-content/60">{doc.difficulty_level}</span>
+                      <span className="truncate">{dup.doc1_path}</span>
+                      <span className="text-base-content/50">~</span>
+                      <span className="truncate">{dup.doc2_path}</span>
+                      <span className="badge badge-warning badge-sm ml-auto">{Math.round(dup.similarity * 100)}%</span>
                     </div>
                   ))}
                 </div>
               </div>
-            </div>
-          )}
-        </>
-      ) : norwegian?.reason ? (
-        <ModuleUnavailable name="Norwegian LIX" reason={norwegian.reason} />
-      ) : null}
-    </div>
-  );
-}
-
-// Freshness View
-function FreshnessView() {
-  const { data: freshness, isLoading: freshnessLoading } = useFreshness();
-  const { data: advanced, isLoading: advancedLoading } = useAdvancedInsights();
-
-  if (freshnessLoading || advancedLoading) {
-    return <Loading message="Loading freshness analysis..." />;
-  }
-
-  const predictive = advanced?.predictive_freshness;
-  const totalItems = freshness?.total_items ?? 0;
-  const freshCount = freshness?.fresh_count ?? 0;
-  const staleCount = freshness?.stale_count ?? 0;
-  const expiredCount = freshness?.expired_count ?? 0;
-  const freshPercent = totalItems > 0 ? Math.round((freshCount / totalItems) * 100) : 0;
-
-  return (
-    <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="card bg-base-200 border border-success/30">
-          <div className="card-body p-4 items-center text-center">
-            <CheckCircle size={24} className="text-success" />
-            <span className="text-2xl font-bold">{freshCount}</span>
-            <span className="text-sm text-base-content/60">Fresh</span>
-          </div>
-        </div>
-        <div className={`card bg-base-200 ${staleCount > 0 ? 'border border-warning/30' : ''}`}>
-          <div className="card-body p-4 items-center text-center">
-            <Clock size={24} className="text-warning" />
-            <span className="text-2xl font-bold">{staleCount}</span>
-            <span className="text-sm text-base-content/60">Stale</span>
-          </div>
-        </div>
-        <div className={`card bg-base-200 ${expiredCount > 0 ? 'border border-error/30' : ''}`}>
-          <div className="card-body p-4 items-center text-center">
-            <XCircle size={24} className="text-error" />
-            <span className="text-2xl font-bold">{expiredCount}</span>
-            <span className="text-sm text-base-content/60">Expired</span>
-          </div>
-        </div>
-        {predictive?.available && (
-          <div className={`card bg-base-200 ${(predictive.high_risk_count ?? 0) > 0 ? 'border border-primary/30' : ''}`}>
-            <div className="card-body p-4 items-center text-center">
-              <RefreshCw size={24} className="text-primary" />
-              <span className="text-2xl font-bold">{predictive.high_risk_count ?? 0}</span>
-              <span className="text-sm text-base-content/60">High Risk</span>
-            </div>
+            )}
           </div>
         )}
-      </div>
+      </ExpandableSection>
 
-      {/* Overall Progress */}
-      <div className="card bg-base-200">
-        <div className="card-body">
-          <h3 className="card-title text-lg">Overall Freshness</h3>
-          <p className="text-sm text-base-content/60 mb-4">{totalItems} tracked items</p>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-lg font-semibold">{freshPercent}% Fresh</span>
-            <div className={`badge ${freshPercent >= 90 ? 'badge-success' : freshPercent >= 70 ? 'badge-warning' : 'badge-error'}`}>
-              {freshPercent >= 90 ? 'Excellent' : freshPercent >= 70 ? 'Good' : 'Needs Attention'}
+      {/* Knowledge Graph */}
+      <ExpandableSection
+        title="Knowledge Graph"
+        description="Document relationships, concepts, and prerequisites"
+        icon={<Network size={20} />}
+        tooltip={METRIC_EXPLANATIONS.orphanConcepts}
+        statusBadge={(kg?.orphan_count ?? 0) > 0 ? 'warning' : undefined}
+        statusCount={kg?.orphan_count}
+      >
+        {!kg?.available ? (
+          <div className="text-center py-6 text-base-content/60">
+            <Zap size={24} className="mx-auto mb-2 opacity-30" />
+            <p>{kg?.reason || 'Knowledge graph not available'}</p>
+          </div>
+        ) : kg?.error ? (
+          <div className="text-center py-6 text-error">
+            <AlertCircle size={24} className="mx-auto mb-2" />
+            <p>{kg.error}</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Metrics */}
+            <div className="grid grid-cols-4 gap-4">
+              <div className="text-center p-3 rounded-lg bg-base-300">
+                <div className="text-2xl font-bold text-primary">{kg.metrics?.total_nodes ?? kg.node_count ?? 0}</div>
+                <div className="text-xs text-base-content/60">Nodes</div>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-base-300">
+                <div className="text-2xl font-bold text-success">{kg.metrics?.total_edges ?? kg.edge_count ?? 0}</div>
+                <div className="text-xs text-base-content/60">Edges</div>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-base-300">
+                <div className="text-2xl font-bold text-warning">{kg.orphan_count ?? 0}</div>
+                <div className="text-xs text-base-content/60 flex items-center justify-center gap-1">
+                  Orphans
+                  <InfoTooltip {...METRIC_EXPLANATIONS.orphanConcepts} />
+                </div>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-base-300">
+                <div className="text-2xl font-bold text-error">{kg.prereq_issue_count ?? 0}</div>
+                <div className="text-xs text-base-content/60 flex items-center justify-center gap-1">
+                  Prereq Issues
+                  <InfoTooltip {...METRIC_EXPLANATIONS.prerequisiteIssues} />
+                </div>
+              </div>
+            </div>
+
+            {/* Graph Visualization */}
+            {reagraphNodes.length > 0 && (
+              <div className="pt-4 border-t border-base-300">
+                <h4 className="font-medium mb-2">Interactive Graph</h4>
+                <p className="text-sm text-base-content/60 mb-3">Drag to pan, scroll to zoom, click nodes for details.</p>
+                <GraphErrorBoundary fallbackHeight={350}>
+                  <GraphCanvas
+                    nodes={reagraphNodes}
+                    edges={reagraphEdges}
+                    height={350}
+                    showToolbar={true}
+                    showLegend={true}
+                    legendItems={knowledgeGraphLegend}
+                    layoutType="forceDirected2d"
+                  />
+                </GraphErrorBoundary>
+              </div>
+            )}
+
+            {/* Orphan Concepts */}
+            {kg.orphan_concepts && kg.orphan_concepts.length > 0 && (
+              <div className="pt-4 border-t border-base-300">
+                <h4 className="font-medium mb-2">Orphan Concepts</h4>
+                <div className="flex flex-wrap gap-2">
+                  {kg.orphan_concepts.slice(0, 8).map((orphan, idx) => {
+                    const name = typeof orphan === 'string' ? orphan : orphan?.concept ?? 'Unknown';
+                    return (
+                      <span key={idx} className="badge badge-warning gap-1">
+                        <Brain size={12} />
+                        {name}
+                      </span>
+                    );
+                  })}
+                  {kg.orphan_concepts.length > 8 && (
+                    <span className="badge badge-ghost">+{kg.orphan_concepts.length - 8} more</span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </ExpandableSection>
+
+      {/* Readability */}
+      <ExpandableSection
+        title="Readability"
+        description="Content accessibility and Norwegian LIX analysis"
+        icon={<BookOpen size={20} />}
+        tooltip={METRIC_EXPLANATIONS.readability}
+        statusBadge={norwegian?.difficult_count && norwegian.difficult_count > 0 ? 'warning' : undefined}
+        statusCount={norwegian?.difficult_count}
+      >
+        <div className="space-y-4">
+          {/* General Score */}
+          <div className="flex items-center gap-4 p-4 rounded-lg bg-base-300">
+            <BookOpen size={32} className={insights?.health?.components?.readability && insights.health.components.readability >= 80 ? 'text-success' : 'text-warning'} />
+            <div>
+              <div className="text-2xl font-bold">{Math.round(insights?.health?.components?.readability ?? 0)}%</div>
+              <div className="text-sm text-base-content/60 flex items-center gap-1">
+                Overall Readability
+                <InfoTooltip {...METRIC_EXPLANATIONS.readability} />
+              </div>
             </div>
           </div>
-          <progress className="progress progress-success w-full h-3" value={freshPercent} max="100"></progress>
-        </div>
-      </div>
 
-      {/* Predictive Staleness */}
-      {predictive?.available && (
-        <div className="card bg-base-200">
-          <div className="card-body">
-            <h3 className="card-title text-lg">Predictive Staleness</h3>
-            <p className="text-sm text-base-content/60 mb-4">AI-powered freshness prediction</p>
-            <div className="grid grid-cols-4 gap-4 mb-4">
-              <div className="text-center p-3 rounded-lg bg-success/10">
-                <div className="text-lg font-bold text-success">{predictive.summary?.low_risk ?? 0}</div>
-                <div className="text-xs text-base-content/60">Low Risk</div>
+          {/* Norwegian LIX */}
+          {norwegian?.available ? (
+            <div className="pt-4 border-t border-base-300">
+              <h4 className="font-medium mb-2 flex items-center gap-2">
+                Norwegian LIX Analysis
+                <InfoTooltip {...METRIC_EXPLANATIONS.lixScore} />
+              </h4>
+              <div className="grid grid-cols-2 gap-4 mb-3">
+                <div className="text-center p-3 rounded-lg bg-base-300">
+                  <div className="text-2xl font-bold">{norwegian.average_lix?.toFixed(1) ?? 'N/A'}</div>
+                  <div className="text-xs text-base-content/60">Average LIX</div>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-base-300">
+                  <div className="text-2xl font-bold">{norwegian.documents_analyzed ?? 0}</div>
+                  <div className="text-xs text-base-content/60">Documents Analyzed</div>
+                </div>
               </div>
-              <div className="text-center p-3 rounded-lg bg-warning/10">
-                <div className="text-lg font-bold text-warning">{predictive.summary?.medium_risk ?? 0}</div>
-                <div className="text-xs text-base-content/60">Medium</div>
+              <div className="flex flex-wrap gap-2 text-xs">
+                <span className="px-2 py-1 rounded bg-success/20 text-success">&lt;25 Very Easy</span>
+                <span className="px-2 py-1 rounded bg-success/10 text-success/80">25-34 Easy</span>
+                <span className="px-2 py-1 rounded bg-warning/20 text-warning">35-44 Medium</span>
+                <span className="px-2 py-1 rounded bg-error/20 text-error">45-54 Difficult</span>
+                <span className="px-2 py-1 rounded bg-error/30 text-error">&gt;54 Very Difficult</span>
               </div>
-              <div className="text-center p-3 rounded-lg bg-error/10">
-                <div className="text-lg font-bold text-error">{predictive.summary?.high_risk ?? 0}</div>
-                <div className="text-xs text-base-content/60">High</div>
+            </div>
+          ) : norwegian?.reason ? (
+            <p className="text-sm text-base-content/60 pt-4 border-t border-base-300">
+              Norwegian LIX: {norwegian.reason}
+            </p>
+          ) : null}
+        </div>
+      </ExpandableSection>
+
+      {/* Freshness & Predictive */}
+      <ExpandableSection
+        title="Freshness & Staleness"
+        description="Content freshness tracking and predictive analysis"
+        icon={<Clock size={20} />}
+        tooltip={METRIC_EXPLANATIONS.freshness}
+        statusBadge={(freshness?.stale_count ?? 0) > 0 ? 'warning' : undefined}
+        statusCount={freshness?.stale_count}
+      >
+        <div className="space-y-4">
+          {/* Freshness Summary */}
+          <div className="grid grid-cols-4 gap-4">
+            <div className="text-center p-3 rounded-lg bg-success/10">
+              <div className="text-2xl font-bold text-success">{freshCount}</div>
+              <div className="text-xs text-base-content/60">Fresh</div>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-warning/10">
+              <div className="text-2xl font-bold text-warning">{freshness?.stale_count ?? 0}</div>
+              <div className="text-xs text-base-content/60">Stale</div>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-error/10">
+              <div className="text-2xl font-bold text-error">{freshness?.expired_count ?? 0}</div>
+              <div className="text-xs text-base-content/60">Expired</div>
+            </div>
+            <div className="text-center p-3 rounded-lg bg-primary/10">
+              <div className="text-2xl font-bold text-primary">{freshPercent}%</div>
+              <div className="text-xs text-base-content/60 flex items-center justify-center gap-1">
+                Overall
+                <InfoTooltip {...METRIC_EXPLANATIONS.freshnessProgress} />
               </div>
-              <div className="text-center p-3 rounded-lg bg-error/20">
-                <div className="text-lg font-bold text-error">{predictive.summary?.critical_risk ?? 0}</div>
-                <div className="text-xs text-base-content/60">Critical</div>
+            </div>
+          </div>
+
+          {/* Predictive Staleness */}
+          {predictive?.available && (
+            <div className="pt-4 border-t border-base-300">
+              <h4 className="font-medium mb-2 flex items-center gap-2">
+                Predictive Staleness
+                <InfoTooltip {...METRIC_EXPLANATIONS.predictiveStaleness} />
+              </h4>
+              <div className="grid grid-cols-4 gap-3 mb-3">
+                <div className="text-center p-2 rounded bg-success/10">
+                  <div className="font-bold text-success">{predictive.summary?.low_risk ?? 0}</div>
+                  <div className="text-xs">Low Risk</div>
+                </div>
+                <div className="text-center p-2 rounded bg-warning/10">
+                  <div className="font-bold text-warning">{predictive.summary?.medium_risk ?? 0}</div>
+                  <div className="text-xs">Medium</div>
+                </div>
+                <div className="text-center p-2 rounded bg-error/10">
+                  <div className="font-bold text-error">{predictive.summary?.high_risk ?? 0}</div>
+                  <div className="text-xs">High</div>
+                </div>
+                <div className="text-center p-2 rounded bg-error/20">
+                  <div className="font-bold text-error">{predictive.summary?.critical_risk ?? 0}</div>
+                  <div className="text-xs">Critical</div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </ExpandableSection>
+
+      {/* Code Sync */}
+      <ExpandableSection
+        title="Code Synchronization"
+        description="Code example validation and API reference checks"
+        icon={<Code size={20} />}
+        tooltip={METRIC_EXPLANATIONS.syntaxErrors}
+        statusBadge={(codesync?.syntax_error_count ?? 0) > 0 ? 'error' : (codesync?.deprecated_count ?? 0) > 0 ? 'warning' : undefined}
+        statusCount={(codesync?.syntax_error_count ?? 0) + (codesync?.deprecated_count ?? 0)}
+      >
+        {!codesync?.available ? (
+          <div className="text-center py-6 text-base-content/60">
+            <Zap size={24} className="mx-auto mb-2 opacity-30" />
+            <p>{codesync?.reason || 'Code sync analysis not available'}</p>
+          </div>
+        ) : codesync?.error ? (
+          <div className="text-center py-6 text-error">
+            <AlertCircle size={24} className="mx-auto mb-2" />
+            <p>{codesync.error}</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center p-3 rounded-lg bg-base-300">
+                <div className="text-2xl font-bold text-error">{codesync.syntax_error_count ?? 0}</div>
+                <div className="text-xs text-base-content/60 flex items-center justify-center gap-1">
+                  Syntax Errors
+                  <InfoTooltip {...METRIC_EXPLANATIONS.syntaxErrors} />
+                </div>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-base-300">
+                <div className="text-2xl font-bold text-warning">{codesync.deprecated_count ?? 0}</div>
+                <div className="text-xs text-base-content/60 flex items-center justify-center gap-1">
+                  Deprecated
+                  <InfoTooltip {...METRIC_EXPLANATIONS.deprecatedPatterns} />
+                </div>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-base-300">
+                <div className="text-2xl font-bold text-primary">{codesync.api_issue_count ?? 0}</div>
+                <div className="text-xs text-base-content/60 flex items-center justify-center gap-1">
+                  API Issues
+                  <InfoTooltip {...METRIC_EXPLANATIONS.apiIssues} />
+                </div>
               </div>
             </div>
 
-            {predictive.high_risk_documents && predictive.high_risk_documents.length > 0 && (
-              <div className="space-y-2 pt-4 border-t border-base-300">
-                <h4 className="font-medium">High Risk Documents</h4>
-                {predictive.high_risk_documents.map((doc, idx) => (
-                  <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-base-300">
-                    <AlertTriangle size={14} className="text-warning flex-shrink-0" />
-                    <span className="text-sm truncate flex-1">{doc.path}</span>
-                    <div className={`badge badge-sm ${doc.risk_level === 'critical' ? 'badge-error' : 'badge-warning'}`}>
-                      {Math.round(doc.staleness_probability * 100)}% likely stale
+            {/* Syntax Errors List */}
+            {codesync.syntax_errors && codesync.syntax_errors.length > 0 && (
+              <div className="pt-4 border-t border-base-300">
+                <h4 className="font-medium mb-2">Syntax Errors</h4>
+                <div className="space-y-2">
+                  {codesync.syntax_errors.slice(0, 5).map((issue, idx) => (
+                    <div key={idx} className="p-2 rounded bg-base-300 text-sm">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle size={14} className="text-error" />
+                        <span className="truncate">{issue.document}</span>
+                        <span className="badge badge-error badge-sm">Line {issue.line}</span>
+                      </div>
+                      <p className="text-xs text-base-content/60 mt-1 pl-5">{issue.message}</p>
                     </div>
-                    {doc.days_until_stale && (
-                      <span className="text-xs text-base-content/60">~{doc.days_until_stale} days</span>
-                    )}
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
           </div>
-        </div>
-      )}
-
-      {/* Stale Items */}
-      {freshness?.stale_items && freshness.stale_items.length > 0 && (
-        <div className="card bg-base-200 border border-warning/30">
-          <div className="card-body">
-            <h3 className="card-title text-lg">Stale Content</h3>
-            <p className="text-sm text-base-content/60 mb-4">{freshness.stale_items.length} items need attention</p>
-            <div className="space-y-2">
-              {freshness.stale_items.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-base-300">
-                  <Clock size={14} className="text-warning flex-shrink-0" />
-                  <span className="text-sm truncate flex-1">{item.path}</span>
-                  <div className="badge badge-ghost badge-sm">{item.content_type}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Code Sync View
-function CodeSyncView() {
-  const { data: advanced, isLoading } = useAdvancedInsights();
-
-  if (isLoading) {
-    return <Loading message="Loading code sync analysis..." />;
-  }
-
-  const codesync = advanced?.enhanced_codesync;
-
-  if (!codesync?.available) {
-    return <ModuleUnavailable name="Enhanced Code Sync" reason={codesync?.reason} />;
-  }
-
-  if (codesync?.error) {
-    return <ModuleError name="Enhanced Code Sync" error={codesync.error} />;
-  }
-
-  return (
-    <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className={`card bg-base-200 ${(codesync.syntax_error_count ?? 0) > 0 ? 'border border-error/30' : ''}`}>
-          <div className="card-body p-4 items-center text-center">
-            <AlertCircle size={24} className="text-error" />
-            <span className="text-2xl font-bold">{codesync.syntax_error_count ?? 0}</span>
-            <span className="text-sm text-base-content/60 flex items-center gap-1">
-              Syntax Errors
-              <InfoTooltip {...METRIC_EXPLANATIONS.syntaxErrors} />
-            </span>
-          </div>
-        </div>
-        <div className={`card bg-base-200 ${(codesync.deprecated_count ?? 0) > 0 ? 'border border-warning/30' : ''}`}>
-          <div className="card-body p-4 items-center text-center">
-            <AlertTriangle size={24} className="text-warning" />
-            <span className="text-2xl font-bold">{codesync.deprecated_count ?? 0}</span>
-            <span className="text-sm text-base-content/60 flex items-center gap-1">
-              Deprecated
-              <InfoTooltip {...METRIC_EXPLANATIONS.deprecatedPatterns} />
-            </span>
-          </div>
-        </div>
-        <div className={`card bg-base-200 ${(codesync.api_issue_count ?? 0) > 0 ? 'border border-primary/30' : ''}`}>
-          <div className="card-body p-4 items-center text-center">
-            <Code size={24} className="text-primary" />
-            <span className="text-2xl font-bold">{codesync.api_issue_count ?? 0}</span>
-            <span className="text-sm text-base-content/60 flex items-center gap-1">
-              API Issues
-              <InfoTooltip {...METRIC_EXPLANATIONS.apiIssues} />
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Syntax Errors */}
-      <div className="card bg-base-200">
-        <div className="card-body">
-          <h3 className="card-title text-lg">Syntax Errors</h3>
-          <p className="text-sm text-base-content/60 mb-4">Invalid code blocks in documentation</p>
-          {codesync.syntax_errors && codesync.syntax_errors.length > 0 ? (
-            <div className="space-y-3">
-              {codesync.syntax_errors.slice(0, 10).map((issue, idx) => (
-                <div key={idx} className="p-3 rounded-lg bg-base-300 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle size={14} className="text-error" />
-                    <span className="text-sm truncate flex-1">{issue.document}</span>
-                    <div className="badge badge-error badge-sm">Line {issue.line}</div>
-                  </div>
-                  <p className="text-sm text-base-content/70 pl-5">{issue.message}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <CheckCircle size={24} className="text-success mx-auto mb-2" />
-              <p className="text-sm text-base-content/60">All code blocks have valid syntax</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Deprecated Patterns */}
-      <div className="card bg-base-200">
-        <div className="card-body">
-          <h3 className="card-title text-lg">Deprecated Patterns</h3>
-          <p className="text-sm text-base-content/60 mb-4">Outdated code patterns in examples</p>
-          {codesync.deprecated_patterns && codesync.deprecated_patterns.length > 0 ? (
-            <div className="space-y-3">
-              {codesync.deprecated_patterns.slice(0, 10).map((issue, idx) => (
-                <div key={idx} className="p-3 rounded-lg bg-base-300 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle size={14} className="text-warning" />
-                    <span className="text-sm truncate">{issue.document}</span>
-                  </div>
-                  <p className="text-sm text-base-content/70 pl-5">{issue.message}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <CheckCircle size={24} className="text-success mx-auto mb-2" />
-              <p className="text-sm text-base-content/60">No deprecated patterns found</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* API Issues */}
-      <div className="card bg-base-200">
-        <div className="card-body">
-          <h3 className="card-title text-lg">API Reference Issues</h3>
-          <p className="text-sm text-base-content/60 mb-4">Invalid or outdated API references</p>
-          {codesync.api_issues && codesync.api_issues.length > 0 ? (
-            <div className="space-y-3">
-              {codesync.api_issues.slice(0, 10).map((issue, idx) => (
-                <div key={idx} className="p-3 rounded-lg bg-base-300 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Code size={14} className="text-primary" />
-                    <span className="text-sm truncate">{issue.document}</span>
-                  </div>
-                  <p className="text-sm text-base-content/70 pl-5">{issue.message}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <CheckCircle size={24} className="text-success mx-auto mb-2" />
-              <p className="text-sm text-base-content/60">All API references are valid</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Advanced Analysis View
-function AdvancedView() {
-  const { data: advanced, isLoading } = useAdvancedInsights();
-
-  if (isLoading) {
-    return <Loading message="Loading advanced analysis..." />;
-  }
-
-  const analysis = advanced?.advanced_analysis;
-
-  if (!analysis?.available) {
-    return <ModuleUnavailable name="Advanced Analysis" reason={analysis?.reason} />;
-  }
-
-  if (analysis?.error) {
-    return <ModuleError name="Advanced Analysis" error={analysis.error} />;
-  }
-
-  const audienceDrift = analysis.audience_drift;
-  const questionCoverage = analysis.question_coverage;
-  const crossRefs = analysis.cross_references;
-  const style = analysis.style_consistency;
-
-  return (
-    <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {audienceDrift && (
-          <div className={`card bg-base-200 ${audienceDrift.drift_score > 0.3 ? 'border border-warning/30' : ''}`}>
-            <div className="card-body p-4 items-center text-center">
-              <Target size={24} className="text-primary" />
-              <span className="text-lg font-bold">{audienceDrift.trend}</span>
-              <span className="text-sm text-base-content/60">Audience Drift</span>
-            </div>
-          </div>
         )}
-        {questionCoverage && (
-          <div className="card bg-base-200">
-            <div className="card-body p-4 items-center text-center">
-              <HelpCircle size={24} className="text-success" />
-              <span className="text-2xl font-bold">{questionCoverage.coverage_percent?.toFixed(0) ?? 0}%</span>
-              <span className="text-sm text-base-content/60">Questions Covered</span>
-            </div>
-          </div>
-        )}
-        {crossRefs && (
-          <div className="card bg-base-200">
-            <div className="card-body p-4 items-center text-center">
-              <Link2 size={24} className="text-info" />
-              <span className="text-2xl font-bold">{crossRefs.total_references ?? 0}</span>
-              <span className="text-sm text-base-content/60">Cross-References</span>
-            </div>
-          </div>
-        )}
-        {style && (
-          <div className={`card bg-base-200 ${style.style_score < 70 ? 'border border-warning/30' : ''}`}>
-            <div className="card-body p-4 items-center text-center">
-              <BarChart3 size={24} className="text-warning" />
-              <span className="text-2xl font-bold">{style.style_score?.toFixed(0) ?? 0}</span>
-              <span className="text-sm text-base-content/60">Style Score</span>
-            </div>
-          </div>
-        )}
-      </div>
+      </ExpandableSection>
 
-      {/* Audience Drift */}
-      {audienceDrift && (
-        <div className="card bg-base-200">
-          <div className="card-body">
-            <h3 className="card-title text-lg">Audience Drift Analysis</h3>
-            <p className="text-sm text-base-content/60 mb-4">Content complexity trends over time</p>
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-sm text-base-content/60">Complexity Trend:</span>
-              <div className={`badge ${audienceDrift.trend === 'stable' ? 'badge-success' : 'badge-warning'}`}>
-                {audienceDrift.trend}
-              </div>
-            </div>
-            {audienceDrift.documents_with_drift?.length > 0 && (
-              <div className="space-y-2 pt-4 border-t border-base-300">
-                <h4 className="font-medium">Documents with Drift</h4>
-                {audienceDrift.documents_with_drift.slice(0, 5).map((doc, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-sm">
-                    <FileText size={14} className="text-base-content/60" />
-                    <span>{doc}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+      {/* Advanced Analysis */}
+      <ExpandableSection
+        title="Advanced Analysis"
+        description="Audience drift, question coverage, cross-references, and style"
+        icon={<TrendingUp size={20} />}
+      >
+        {!analysis?.available ? (
+          <div className="text-center py-6 text-base-content/60">
+            <Zap size={24} className="mx-auto mb-2 opacity-30" />
+            <p>{analysis?.reason || 'Advanced analysis not available'}</p>
           </div>
-        </div>
-      )}
-
-      {/* Question Coverage */}
-      {questionCoverage && (
-        <div className="card bg-base-200">
-          <div className="card-body">
-            <h3 className="card-title text-lg">Question Coverage</h3>
-            <p className="text-sm text-base-content/60 mb-4">How well your content answers reader questions</p>
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="text-center p-4 rounded-lg bg-base-300">
-                <div className="text-2xl font-bold">{questionCoverage.total_questions ?? 0}</div>
-                <div className="text-sm text-base-content/60">Total Questions</div>
-              </div>
-              <div className="text-center p-4 rounded-lg bg-base-300">
-                <div className="text-2xl font-bold text-success">{questionCoverage.answered_questions ?? 0}</div>
-                <div className="text-sm text-base-content/60">Answered</div>
-              </div>
-            </div>
-            <div className="space-y-1 mb-4">
-              <div className="flex justify-between text-sm">
-                <span>Coverage</span>
-                <span>{questionCoverage.coverage_percent ?? 0}%</span>
-              </div>
-              <progress className="progress progress-success w-full" value={questionCoverage.coverage_percent ?? 0} max="100"></progress>
-            </div>
-            {questionCoverage.unanswered_questions?.length > 0 && (
-              <div className="space-y-2 pt-4 border-t border-base-300">
-                <h4 className="font-medium">Unanswered Questions</h4>
-                {questionCoverage.unanswered_questions.slice(0, 5).map((q, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-sm">
-                    <HelpCircle size={14} className="text-warning flex-shrink-0" />
-                    <span>{q}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+        ) : analysis?.error ? (
+          <div className="text-center py-6 text-error">
+            <AlertCircle size={24} className="mx-auto mb-2" />
+            <p>{analysis.error}</p>
           </div>
-        </div>
-      )}
-
-      {/* Cross-Reference Density */}
-      {crossRefs && (
-        <div className="card bg-base-200">
-          <div className="card-body">
-            <h3 className="card-title text-lg">Cross-Reference Analysis</h3>
-            <p className="text-sm text-base-content/60 mb-4">Internal and external linking</p>
-            <div className="space-y-3 mb-4">
-              <div className="flex justify-between items-center p-3 rounded-lg bg-base-300">
-                <span>Internal References</span>
-                <strong>{crossRefs.internal_references ?? 0}</strong>
-              </div>
-              <div className="flex justify-between items-center p-3 rounded-lg bg-base-300">
-                <span>External References</span>
-                <strong>{crossRefs.external_references ?? 0}</strong>
-              </div>
-              <div className="flex justify-between items-center p-3 rounded-lg bg-base-300">
-                <span>Density Score</span>
-                <strong>{crossRefs.density_score?.toFixed(1) ?? 'N/A'}</strong>
-              </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {analysis.audience_drift && (
+                <div className="text-center p-3 rounded-lg bg-base-300">
+                  <Target size={20} className="mx-auto mb-1 text-primary" />
+                  <div className="font-bold">{analysis.audience_drift.trend}</div>
+                  <div className="text-xs text-base-content/60">Audience Drift</div>
+                </div>
+              )}
+              {analysis.question_coverage && (
+                <div className="text-center p-3 rounded-lg bg-base-300">
+                  <HelpCircle size={20} className="mx-auto mb-1 text-success" />
+                  <div className="font-bold">{analysis.question_coverage.coverage_percent?.toFixed(0) ?? 0}%</div>
+                  <div className="text-xs text-base-content/60">Question Coverage</div>
+                </div>
+              )}
+              {analysis.cross_references && (
+                <div className="text-center p-3 rounded-lg bg-base-300">
+                  <Link2 size={20} className="mx-auto mb-1 text-info" />
+                  <div className="font-bold">{analysis.cross_references.total_references ?? 0}</div>
+                  <div className="text-xs text-base-content/60">Cross-References</div>
+                </div>
+              )}
+              {analysis.style_consistency && (
+                <div className="text-center p-3 rounded-lg bg-base-300">
+                  <BarChart3 size={20} className="mx-auto mb-1 text-warning" />
+                  <div className="font-bold">{analysis.style_consistency.style_score?.toFixed(0) ?? 0}</div>
+                  <div className="text-xs text-base-content/60">Style Score</div>
+                </div>
+              )}
             </div>
-            {crossRefs.orphan_references?.length > 0 && (
-              <div className="space-y-2 pt-4 border-t border-base-300">
-                <h4 className="font-medium">Orphan References ({crossRefs.orphan_references.length})</h4>
-                {crossRefs.orphan_references.slice(0, 5).map((ref, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-sm">
-                    <Link2 size={14} className="text-warning flex-shrink-0" />
-                    <span>{ref}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
-      {/* Style Consistency */}
-      {style && (
-        <div className="card bg-base-200">
-          <div className="card-body">
-            <h3 className="card-title text-lg">Style Consistency</h3>
-            <p className="text-sm text-base-content/60 mb-4">Writing style uniformity across documents</p>
-            <div className="space-y-1 mb-4">
-              <div className="flex justify-between text-sm">
-                <span>Style Score</span>
-                <span>{style.style_score ?? 0}%</span>
-              </div>
-              <progress
-                className={`progress w-full h-3 ${style.style_score >= 80 ? 'progress-success' : style.style_score >= 60 ? 'progress-warning' : 'progress-error'}`}
-                value={style.style_score ?? 0}
-                max="100"
-              ></progress>
-            </div>
-            {style.inconsistencies?.length > 0 && (
-              <div className="space-y-2 pt-4 border-t border-base-300">
-                <h4 className="font-medium">Style Inconsistencies</h4>
-                {style.inconsistencies.slice(0, 5).map((item, idx) => (
-                  <div key={idx} className="flex items-start gap-2 text-sm p-3 rounded-lg bg-base-300">
-                    <AlertTriangle size={14} className="text-warning flex-shrink-0 mt-0.5" />
-                    <div>
-                      <span className="text-base-content/60">{item.document}</span>
-                      <span className="mx-2">-</span>
-                      <span>{item.issue}</span>
+            {/* Unanswered Questions */}
+            {(analysis.question_coverage?.unanswered_questions?.length ?? 0) > 0 && (
+              <div className="pt-4 border-t border-base-300">
+                <h4 className="font-medium mb-2">Unanswered Questions</h4>
+                <div className="space-y-1">
+                  {analysis.question_coverage?.unanswered_questions?.slice(0, 5).map((q, idx) => (
+                    <div key={idx} className="flex items-center gap-2 text-sm">
+                      <HelpCircle size={14} className="text-warning flex-shrink-0" />
+                      <span>{q}</span>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
           </div>
-        </div>
-      )}
+        )}
+      </ExpandableSection>
     </div>
   );
 }
 
-// Activity View
+// ============== ACTIVITY TAB ==============
 function ActivityView() {
   const { data: auditLog, isLoading: auditLoading } = useAuditLog();
   const { data: insights, isLoading: insightsLoading } = useInsights();
@@ -1160,11 +671,14 @@ function ActivityView() {
       {/* Recent Commits */}
       <div className="card bg-base-200">
         <div className="card-body">
-          <h3 className="card-title text-lg">Recent Commits</h3>
-          <p className="text-sm text-base-content/60 mb-4">Git activity</p>
+          <h3 className="card-title text-lg flex items-center gap-2">
+            Recent Commits
+            <InfoTooltip {...METRIC_EXPLANATIONS.recentCommits} />
+          </h3>
+          <p className="text-sm text-base-content/60 mb-4">Git activity affecting content files</p>
           {recentChanges.length > 0 ? (
             <div className="space-y-3">
-              {recentChanges.slice(0, 5).map((change, idx) => (
+              {recentChanges.slice(0, 8).map((change, idx) => (
                 <div key={idx} className="p-3 rounded-lg bg-base-300">
                   <div className="flex items-start gap-3">
                     <GitCommit size={16} className="text-primary flex-shrink-0 mt-0.5" />
@@ -1196,10 +710,10 @@ function ActivityView() {
       <div className="card bg-base-200">
         <div className="card-body">
           <h3 className="card-title text-lg">Audit Log</h3>
-          <p className="text-sm text-base-content/60 mb-4">System activity</p>
+          <p className="text-sm text-base-content/60 mb-4">System activity and actions</p>
           {entries.length > 0 ? (
             <div className="space-y-2">
-              {entries.slice(0, 10).map((entry, idx) => (
+              {entries.slice(0, 15).map((entry, idx) => (
                 <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-base-300">
                   <ActivityIcon size={14} className="text-base-content/40 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
@@ -1222,7 +736,7 @@ function ActivityView() {
   );
 }
 
-// Main Quality Page
+// ============== MAIN QUALITY PAGE ==============
 export function Quality() {
   return (
     <div className="space-y-6">
@@ -1232,13 +746,8 @@ export function Quality() {
       </div>
 
       <Routes>
-        <Route index element={<QualityView />} />
-        <Route path="semantic" element={<SemanticView />} />
-        <Route path="knowledge" element={<KnowledgeView />} />
-        <Route path="readability" element={<ReadabilityView />} />
-        <Route path="freshness" element={<FreshnessView />} />
-        <Route path="codesync" element={<CodeSyncView />} />
-        <Route path="advanced" element={<AdvancedView />} />
+        <Route index element={<OverviewView />} />
+        <Route path="analysis" element={<AnalysisView />} />
         <Route path="activity" element={<ActivityView />} />
       </Routes>
     </div>

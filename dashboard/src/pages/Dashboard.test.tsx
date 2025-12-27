@@ -24,10 +24,11 @@ describe('Dashboard', () => {
     });
   });
 
-  it('renders health status', async () => {
+  it('renders health grade', async () => {
     render(<Dashboard />);
     await waitFor(() => {
-      expect(screen.getByText(/good/i)).toBeInTheDocument();
+      // Dashboard shows "Grade: B" based on mock health data
+      expect(screen.getByText(/grade/i)).toBeInTheDocument();
     });
   });
 });

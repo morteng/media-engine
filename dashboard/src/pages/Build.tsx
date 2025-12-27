@@ -31,6 +31,7 @@ const formatIcons: Record<string, typeof FileText> = {
   xlsx: Table,
   pdf: FileText,
   video: Film,
+  mp4: Film,
 };
 
 const formatColors: Record<string, string> = {
@@ -38,6 +39,8 @@ const formatColors: Record<string, string> = {
   pptx: 'badge-warning',
   xlsx: 'badge-success',
   pdf: 'badge-error',
+  video: 'badge-secondary',
+  mp4: 'badge-secondary',
 };
 
 function formatFileSize(bytes: number): string {

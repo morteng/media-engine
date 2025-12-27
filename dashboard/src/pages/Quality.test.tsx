@@ -81,32 +81,27 @@ describe('Quality Tabs', () => {
   it('renders all sub-tabs', async () => {
     renderQuality();
     await waitFor(() => {
-      expect(screen.getByRole('tab', { name: /^quality$/i })).toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: /semantic/i })).toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: /knowledge/i })).toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: /readability/i })).toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: /freshness/i })).toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: /code sync/i })).toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: /advanced/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /overview/i })).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /analysis/i })).toBeInTheDocument();
       expect(screen.getByRole('tab', { name: /activity/i })).toBeInTheDocument();
     });
   });
 
-  it('renders semantic tab when navigated to /quality/semantic', async () => {
-    renderQuality('/quality/semantic');
+  it('renders analysis tab when navigated to /quality/analysis', async () => {
+    renderQuality('/quality/analysis');
     await waitFor(() => {
-      // Semantic tab should be active
-      const semanticTab = screen.getByRole('tab', { name: /semantic/i });
-      expect(semanticTab).toHaveClass('tab-active');
+      // Analysis tab should be active
+      const analysisTab = screen.getByRole('tab', { name: /analysis/i });
+      expect(analysisTab).toHaveClass('tab-active');
     });
   });
 
-  it('renders freshness tab when navigated to /quality/freshness', async () => {
-    renderQuality('/quality/freshness');
+  it('renders activity tab when navigated to /quality/activity', async () => {
+    renderQuality('/quality/activity');
     await waitFor(() => {
-      // Freshness tab should be active
-      const freshnessTab = screen.getByRole('tab', { name: /freshness/i });
-      expect(freshnessTab).toHaveClass('tab-active');
+      // Activity tab should be active
+      const activityTab = screen.getByRole('tab', { name: /activity/i });
+      expect(activityTab).toHaveClass('tab-active');
     });
   });
 });

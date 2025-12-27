@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { useProject, useDocuments, useDocument, useInsights, useSaveDocument, useHierarchyTree, useBreadcrumbs, useHierarchyNode, useFlowGraph } from '@/hooks/useApi';
+import { useProject, useDocuments, useDocument, useInsights, useSaveDocument, useHierarchyTree, useBreadcrumbs, useHierarchyNode, useFlowGraph, useUnifiedGraph } from '@/hooks/useApi';
 import { SubTabs } from '@/components/ui/SubTabs';
 import { MarkdownPreview } from '@/components/ui/MarkdownPreview';
 import { SelectionAnnotation } from '@/components/ui/SelectionAnnotation';
-import { HierarchyTree, Breadcrumbs, FlowDiagram, ReagraphFlow } from '@/components/hierarchy';
+import { HierarchyTree, Breadcrumbs, FlowDiagram, ReagraphFlow, LanguagePanelGraph } from '@/components/hierarchy';
 import {
   FileText,
   FolderOpen,
@@ -24,6 +24,9 @@ import {
   Users,
   List,
   Network,
+  Columns,
+  Book,
+  FileQuestion,
 } from 'lucide-react';
 import { Video as VideoView } from './Video';
 import { Media as MediaView } from './Media';
@@ -156,6 +159,12 @@ function DocumentsView() {
             const docsList = docs as Array<{ path: string; title: string }>;
             const hasActiveDoc = docsList.some(d => d.path === selectedDoc);
 
+            // Check if this is a publication category (starts with 📚)
+            const isPublication = category.startsWith('📚 ');
+            const isStandalone = category === 'Standalone Chapters';
+            const displayName = isPublication ? category.replace('📚 ', '') : category;
+            const CategoryIcon = isPublication ? Book : isStandalone ? FileQuestion : FolderOpen;
+
             return (
               <div key={category} className="mb-1">
                 <button
@@ -163,8 +172,8 @@ function DocumentsView() {
                   onClick={() => toggleCategory(category)}
                 >
                   {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                  <FolderOpen size={14} className="text-primary" />
-                  <span className="flex-1 truncate">{category}</span>
+                  <CategoryIcon size={14} className={isPublication ? 'text-success' : isStandalone ? 'text-warning' : 'text-primary'} />
+                  <span className="flex-1 truncate">{displayName}</span>
                   <div className="badge badge-ghost badge-sm">{docsList.length}</div>
                 </button>
 
@@ -337,7 +346,7 @@ function createFallbackGraph(documents: Record<string, Array<{ path: string; tit
     position: { x: 400, y: 50 },
   });
 
-  let yOffset = 150;
+  const yOffset = 150;
 
   // Add category nodes and document nodes
   Object.entries(documents).forEach(([category, docs], catIndex) => {
@@ -404,13 +413,14 @@ function HierarchyView() {
   const { data: project } = useProject();
   const [selectedLang, setSelectedLang] = useState('en');
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'tree' | 'flow' | 'graph'>('tree');
+  const [viewMode, setViewMode] = useState<'tree' | 'flow' | 'graph' | 'panel'>('panel');
 
   const { data: hierarchyTree, isLoading: treeLoading } = useHierarchyTree(selectedLang);
   const { data: nodeDetail, isLoading: nodeLoading } = useHierarchyNode(selectedPath ?? '');
   const { data: breadcrumbs } = useBreadcrumbs(selectedPath ?? '');
   const { data: flowGraph, isLoading: flowLoading } = useFlowGraph({ language: selectedLang });
   const { data: documents, isLoading: docsLoading } = useDocuments(selectedLang);
+  const { data: unifiedGraph, isLoading: unifiedLoading } = useUnifiedGraph();
 
   const languages = project?.languages ? Object.keys(project.languages) : ['en'];
 
@@ -427,13 +437,14 @@ function HierarchyView() {
   }, [flowGraph, documents]);
 
   const isLoading = (viewMode === 'tree' && treeLoading) ||
-    ((viewMode === 'flow' || viewMode === 'graph') && flowLoading && docsLoading);
+    ((viewMode === 'flow' || viewMode === 'graph') && flowLoading && docsLoading) ||
+    (viewMode === 'panel' && unifiedLoading);
 
   // Shared header with language selector and view mode toggle
   const renderHeader = () => (
     <div className="flex items-center justify-between mb-4">
       <div className="flex gap-1">
-        {languages.map(lang => (
+        {viewMode !== 'panel' && languages.map(lang => (
           <button
             key={lang}
             className={`btn btn-xs ${selectedLang === lang ? 'btn-primary' : 'btn-ghost'}`}
@@ -442,8 +453,18 @@ function HierarchyView() {
             {lang.toUpperCase()}
           </button>
         ))}
+        {viewMode === 'panel' && (
+          <span className="text-sm text-base-content/60">All languages</span>
+        )}
       </div>
       <div className="flex gap-1">
+        <button
+          className={`btn btn-xs gap-1 ${viewMode === 'panel' ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() => setViewMode('panel')}
+          title="Side-by-side language view"
+        >
+          <Columns size={14} /> Panel
+        </button>
         <button
           className={`btn btn-xs gap-1 ${viewMode === 'tree' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => setViewMode('tree')}
@@ -477,6 +498,28 @@ function HierarchyView() {
               {viewMode === 'tree' ? 'Loading hierarchy...' : 'Loading flow graph...'}
             </p>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Side-by-side language panel view
+  if (viewMode === 'panel') {
+    return (
+      <div className="space-y-4">
+        {renderHeader()}
+        <div className="h-[calc(100vh-280px)] bg-base-200 rounded-lg overflow-hidden">
+          {unifiedGraph ? (
+            <LanguagePanelGraph
+              data={unifiedGraph}
+              selectedNode={selectedPath ?? undefined}
+              onNodeClick={setSelectedPath}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <span className="text-base-content/60">No relationship data available</span>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -899,10 +942,51 @@ function TranslationsView() {
 
 // Main Content Page
 export function Content() {
+  const [showCreateHelp, setShowCreateHelp] = useState(false);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold">Content</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-semibold">Content</h1>
+          <div className="relative">
+            <button
+              className="btn btn-ghost btn-xs gap-1"
+              onClick={() => setShowCreateHelp(!showCreateHelp)}
+            >
+              <FileText size={14} />
+              Create
+            </button>
+            {showCreateHelp && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowCreateHelp(false)} />
+                <div className="absolute left-0 top-full mt-2 z-50 w-80 p-4 bg-base-200 border border-base-300 rounded-lg shadow-lg">
+                  <h4 className="font-semibold mb-2">Creating Content</h4>
+                  <p className="text-sm text-base-content/70 mb-3">
+                    Content is created as Markdown files in your project's content directory.
+                  </p>
+                  <div className="text-sm space-y-2">
+                    <div className="p-2 bg-base-300 rounded font-mono text-xs">
+                      content/{'{lang}'}/chapters/my_doc.md
+                    </div>
+                    <p className="text-base-content/60">
+                      Add YAML frontmatter for title and metadata. Use the CLI for guided creation:
+                    </p>
+                    <div className="p-2 bg-base-300 rounded font-mono text-xs">
+                      media-engine init --template chapter
+                    </div>
+                  </div>
+                  <button
+                    className="btn btn-ghost btn-xs mt-3"
+                    onClick={() => setShowCreateHelp(false)}
+                  >
+                    Got it
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
         <SubTabs tabs={tabs} basePath="/content" />
       </div>
 

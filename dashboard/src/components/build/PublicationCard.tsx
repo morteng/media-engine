@@ -1,4 +1,4 @@
-import { BookOpen, Presentation, Table, FileSpreadsheet, CheckCircle } from 'lucide-react';
+import { BookOpen, Presentation, Table, FileSpreadsheet, Film, CheckCircle } from 'lucide-react';
 import type { PublicationBuildInfo } from '@/api/types';
 
 const typeIcons = {
@@ -6,6 +6,7 @@ const typeIcons = {
   deck: Presentation,
   spreadsheet: Table,
   report: FileSpreadsheet,
+  video: Film,
 };
 
 const formatLabels: Record<string, string> = {
@@ -13,6 +14,8 @@ const formatLabels: Record<string, string> = {
   pptx: 'PPTX',
   xlsx: 'XLSX',
   pdf: 'PDF',
+  mp4: 'MP4',
+  video: 'Video',
 };
 
 const formatColors: Record<string, { active: string; inactive: string }> = {
@@ -20,6 +23,8 @@ const formatColors: Record<string, { active: string; inactive: string }> = {
   pptx: { active: 'badge-warning', inactive: 'badge-outline opacity-50' },
   xlsx: { active: 'badge-success', inactive: 'badge-outline opacity-50' },
   pdf: { active: 'badge-error', inactive: 'badge-outline opacity-50' },
+  mp4: { active: 'badge-secondary', inactive: 'badge-outline opacity-50' },
+  video: { active: 'badge-secondary', inactive: 'badge-outline opacity-50' },
 };
 
 interface PublicationCardProps {

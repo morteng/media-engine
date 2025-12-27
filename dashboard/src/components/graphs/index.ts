@@ -9,6 +9,9 @@
 export { GraphCanvas, SelectableGraphCanvas } from './GraphCanvas';
 export type { GraphCanvasProps } from './GraphCanvas';
 
+// Error boundary
+export { GraphErrorBoundary } from './GraphErrorBoundary';
+
 // Controls and UI
 export { GraphToolbar } from './GraphToolbar';
 export { GraphLegend, knowledgeGraphLegend, dependencyGraphLegend, hierarchyGraphLegend } from './GraphLegend';

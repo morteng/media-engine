@@ -23,6 +23,8 @@ export { ToastProvider, useToast } from './Toast';
 export { CommandPalette } from './CommandPalette';
 export { Skeleton, SkeletonCard, SkeletonList, SkeletonStats } from './Skeleton';
 export { EmptyState, NoResultsState, NoDocumentsState, NoFilesState } from './EmptyState';
+export { ExpandableSection, AnalysisModule } from './ExpandableSection';
+export { InfoTooltip, MetricLabel, NavTooltip, METRIC_EXPLANATIONS } from './InfoTooltip';
 
 // Utility
 export { cn } from '@/utils/cn';

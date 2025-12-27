@@ -24,16 +24,19 @@ describe('Sidebar', () => {
   });
 
   describe('Navigation Items', () => {
-    it('renders all navigation links', () => {
+    it('renders all navigation links', async () => {
       mockWindowWidth(1024);
       render(<Sidebar />);
+
+      // Give time for the sidebar to render
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       expect(screen.getByRole('link', { name: /dashboard/i })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /content/i })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /quality/i })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /build/i })).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: /ai assist/i })).toBeInTheDocument();
-    });
+      expect(screen.getByRole('link', { name: /ai workspace/i })).toBeInTheDocument();
+    }, 10000);
 
     it('Dashboard link points to root', () => {
       mockWindowWidth(1024);
@@ -59,10 +62,10 @@ describe('Sidebar', () => {
       expect(screen.getByRole('link', { name: /build/i })).toHaveAttribute('href', '/build');
     });
 
-    it('AI Assist link points to /ai-assist', () => {
+    it('AI Workspace link points to /ai-assist', () => {
       mockWindowWidth(1024);
       render(<Sidebar />);
-      expect(screen.getByRole('link', { name: /ai assist/i })).toHaveAttribute('href', '/ai-assist');
+      expect(screen.getByRole('link', { name: /ai workspace/i })).toHaveAttribute('href', '/ai-assist');
     });
   });
 

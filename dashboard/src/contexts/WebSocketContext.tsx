@@ -46,7 +46,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
         queryClient.invalidateQueries();
         break;
 
-      case 'file_change':
+      case 'file_change': {
         // File system change detected - invalidate based on refresh hints
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const refresh = (message as any).refresh as string[] | undefined;
@@ -79,6 +79,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
           }
         }
         break;
+      }
 
       case 'edit':
         // Could show a toast notification about remote edits

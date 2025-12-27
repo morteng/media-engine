@@ -32,7 +32,7 @@ interface LegacyCardHeaderProps {
 }
 
 // New shadcn-style CardHeader
-interface NewCardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {}
+type NewCardHeaderProps = React.HTMLAttributes<HTMLDivElement>;
 
 type CardHeaderProps = LegacyCardHeaderProps | NewCardHeaderProps;
 

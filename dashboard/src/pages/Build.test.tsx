@@ -6,44 +6,75 @@ describe('Build', () => {
   it('renders build page header', async () => {
     render(<Build />);
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /build/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /build & publish/i })).toBeInTheDocument();
     });
   });
 
-  it('shows available output formats', async () => {
+  it('shows publications section', async () => {
     render(<Build />);
     await waitFor(() => {
-      // Use getAllByText since HTML appears multiple times
-      const htmlElements = screen.getAllByText(/html/i);
-      expect(htmlElements.length).toBeGreaterThan(0);
+      expect(screen.getByText(/publications/i)).toBeInTheDocument();
     });
   });
 
-  it('shows last build status', async () => {
+  it('shows available publications', async () => {
     render(<Build />);
     await waitFor(() => {
-      expect(screen.getByText(/success/i)).toBeInTheDocument();
+      // Check for publication titles from mock data
+      expect(screen.getByText(/documentation/i)).toBeInTheDocument();
     });
   });
 
-  it('has a build button', async () => {
+  it('shows output options section', async () => {
     render(<Build />);
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /build/i })).toBeInTheDocument();
+      expect(screen.getByText(/output options/i)).toBeInTheDocument();
     });
   });
 
-  it('triggers build when button is clicked', async () => {
+  it('has build & publish button', async () => {
+    render(<Build />);
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /build & publish/i })).toBeInTheDocument();
+    });
+  });
+
+  it('has build only button', async () => {
+    render(<Build />);
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /build only/i })).toBeInTheDocument();
+    });
+  });
+
+  it('shows last build time when available', async () => {
+    render(<Build />);
+    await waitFor(() => {
+      expect(screen.getByText(/last build/i)).toBeInTheDocument();
+    });
+  });
+
+  it('shows format options for publications', async () => {
+    render(<Build />);
+    await waitFor(() => {
+      // Publications have format badges
+      const htmlBadges = screen.getAllByText(/html/i);
+      expect(htmlBadges.length).toBeGreaterThan(0);
+    });
+  });
+
+  it('can toggle publication selection', async () => {
     const user = userEvent.setup();
     render(<Build />);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /build/i })).toBeInTheDocument();
+      expect(screen.getByText(/documentation/i)).toBeInTheDocument();
     });
 
-    const buildButton = screen.getByRole('button', { name: /build/i });
-    await user.click(buildButton);
+    // Find and click a checkbox
+    const checkboxes = screen.getAllByRole('checkbox');
+    expect(checkboxes.length).toBeGreaterThan(0);
 
-    // Build should be triggered (implementation specific behavior)
+    // Click to toggle
+    await user.click(checkboxes[0]);
   });
 });

@@ -127,7 +127,8 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
               case 'user_left':
                 if (message.user_id) {
                   newState.users = prev.users.filter(u => u !== message.user_id);
-                  const { [message.user_id]: _, ...remainingCursors } = prev.cursors;
+                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                  const { [message.user_id]: _removedCursor, ...remainingCursors } = prev.cursors;
                   newState.cursors = remainingCursors;
                 }
                 break;

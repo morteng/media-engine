@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { InfoTooltip } from './InfoTooltip';
 import type { ReactNode } from 'react';
 
@@ -14,6 +15,7 @@ interface StatCardProps {
     title: string;
     content: string;
   };
+  href?: string;
 }
 
 const variantStyles: Record<string, { border: string; icon: string; accent: string }> = {
@@ -44,27 +46,37 @@ const variantStyles: Record<string, { border: string; icon: string; accent: stri
   },
 };
 
-export function StatCard({ label, value, icon, trend, variant = 'default', tooltip }: StatCardProps) {
+export function StatCard({ label, value, icon, trend, variant = 'default', tooltip, href }: StatCardProps) {
   const styles = variantStyles[variant];
 
-  return (
-    <div className={`card bg-base-200 border ${styles.border}`}>
-      <div className="card-body p-4">
-        <div className="flex items-center gap-3 mb-2">
-          {icon && <div className={`${styles.icon}`}>{icon}</div>}
-          <span className="text-sm text-base-content/70 flex items-center gap-1.5">
-            {label}
-            {tooltip && <InfoTooltip title={tooltip.title} content={tooltip.content} />}
-          </span>
-        </div>
-        <div className={`text-3xl font-semibold ${styles.accent}`}>{value}</div>
-        {trend && (
-          <div className={`flex items-center gap-2 text-sm mt-2 ${trend.value > 0 ? 'text-success' : trend.value < 0 ? 'text-error' : 'text-base-content/60'}`}>
-            <span>{trend.value > 0 ? '+' : ''}{trend.value}%</span>
-            <span className="text-base-content/50">{trend.label}</span>
-          </div>
-        )}
+  const content = (
+    <div className="card-body p-4">
+      <div className="flex items-center gap-3 mb-2">
+        {icon && <div className={`${styles.icon}`}>{icon}</div>}
+        <span className="text-sm text-base-content/70 flex items-center gap-1.5">
+          {label}
+          {tooltip && <InfoTooltip title={tooltip.title} content={tooltip.content} />}
+        </span>
       </div>
+      <div className={`text-3xl font-semibold ${styles.accent}`}>{value}</div>
+      {trend && (
+        <div className={`flex items-center gap-2 text-sm mt-2 ${trend.value > 0 ? 'text-success' : trend.value < 0 ? 'text-error' : 'text-base-content/60'}`}>
+          <span>{trend.value > 0 ? '+' : ''}{trend.value}%</span>
+          <span className="text-base-content/50">{trend.label}</span>
+        </div>
+      )}
     </div>
   );
+
+  const cardClasses = `card bg-base-200 border ${styles.border} ${href ? 'hover:bg-base-300 transition-colors cursor-pointer' : ''}`;
+
+  if (href) {
+    return (
+      <Link to={href} className={cardClasses}>
+        {content}
+      </Link>
+    );
+  }
+
+  return <div className={cardClasses}>{content}</div>;
 }
