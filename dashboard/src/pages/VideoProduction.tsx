@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { Routes, Route, NavLink } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -16,6 +16,11 @@ import {
   XCircle,
   AlertCircle,
   Monitor,
+  Plus,
+  Download,
+  Trash2,
+  Copy,
+  X,
 } from 'lucide-react';
 import clsx from 'clsx';
 import type {
@@ -76,6 +81,87 @@ const getMotionComponents = async () => {
   if (!res.ok) throw new Error('Failed to fetch components');
   return res.json();
 };
+
+const createVideoScript = async ({ name, content }: { name: string; content: string }) => {
+  const res = await fetch('/api/video/scripts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, content }),
+  });
+  if (!res.ok) throw new Error('Failed to create script');
+  return res.json();
+};
+
+const deleteVideoScript = async (scriptId: string) => {
+  const res = await fetch(`/api/video/scripts/${scriptId}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error('Failed to delete script');
+  return res.json();
+};
+
+const duplicateVideoScript = async ({ sourceId, newName }: { sourceId: string; newName: string }) => {
+  const res = await fetch(`/api/video/scripts/${sourceId}/duplicate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: newName }),
+  });
+  if (!res.ok) throw new Error('Failed to duplicate script');
+  return res.json();
+};
+
+const downloadRender = async (jobId: string) => {
+  const res = await fetch(`/api/video/render/${jobId}/download`);
+  if (!res.ok) throw new Error('Failed to get download URL');
+  const data = await res.json();
+  // Trigger download
+  if (data.download_url) {
+    window.open(data.download_url, '_blank');
+  }
+  return data;
+};
+
+// Default template for new scripts
+const DEFAULT_SCRIPT_TEMPLATE = `title: "New Video"
+language: en
+
+metadata:
+  version: 1.0.0
+  author: ""
+  description: ""
+
+settings:
+  fps: 30
+  width: 1920
+  height: 1080
+  background: "dark"
+
+scenes:
+  - id: intro
+    type: intro
+    title: "Welcome"
+    text: "Enter your intro text here"
+    duration: 5
+    background: aurora
+    transition_in: fade
+    text_effect: bounce
+
+  - id: main
+    type: feature
+    title: "Main Content"
+    text: "Your main content goes here"
+    duration: 10
+    background: grid
+    transition_in: slide-left
+
+  - id: outro
+    type: outro
+    title: "Thanks for Watching"
+    text: "Your call to action"
+    duration: 5
+    background: waves
+    transition_in: fade
+`;
 
 // Tab configuration - use absolute paths to avoid nested routing issues
 const tabs = [
@@ -207,6 +293,9 @@ function VideoOverview() {
 function VideoScripts() {
   const [selectedScript, setSelectedScript] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newScriptName, setNewScriptName] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const { data: scriptsData, isLoading } = useQuery({
@@ -228,12 +317,46 @@ function VideoScripts() {
     },
   });
 
+  const createMutation = useMutation({
+    mutationFn: createVideoScript,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['videoScripts'] });
+      setShowCreateModal(false);
+      setNewScriptName('');
+      if (data.script_id) {
+        setSelectedScript(data.script_id);
+      }
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteVideoScript,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['videoScripts'] });
+      setConfirmDelete(null);
+      if (selectedScript === confirmDelete) {
+        setSelectedScript(null);
+        setEditContent('');
+      }
+    },
+  });
+
+  const duplicateMutation = useMutation({
+    mutationFn: duplicateVideoScript,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['videoScripts'] });
+      if (data.script_id) {
+        setSelectedScript(data.script_id);
+      }
+    },
+  });
+
   // Update edit content when script loads
-  useState(() => {
+  useEffect(() => {
     if (scriptDetail?.content) {
       setEditContent(scriptDetail.content);
     }
-  });
+  }, [scriptDetail?.content]);
 
   if (isLoading) {
     return (
@@ -245,89 +368,274 @@ function VideoScripts() {
 
   const scripts: VideoScriptItem[] = scriptsData?.scripts || [];
 
-  return (
-    <div className="flex gap-6 h-[calc(100vh-280px)]">
-      {/* Script List */}
-      <aside className="w-72 flex-shrink-0 flex flex-col bg-base-200 rounded-lg overflow-hidden">
-        <div className="p-4 border-b border-base-300">
-          <h3 className="font-semibold flex items-center gap-2">
-            <Film size={16} />
-            Scripts
-            <span className="badge badge-ghost badge-sm ml-auto">{scripts.length}</span>
-          </h3>
-        </div>
-        <nav className="flex-1 overflow-y-auto p-2 space-y-1">
-          {scripts.map((script) => (
-            <button
-              key={script.id}
-              onClick={() => {
-                setSelectedScript(script.id);
-                setEditContent('');
-              }}
-              className={clsx(
-                'w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-sm transition-colors',
-                selectedScript === script.id
-                  ? 'bg-primary/20 text-primary'
-                  : 'hover:bg-base-300 text-base-content/80'
-              )}
-            >
-              <FileVideo size={14} />
-              <span className="flex-1 truncate">{script.name}</span>
-              {script.has_output && <CheckCircle size={12} className="text-success" />}
-            </button>
-          ))}
-        </nav>
-      </aside>
+  const handleCreateScript = () => {
+    if (!newScriptName.trim()) return;
+    createMutation.mutate({
+      name: newScriptName.trim(),
+      content: DEFAULT_SCRIPT_TEMPLATE.replace('title: "New Video"', `title: "${newScriptName.trim()}"`),
+    });
+  };
 
-      {/* Editor */}
-      <main className="flex-1 min-w-0 flex flex-col">
-        {selectedScript ? (
-          detailLoading ? (
-            <div className="flex items-center justify-center h-full">
-              <span className="loading loading-spinner loading-lg text-primary" />
+  const handleDuplicate = (scriptId: string, scriptName: string) => {
+    duplicateMutation.mutate({
+      sourceId: scriptId,
+      newName: `${scriptName} (copy)`,
+    });
+  };
+
+  return (
+    <>
+      <div className="flex gap-6 h-[calc(100vh-280px)]">
+        {/* Script List */}
+        <aside className="w-72 flex-shrink-0 flex flex-col bg-base-200 rounded-lg overflow-hidden">
+          <div className="p-4 border-b border-base-300">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold flex items-center gap-2 flex-1">
+                <Film size={16} />
+                Scripts
+                <span className="badge badge-ghost badge-sm">{scripts.length}</span>
+              </h3>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="btn btn-primary btn-xs gap-1"
+                title="Create new script"
+              >
+                <Plus size={12} />
+                New
+              </button>
             </div>
-          ) : scriptDetail ? (
-            <>
-              <div className="flex items-center gap-4 mb-4">
-                <h2 className="text-lg font-semibold">{scriptDetail.parsed?.title || selectedScript}</h2>
-                <span className="badge badge-ghost">{scriptDetail.parsed?.language || 'en'}</span>
-                {scriptDetail.parsed?.metadata?.version && (
-                  <span className="badge badge-info">v{scriptDetail.parsed.metadata.version}</span>
-                )}
-                <div className="flex-1" />
+          </div>
+          <nav className="flex-1 overflow-y-auto p-2 space-y-1">
+            {scripts.length === 0 ? (
+              <div className="text-center py-8 text-base-content/60 text-sm">
+                <FileVideo size={32} className="mx-auto mb-2 opacity-50" />
+                <p>No scripts yet</p>
                 <button
-                  onClick={() => updateMutation.mutate({ scriptId: selectedScript, content: editContent })}
-                  disabled={updateMutation.isPending || editContent === scriptDetail.content}
-                  className="btn btn-primary btn-sm gap-2"
+                  onClick={() => setShowCreateModal(true)}
+                  className="btn btn-ghost btn-xs mt-2"
                 >
-                  {updateMutation.isPending ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    'Save'
-                  )}
+                  Create your first script
                 </button>
               </div>
-              <textarea
-                className="textarea textarea-bordered flex-1 font-mono text-sm"
-                value={editContent || scriptDetail.content}
-                onChange={(e) => setEditContent(e.target.value)}
-                placeholder="Script content..."
-              />
-            </>
+            ) : (
+              scripts.map((script) => (
+                <div
+                  key={script.id}
+                  className={clsx(
+                    'group flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors',
+                    selectedScript === script.id
+                      ? 'bg-primary/20 text-primary'
+                      : 'hover:bg-base-300 text-base-content/80'
+                  )}
+                >
+                  <button
+                    onClick={() => {
+                      setSelectedScript(script.id);
+                      setEditContent('');
+                    }}
+                    className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                  >
+                    <FileVideo size={14} className="flex-shrink-0" />
+                    <span className="flex-1 truncate">{script.name}</span>
+                    {script.has_output && <CheckCircle size={12} className="text-success flex-shrink-0" />}
+                  </button>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDuplicate(script.id, script.name);
+                      }}
+                      className="btn btn-ghost btn-xs p-1"
+                      title="Duplicate script"
+                    >
+                      <Copy size={12} />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setConfirmDelete(script.id);
+                      }}
+                      className="btn btn-ghost btn-xs p-1 text-error"
+                      title="Delete script"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </nav>
+        </aside>
+
+        {/* Editor */}
+        <main className="flex-1 min-w-0 flex flex-col">
+          {selectedScript ? (
+            detailLoading ? (
+              <div className="flex items-center justify-center h-full">
+                <span className="loading loading-spinner loading-lg text-primary" />
+              </div>
+            ) : scriptDetail ? (
+              <>
+                <div className="flex items-center gap-4 mb-4">
+                  <h2 className="text-lg font-semibold">{scriptDetail.parsed?.title || selectedScript}</h2>
+                  <span className="badge badge-ghost">{scriptDetail.parsed?.language || 'en'}</span>
+                  {scriptDetail.parsed?.metadata?.version && (
+                    <span className="badge badge-info">v{scriptDetail.parsed.metadata.version}</span>
+                  )}
+                  <div className="flex-1" />
+                  <button
+                    onClick={() => handleDuplicate(selectedScript, scriptDetail.parsed?.title || selectedScript)}
+                    className="btn btn-ghost btn-sm gap-2"
+                    title="Duplicate this script"
+                  >
+                    <Copy size={14} />
+                  </button>
+                  <button
+                    onClick={() => setConfirmDelete(selectedScript)}
+                    className="btn btn-ghost btn-sm gap-2 text-error"
+                    title="Delete this script"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                  <button
+                    onClick={() => updateMutation.mutate({ scriptId: selectedScript, content: editContent })}
+                    disabled={updateMutation.isPending || editContent === scriptDetail.content}
+                    className="btn btn-primary btn-sm gap-2"
+                  >
+                    {updateMutation.isPending ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      'Save'
+                    )}
+                  </button>
+                </div>
+                <textarea
+                  className="textarea textarea-bordered flex-1 font-mono text-sm"
+                  value={editContent || scriptDetail.content}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  placeholder="Script content..."
+                />
+              </>
+            ) : (
+              <div className="flex items-center justify-center h-full text-base-content/60">
+                Failed to load script
+              </div>
+            )
           ) : (
-            <div className="flex items-center justify-center h-full text-base-content/60">
-              Failed to load script
+            <div className="flex flex-col items-center justify-center h-full text-center">
+              <Code size={48} className="text-base-content/30 mb-4" />
+              <h3 className="text-lg font-semibold">Select a Script</h3>
+              <p className="text-base-content/60 mb-4">Choose a video script to edit</p>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="btn btn-primary btn-sm gap-2"
+              >
+                <Plus size={14} />
+                Create New Script
+              </button>
             </div>
-          )
-        ) : (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <Code size={48} className="text-base-content/30 mb-4" />
-            <h3 className="text-lg font-semibold">Select a Script</h3>
-            <p className="text-base-content/60">Choose a video script to edit</p>
+          )}
+        </main>
+      </div>
+
+      {/* Create Script Modal */}
+      {showCreateModal && (
+        <div className="modal modal-open">
+          <div className="modal-box">
+            <button
+              onClick={() => {
+                setShowCreateModal(false);
+                setNewScriptName('');
+              }}
+              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+            >
+              <X size={16} />
+            </button>
+            <h3 className="font-bold text-lg flex items-center gap-2">
+              <Plus size={18} />
+              Create New Video Script
+            </h3>
+            <p className="text-base-content/60 text-sm mt-2">
+              A new script will be created with a starter template that you can customize.
+            </p>
+            <div className="form-control mt-4">
+              <label className="label">
+                <span className="label-text">Script Name</span>
+              </label>
+              <input
+                type="text"
+                placeholder="My Awesome Video"
+                className="input input-bordered w-full"
+                value={newScriptName}
+                onChange={(e) => setNewScriptName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleCreateScript()}
+                autoFocus
+              />
+            </div>
+            <div className="modal-action">
+              <button
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setNewScriptName('');
+                }}
+                className="btn btn-ghost"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateScript}
+                disabled={!newScriptName.trim() || createMutation.isPending}
+                className="btn btn-primary gap-2"
+              >
+                {createMutation.isPending ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Plus size={14} />
+                )}
+                Create Script
+              </button>
+            </div>
           </div>
-        )}
-      </main>
-    </div>
+          <div className="modal-backdrop" onClick={() => setShowCreateModal(false)} />
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {confirmDelete && (
+        <div className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg flex items-center gap-2 text-error">
+              <Trash2 size={18} />
+              Delete Script?
+            </h3>
+            <p className="text-base-content/60 mt-4">
+              Are you sure you want to delete this script? This action cannot be undone.
+            </p>
+            <div className="modal-action">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                className="btn btn-ghost"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => deleteMutation.mutate(confirmDelete)}
+                disabled={deleteMutation.isPending}
+                className="btn btn-error gap-2"
+              >
+                {deleteMutation.isPending ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Trash2 size={14} />
+                )}
+                Delete
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => setConfirmDelete(null)} />
+        </div>
+      )}
+    </>
   );
 }
 
@@ -742,6 +1050,8 @@ function VideoPreviewTab() {
 // Render Job Card Component
 // ============================================================================
 function RenderJobCard({ job, showDetails = false }: { job: RenderJob; showDetails?: boolean }) {
+  const [isDownloading, setIsDownloading] = useState(false);
+
   const statusIcons: Record<string, ReactNode> = {
     queued: <Clock size={16} className="text-info" />,
     rendering: <Loader2 size={16} className="text-warning animate-spin" />,
@@ -758,6 +1068,17 @@ function RenderJobCard({ job, showDetails = false }: { job: RenderJob; showDetai
     cancelled: 'badge-ghost',
   };
 
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      await downloadRender(job.id);
+    } catch (error) {
+      console.error('Download failed:', error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="p-3 rounded-lg bg-base-300">
       <div className="flex items-center gap-3">
@@ -770,6 +1091,21 @@ function RenderJobCard({ job, showDetails = false }: { job: RenderJob; showDetai
             </div>
           )}
         </div>
+        {job.status === 'completed' && (
+          <button
+            onClick={handleDownload}
+            disabled={isDownloading}
+            className="btn btn-ghost btn-xs gap-1"
+            title="Download video"
+          >
+            {isDownloading ? (
+              <Loader2 size={12} className="animate-spin" />
+            ) : (
+              <Download size={12} />
+            )}
+            Download
+          </button>
+        )}
         <span className={clsx('badge badge-sm', statusColors[job.status])}>
           {job.status}
         </span>

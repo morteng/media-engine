@@ -563,6 +563,9 @@ export const handlers = [
     return new HttpResponse(null, { status: 404 });
   }),
   http.put('/api/video/scripts/:scriptId', () => HttpResponse.json({ status: 'ok', message: 'Script updated' })),
+  http.post('/api/video/scripts', () => HttpResponse.json({ status: 'ok', script_id: 'en/new-script', path: 'content/en/scripts/new-script.yaml' })),
+  http.delete('/api/video/scripts/:scriptId', () => HttpResponse.json({ status: 'ok', message: 'Script deleted' })),
+  http.post('/api/video/scripts/:scriptId/duplicate', () => HttpResponse.json({ status: 'ok', script_id: 'en/new-script-copy', path: 'content/en/scripts/new-script-copy.yaml' })),
   http.post('/api/video/render', () => HttpResponse.json({ job_id: 'job-' + Date.now(), status: 'queued' })),
   http.get('/api/video/render/:jobId', ({ params }) => {
     const job = mockRenderQueue.jobs.find(j => j.id === params.jobId);
@@ -570,6 +573,17 @@ export const handlers = [
     return new HttpResponse(null, { status: 404 });
   }),
   http.delete('/api/video/render/:jobId', () => HttpResponse.json({ status: 'cancelled' })),
+  http.get('/api/video/render/:jobId/download', ({ params }) => {
+    const job = mockRenderQueue.jobs.find(j => j.id === params.jobId);
+    if (job && job.status === 'completed' && job.output_path) {
+      return HttpResponse.json({
+        download_url: `/api/video/file/${job.output_path}`,
+        filename: 'video.mp4',
+        size: 10485760,
+      });
+    }
+    return new HttpResponse(null, { status: 404 });
+  }),
   http.get('/api/video/queue', () => HttpResponse.json(mockRenderQueue)),
   http.get('/api/video/assets', () => HttpResponse.json(mockVideoAssets)),
   http.get('/api/video/components', () => HttpResponse.json(mockMotionComponents)),

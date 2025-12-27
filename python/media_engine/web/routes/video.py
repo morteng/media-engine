@@ -40,6 +40,18 @@ def register_video_routes(
 
         content: str
 
+    class ScriptCreateRequest(BaseModel):
+        """Request to create a new video script."""
+
+        name: str
+        content: str
+        language: str = "en"
+
+    class ScriptDuplicateRequest(BaseModel):
+        """Request to duplicate a video script."""
+
+        name: str
+
     # =========================================================================
     # Script Management
     # =========================================================================
@@ -168,6 +180,130 @@ def register_video_routes(
             raise HTTPException(status_code=400, detail=f"Invalid YAML: {e}")
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to update script: {e}")
+
+    @router.post("/api/video/scripts")
+    async def create_video_script(request: ScriptCreateRequest):
+        """Create a new video script."""
+        project = get_project()
+        import yaml
+        import re
+
+        # Sanitize the name to create a valid filename
+        safe_name = re.sub(r'[^\w\-]', '_', request.name.lower().strip())
+        if not safe_name:
+            safe_name = "untitled"
+
+        # Ensure scripts directory exists
+        scripts_dir = project.content_dir / request.language / "scripts"
+        scripts_dir.mkdir(parents=True, exist_ok=True)
+
+        # Generate unique filename if exists
+        script_path = scripts_dir / f"{safe_name}.yaml"
+        counter = 1
+        while script_path.exists():
+            script_path = scripts_dir / f"{safe_name}_{counter}.yaml"
+            counter += 1
+
+        try:
+            # Validate YAML
+            yaml.safe_load(request.content)
+
+            # Write content
+            with open(script_path, "w") as f:
+                f.write(request.content)
+
+            script_id = f"{request.language}/{script_path.stem}"
+
+            # Broadcast creation
+            await manager.broadcast(
+                {"type": "script_created", "script_id": script_id, "timestamp": datetime.now().isoformat()}
+            )
+
+            return {"status": "ok", "script_id": script_id, "path": str(script_path.relative_to(project.root))}
+        except yaml.YAMLError as e:
+            raise HTTPException(status_code=400, detail=f"Invalid YAML: {e}")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to create script: {e}")
+
+    @router.delete("/api/video/scripts/{script_id:path}")
+    async def delete_video_script(script_id: str):
+        """Delete a video script."""
+        project = get_project()
+
+        parts = script_id.split("/", 1)
+        if len(parts) != 2:
+            raise HTTPException(status_code=400, detail="Invalid script ID format")
+
+        lang, name = parts
+        script_path = project.content_dir / lang / "scripts" / f"{name}.yaml"
+
+        if not script_path.exists():
+            raise HTTPException(status_code=404, detail="Script not found")
+
+        try:
+            script_path.unlink()
+
+            # Broadcast deletion
+            await manager.broadcast(
+                {"type": "script_deleted", "script_id": script_id, "timestamp": datetime.now().isoformat()}
+            )
+
+            return {"status": "ok", "message": "Script deleted"}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to delete script: {e}")
+
+    @router.post("/api/video/scripts/{script_id:path}/duplicate")
+    async def duplicate_video_script(script_id: str, request: ScriptDuplicateRequest):
+        """Duplicate a video script."""
+        project = get_project()
+        import yaml
+        import re
+
+        parts = script_id.split("/", 1)
+        if len(parts) != 2:
+            raise HTTPException(status_code=400, detail="Invalid script ID format")
+
+        lang, name = parts
+        source_path = project.content_dir / lang / "scripts" / f"{name}.yaml"
+
+        if not source_path.exists():
+            raise HTTPException(status_code=404, detail="Source script not found")
+
+        try:
+            # Read source content
+            with open(source_path, "r") as f:
+                content = f.read()
+                data = yaml.safe_load(content)
+
+            # Update title in content
+            data["title"] = request.name
+
+            # Generate safe filename
+            safe_name = re.sub(r'[^\w\-]', '_', request.name.lower().strip())
+            if not safe_name:
+                safe_name = f"{name}_copy"
+
+            scripts_dir = project.content_dir / lang / "scripts"
+            new_path = scripts_dir / f"{safe_name}.yaml"
+            counter = 1
+            while new_path.exists():
+                new_path = scripts_dir / f"{safe_name}_{counter}.yaml"
+                counter += 1
+
+            # Write new script
+            with open(new_path, "w") as f:
+                yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+
+            new_script_id = f"{lang}/{new_path.stem}"
+
+            # Broadcast creation
+            await manager.broadcast(
+                {"type": "script_created", "script_id": new_script_id, "timestamp": datetime.now().isoformat()}
+            )
+
+            return {"status": "ok", "script_id": new_script_id, "path": str(new_path.relative_to(project.root))}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to duplicate script: {e}")
 
     @router.get("/api/video/scripts/{script_id:path}/props")
     async def get_script_props(script_id: str):
@@ -308,6 +444,60 @@ def register_video_routes(
         await manager.broadcast({"type": "render_cancelled", "job_id": job_id})
 
         return {"status": "cancelled"}
+
+    @router.get("/api/video/render/{job_id}/download")
+    async def download_render(job_id: str):
+        """Get download URL for a completed render."""
+        from fastapi.responses import FileResponse
+
+        if job_id not in render_state:
+            raise HTTPException(status_code=404, detail="Render job not found")
+
+        job = render_state[job_id]
+        if job["status"] != "completed":
+            raise HTTPException(status_code=400, detail="Render not completed")
+
+        output_path = job.get("output_path")
+        if not output_path:
+            raise HTTPException(status_code=404, detail="Output file not found")
+
+        output_file = Path(output_path)
+        if not output_file.exists():
+            raise HTTPException(status_code=404, detail="Output file not found on disk")
+
+        # Return a URL that can be used to download the file
+        # The actual file serving would be handled by a static files route
+        project = get_project()
+        relative_path = output_file.relative_to(project.root)
+
+        return {
+            "download_url": f"/api/video/file/{relative_path}",
+            "filename": output_file.name,
+            "size": output_file.stat().st_size,
+        }
+
+    @router.get("/api/video/file/{file_path:path}")
+    async def serve_video_file(file_path: str):
+        """Serve a video file for download."""
+        from fastapi.responses import FileResponse
+
+        project = get_project()
+        full_path = project.root / file_path
+
+        # Security: ensure the path is within the project
+        try:
+            full_path.resolve().relative_to(project.root.resolve())
+        except ValueError:
+            raise HTTPException(status_code=403, detail="Access denied")
+
+        if not full_path.exists():
+            raise HTTPException(status_code=404, detail="File not found")
+
+        return FileResponse(
+            path=full_path,
+            filename=full_path.name,
+            media_type="video/mp4",
+        )
 
     @router.get("/api/video/queue")
     async def get_render_queue():
