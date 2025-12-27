@@ -419,3 +419,73 @@ def register_observability_routes(
             diagnostics["message"] = "No issues detected"
 
         return diagnostics
+
+    @router.get("/api/observability/metrics")
+    async def get_metrics() -> dict[str, Any]:
+        """
+        Get system metrics for monitoring.
+
+        Returns performance and usage metrics.
+        """
+        project = get_project()
+
+        metrics = {
+            "timestamp": datetime.now().isoformat(),
+            "project": project.name,
+            "counts": {},
+            "performance": {},
+        }
+
+        # Document counts
+        try:
+            for lang in project.languages:
+                chapters = list(project.list_chapters(lang))
+                metrics["counts"][f"documents_{lang}"] = len(chapters)
+        except Exception:
+            pass
+
+        # Session metrics
+        try:
+            from ...ai.sessions import SessionManager, SessionStatus
+
+            session_manager = SessionManager(project.root)
+            active = session_manager.list_sessions(status=SessionStatus.ACTIVE)
+            completed = session_manager.list_sessions(status=SessionStatus.COMPLETED, limit=100)
+
+            metrics["counts"]["active_sessions"] = len(active)
+            metrics["counts"]["completed_sessions"] = len(completed)
+        except Exception:
+            pass
+
+        # Lock metrics
+        try:
+            from ...ai.locking import get_lock_manager
+
+            lock_manager = get_lock_manager(project.root)
+            summary = lock_manager.get_lock_summary()
+            metrics["counts"]["active_locks"] = summary["total_active"]
+            metrics["counts"]["expired_locks"] = summary["total_expired"]
+        except Exception:
+            pass
+
+        # Queue metrics
+        try:
+            from ...ai.queue import TaskQueue, TaskStatus
+
+            queue = TaskQueue(project.root)
+            metrics["counts"]["pending_tasks"] = len(queue.list_tasks(status=TaskStatus.PENDING))
+            metrics["counts"]["failed_tasks"] = len(queue.list_tasks(status=TaskStatus.FAILED, limit=100))
+        except Exception:
+            pass
+
+        # Approval metrics
+        try:
+            from ...ai.approval import ApprovalManager
+
+            approval_manager = ApprovalManager(project.root)
+            summary = approval_manager.get_summary()
+            metrics["counts"]["pending_approvals"] = summary["pending"]
+        except Exception:
+            pass
+
+        return metrics

@@ -55,6 +55,15 @@ from .hashing import (
     verify_file_hash,
     verify_hash,
 )
+from .logging import (
+    LogContext,
+    LogEntry,
+    StructuredLogger,
+    configure_logging,
+    get_logger,
+    log_async_operation,
+    log_operation,
+)
 from .project import LanguageConfig, Project, find_project
 from .sections import (
     ChangeType,
@@ -154,4 +163,12 @@ __all__ = [
     "error_from_dict",
     "is_recoverable",
     "get_error_suggestions",
+    # Logging
+    "get_logger",
+    "configure_logging",
+    "LogContext",
+    "LogEntry",
+    "StructuredLogger",
+    "log_operation",
+    "log_async_operation",
 ]
