@@ -1,0 +1,167 @@
+# Media Engine Architecture - Publication-Centric Workflow
+# Render with: d2 --sketch architecture.d2 architecture.svg
+
+direction: down
+
+# Content Sources Layer
+sources: Content Sources {
+  style: {
+    fill: "#e0f2fe"
+    stroke: "#0284c7"
+    stroke-width: 2
+    border-radius: 8
+  }
+
+  publications: "📚 Publications" {
+    shape: rectangle
+    style.fill: "#bae6fd"
+  }
+
+  chapters: "📄 Chapters" {
+    shape: rectangle
+    style.fill: "#bae6fd"
+  }
+
+  slides: "📊 Slides" {
+    shape: rectangle
+    style.fill: "#bae6fd"
+  }
+
+  data: "🗄️ Data" {
+    shape: rectangle
+    style.fill: "#bae6fd"
+  }
+
+  scripts: "🎬 Scripts" {
+    shape: rectangle
+    style.fill: "#bae6fd"
+  }
+}
+
+# Processing Layer
+processing: Processing Pipeline {
+  style: {
+    fill: "#fef3c7"
+    stroke: "#d97706"
+    stroke-width: 2
+    border-radius: 8
+  }
+
+  cms: CMS Module {
+    shape: rectangle
+    style.fill: "#fde68a"
+  }
+
+  builders: Builders {
+    shape: rectangle
+    style.fill: "#fde68a"
+  }
+
+  quality: Quality {
+    shape: rectangle
+    style.fill: "#fde68a"
+  }
+
+  video: Video {
+    shape: rectangle
+    style.fill: "#fde68a"
+  }
+}
+
+# Output Layer
+outputs: Deliverables {
+  style: {
+    fill: "#dcfce7"
+    stroke: "#16a34a"
+    stroke-width: 2
+    border-radius: 8
+  }
+
+  html: HTML {
+    shape: rectangle
+    style.fill: "#bbf7d0"
+  }
+
+  pdf: PDF {
+    shape: rectangle
+    style.fill: "#bbf7d0"
+  }
+
+  pptx: PPTX {
+    shape: rectangle
+    style.fill: "#bbf7d0"
+  }
+
+  xlsx: XLSX {
+    shape: rectangle
+    style.fill: "#bbf7d0"
+  }
+
+  mp4: MP4 {
+    shape: rectangle
+    style.fill: "#bbf7d0"
+  }
+}
+
+# Dashboard
+dashboard: "🖥️ Dashboard" {
+  shape: rectangle
+  style: {
+    fill: "#f3e8ff"
+    stroke: "#9333ea"
+    stroke-width: 2
+    border-radius: 8
+  }
+}
+
+# Connections - Content to Processing
+sources.publications -> processing.cms: defines {
+  style.stroke: "#0284c7"
+}
+sources.chapters -> processing.cms: content {
+  style.stroke: "#0284c7"
+}
+sources.slides -> processing.builders {
+  style.stroke: "#0284c7"
+}
+sources.data -> processing.builders {
+  style.stroke: "#0284c7"
+}
+sources.scripts -> processing.video {
+  style.stroke: "#0284c7"
+}
+
+# Processing internal
+processing.cms -> processing.quality: validates {
+  style.stroke: "#d97706"
+}
+processing.cms -> processing.builders {
+  style.stroke: "#d97706"
+}
+
+# Processing to Outputs
+processing.builders -> outputs.html {
+  style.stroke: "#16a34a"
+}
+processing.builders -> outputs.pdf {
+  style.stroke: "#16a34a"
+}
+processing.builders -> outputs.pptx {
+  style.stroke: "#16a34a"
+}
+processing.builders -> outputs.xlsx {
+  style.stroke: "#16a34a"
+}
+processing.video -> outputs.mp4 {
+  style.stroke: "#16a34a"
+}
+
+# Dashboard connections
+dashboard -> sources: manages {
+  style.stroke: "#9333ea"
+  style.stroke-dash: 3
+}
+dashboard -> outputs: displays {
+  style.stroke: "#9333ea"
+  style.stroke-dash: 3
+}

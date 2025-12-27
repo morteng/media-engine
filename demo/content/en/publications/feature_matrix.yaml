@@ -1,0 +1,69 @@
+---
+# Publication Definition - Feature Matrix Spreadsheet
+type: publication
+title: "Media Engine Feature Matrix"
+subtitle: "Complete Feature Comparison"
+description: |
+  Comprehensive spreadsheet comparing all Media Engine features,
+  capabilities, and requirements across different use cases.
+
+metadata:
+  version: "1.0.0"
+  status: draft
+  author: "Media Engine Team"
+  copyright: "2024 Media Engine Project"
+  target_audience: "Evaluators and architects"
+
+outputs:
+  - format: xlsx
+    filename: "feature-matrix"
+    sheets:
+      - name: "Features Overview"
+        type: feature_list
+      - name: "Format Support"
+        type: format_matrix
+      - name: "Requirements"
+        type: requirements
+      - name: "Comparison"
+        type: comparison
+
+# Data sources for spreadsheet generation
+data_sources:
+  # Extract features from chapters
+  features:
+    - source: chapters/02_content_management.md
+      category: "Content Management"
+      extract: features  # Extract feature lists
+
+    - source: chapters/03_video_production.md
+      category: "Video Production"
+      extract: features
+
+    - source: chapters/04_quality_checks.md
+      category: "Quality Assurance"
+      extract: features
+
+    - source: chapters/05_builders.md
+      category: "Output Formats"
+      extract: features
+
+    - source: chapters/14_integrations.md
+      category: "Integrations"
+      extract: features
+
+  # Format support matrix
+  formats:
+    - source: data/feature_matrix.yaml
+      sheet: "Format Support"
+
+# Spreadsheet styling
+styling:
+  header_color: "brand.primary"
+  alternate_rows: true
+  freeze_header: true
+  auto_filter: true
+
+translations:
+  source_language: en
+  target_languages:
+    - "no"

@@ -30,8 +30,8 @@ derived_from:
 # Anchors - key facts defined here
 anchors:
   supported_formats:
-    value: ["html", "pdf", "pptx", "xlsx"]
-    type: array
+    value: "html, pdf, pptx, xlsx"
+    type: string
     description: "List of output formats supported by Media Engine"
   default_output_dir:
     value: "dist"
@@ -46,7 +46,7 @@ anchor_refs:
 
 # Output Builders
 
-Media Engine provides builders for generating multiple output formats from your content sources.
+Media Engine provides builders for generating multiple output formats from your content sources. For information on validating your content before building, see the [Validation chapter](08_validation.md).
 
 ## Available Builders
 

@@ -1,0 +1,139 @@
+---
+# Publication Definition - A composite document with its own identity
+# This defines a "book" composed of multiple chapters
+
+type: publication
+title: "Media Engine Documentation"
+subtitle: "Complete Reference Guide"
+description: |
+  Comprehensive documentation for the Media Engine framework,
+  covering all aspects of content management, video production,
+  quality assurance, and publishing workflows.
+
+# Publication metadata
+metadata:
+  version: "1.0.0"
+  status: draft  # draft | in_review | approved | published
+  author: "Media Engine Team"
+  copyright: "2024 Media Engine Project"
+  license: "MIT"
+  isbn: null  # Optional ISBN for formal publications
+  edition: "First Edition"
+  publication_date: null  # Set when published
+
+# Output formats to generate for this publication
+outputs:
+  - format: html
+    template: documentation  # Use documentation template
+    single_file: true        # Combine all chapters into one file
+    toc: true                # Generate table of contents
+    filename: "media-engine-docs"
+
+  - format: pdf
+    template: documentation
+    single_file: true
+    toc: true
+    cover_page: true
+    filename: "media-engine-docs"
+
+  - format: epub
+    template: ebook
+    single_file: true
+    toc: true
+    cover_image: "assets/images/cover.png"
+    filename: "media-engine-docs"
+
+# Chapters to include (in order)
+# Can reference by path or by pattern
+chapters:
+  - path: chapters/01_introduction.md
+    required: true  # Must exist for publication to be valid
+
+  - path: chapters/02_content_management.md
+    required: true
+
+  - path: chapters/03_video_production.md
+    required: true
+
+  - path: chapters/04_quality_checks.md
+    required: true
+
+  - path: chapters/05_builders.md
+    required: true
+
+  - path: chapters/06_diagrams.md
+    required: true
+
+  - path: chapters/07_search_indexing.md
+    required: true
+
+  - path: chapters/08_validation.md
+    required: true
+
+  - path: chapters/09_publishing.md
+    required: true
+
+  - path: chapters/10_packs.md
+    required: true
+
+  - path: chapters/11_assets.md
+    required: true
+
+  - path: chapters/12_cli_reference.md
+    required: true
+
+  - path: chapters/13_security.md
+    required: true
+
+  - path: chapters/14_integrations.md
+    required: true
+
+  - path: chapters/15_analysis.md
+    required: true
+
+  - path: chapters/16_github_showcase.md
+    required: false  # Optional showcase chapter
+
+  - path: chapters/17_capybara_facts.md
+    required: false  # Fun bonus chapter
+
+# Appendices (optional additional content)
+appendices:
+  - title: "CLI Command Reference"
+    path: chapters/12_cli_reference.md
+
+# Front matter (generated pages)
+front_matter:
+  - type: title_page
+  - type: copyright_page
+  - type: table_of_contents
+  - type: preface
+    content: |
+      This documentation provides a comprehensive guide to using
+      Media Engine for automated content production.
+
+# Back matter
+back_matter:
+  - type: index
+    auto_generate: true
+  - type: glossary
+    auto_generate: true
+
+# Related assets to include
+assets:
+  - diagrams/architecture.yaml
+  - diagrams/video_pipeline.yaml
+
+# Translation tracking
+translations:
+  source_language: en
+  target_languages:
+    - "no"
+  # Translation status is tracked per-language via content hashes
+
+# Quality requirements for this publication
+quality:
+  min_readability_score: 60
+  require_all_links_valid: true
+  require_spell_check: true
+  require_approved_status: false  # Set true before final publish

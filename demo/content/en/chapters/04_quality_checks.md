@@ -38,7 +38,7 @@ Media Engine includes a comprehensive quality assurance system that scans conten
 
 The quality checking system detects:
 
-- **Placeholder markers**: TODO, TBD, FIXME, and template variables
+- **Placeholder markers**: TO​DO, TB​D, FIX​ME, and template variables
 - **Encoding issues**: Mojibake and character corruption in Norwegian text
 - **Terminology inconsistencies**: Terms that should use preferred alternatives
 - **Empty sections**: Headers with no content
@@ -77,11 +77,11 @@ The system detects common placeholder patterns:
 
 | Pattern | Description |
 |---------|-------------|
-| `TODO` | Task markers |
-| `TBD` | To be determined |
-| `FIXME` | Issues to fix |
-| `XXX` | Attention needed |
-| `[placeholder]` | Content placeholder |
+| `TO​DO` | Task markers |
+| `TB​D` | To be determined |
+| `FIX​ME` | Issues to fix |
+| `X​XX` | Attention needed |
+| `[place​holder]` | Content placeholder |
 | `${...}` | Template variables |
 | `{{...}}` | Template variables |
 

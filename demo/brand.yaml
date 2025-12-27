@@ -8,14 +8,51 @@ name: "Media Engine Demo"
 # =============================================================================
 identity:
   logos:
+    # Primary logo - full size mascot
     primary:
-      path: "brand/logos/logo.svg"
-      alt: "Media Engine Logo"
+      path: "brand/logos/logo.png"
+      alt: "Media Engine - Capy the Capybara"
+      width: 1024
+      height: 1024
+    # Dark mode variant
     dark:
-      path: "brand/logos/logo-dark.svg"
+      path: "brand/logos/logo-dark.png"
+      alt: "Media Engine - Capy the Capybara (Dark Mode)"
+    # Square variant for social media, app icons
+    square:
+      path: "brand/logos/logo-square.png"
+      alt: "Media Engine Logo Square"
+    # Icon variants at multiple sizes
     icon:
-      path: "brand/logos/icon.png"
-      sizes: [16, 32, 64, 128]
+      path: "brand/logos/icon-64.png"
+      sizes:
+        16: "brand/logos/icon-16.png"
+        32: "brand/logos/icon-32.png"
+        64: "brand/logos/icon-64.png"
+        128: "brand/logos/icon-128.png"
+        256: "brand/logos/icon-256.png"
+        512: "brand/logos/icon-512.png"
+    # Original mascot source
+    mascot:
+      path: "brand/logos/mascot.png"
+      alt: "Capy the Capybara - Media Engine Mascot"
+      description: "Friendly capybara wearing headphones, representing our approachable and helpful brand personality"
+
+  # Mascot character details
+  mascot:
+    name: "Capy"
+    species: "Capybara"
+    personality: "Friendly, calm, and always ready to help with media production"
+    tagline: "Your friendly media production companion"
+    uses:
+      - documentation headers
+      - error pages (friendly error messages)
+      - loading states
+      - welcome screens
+      - tutorial guides
+      - favicon and app icons
+      - social media avatars
+
   legal:
     copyright: "2024 Media Engine Project"
     tagline: "Agent-based media production framework"

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 150">
+  <rect width="400" height="150" fill="#1a1a2e"/>
+  <text x="200" y="30" text-anchor="middle" fill="#00d4ff" font-size="16">Content Workflow</text>
+  <circle cx="80" cy="80" r="30" fill="#22c55e"/>
+  <text x="80" y="85" text-anchor="middle" fill="white" font-size="10">Write</text>
+  <circle cx="200" cy="80" r="30" fill="#f59e0b"/>
+  <text x="200" y="85" text-anchor="middle" fill="white" font-size="10">Review</text>
+  <circle cx="320" cy="80" r="30" fill="#6366f1"/>
+  <text x="320" y="85" text-anchor="middle" fill="white" font-size="10">Publish</text>
+  <line x1="110" y1="80" x2="170" y2="80" stroke="#00d4ff" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="230" y1="80" x2="290" y2="80" stroke="#00d4ff" stroke-width="2"/>
+</svg>

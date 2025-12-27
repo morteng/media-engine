@@ -1,0 +1,52 @@
+# Media Engine Demo Project
+#
+# This project demonstrates all features of the media engine.
+# Use it as a reference when creating your own projects.
+
+project:
+  name: "Media Engine Demo"
+  description: "Sample project showcasing media-engine capabilities"
+
+# Localization settings
+localization:
+  source_language: "en"
+  languages:
+    "en":
+      name: "English"
+      locale: "en-US"
+      voice_id: "UEKYgullGqaF0keqT8Bu"
+    "no":  # Must quote 'no' - YAML parses it as False otherwise
+      name: "Norwegian"
+      locale: "nb-NO"
+      voice_id: "s2xtA7B2CTXPPlJzch1v"
+
+# Voiceover settings
+voiceover:
+  provider: "elevenlabs"
+  model: "eleven_multilingual_v2"
+  stability: 0.5
+  similarity_boost: 0.75
+
+# Video output settings
+video:
+  width: 1920
+  height: 1080
+  fps: 30
+
+# Project paths (relative to project root)
+paths:
+  content: "content"
+  assets: "assets"
+  output: "output"
+  # publish: "dist"  # Where final deliverables go (default: dist/{project-name})
+  # Can also be absolute: /path/to/deliverables
+  # Or set via environment: MEDIA_ENGINE_PUBLISH_DIR
+
+# Design system (loads from theme.yaml)
+design:
+  theme: "theme.yaml"
+
+# Quality settings
+quality:
+  freshness_days: 30
+  warn_after_days: 14

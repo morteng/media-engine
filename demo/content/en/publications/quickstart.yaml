@@ -1,0 +1,72 @@
+---
+# Publication Definition - Quick Start Guide (subset of full documentation)
+type: publication
+title: "Media Engine Quick Start"
+subtitle: "Get up and running in 15 minutes"
+description: |
+  A condensed guide to get started with Media Engine quickly.
+  Covers essential concepts without overwhelming detail.
+
+metadata:
+  version: "1.0.0"
+  status: draft
+  author: "Media Engine Team"
+  copyright: "2024 Media Engine Project"
+  target_audience: "New users"
+  reading_time: "15 minutes"
+
+outputs:
+  - format: html
+    template: quickstart
+    single_file: true
+    toc: true
+    filename: "quickstart"
+
+  - format: pdf
+    template: quickstart
+    single_file: true
+    compact: true
+    filename: "quickstart"
+
+# Only essential chapters for getting started
+chapters:
+  - path: chapters/01_introduction.md
+    required: true
+    sections:  # Only include specific sections
+      - "Overview"
+      - "Installation"
+      - "Quick Start"
+
+  - path: chapters/02_content_management.md
+    required: true
+    sections:
+      - "Creating Documents"
+      - "Frontmatter"
+
+  - path: chapters/05_builders.md
+    required: true
+    sections:
+      - "HTML Builder"
+      - "PDF Builder"
+
+  - path: chapters/12_cli_reference.md
+    required: true
+    sections:
+      - "Essential Commands"
+      - "media-engine init"
+      - "media-engine build"
+      - "media-engine dashboard"
+
+front_matter:
+  - type: title_page
+  - type: table_of_contents
+
+# No back matter for quick start
+
+translations:
+  source_language: en
+  target_languages:
+    - "no"
+
+related:
+  - publications/documentation.yaml  # Link to full docs

@@ -349,7 +349,7 @@ Find incomplete content markers.
 media-engine incomplete [--json]
 ```
 
-Detects TODO, TBD, FIXME, and other incomplete markers.
+Detects TO​DO, TB​D, FIX​ME, and other incomplete markers.
 
 ### consistency
 

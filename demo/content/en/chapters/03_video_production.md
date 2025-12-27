@@ -27,15 +27,15 @@ derived_from:
 anchors:
   default_video_width:
     value: 1920
-    type: integer
+    type: number
     description: "Default video width in pixels"
   default_video_height:
     value: 1080
-    type: integer
+    type: number
     description: "Default video height in pixels"
   default_video_fps:
     value: 30
-    type: integer
+    type: number
     description: "Default frames per second"
 ---
 

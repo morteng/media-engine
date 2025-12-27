@@ -1,0 +1,109 @@
+---
+# Publication Definition - Presentation derived from documentation
+type: publication
+title: "Media Engine Overview"
+subtitle: "Framework Presentation"
+description: |
+  Executive presentation summarizing Media Engine capabilities,
+  automatically derived from key documentation sections.
+
+metadata:
+  version: "1.0.0"
+  status: draft
+  author: "Media Engine Team"
+  copyright: "2024 Media Engine Project"
+  target_audience: "Technical decision makers"
+  presentation_duration: "20 minutes"
+
+# Output formats
+outputs:
+  - format: pptx
+    template: pitch_deck
+    filename: "media-engine-overview"
+    speaker_notes: true
+    animations: minimal
+
+  - format: html
+    template: presentation  # reveal.js style
+    filename: "media-engine-overview"
+    transitions: slide
+
+# Slides derived from chapters
+# Each slide extracts key points from a chapter
+slides:
+  - type: title
+    title: "{{publication.title}}"
+    subtitle: "{{publication.subtitle}}"
+    background: brand.primary
+
+  - type: section
+    title: "What is Media Engine?"
+    source: chapters/01_introduction.md
+    extract: summary  # Extract first paragraph as summary
+
+  - type: content
+    title: "Content Management"
+    source: chapters/02_content_management.md
+    extract: key_points  # Extract bullet points from headers
+    max_points: 5
+
+  - type: content
+    title: "Video Production"
+    source: chapters/03_video_production.md
+    extract: key_points
+    max_points: 5
+
+  - type: content
+    title: "Quality Assurance"
+    source: chapters/04_quality_checks.md
+    extract: key_points
+    max_points: 5
+
+  - type: two_column
+    title: "Build Outputs"
+    source: chapters/05_builders.md
+    left_column:
+      title: "Document Formats"
+      extract: formats  # HTML, PDF, PPTX, XLSX
+    right_column:
+      title: "Media Formats"
+      extract: media  # Video, Audio, Diagrams
+
+  - type: image
+    title: "Architecture"
+    source: diagrams/architecture.yaml
+    caption: "Media Engine Architecture"
+
+  - type: content
+    title: "Security & Validation"
+    source: chapters/13_security.md
+    extract: key_points
+    max_points: 4
+
+  - type: content
+    title: "Integrations"
+    source: chapters/14_integrations.md
+    extract: key_points
+    max_points: 4
+
+  - type: quote
+    title: "Why Media Engine?"
+    quote: "Automate content production while maintaining quality and consistency."
+    attribution: "Media Engine Documentation"
+
+  - type: section
+    title: "Get Started"
+    bullets:
+      - "pip install media-engine"
+      - "media-engine init"
+      - "media-engine dashboard"
+    call_to_action: "https://github.com/your-org/media-engine"
+
+# Related publication (full docs)
+related:
+  - publications/documentation.yaml
+
+translations:
+  source_language: en
+  target_languages:
+    - "no"

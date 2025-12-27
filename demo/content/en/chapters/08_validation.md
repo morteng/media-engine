@@ -179,14 +179,14 @@ class ValidationReport:
     passed: bool
 
     @property
-    def error_count(self) -> int
+    def error_count(self) -> int: ...
     @property
-    def warning_count(self) -> int
+    def warning_count(self) -> int: ...
 ```
 
 ## Schema Error Examples
 
-```yaml
+```text
 # Missing required field
 ERROR: document.md - Missing required field 'title'
 

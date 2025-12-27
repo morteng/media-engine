@@ -4,20 +4,20 @@
     "status_code": 200,
     "redirect_url": null,
     "error": null,
-    "cached_at": "2025-12-22T21:54:26.915350"
+    "cached_at": "2025-12-27T03:58:26.086565"
   },
   "https://www.worldwildlife.org/stories/are-capybaras-rodents-and-5-other-capybara-facts": {
     "status": "broken",
     "status_code": 403,
     "redirect_url": null,
     "error": "Forbidden",
-    "cached_at": "2025-12-22T21:54:26.922483"
+    "cached_at": "2025-12-27T03:58:26.087691"
   },
   "https://blog.nature.org/2020/02/11/capybara-meet-the-worlds-largest-rodent/": {
     "status": "valid",
     "status_code": 200,
     "redirect_url": null,
     "error": null,
-    "cached_at": "2025-12-22T21:54:26.935321"
+    "cached_at": "2025-12-27T03:58:26.146001"
   }
 }

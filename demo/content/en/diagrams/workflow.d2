@@ -1,0 +1,99 @@
+# Publication Workflow - From Content to Deliverables
+# Render with: d2 --sketch workflow.d2 workflow.svg
+
+direction: right
+
+# Step 1: Create Content
+create: "1. Create" {
+  shape: rectangle
+  style: {
+    fill: "#dbeafe"
+    stroke: "#2563eb"
+    stroke-width: 2
+    border-radius: 10
+  }
+
+  md: Write Markdown
+  yaml: Define YAML
+}
+
+# Step 2: Define Publication
+define: "2. Define Publication" {
+  shape: rectangle
+  style: {
+    fill: "#fef3c7"
+    stroke: "#d97706"
+    stroke-width: 2
+    border-radius: 10
+  }
+
+  pub: publication.yaml
+  chapters: Link Chapters
+  meta: Add Metadata
+}
+
+# Step 3: Quality Check
+check: "3. Quality Check" {
+  shape: rectangle
+  style: {
+    fill: "#fce7f3"
+    stroke: "#db2777"
+    stroke-width: 2
+    border-radius: 10
+  }
+
+  validate: Validate Links
+  fresh: Check Freshness
+  read: Readability
+}
+
+# Step 4: Build
+build: "4. Build" {
+  shape: rectangle
+  style: {
+    fill: "#d1fae5"
+    stroke: "#059669"
+    stroke-width: 2
+    border-radius: 10
+  }
+
+  html: Generate HTML
+  pdf: Generate PDF
+  pptx: Generate PPTX
+}
+
+# Step 5: Publish
+publish: "5. Publish" {
+  shape: rectangle
+  style: {
+    fill: "#e0e7ff"
+    stroke: "#4f46e5"
+    stroke-width: 2
+    border-radius: 10
+  }
+
+  deploy: Deploy
+  share: Share
+}
+
+# Flow
+create -> define: chapters ready
+define -> check: publication defined
+check -> build: quality passed
+build -> publish: deliverables ready
+
+# Dashboard overlay
+dashboard: Dashboard {
+  shape: cloud
+  style: {
+    fill: "#f3e8ff"
+    stroke: "#9333ea"
+    stroke-dash: 3
+  }
+}
+
+dashboard -> create
+dashboard -> define
+dashboard -> check
+dashboard -> build
+dashboard -> publish

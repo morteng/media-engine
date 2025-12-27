@@ -1,0 +1,649 @@
+{
+  "version": "2.0.0",
+  "generated_at": "2025-12-26T17:44:11.162800",
+  "nodes": {
+    "/Users/Morten/media-engine/demo/content/en/chapters/01_introduction.md": {
+      "path": "/Users/Morten/media-engine/demo/content/en/chapters/01_introduction.md",
+      "title": "Introduction to Media Engine",
+      "language": "en",
+      "doc_type": "architecture",
+      "lifecycle": "living",
+      "status": "final",
+      "content_hash": "c337e83d5152a187",
+      "last_modified": "2025-12-24T03:03:05.147043",
+      "owner": "morteng@example.com",
+      "approvers": [
+        "reviewer@example.com"
+      ],
+      "anchors": {
+        "project_name": {
+          "value": "Media Engine",
+          "type": "string"
+        },
+        "min_python_version": {
+          "value": "3.11",
+          "type": "string"
+        }
+      },
+      "is_stale": false,
+      "stale_reasons": []
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/02_content_management.md": {
+      "path": "/Users/Morten/media-engine/demo/content/en/chapters/02_content_management.md",
+      "title": "Content Management",
+      "language": "en",
+      "doc_type": "implementation",
+      "lifecycle": "living",
+      "status": "final",
+      "content_hash": "478bc57f0eee40a8",
+      "last_modified": "2025-12-24T03:03:05.152570",
+      "owner": null,
+      "approvers": [],
+      "anchors": {},
+      "is_stale": false,
+      "stale_reasons": []
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/04_quality_checks.md": {
+      "path": "/Users/Morten/media-engine/demo/content/en/chapters/04_quality_checks.md",
+      "title": "Quality Checks",
+      "language": "en",
+      "doc_type": "operations",
+      "lifecycle": "living",
+      "status": "final",
+      "content_hash": "7dd60f9ccb9d1652",
+      "last_modified": "2025-12-24T03:03:05.157470",
+      "owner": null,
+      "approvers": [],
+      "anchors": {},
+      "is_stale": false,
+      "stale_reasons": []
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/06_diagrams.md": {
+      "path": "/Users/Morten/media-engine/demo/content/en/chapters/06_diagrams.md",
+      "title": "Diagram Generation",
+      "language": "en",
+      "doc_type": "chapter",
+      "lifecycle": "living",
+      "status": "final",
+      "content_hash": "00388163f9211742",
+      "last_modified": "2025-12-24T03:03:05.167068",
+      "owner": null,
+      "approvers": [],
+      "anchors": {},
+      "is_stale": false,
+      "stale_reasons": []
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/07_search_indexing.md": {
+      "path": "/Users/Morten/media-engine/demo/content/en/chapters/07_search_indexing.md",
+      "title": "Search Indexing",
+      "language": "en",
+      "doc_type": "chapter",
+      "lifecycle": "living",
+      "status": "final",
+      "content_hash": "07abcad283d1114e",
+      "last_modified": "2025-12-24T03:03:05.169401",
+      "owner": null,
+      "approvers": [],
+      "anchors": {},
+      "is_stale": false,
+      "stale_reasons": []
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/09_publishing.md": {
+      "path": "/Users/Morten/media-engine/demo/content/en/chapters/09_publishing.md",
+      "title": "Publishing",
+      "language": "en",
+      "doc_type": "operations",
+      "lifecycle": "living",
+      "status": "final",
+      "content_hash": "a037318f08851c0d",
+      "last_modified": "2025-12-24T03:03:05.178275",
+      "owner": null,
+      "approvers": [],
+      "anchors": {},
+      "is_stale": false,
+      "stale_reasons": []
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/10_packs.md": {
+      "path": "/Users/Morten/media-engine/demo/content/en/chapters/10_packs.md",
+      "title": "Audience Packs",
+      "language": "en",
+      "doc_type": "chapter",
+      "lifecycle": "living",
+      "status": "final",
+      "content_hash": "d984193534d4a251",
+      "last_modified": "2025-12-24T03:03:05.181182",
+      "owner": null,
+      "approvers": [],
+      "anchors": {},
+      "is_stale": false,
+      "stale_reasons": []
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/11_assets.md": {
+      "path": "/Users/Morten/media-engine/demo/content/en/chapters/11_assets.md",
+      "title": "Assets and Fonts",
+      "language": "en",
+      "doc_type": "chapter",
+      "lifecycle": "living",
+      "status": "final",
+      "content_hash": "be98807030fd0945",
+      "last_modified": "2025-12-24T03:03:05.184157",
+      "owner": null,
+      "approvers": [],
+      "anchors": {},
+      "is_stale": false,
+      "stale_reasons": []
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/12_cli_reference.md": {
+      "path": "/Users/Morten/media-engine/demo/content/en/chapters/12_cli_reference.md",
+      "title": "CLI Reference",
+      "language": "en",
+      "doc_type": "operations",
+      "lifecycle": "living",
+      "status": "final",
+      "content_hash": "baaf03aaa99732cb",
+      "last_modified": "2025-12-24T03:03:05.186693",
+      "owner": null,
+      "approvers": [],
+      "anchors": {},
+      "is_stale": false,
+      "stale_reasons": []
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/13_security.md": {
+      "path": "/Users/Morten/media-engine/demo/content/en/chapters/13_security.md",
+      "title": "Security Scanning",
+      "language": "en",
+      "doc_type": "chapter",
+      "lifecycle": "living",
+      "status": "final",
+      "content_hash": "c73020a96cc60382",
+      "last_modified": "2025-12-24T03:03:05.189615",
+      "owner": null,
+      "approvers": [],
+      "anchors": {},
+      "is_stale": false,
+      "stale_reasons": []
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/14_integrations.md": {
+      "path": "/Users/Morten/media-engine/demo/content/en/chapters/14_integrations.md",
+      "title": "Integrations",
+      "language": "en",
+      "doc_type": "chapter",
+      "lifecycle": "living",
+      "status": "final",
+      "content_hash": "11af4172562869c6",
+      "last_modified": "2025-12-24T03:03:05.192150",
+      "owner": null,
+      "approvers": [],
+      "anchors": {},
+      "is_stale": false,
+      "stale_reasons": []
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/15_analysis.md": {
+      "path": "/Users/Morten/media-engine/demo/content/en/chapters/15_analysis.md",
+      "title": "Content Analysis",
+      "language": "en",
+      "doc_type": "chapter",
+      "lifecycle": "living",
+      "status": "final",
+      "content_hash": "6224ebc28194f87c",
+      "last_modified": "2025-12-24T03:03:05.194522",
+      "owner": null,
+      "approvers": [],
+      "anchors": {},
+      "is_stale": false,
+      "stale_reasons": []
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/16_github_showcase.md": {
+      "path": "/Users/Morten/media-engine/demo/content/en/chapters/16_github_showcase.md",
+      "title": "GitHub README Showcase",
+      "language": "en",
+      "doc_type": "chapter",
+      "lifecycle": "living",
+      "status": "final",
+      "content_hash": "e550d47e06c988c1",
+      "last_modified": "2025-12-24T03:03:05.196657",
+      "owner": null,
+      "approvers": [],
+      "anchors": {},
+      "is_stale": false,
+      "stale_reasons": []
+    },
+    "/Users/Morten/media-engine/demo/content/en/chapters/17_capybara_facts.md": {
+      "path": "/Users/Morten/media-engine/demo/content/en/chapters/17_capybara_facts.md",
+      "title": "Fun Facts About Capybaras",
+      "language": "en",
+      "doc_type": "chapter",
+      "lifecycle": "living",
+      "status": "final",
+      "content_hash": "3586d6c2f496fc73",
+      "last_modified": "2025-12-24T03:03:05.198590",
+      "owner": null,
+      "approvers": [],
+      "anchors": {},
+      "is_stale": false,
+      "stale_reasons": []
+    }
+  },
+  "edges": {
+    "/Users/Morten/media-engine/demo/content/en/chapters/01_introduction.md": [
+      {
+        "source": "/Users/Morten/media-engine/demo/content/en/chapters/01_introduction.md",
+        "target": "/Users/Morten/media-engine/demo/content/en/assets/images/architecture.svg",
+        "edge_type": "uses_asset",
+        "context": "Image: Media Engine Architecture",
+        "line_number": null,
+        "version": null,
+        "target_hash": "12ab6a10f90d99f5",
+        "recorded_at": "2025-12-24T03:03:05.149413",
+        "is_stale": false,
+        "stale_reason": null
+      },
+      {
+        "source": "/Users/Morten/media-engine/demo/content/en/chapters/01_introduction.md",
+        "target": "/Users/Morten/media-engine/demo/content/en/assets/images/workflow.svg",
+        "edge_type": "uses_asset",
+        "context": "Image: Content Workflow",
+        "line_number": null,
+        "version": null,
+        "target_hash": "425ad95baf3536f5",
+        "recorded_at": "2025-12-24T03:03:05.151291",
+        "is_stale": false,
+        "stale_reason": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/en/chapters/02_content_management.md": [
+      {
+        "source": "/Users/Morten/media-engine/demo/content/en/chapters/02_content_management.md",
+        "target": "/Users/Morten/media-engine/demo/content/chapters/01_introduction.md",
+        "edge_type": "implements",
+        "context": null,
+        "line_number": null,
+        "version": "1.0.0",
+        "target_hash": null,
+        "recorded_at": "2025-12-24T03:03:05.152871",
+        "is_stale": false,
+        "stale_reason": null
+      },
+      {
+        "source": "/Users/Morten/media-engine/demo/content/en/chapters/02_content_management.md",
+        "target": "/Users/Morten/media-engine/demo/content/chapters/01_introduction",
+        "edge_type": "depends_on",
+        "context": null,
+        "line_number": null,
+        "version": null,
+        "target_hash": null,
+        "recorded_at": "2025-12-24T03:03:05.153007",
+        "is_stale": false,
+        "stale_reason": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/en/chapters/04_quality_checks.md": [
+      {
+        "source": "/Users/Morten/media-engine/demo/content/en/chapters/04_quality_checks.md",
+        "target": "/Users/Morten/media-engine/demo/content/chapters/02_content_management.md",
+        "edge_type": "implements",
+        "context": null,
+        "line_number": null,
+        "version": "1.0.0",
+        "target_hash": null,
+        "recorded_at": "2025-12-24T03:03:05.157737",
+        "is_stale": false,
+        "stale_reason": null
+      },
+      {
+        "source": "/Users/Morten/media-engine/demo/content/en/chapters/04_quality_checks.md",
+        "target": "/Users/Morten/media-engine/demo/content/chapters/02_content_management",
+        "edge_type": "depends_on",
+        "context": null,
+        "line_number": null,
+        "version": null,
+        "target_hash": null,
+        "recorded_at": "2025-12-24T03:03:05.157946",
+        "is_stale": false,
+        "stale_reason": null
+      },
+      {
+        "source": "/Users/Morten/media-engine/demo/content/en/chapters/04_quality_checks.md",
+        "target": "/Users/Morten/media-engine/demo/content/chapters/01_introduction.md",
+        "edge_type": "anchor_ref",
+        "context": "anchor:project_name",
+        "line_number": null,
+        "version": null,
+        "target_hash": null,
+        "recorded_at": "2025-12-24T03:03:05.158163",
+        "is_stale": false,
+        "stale_reason": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/en/chapters/06_diagrams.md": [
+      {
+        "source": "/Users/Morten/media-engine/demo/content/en/chapters/06_diagrams.md",
+        "target": "/Users/Morten/media-engine/demo/content/chapters/05_builders",
+        "edge_type": "depends_on",
+        "context": null,
+        "line_number": null,
+        "version": null,
+        "target_hash": null,
+        "recorded_at": "2025-12-24T03:03:05.167351",
+        "is_stale": false,
+        "stale_reason": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/en/chapters/07_search_indexing.md": [
+      {
+        "source": "/Users/Morten/media-engine/demo/content/en/chapters/07_search_indexing.md",
+        "target": "/Users/Morten/media-engine/demo/content/chapters/02_content_management",
+        "edge_type": "depends_on",
+        "context": null,
+        "line_number": null,
+        "version": null,
+        "target_hash": null,
+        "recorded_at": "2025-12-24T03:03:05.169726",
+        "is_stale": false,
+        "stale_reason": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/en/chapters/09_publishing.md": [
+      {
+        "source": "/Users/Morten/media-engine/demo/content/en/chapters/09_publishing.md",
+        "target": "/Users/Morten/media-engine/demo/content/chapters/05_builders.md",
+        "edge_type": "extends",
+        "context": null,
+        "line_number": null,
+        "version": "1.0.0",
+        "target_hash": null,
+        "recorded_at": "2025-12-24T03:03:05.178564",
+        "is_stale": false,
+        "stale_reason": null
+      },
+      {
+        "source": "/Users/Morten/media-engine/demo/content/en/chapters/09_publishing.md",
+        "target": "/Users/Morten/media-engine/demo/content/chapters/05_builders",
+        "edge_type": "depends_on",
+        "context": null,
+        "line_number": null,
+        "version": null,
+        "target_hash": null,
+        "recorded_at": "2025-12-24T03:03:05.178699",
+        "is_stale": false,
+        "stale_reason": null
+      },
+      {
+        "source": "/Users/Morten/media-engine/demo/content/en/chapters/09_publishing.md",
+        "target": "/Users/Morten/media-engine/demo/content/chapters/05_builders.md",
+        "edge_type": "anchor_ref",
+        "context": "anchor:supported_formats",
+        "line_number": null,
+        "version": null,
+        "target_hash": null,
+        "recorded_at": "2025-12-24T03:03:05.178831",
+        "is_stale": false,
+        "stale_reason": null
+      },
+      {
+        "source": "/Users/Morten/media-engine/demo/content/en/chapters/09_publishing.md",
+        "target": "/Users/Morten/media-engine/demo/content/chapters/05_builders.md",
+        "edge_type": "anchor_ref",
+        "context": "anchor:default_output_dir",
+        "line_number": null,
+        "version": null,
+        "target_hash": null,
+        "recorded_at": "2025-12-24T03:03:05.178936",
+        "is_stale": false,
+        "stale_reason": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/en/chapters/10_packs.md": [
+      {
+        "source": "/Users/Morten/media-engine/demo/content/en/chapters/10_packs.md",
+        "target": "/Users/Morten/media-engine/demo/content/chapters/09_publishing",
+        "edge_type": "depends_on",
+        "context": null,
+        "line_number": null,
+        "version": null,
+        "target_hash": null,
+        "recorded_at": "2025-12-24T03:03:05.181574",
+        "is_stale": false,
+        "stale_reason": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/en/chapters/11_assets.md": [
+      {
+        "source": "/Users/Morten/media-engine/demo/content/en/chapters/11_assets.md",
+        "target": "/Users/Morten/media-engine/demo/content/chapters/05_builders",
+        "edge_type": "depends_on",
+        "context": null,
+        "line_number": null,
+        "version": null,
+        "target_hash": null,
+        "recorded_at": "2025-12-24T03:03:05.184419",
+        "is_stale": false,
+        "stale_reason": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/en/chapters/12_cli_reference.md": [
+      {
+        "source": "/Users/Morten/media-engine/demo/content/en/chapters/12_cli_reference.md",
+        "target": "/Users/Morten/media-engine/demo/content/chapters/01_introduction.md",
+        "edge_type": "implements",
+        "context": null,
+        "line_number": null,
+        "version": "1.0.0",
+        "target_hash": null,
+        "recorded_at": "2025-12-24T03:03:05.186964",
+        "is_stale": false,
+        "stale_reason": null
+      },
+      {
+        "source": "/Users/Morten/media-engine/demo/content/en/chapters/12_cli_reference.md",
+        "target": "/Users/Morten/media-engine/demo/content/chapters/02_content_management.md",
+        "edge_type": "summarizes",
+        "context": null,
+        "line_number": null,
+        "version": "1.0.0",
+        "target_hash": null,
+        "recorded_at": "2025-12-24T03:03:05.187081",
+        "is_stale": false,
+        "stale_reason": null
+      },
+      {
+        "source": "/Users/Morten/media-engine/demo/content/en/chapters/12_cli_reference.md",
+        "target": "/Users/Morten/media-engine/demo/content/chapters/01_introduction",
+        "edge_type": "depends_on",
+        "context": null,
+        "line_number": null,
+        "version": null,
+        "target_hash": null,
+        "recorded_at": "2025-12-24T03:03:05.187205",
+        "is_stale": false,
+        "stale_reason": null
+      },
+      {
+        "source": "/Users/Morten/media-engine/demo/content/en/chapters/12_cli_reference.md",
+        "target": "/Users/Morten/media-engine/demo/content/chapters/01_introduction.md",
+        "edge_type": "anchor_ref",
+        "context": "anchor:project_name",
+        "line_number": null,
+        "version": null,
+        "target_hash": null,
+        "recorded_at": "2025-12-24T03:03:05.187352",
+        "is_stale": false,
+        "stale_reason": null
+      },
+      {
+        "source": "/Users/Morten/media-engine/demo/content/en/chapters/12_cli_reference.md",
+        "target": "/Users/Morten/media-engine/demo/content/chapters/01_introduction.md",
+        "edge_type": "anchor_ref",
+        "context": "anchor:min_python_version",
+        "line_number": null,
+        "version": null,
+        "target_hash": null,
+        "recorded_at": "2025-12-24T03:03:05.187460",
+        "is_stale": false,
+        "stale_reason": null
+      },
+      {
+        "source": "/Users/Morten/media-engine/demo/content/en/chapters/12_cli_reference.md",
+        "target": "/Users/Morten/media-engine/demo/content/chapters/05_builders.md",
+        "edge_type": "anchor_ref",
+        "context": "anchor:supported_formats",
+        "line_number": null,
+        "version": null,
+        "target_hash": null,
+        "recorded_at": "2025-12-24T03:03:05.187564",
+        "is_stale": false,
+        "stale_reason": null
+      },
+      {
+        "source": "/Users/Morten/media-engine/demo/content/en/chapters/12_cli_reference.md",
+        "target": "/Users/Morten/media-engine/demo/content/chapters/03_video_production.md",
+        "edge_type": "anchor_ref",
+        "context": "anchor:default_video_fps",
+        "line_number": null,
+        "version": null,
+        "target_hash": null,
+        "recorded_at": "2025-12-24T03:03:05.187664",
+        "is_stale": false,
+        "stale_reason": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/en/chapters/13_security.md": [
+      {
+        "source": "/Users/Morten/media-engine/demo/content/en/chapters/13_security.md",
+        "target": "/Users/Morten/media-engine/demo/content/chapters/04_quality_checks",
+        "edge_type": "depends_on",
+        "context": null,
+        "line_number": null,
+        "version": null,
+        "target_hash": null,
+        "recorded_at": "2025-12-24T03:03:05.189806",
+        "is_stale": false,
+        "stale_reason": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/en/chapters/14_integrations.md": [
+      {
+        "source": "/Users/Morten/media-engine/demo/content/en/chapters/14_integrations.md",
+        "target": "/Users/Morten/media-engine/demo/content/chapters/01_introduction",
+        "edge_type": "depends_on",
+        "context": null,
+        "line_number": null,
+        "version": null,
+        "target_hash": null,
+        "recorded_at": "2025-12-24T03:03:05.192474",
+        "is_stale": false,
+        "stale_reason": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/en/chapters/15_analysis.md": [
+      {
+        "source": "/Users/Morten/media-engine/demo/content/en/chapters/15_analysis.md",
+        "target": "/Users/Morten/media-engine/demo/content/chapters/04_quality_checks",
+        "edge_type": "depends_on",
+        "context": null,
+        "line_number": null,
+        "version": null,
+        "target_hash": null,
+        "recorded_at": "2025-12-24T03:03:05.194693",
+        "is_stale": false,
+        "stale_reason": null
+      }
+    ],
+    "/Users/Morten/media-engine/demo/content/en/chapters/17_capybara_facts.md": [
+      {
+        "source": "/Users/Morten/media-engine/demo/content/en/chapters/17_capybara_facts.md",
+        "target": "/Users/Morten/media-engine/demo/content/research/capybara_research",
+        "edge_type": "depends_on",
+        "context": null,
+        "line_number": null,
+        "version": null,
+        "target_hash": null,
+        "recorded_at": "2025-12-24T03:03:05.198784",
+        "is_stale": false,
+        "stale_reason": null
+      }
+    ]
+  },
+  "anchors": {
+    "project_name": {
+      "id": "project_name",
+      "value": "Media Engine",
+      "value_type": "string",
+      "defined_in": "/Users/Morten/media-engine/demo/content/en/chapters/01_introduction.md",
+      "referenced_in": [
+        "/Users/Morten/media-engine/demo/content/en/chapters/04_quality_checks.md",
+        "/Users/Morten/media-engine/demo/content/en/chapters/05_builders.md",
+        "/Users/Morten/media-engine/demo/content/en/chapters/12_cli_reference.md"
+      ]
+    },
+    "min_python_version": {
+      "id": "min_python_version",
+      "value": "3.11",
+      "value_type": "string",
+      "defined_in": "/Users/Morten/media-engine/demo/content/en/chapters/01_introduction.md",
+      "referenced_in": [
+        "/Users/Morten/media-engine/demo/content/en/chapters/12_cli_reference.md"
+      ]
+    },
+    "default_video_width": {
+      "id": "default_video_width",
+      "value": 1920,
+      "value_type": "integer",
+      "defined_in": "/Users/Morten/media-engine/demo/content/en/chapters/03_video_production.md",
+      "referenced_in": []
+    },
+    "default_video_height": {
+      "id": "default_video_height",
+      "value": 1080,
+      "value_type": "integer",
+      "defined_in": "/Users/Morten/media-engine/demo/content/en/chapters/03_video_production.md",
+      "referenced_in": []
+    },
+    "default_video_fps": {
+      "id": "default_video_fps",
+      "value": 30,
+      "value_type": "integer",
+      "defined_in": "/Users/Morten/media-engine/demo/content/en/chapters/03_video_production.md",
+      "referenced_in": [
+        "/Users/Morten/media-engine/demo/content/en/chapters/12_cli_reference.md"
+      ]
+    },
+    "supported_formats": {
+      "id": "supported_formats",
+      "value": [
+        "html",
+        "pdf",
+        "pptx",
+        "xlsx"
+      ],
+      "value_type": "array",
+      "defined_in": "/Users/Morten/media-engine/demo/content/en/chapters/05_builders.md",
+      "referenced_in": [
+        "/Users/Morten/media-engine/demo/content/en/chapters/09_publishing.md",
+        "/Users/Morten/media-engine/demo/content/en/chapters/12_cli_reference.md"
+      ]
+    },
+    "default_output_dir": {
+      "id": "default_output_dir",
+      "value": "dist",
+      "value_type": "string",
+      "defined_in": "/Users/Morten/media-engine/demo/content/en/chapters/05_builders.md",
+      "referenced_in": [
+        "/Users/Morten/media-engine/demo/content/en/chapters/09_publishing.md"
+      ]
+    }
+  },
+  "summary": {
+    "total_nodes": 14,
+    "total_edges": 26,
+    "edge_types": {
+      "uses_asset": 2,
+      "implements": 3,
+      "depends_on": 12,
+      "anchor_ref": 7,
+      "extends": 1,
+      "summarizes": 1
+    },
+    "anchor_count": 7
+  }
+}

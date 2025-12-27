@@ -47,7 +47,11 @@ Content (Markdown) → Media Engine → Outputs (PDF, Video, etc.)
                     (configuration)
 ```
 
+![Media Engine Architecture](../assets/images/architecture.svg)
+
 The media engine reads your content, applies your theme, and generates outputs. It tracks what's been built and only regenerates when source content changes.
+
+![Content Workflow](../assets/images/workflow.svg)
 
 ## Getting Started
 
