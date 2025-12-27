@@ -18,7 +18,7 @@ Write content once in Markdown. Generate professional documents, presentations, 
 </p>
 
 <p align="center">
-  <em>99-second walkthrough: Dashboard, insights, content management, quality, build system, AI integration, and video production</em><br>
+  <em>120-second walkthrough: Dashboard, content hierarchy, quality, brand system, build & publish, AI workspace, and video production</em><br>
   <strong>This video was built with Media Engine</strong> - from YAML script to AI voiceover to motion graphics
 </p>
 
@@ -53,7 +53,19 @@ All outputs are styled consistently using your theme configuration.
 - **PDF** - Print-ready documents
 - **PowerPoint** - Slide decks from YAML definitions
 - **Excel** - Spreadsheets with formulas and charts
-- **Diagrams** - Matplotlib-based with theming
+- **Diagrams** - Multi-engine (matplotlib, d2, excalidraw) with theming
+
+### Publications System
+- **Deliverable-centric** - Define publications (book, deck, video, report, website, package)
+- **Component-based** - Compose from chapters, slides, data sources
+- **Multi-format** - Build to PDF, HTML, PPTX, XLSX per publication
+- **Validation** - Automatic status tracking and freshness monitoring
+
+### Brand System
+- **Single source** - Colors, typography, logos in brand.yaml
+- **Voice guidelines** - Tone profiles by document type and audience
+- **Design tokens** - Semantic colors, spacing, borders, shadows
+- **Dark mode** - Full support throughout all outputs
 
 ### Video Production
 - **Voiceover** - ElevenLabs TTS with smart caching
@@ -68,10 +80,16 @@ All outputs are styled consistently using your theme configuration.
 - **Schema validation** - Frontmatter structure enforcement
 - **Security scanning** - API keys, PII, secrets detection
 
+### AI Workspace
+- **Session tracking** - Track AI agent work with progress and changes
+- **Task queue** - Structured tasks with priorities
+- **Research store** - Persist findings across sessions
+- **Notes & decisions** - Human-AI collaboration with reasoning capture
+
 ### Integrations
-- **CLI** - Full command-line interface
-- **MCP Server** - 20+ tools for AI agent integration
-- **Web Dashboard** - Real-time project management UI
+- **CLI** - Full command-line interface (25+ command modules)
+- **MCP Server** - 26 tool modules with 100+ tools for AI agents
+- **Web Dashboard** - Real-time project management UI (7 pages, 15+ tabs)
 - **GitHub Actions** - CI/CD workflow templates
 - **Python API** - Programmatic access to all features
 
@@ -149,11 +167,13 @@ media-engine dashboard           # Launch web UI
 ```
 my-project/
 ├── project.yaml          # Project configuration
+├── brand.yaml            # Brand identity (colors, typography, voice)
 ├── theme.yaml            # Design tokens
 ├── schema.yaml           # Frontmatter validation
 ├── content/
 │   ├── en/
 │   │   ├── chapters/     # Markdown documentation
+│   │   ├── publications/ # Publication definitions (book, deck, video)
 │   │   ├── scripts/      # Video script YAML
 │   │   ├── slides/       # Presentation YAML
 │   │   ├── diagrams/     # Diagram definitions
@@ -267,7 +287,16 @@ media-engine-mcp --project /path/to/project
 }
 ```
 
-**Available tools:** `project_status`, `list_chapters`, `read_document`, `update_document_metadata`, `translation_status`, `quality_check`, `build_html`, `search_content`, and 12 more.
+**Key tool categories:**
+- **Project** - `project_status`, `get_project_context`, `refresh_project`
+- **Documents** - `list_chapters`, `read_document`, `create_document`, `update_document_content`
+- **AI Context** - `get_ai_context`, `start_ai_session`, `record_session_progress`, `add_ai_note`
+- **Quality** - `quality_check`, `quality_report_summary`, `publish_readiness`
+- **Build** - `build_html`, `build_pptx`, `build_diagram`, `list_publications`
+- **Translation** - `translation_status`, `outdated_translations`, `sync_all_translations`
+- **Search** - `search_content`, `find_relevant_documents`, `natural_language_query`
+
+Full list: 26 modules with 100+ tools for comprehensive AI agent integration.
 
 ---
 
@@ -278,13 +307,20 @@ media-engine dashboard
 # Opens http://localhost:8080
 ```
 
+**Navigation:**
+- **Overview** - Dashboard (health score, publications, AI workspace), Build & Publish
+- **Content** - Documents, Hierarchy (4 view modes), Translations, Video, Media
+- **Quality** - Overview (health score), Analysis (knowledge graph), Activity (audit log)
+- **Brand** - Design System (colors, typography, logos), Voice & Guidelines
+- **AI Workspace** - Sessions, Notes, Queue, Research, Decisions
+- **Settings** - Theme, Project, Quality, Video, Paths
+
 Features:
-- **Overview** - Project stats, translation matrix, recent issues
-- **Documents** - Browse and preview all content types
-- **Media** - View generated audio, video, demos with source links
-- **Translations** - Full translation status matrix
-- **Quality** - Issue tracking with file navigation
-- **Activity** - Audit log of all operations
+- Real-time updates via WebSocket
+- Hierarchy visualization (panel, tree, flow, graph views)
+- Publication management with format/language selection
+- AI session tracking and task queue
+- Brand system editor with live preview
 
 ---
 
@@ -389,9 +425,9 @@ pip install -e ".[all]"         # Everything
 
 The `demo/` directory is a comprehensive, self-documenting reference project:
 
-- **16 chapters** covering all Media Engine features
-- **12 interactive demos** showcasing all 9 demo types
-- **Full translations** (English + Norwegian)
+- **17 chapters** covering all Media Engine features
+- **4 publications** (documentation, presentation, quickstart, feature matrix)
+- **Complete brand system** with Capy the Capybara mascot
 - **Video scripts, diagrams, slides, and data files**
 - **The walkthrough video** - built entirely with Media Engine
 
@@ -409,15 +445,21 @@ media-engine build        # Build all outputs
 media-engine/
 ├── python/
 │   └── media_engine/        # Main Python package
-│       ├── core/            # Config, Project, Theme
+│       ├── core/            # Config, Project, Theme, Hashing
+│       ├── brand/           # Brand system
 │       ├── cms/             # Document management
 │       ├── video/           # Video production
-│       ├── builders/        # Output generators
+│       ├── builders/        # Output generators (HTML, PDF, PPTX, XLSX)
+│       ├── diagrams/        # Multi-engine diagrams (matplotlib, d2, excalidraw)
+│       ├── publications/    # Publication registry, builder, tracker
+│       ├── ai/              # AI context, sessions, research, notes, queue
+│       ├── relationships/   # Unified document relationships
 │       ├── quality/         # Quality checks
 │       ├── security/        # Secret/PII detection
-│       ├── web/             # Dashboard (FastAPI)
-│       ├── mcp/             # MCP server
-│       └── cli.py           # CLI interface
+│       ├── web/             # Dashboard (FastAPI, 24 route files)
+│       ├── mcp/             # MCP server (26 tool modules)
+│       └── cli/             # CLI interface (25+ command modules)
+├── dashboard/               # React dashboard (Vite + React 19)
 ├── remotion/                # Motion graphics (React)
 ├── demo/                    # Reference project
 └── pyproject.toml
