@@ -12,6 +12,10 @@ export { Select, SelectGroup, SelectValue, SelectTrigger, SelectContent, SelectL
 export { Label } from './Label';
 export { Separator } from './Separator';
 
+// Error Handling
+export { ErrorBoundary, PageErrorFallback, withErrorBoundary } from './ErrorBoundary';
+export { ConfirmProvider, ConfirmDialog, useConfirm } from './ConfirmDialog';
+
 // Custom Components
 export { StatCard } from './StatCard';
 export { SubTabs } from './SubTabs';
@@ -25,6 +29,7 @@ export { Skeleton, SkeletonCard, SkeletonList, SkeletonStats } from './Skeleton'
 export { EmptyState, NoResultsState, NoDocumentsState, NoFilesState } from './EmptyState';
 export { ExpandableSection, AnalysisModule } from './ExpandableSection';
 export { InfoTooltip, MetricLabel, NavTooltip, METRIC_EXPLANATIONS } from './InfoTooltip';
+export { KeyboardShortcutsHelp } from './KeyboardShortcutsHelp';
 
 // Utility
 export { cn } from '@/utils/cn';

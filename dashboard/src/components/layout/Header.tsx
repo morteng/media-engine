@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useProject, useRecentProjects, useOpenProject, useBrowseProject, useRemoveRecentProject } from '@/hooks/useApi';
 import { useSidebar, useSettings } from '@/contexts';
 import { ConnectionStatus } from '@/components/ui';
+import { AgentActivityPanel } from '@/components/ai';
 import {
   Search,
   Moon,
@@ -173,13 +174,15 @@ export function Header() {
 
       {/* Right side actions */}
       <div className="flex items-center gap-2 flex-shrink-0">
+        <AgentActivityPanel variant="compact" />
         <ConnectionStatus />
         <button
           className="btn btn-ghost btn-sm btn-square"
           onClick={toggleTheme}
           title={isDark ? "Switch to light theme" : "Switch to dark theme"}
+          aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
         >
-          {isDark ? <Sun size={18} /> : <Moon size={18} />}
+          {isDark ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}
         </button>
       </div>
     </header>

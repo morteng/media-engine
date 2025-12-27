@@ -9,3 +9,4 @@ export { AITaskQueue, type AITask } from './AITaskQueue';
 export { AIResearchCard, type AIResearchEntry } from './AIResearchCard';
 export { AIContextPanel, type AIContextData } from './AIContextPanel';
 export { AIWorkspaceSummary } from './AIWorkspaceSummary';
+export { AgentActivityPanel } from './AgentActivityPanel';

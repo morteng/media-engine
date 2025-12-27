@@ -79,8 +79,9 @@ export function Sidebar() {
         }
         end={item.path === '/'}
         onClick={handleNavClick}
+        aria-label={isCollapsed && !isMobile ? item.label : undefined}
       >
-        <item.icon size={18} className="flex-shrink-0" />
+        <item.icon size={18} className="flex-shrink-0" aria-hidden="true" />
         {(!isCollapsed || isMobile) && <span>{item.label}</span>}
       </NavLink>
     </NavTooltip>
@@ -97,6 +98,7 @@ export function Sidebar() {
       )}
 
       <aside
+        aria-label="Sidebar"
         className={clsx(
           'bg-base-200 border-r border-base-300 flex flex-col transition-all duration-200',
           {
@@ -123,7 +125,7 @@ export function Sidebar() {
           </div>
         )}
 
-        <nav className="flex-1 p-2 overflow-y-auto">
+        <nav className="flex-1 p-2 overflow-y-auto" role="navigation" aria-label="Main navigation">
           {isCollapsed && !isMobile ? (
             // Collapsed mode: flat list without sections
             <div className="space-y-1">
