@@ -9,6 +9,7 @@ import {
   Palette,
   Settings,
   X,
+  Film,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { NavTooltip } from '@/components/ui/InfoTooltip';
@@ -28,6 +29,12 @@ const navSections = [
       { path: '/content', icon: FileText, label: 'Content' },
       { path: '/quality', icon: Shield, label: 'Quality' },
       { path: '/brand', icon: Palette, label: 'Brand' },
+    ],
+  },
+  {
+    title: 'Production',
+    items: [
+      { path: '/video', icon: Film, label: 'Video Production' },
     ],
   },
   {

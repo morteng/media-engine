@@ -18,6 +18,7 @@ from . import (
     diagrams,
     documents,
     hierarchy,
+    motion_design,
     notes,
     project,
     provenance,
@@ -29,6 +30,9 @@ from . import (
     session,
     suggestions,
     translation,
+    video_design_knowledge,
+    video_producer,
+    video_render,
     webhooks,
 )
 
@@ -46,6 +50,7 @@ __all__ = [
     "diagrams",
     "documents",
     "hierarchy",
+    "motion_design",
     "notes",
     "project",
     "provenance",
@@ -57,5 +62,8 @@ __all__ = [
     "session",
     "suggestions",
     "translation",
+    "video_design_knowledge",
+    "video_producer",
+    "video_render",
     "webhooks",
 ]

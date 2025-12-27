@@ -1176,3 +1176,109 @@ export interface PublishConfig {
   useDesktop: boolean;
   projectName: string;
 }
+
+// ============== VIDEO PRODUCTION TYPES ==============
+
+export interface VideoScriptItem {
+  id: string;
+  name: string;
+  path: string;
+  language: string;
+  description?: string;
+  version?: string;
+  status?: string;
+  scenes: number;
+  duration?: number;
+  has_output?: boolean;
+  output_size?: number;
+  output_modified?: string;
+  error?: string;
+}
+
+export interface VideoScriptsResponse {
+  scripts: VideoScriptItem[];
+  count: number;
+}
+
+export interface VideoScriptDetail {
+  id: string;
+  path: string;
+  content: string;
+  parsed: VideoScript;
+  modified: string;
+}
+
+export interface VideoPropsResponse {
+  props: Record<string, unknown>;
+}
+
+export interface RenderRequest {
+  script_id: string;
+  quality: 'preview' | 'production';
+  output_format?: string;
+}
+
+export interface RenderJob {
+  id: string;
+  script_id: string;
+  quality: string;
+  status: 'queued' | 'rendering' | 'completed' | 'failed' | 'cancelled';
+  progress: number;
+  stage: string;
+  started: string;
+  completed?: string;
+  error?: string;
+  output_path?: string;
+}
+
+export interface RenderStartResponse {
+  job_id: string;
+  status: string;
+}
+
+export interface RenderQueueResponse {
+  jobs: RenderJob[];
+  active: number;
+  completed: number;
+  failed: number;
+}
+
+export interface VideoAssetItem {
+  name: string;
+  path: string;
+  size: number;
+  modified: string;
+  language?: string;
+}
+
+export interface VideoAssetsResponse {
+  demos: VideoAssetItem[];
+  audio: VideoAssetItem[];
+  graphics: VideoAssetItem[];
+  outputs: VideoAssetItem[];
+}
+
+export interface MotionComponent {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  props: string[];
+}
+
+export interface MotionComponentsResponse {
+  components: MotionComponent[];
+  backgrounds: string[];
+  transitions: string[];
+  text_effects: string[];
+}
+
+export interface VideoVoice {
+  language: string;
+  voice_id: string;
+  name: string;
+}
+
+export interface VideoVoicesResponse {
+  voices: VideoVoice[];
+}

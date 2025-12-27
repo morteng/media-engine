@@ -9,6 +9,7 @@ import {
   Brand,
   Settings,
   AIWorkspace,
+  VideoProduction,
 } from '@/pages';
 import { WebSocketProvider, SidebarProvider, SettingsProvider } from '@/contexts';
 import { ToastProvider } from '@/components/ui';
@@ -48,6 +49,9 @@ export default function App() {
                     <Route path="content/*" element={<Content />} />
                     <Route path="translations" element={<Navigate to="/content/translations" replace />} />
                     <Route path="quality/*" element={<Quality />} />
+
+                    {/* Production section */}
+                    <Route path="video/*" element={<VideoProduction />} />
 
                     {/* Tools section */}
                     <Route path="ai-assist/*" element={<AIWorkspace />} />

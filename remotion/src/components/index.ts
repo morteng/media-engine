@@ -9,3 +9,4 @@ export { TextReveal, HighlightText, Typewriter } from './TextReveal';
 export { Transition, Scene } from './Transition';
 export { Background } from './Background';
 export { Overlay } from './Overlay';
+export { SplitScreenDemo } from './SplitScreenDemo';

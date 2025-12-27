@@ -9,7 +9,14 @@ export type WebSocketMessageType =
   | 'ai_task_update'
   | 'build_status'
   | 'refresh'
-  | 'file_change';
+  | 'file_change'
+  // Video production events
+  | 'render_started'
+  | 'render_progress'
+  | 'render_complete'
+  | 'render_failed'
+  | 'render_cancelled'
+  | 'script_updated';
 
 export interface WebSocketMessage {
   type: WebSocketMessageType;

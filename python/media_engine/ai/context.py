@@ -46,6 +46,7 @@ class AIContext:
             "active_session": self._get_session_context(),
             "notes_requiring_attention": self._get_notes_context(),
             "research_status": self._get_research_context(),
+            "video_production": self._get_video_context(),
             "suggested_actions": self._get_suggested_actions(),
             "timestamp": datetime.now().isoformat(),
         }
@@ -157,6 +158,83 @@ class AIContext:
             ],
         }
 
+    def _get_video_context(self) -> Dict[str, Any]:
+        """Get video production context including scripts, render queue, and brand."""
+        try:
+            # Get video scripts
+            scripts_dir = self.project.content_dir
+            video_scripts = []
+            for lang_dir in scripts_dir.iterdir():
+                if lang_dir.is_dir():
+                    script_path = lang_dir / "scripts"
+                    if script_path.exists():
+                        for script_file in script_path.glob("*.yaml"):
+                            video_scripts.append({
+                                "id": f"{lang_dir.name}/{script_file.stem}",
+                                "path": str(script_file),
+                                "language": lang_dir.name,
+                            })
+
+            # Get render queue status from MCP tools module
+            try:
+                from ..mcp.tools.video_render import _render_jobs
+                render_stats = {
+                    "total": len(_render_jobs),
+                    "queued": sum(1 for j in _render_jobs.values() if j.get("status") == "queued"),
+                    "rendering": sum(1 for j in _render_jobs.values() if j.get("status") == "rendering"),
+                    "completed": sum(1 for j in _render_jobs.values() if j.get("status") == "completed"),
+                    "failed": sum(1 for j in _render_jobs.values() if j.get("status") == "failed"),
+                }
+                active_renders = [
+                    {"id": job_id, "script_id": job.get("script_id"), "progress": job.get("progress", 0)}
+                    for job_id, job in _render_jobs.items()
+                    if job.get("status") in ("queued", "rendering")
+                ]
+            except ImportError:
+                render_stats = {"total": 0}
+                active_renders = []
+
+            # Get brand context for videos
+            brand_context = {}
+            if hasattr(self.project, 'brand_context'):
+                brand = self.project.brand_context
+                brand_context = {
+                    "has_brand": True,
+                    "primary_color": brand.get_color("brand.primary") if hasattr(brand, 'get_color') else None,
+                    "logo_available": hasattr(brand, 'get_logo'),
+                }
+            else:
+                brand_context = {"has_brand": False}
+
+            return {
+                "scripts": {
+                    "count": len(video_scripts),
+                    "scripts": video_scripts[:10],  # Limit to 10 for context size
+                },
+                "render_queue": {
+                    "stats": render_stats,
+                    "active_renders": active_renders[:5],
+                },
+                "brand": brand_context,
+                "capabilities": {
+                    "has_video_tools": True,
+                    "available_tools": [
+                        "plan_video_from_content",
+                        "generate_video_script",
+                        "suggest_scene_visuals",
+                        "optimize_timing",
+                        "validate_video_script",
+                        "list_motion_components",
+                        "suggest_transitions",
+                        "apply_brand_to_video",
+                        "start_video_render",
+                        "get_render_status",
+                    ],
+                },
+            }
+        except Exception as e:
+            return {"error": str(e), "capabilities": {"has_video_tools": True}}
+
     def _get_suggested_actions(self) -> List[Dict[str, Any]]:
         """Generate suggested actions based on current state."""
         suggestions = []
@@ -209,6 +287,24 @@ class AIContext:
                 "session_id": session.id,
                 "notes": session.notes,
             })
+
+        # Check for video render queue
+        try:
+            from ..mcp.tools.video_render import _render_jobs
+            queued_renders = [
+                (job_id, job) for job_id, job in _render_jobs.items()
+                if job.get("status") == "queued"
+            ]
+            if queued_renders:
+                suggestions.append({
+                    "type": "process_render_queue",
+                    "priority": "medium",
+                    "reason": f"{len(queued_renders)} video renders queued",
+                    "action": "Monitor and process render queue",
+                    "queued_jobs": len(queued_renders),
+                })
+        except ImportError:
+            pass
 
         return suggestions
 

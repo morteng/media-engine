@@ -40,6 +40,7 @@ export const selectors = {
   navContent: 'a[href="/content"]',
   navQuality: 'a[href="/quality"]',
   navBuild: 'a[href="/build"]',
+  navVideo: 'a[href="/video"]',
   navAiAssist: 'a[href="/ai-assist"]',
 
   // Dashboard

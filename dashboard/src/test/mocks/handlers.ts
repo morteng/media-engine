@@ -374,6 +374,114 @@ export const mockSceneNotes = {
   },
 };
 
+// Video Production Mocks
+export const mockVideoScripts = {
+  scripts: [
+    {
+      id: 'en/intro',
+      name: 'Introduction Video',
+      path: 'content/en/scripts/intro.yaml',
+      language: 'en',
+      description: 'An introduction video',
+      version: '1.0.0',
+      status: 'published',
+      scenes: 3,
+      duration: 45,
+      has_output: true,
+      output_size: 10485760,
+      output_modified: '2025-01-15T10:00:00Z',
+    },
+    {
+      id: 'en/demo',
+      name: 'Demo Video',
+      path: 'content/en/scripts/demo.yaml',
+      language: 'en',
+      description: 'A product demo',
+      version: '2.0.0',
+      status: 'draft',
+      scenes: 5,
+      duration: 120,
+      has_output: false,
+    },
+    {
+      id: 'no/intro',
+      name: 'Introduksjonsvideo',
+      path: 'content/no/scripts/intro.yaml',
+      language: 'no',
+      description: 'En introduksjon',
+      version: '1.0.0',
+      status: 'draft',
+      scenes: 3,
+      duration: 50,
+      has_output: false,
+    },
+  ],
+  count: 3,
+};
+
+export const mockRenderQueue = {
+  jobs: [
+    {
+      id: 'job-001',
+      script_id: 'en/intro',
+      quality: 'production',
+      status: 'completed',
+      progress: 100,
+      stage: 'done',
+      started: '2025-01-15T09:00:00Z',
+      completed: '2025-01-15T09:15:00Z',
+      output_path: 'output/en/videos/intro.mp4',
+    },
+    {
+      id: 'job-002',
+      script_id: 'en/demo',
+      quality: 'preview',
+      status: 'rendering',
+      progress: 45,
+      stage: 'rendering_video',
+      started: '2025-01-15T10:00:00Z',
+    },
+  ],
+  active: 1,
+  completed: 1,
+  failed: 0,
+};
+
+export const mockVideoAssets = {
+  demos: [
+    { name: 'dashboard-overview', path: 'demos/dashboard-overview.mp4', size: 5242880, modified: '2025-01-14T12:00:00Z' },
+    { name: 'feature-demo', path: 'demos/feature-demo.mp4', size: 3145728, modified: '2025-01-14T14:00:00Z' },
+  ],
+  audio: [
+    { name: 'intro-voiceover', path: 'output/en/videos/intro.mp3', language: 'en', size: 524288, modified: '2025-01-15T09:00:00Z' },
+  ],
+  graphics: [],
+  outputs: [
+    { name: 'intro', path: 'output/en/videos/intro.mp4', language: 'en', size: 10485760, modified: '2025-01-15T09:15:00Z' },
+  ],
+};
+
+export const mockMotionComponents = {
+  components: [
+    { id: 'TitleCard', name: 'Title Card', category: 'title', description: 'Animated title sequence', props: ['title', 'tagline', 'variant'] },
+    { id: 'TextReveal', name: 'Text Reveal', category: 'text', description: 'Kinetic typography', props: ['text', 'effect', 'delay'] },
+    { id: 'FeatureCard', name: 'Feature Card', category: 'layout', description: 'Feature showcase', props: ['title', 'icon', 'bullets'] },
+    { id: 'Background', name: 'Background', category: 'background', description: 'Animated backgrounds', props: ['variant', 'intensity'] },
+    { id: 'Transition', name: 'Transition', category: 'transition', description: 'Scene transitions', props: ['type', 'direction'] },
+  ],
+  backgrounds: ['dark', 'aurora', 'grid', 'particles', 'cyber', 'waves'],
+  transitions: ['fade', 'wipe', 'glitch', 'aurora-sweep', 'slice', 'zoom-burst'],
+  text_effects: ['fade-up', 'bounce', 'elastic', 'wave', 'split', 'scale-pop'],
+};
+
+export const mockVideoVoices = {
+  voices: [
+    { language: 'en', voice_id: 'voice-en-001', name: 'Professional Male' },
+    { language: 'en', voice_id: 'voice-en-002', name: 'Professional Female' },
+    { language: 'no', voice_id: 'voice-no-001', name: 'Norwegian Male' },
+  ],
+};
+
 // API Handlers
 export const handlers = [
   // Project
@@ -437,4 +545,33 @@ export const handlers = [
   http.get('/api/ai/notes', () => HttpResponse.json(mockAINotes)),
   http.get('/api/ai/queue', () => HttpResponse.json(mockAIQueue)),
   http.get('/api/ai/research', () => HttpResponse.json(mockAIResearch)),
+
+  // Video Production
+  http.get('/api/video/scripts', () => HttpResponse.json(mockVideoScripts)),
+  http.get('/api/video/scripts/:scriptId', ({ params }) => {
+    const { scriptId } = params;
+    const script = mockVideoScripts.scripts.find(s => s.id === scriptId);
+    if (script) {
+      return HttpResponse.json({
+        id: script.id,
+        path: script.path,
+        content: 'title: ' + script.name,
+        parsed: { title: script.name, scenes: [] },
+        modified: script.output_modified || '2025-01-15T10:00:00Z',
+      });
+    }
+    return new HttpResponse(null, { status: 404 });
+  }),
+  http.put('/api/video/scripts/:scriptId', () => HttpResponse.json({ status: 'ok', message: 'Script updated' })),
+  http.post('/api/video/render', () => HttpResponse.json({ job_id: 'job-' + Date.now(), status: 'queued' })),
+  http.get('/api/video/render/:jobId', ({ params }) => {
+    const job = mockRenderQueue.jobs.find(j => j.id === params.jobId);
+    if (job) return HttpResponse.json(job);
+    return new HttpResponse(null, { status: 404 });
+  }),
+  http.delete('/api/video/render/:jobId', () => HttpResponse.json({ status: 'cancelled' })),
+  http.get('/api/video/queue', () => HttpResponse.json(mockRenderQueue)),
+  http.get('/api/video/assets', () => HttpResponse.json(mockVideoAssets)),
+  http.get('/api/video/components', () => HttpResponse.json(mockMotionComponents)),
+  http.get('/api/video/voices', () => HttpResponse.json(mockVideoVoices)),
 ];

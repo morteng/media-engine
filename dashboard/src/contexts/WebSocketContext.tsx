@@ -41,6 +41,22 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
         queryClient.invalidateQueries({ queryKey: ['build'] });
         break;
 
+      // Video production events
+      case 'render_started':
+      case 'render_progress':
+      case 'render_complete':
+      case 'render_failed':
+      case 'render_cancelled':
+        // Invalidate render queue queries
+        queryClient.invalidateQueries({ queryKey: ['renderQueue'] });
+        break;
+
+      case 'script_updated':
+        // Invalidate video script queries
+        queryClient.invalidateQueries({ queryKey: ['videoScripts'] });
+        queryClient.invalidateQueries({ queryKey: ['videoScript'] });
+        break;
+
       case 'refresh':
         // Invalidate all queries for a full refresh
         queryClient.invalidateQueries();
@@ -76,6 +92,11 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
           }
           if (refresh?.includes('media')) {
             queryClient.invalidateQueries({ queryKey: ['media'] });
+          }
+          if (refresh?.includes('video')) {
+            queryClient.invalidateQueries({ queryKey: ['videoScripts'] });
+            queryClient.invalidateQueries({ queryKey: ['videoAssets'] });
+            queryClient.invalidateQueries({ queryKey: ['renderQueue'] });
           }
         }
         break;

@@ -152,6 +152,7 @@ class MediaEngineMCPServer:
             diagrams,
             documents,
             hierarchy,
+            motion_design,
             notes,
             project,
             provenance,
@@ -163,6 +164,8 @@ class MediaEngineMCPServer:
             session,
             suggestions,
             translation,
+            video_producer,
+            video_render,
             webhooks,
         )
 
@@ -194,6 +197,11 @@ class MediaEngineMCPServer:
         ai.register_ai_tools(self.mcp, self)
         ai_context.register_ai_context_tools(self.mcp, self)  # AI context & session management
         webhooks.register_webhook_tools(self.mcp, self)
+
+        # Video production tools (autonomous video producer agent)
+        video_producer.register_video_producer_tools(self.mcp, self)
+        motion_design.register_motion_design_tools(self.mcp, self)
+        video_render.register_video_render_tools(self.mcp, self)
 
     def _register_resources(self):
         """Register MCP resources for context."""

@@ -23,6 +23,7 @@ import { Transition, TransitionType } from "./components/Transition";
 import { StatCounter, StatGrid } from "./components/StatCounter";
 import { FeatureCard } from "./components/FeatureCard";
 import { Overlay } from "./components/Overlay";
+import { SplitScreenDemo } from "./components/SplitScreenDemo";
 import { colors, typography, gradients, glows, icons } from "./lib/theme";
 
 // ============================================================================
@@ -79,6 +80,14 @@ interface SceneVisual {
   flying_outputs?: boolean;
   output_icons?: string[];
   output_animation?: string;
+  // Split-screen configuration for demo+graphics combo
+  split_screen?: {
+    demo_on_left?: boolean;
+    split_angle?: number;
+    demo_width?: number;
+    bullets?: string[];
+    highlight?: 'cyan' | 'purple' | 'hot' | 'neon';
+  };
 }
 
 // Demo clip info for scene-based rendering
@@ -89,7 +98,7 @@ interface DemoClipInfo {
 
 interface Scene {
   id: string;
-  type: 'intro' | 'content' | 'feature' | 'demo' | 'section' | 'outro';
+  type: 'intro' | 'content' | 'feature' | 'demo' | 'section' | 'outro' | 'split';
   title?: string;
   text?: string;
   startFrame: number;
@@ -1268,24 +1277,48 @@ export const Video: React.FC<VideoProps> = ({ title, scenes, theme }) => {
         return <ContentScene scene={currentScene} sceneFrame={sceneFrame} />;
       case 'outro':
         return <OutroScene scene={currentScene} sceneFrame={sceneFrame} />;
+      case 'split':
+        // Split-screen with demo video and motion graphics
+        if (currentScene.demo?.clipPath) {
+          const splitConfig = visual.split_screen || {};
+          return (
+            <SplitScreenDemo
+              demoClipPath={currentScene.demo.clipPath}
+              demoOnLeft={splitConfig.demo_on_left ?? true}
+              splitAngle={splitConfig.split_angle ?? 15}
+              demoWidth={splitConfig.demo_width ?? 55}
+              title={currentScene.title}
+              text={currentScene.text}
+              bullets={splitConfig.bullets || []}
+              highlightColor={splitConfig.highlight || 'cyan'}
+              animateSplit={true}
+              sceneFrame={sceneFrame}
+              durationFrames={currentScene.durationFrames}
+            />
+          );
+        }
+        return <ContentScene scene={currentScene} sceneFrame={sceneFrame} />;
       default:
         return <ContentScene scene={currentScene} sceneFrame={sceneFrame} />;
     }
   };
 
-  // Check if scene has a demo clip
-  const hasDemoClip = currentScene.demo?.clipPath;
+  // Check if scene has a demo clip (not for split scenes - they handle their own rendering)
+  const hasDemoClip = currentScene.demo?.clipPath && currentScene.type !== 'split';
+  const isSplitScene = currentScene.type === 'split';
 
   return (
     <AbsoluteFill style={{ backgroundColor: colors.dark.bgPrimary }}>
-      {/* Background - demo clip or animated background */}
-      {hasDemoClip ? (
-        <DemoClipBackground
-          clipPath={currentScene.demo!.clipPath}
-          sceneFrame={sceneFrame}
-        />
-      ) : (
-        <Background variant={bgVariant} intensity={bgIntensity} />
+      {/* Background - demo clip or animated background (skip for split scenes) */}
+      {!isSplitScene && (
+        hasDemoClip ? (
+          <DemoClipBackground
+            clipPath={currentScene.demo!.clipPath}
+            sceneFrame={sceneFrame}
+          />
+        ) : (
+          <Background variant={bgVariant} intensity={bgIntensity} />
+        )
       )}
 
       {/* Scene content (overlays on top of demo clip) */}

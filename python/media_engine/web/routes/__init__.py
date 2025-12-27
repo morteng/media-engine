@@ -70,6 +70,7 @@ def register_routes(
     from .search import register_search_routes
     from .settings import register_settings_routes
     from .translations import register_translation_routes
+    from .video import register_video_routes
     from .websocket import register_websocket_routes
 
     # Create a single router for all routes
@@ -97,6 +98,7 @@ def register_routes(
     register_media_routes(router, get_project, manager)
     register_notes_routes(router, get_project, manager)
     register_scene_notes_routes(router, get_project, manager)
+    register_video_routes(router, get_project, manager)
     register_websocket_routes(router, get_project, manager)
 
     # IMPORTANT: SPA catch-all must be registered LAST
