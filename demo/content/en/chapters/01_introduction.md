@@ -28,7 +28,7 @@ anchors:
 
 # Introduction to Media Engine
 
-Media Engine is a powerful, agent-operated media production framework designed to transform structured content into professional outputs. Whether you need documents, presentations, videos, or data exports, Media Engine provides a unified workflow that AI assistants like Claude Code can operate autonomously—turning your Markdown source files into polished deliverables with minimal manual intervention.
+Media Engine is an agent-operated media production framework that transforms structured content into professional outputs. Whether you need documents, presentations, videos, or data exports, Media Engine provides a unified workflow that AI assistants like Claude Code can operate autonomously—turning your Markdown source files into polished deliverables with minimal manual intervention.
 
 ## Key Features
 
