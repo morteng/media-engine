@@ -28,6 +28,24 @@ def register_video_routes(
     # Track render jobs
     render_state: Dict[str, Dict] = {}
 
+    def find_remotion_dir(project: "Project") -> Optional[Path]:
+        """Find remotion directory in project root or parent directories."""
+        # Check project root first
+        candidate = project.root / "remotion"
+        if candidate.exists() and (candidate / "package.json").exists():
+            return candidate
+
+        # Check parent directories (for monorepo structure like demo/)
+        for parent in project.root.parents:
+            candidate = parent / "remotion"
+            if candidate.exists() and (candidate / "package.json").exists():
+                return candidate
+            # Stop at filesystem root
+            if parent == parent.parent:
+                break
+
+        return None
+
     class RenderRequest(BaseModel):
         """Request to start a video render."""
 
@@ -334,26 +352,24 @@ def register_video_routes(
     async def get_preview_config():
         """Get Remotion preview configuration."""
         project = get_project()
-
-        # Check if remotion project exists
-        remotion_dir = project.root / "remotion"
-        has_remotion = remotion_dir.exists() and (remotion_dir / "package.json").exists()
+        remotion_dir = find_remotion_dir(project)
 
         return {
-            "enabled": has_remotion,
+            "enabled": remotion_dir is not None,
             "studio_url": "http://localhost:3000",  # Default Remotion Studio port
             "studio_port": 3000,
             "compositions": ["Main", "ProfessionalHook", "OutputShowcase"],
             "default_composition": "Main",
+            "remotion_path": str(remotion_dir) if remotion_dir else None,
         }
 
     @router.post("/api/video/preview/start")
     async def start_preview_server(background_tasks: BackgroundTasks):
         """Start the Remotion Studio preview server."""
         project = get_project()
-        remotion_dir = project.root / "remotion"
+        remotion_dir = find_remotion_dir(project)
 
-        if not remotion_dir.exists():
+        if not remotion_dir:
             raise HTTPException(status_code=404, detail="Remotion project not found")
 
         try:

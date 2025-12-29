@@ -468,7 +468,7 @@ function VideoScripts() {
         </aside>
 
         {/* Editor */}
-        <main className="flex-1 min-w-0 flex flex-col">
+        <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
           {selectedScript ? (
             detailLoading ? (
               <div className="flex items-center justify-center h-full">
@@ -510,7 +510,7 @@ function VideoScripts() {
                   </button>
                 </div>
                 <textarea
-                  className="textarea textarea-bordered flex-1 font-mono text-sm"
+                  className="textarea textarea-bordered flex-1 w-full font-mono text-sm resize-none"
                   value={editContent || scriptDetail.content}
                   onChange={(e) => setEditContent(e.target.value)}
                   placeholder="Script content..."
