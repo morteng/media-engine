@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { useInsights, useAuditLog } from '@/hooks/useApi';
 import { SubTabs } from '@/components/ui/SubTabs';
+import { Spinner } from '@/components/ui';
 import {
   TrendingUp,
   Users,
@@ -26,7 +27,7 @@ export function AnalyticsView() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <Spinner size="lg" className="text-primary" />
           <p className="mt-4 text-base-content/60">Loading insights...</p>
         </div>
       </div>
@@ -187,7 +188,7 @@ export function ActivityView() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <Spinner size="lg" className="text-primary" />
           <p className="mt-4 text-base-content/60">Loading activity...</p>
         </div>
       </div>

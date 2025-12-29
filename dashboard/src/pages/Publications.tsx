@@ -1,46 +1,19 @@
 import { useState } from 'react';
 import { usePublicationsStatus, usePublicationTranslations } from '@/hooks/useApi';
-import { Book, FileText, Globe, CheckCircle, AlertCircle, Clock, ChevronRight, Presentation, Table2, Layers, Database } from 'lucide-react';
+import { Book, Globe, CheckCircle, AlertCircle, Clock, ChevronRight } from 'lucide-react';
 import type {
   PublicationsStatusResponse,
   PublicationTranslationsResponse,
   PublicationStatusItem,
 } from '@/api/types';
-import { ExpandableSection } from '@/components/ui';
-
-// Type-specific icons for publications
-const typeIcons: Record<string, typeof Book> = {
-  book: Book,
-  deck: Presentation,
-  spreadsheet: Table2,
-  report: FileText,
-};
-
-// Item type icons
-const itemIcons: Record<string, typeof FileText> = {
-  chapters: FileText,
-  slides: Layers,
-  sources: Database,
-};
-
-// Format icons by output type
-const formatIcons: Record<string, string> = {
-  html: 'HTML',
-  pdf: 'PDF',
-  pptx: 'PPTX',
-  xlsx: 'XLSX',
-  epub: 'EPUB',
-};
+import { ExpandableSection, Spinner } from '@/components/ui';
+import { getPublicationTypeIcon, getItemTypeIcon } from '@/utils/iconMappings';
+import { getPublicationStatusBadge, FORMAT_LABELS } from '@/utils/statusMappings';
+import { CARD_STYLES } from '@/utils/styles';
 
 function StatusBadge({ status }: { status: string }) {
-  const colors: Record<string, string> = {
-    draft: 'badge-warning',
-    in_review: 'badge-info',
-    approved: 'badge-primary',
-    published: 'badge-success',
-  };
   return (
-    <span className={`badge badge-sm ${colors[status] || 'badge-ghost'}`}>
+    <span className={`badge badge-sm ${getPublicationStatusBadge(status)}`}>
       {status.replace('_', ' ')}
     </span>
   );
@@ -84,11 +57,11 @@ function TranslationBadge({ isCurrent, sourceChanged }: { isCurrent: boolean; so
 }
 
 function PublicationCard({ pub }: { pub: PublicationStatusItem }) {
-  const TypeIcon = typeIcons[pub.pub_type] || Book;
-  const ItemIcon = itemIcons[pub.item_label] || FileText;
+  const TypeIcon = getPublicationTypeIcon(pub.pub_type);
+  const ItemIcon = getItemTypeIcon(pub.item_label);
 
   return (
-    <div className="card bg-base-200 shadow-sm hover:shadow-md transition-shadow">
+    <div className={CARD_STYLES.elevated}>
       <div className="card-body p-4">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -271,7 +244,7 @@ export default function Publications() {
   if (statusLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <span className="loading loading-spinner loading-lg text-primary" />
+        <Spinner size="lg" className="text-primary" />
       </div>
     );
   }
@@ -329,7 +302,7 @@ export default function Publications() {
       >
         {translationsLoading ? (
           <div className="flex justify-center py-8">
-            <span className="loading loading-spinner loading-md" />
+            <Spinner size="md" />
           </div>
         ) : translationsData ? (
           <TranslationMatrix data={translationsData} />
@@ -345,7 +318,7 @@ export default function Publications() {
         onToggle={() => toggleSection('formats')}
       >
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          {Object.entries(formatIcons).map(([format, label]) => (
+          {Object.entries(FORMAT_LABELS).map(([format, label]) => (
             <div key={format} className="card bg-base-200 p-4 text-center">
               <div className="text-2xl font-bold text-primary">{label}</div>
               <p className="text-xs text-base-content/60 mt-1 capitalize">{format}</p>

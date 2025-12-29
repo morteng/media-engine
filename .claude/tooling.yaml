@@ -110,6 +110,56 @@ build:
     docs: "Built-in CLI"
 
 # -----------------------------------------------------------------------------
+# Video Production Tools
+# -----------------------------------------------------------------------------
+video_production:
+  scripts:
+    tool: media-engine
+    list_command: "media-engine scripts list"
+    build_command: "media-engine scripts build"
+    docs: "Built-in CLI"
+
+  voiceover:
+    tool: media-engine
+    generate_command: "media-engine voiceover generate"
+    preview_command: "media-engine voiceover preview"
+    voices: ["onyx", "alloy", "echo", "fable", "nova", "shimmer"]
+    docs: "Built-in CLI"
+
+  render:
+    tool: remotion
+    preview_command: "cd remotion && npm run dev"
+    build_command: "cd remotion && npm run build"
+    render_command: "cd remotion && npx remotion render Main"
+    with_props: "npx remotion render Main out/{script}.mp4 --props ../demo/output/{lang}/videos/{script}.props.json"
+    docs: "https://www.remotion.dev/"
+
+  quality_settings:
+    preview:
+      resolution: "1280x720"
+      fps: 24
+      crf: 28
+      description: "Quick preview, smaller file"
+    production:
+      resolution: "1920x1080"
+      fps: 60
+      crf: 18
+      description: "Release quality, larger file"
+
+  dashboard:
+    tool: media-engine
+    command: "media-engine dashboard"
+    url: "http://localhost:8080"
+    video_tabs:
+      - overview   # Stats and quick actions
+      - scripts    # Script browser and editor
+      - timeline   # Visual scene timeline
+      - props      # Props viewer with timing
+      - assets     # Media browser
+      - render     # Render queue
+    docs: "Built-in web dashboard"
+
+# -----------------------------------------------------------------------------
 # Infrastructure Tools
 # -----------------------------------------------------------------------------
 infrastructure:
@@ -192,6 +242,6 @@ pre_release_checks:
 # Metadata
 # -----------------------------------------------------------------------------
 metadata:
-  version: "1.1.0"
-  last_updated: "2025-12-27"
+  version: "1.2.0"
+  last_updated: "2025-12-30"
   maintainer: "media-engine team"

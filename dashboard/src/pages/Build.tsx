@@ -10,10 +10,6 @@ import {
 } from '@/hooks/useApi';
 import { PublicationCard, OptionsPanel, ProgressSection } from '@/components/build';
 import {
-  FileText,
-  Presentation,
-  Table,
-  Film,
   Play,
   StopCircle,
   RefreshCw,
@@ -24,45 +20,10 @@ import {
   FileDown,
 } from 'lucide-react';
 import type { UnifiedBuildPublication } from '@/api/types';
-
-const formatIcons: Record<string, typeof FileText> = {
-  html: FileText,
-  pptx: Presentation,
-  xlsx: Table,
-  pdf: FileText,
-  video: Film,
-  mp4: Film,
-};
-
-const formatColors: Record<string, string> = {
-  html: 'badge-info',
-  pptx: 'badge-warning',
-  xlsx: 'badge-success',
-  pdf: 'badge-error',
-  video: 'badge-secondary',
-  mp4: 'badge-secondary',
-};
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function formatTimeAgo(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffMins < 1) return 'just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString();
-}
+import { formatFileSize, formatTimeAgo } from '@/utils/format';
+import { Spinner } from '@/components/ui';
+import { getFormatIcon } from '@/utils/iconMappings';
+import { getFormatBadge } from '@/utils/statusMappings';
 
 // State for each publication's build config
 interface PublicationBuildState {
@@ -234,7 +195,7 @@ export function Build() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <Spinner size="lg" className="text-primary" />
           <p className="mt-4 text-base-content/60">Loading publications...</p>
         </div>
       </div>
@@ -319,21 +280,17 @@ export function Build() {
                     </thead>
                     <tbody>
                       {outputs.slice(0, 8).map((output, idx) => {
-                        const Icon = formatIcons[output.format.toLowerCase()] ?? FileText;
+                        const FormatIcon = getFormatIcon(output.format);
                         return (
                           <tr key={idx} className="hover">
                             <td className="flex items-center gap-2">
-                              <Icon size={14} className="text-base-content/60" />
+                              <FormatIcon size={14} className="text-base-content/60" aria-hidden="true" />
                               <span className="font-medium text-sm truncate max-w-[150px]">
                                 {output.name}
                               </span>
                             </td>
                             <td>
-                              <div
-                                className={`badge badge-xs ${
-                                  formatColors[output.format.toLowerCase()] || 'badge-ghost'
-                                }`}
-                              >
+                              <div className={`badge badge-xs ${getFormatBadge(output.format)}`}>
                                 {output.format}
                               </div>
                             </td>
@@ -424,7 +381,7 @@ export function Build() {
                 disabled={cancelMutation.isPending}
               >
                 {cancelMutation.isPending ? (
-                  <span className="loading loading-spinner loading-sm"></span>
+                  <Spinner size="sm" />
                 ) : (
                   <StopCircle size={18} />
                 )}
@@ -438,7 +395,7 @@ export function Build() {
                   disabled={!canBuild || buildMutation.isPending}
                 >
                   {buildMutation.isPending ? (
-                    <span className="loading loading-spinner loading-sm"></span>
+                    <Spinner size="sm" />
                   ) : (
                     <Play size={18} />
                   )}

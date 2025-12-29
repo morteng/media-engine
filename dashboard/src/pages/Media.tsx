@@ -15,6 +15,8 @@ import {
   Clock,
   HardDrive,
 } from 'lucide-react';
+import { formatSize, formatDate } from '@/utils/format';
+import { Spinner } from '@/components/ui';
 
 interface MediaSource {
   path: string;
@@ -60,21 +62,6 @@ const typeLabels: Record<string, string> = {
   document: 'Documents',
 };
 
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function formatDate(isoString: string): string {
-  return new Date(isoString).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
 export function Media() {
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<MediaFile | null>(null);
@@ -88,7 +75,7 @@ export function Media() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <Spinner size="lg" className="text-primary" />
           <p className="mt-4 text-base-content/60">Loading media files...</p>
         </div>
       </div>

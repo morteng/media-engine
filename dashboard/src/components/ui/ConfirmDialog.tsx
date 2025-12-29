@@ -3,6 +3,22 @@ import { AlertTriangle, Trash2, X } from 'lucide-react';
 
 type ConfirmVariant = 'default' | 'danger' | 'warning';
 
+// Shared variant styles - defined once at module level
+const CONFIRM_VARIANT_STYLES: Record<ConfirmVariant, { button: string; icon: ReactNode }> = {
+  default: {
+    button: 'btn-primary',
+    icon: null,
+  },
+  warning: {
+    button: 'btn-warning',
+    icon: <AlertTriangle className="w-6 h-6 text-warning" aria-hidden="true" />,
+  },
+  danger: {
+    button: 'btn-error',
+    icon: <Trash2 className="w-6 h-6 text-error" aria-hidden="true" />,
+  },
+};
+
 interface ConfirmOptions {
   title: string;
   description?: string;
@@ -90,23 +106,8 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
     [handleCancel, handleConfirm]
   );
 
-  const variantStyles: Record<ConfirmVariant, { button: string; icon: ReactNode }> = {
-    default: {
-      button: 'btn-primary',
-      icon: null,
-    },
-    warning: {
-      button: 'btn-warning',
-      icon: <AlertTriangle className="w-6 h-6 text-warning" aria-hidden="true" />,
-    },
-    danger: {
-      button: 'btn-error',
-      icon: <Trash2 className="w-6 h-6 text-error" aria-hidden="true" />,
-    },
-  };
-
   const variant = state.variant || 'default';
-  const styles = variantStyles[variant];
+  const styles = CONFIRM_VARIANT_STYLES[variant];
 
   return (
     <ConfirmContext.Provider value={{ confirm }}>
@@ -206,22 +207,7 @@ export function ConfirmDialog({
   onConfirm: () => void;
   onCancel: () => void;
 } & ConfirmOptions) {
-  const variantStyles: Record<ConfirmVariant, { button: string; icon: ReactNode }> = {
-    default: {
-      button: 'btn-primary',
-      icon: null,
-    },
-    warning: {
-      button: 'btn-warning',
-      icon: <AlertTriangle className="w-6 h-6 text-warning" aria-hidden="true" />,
-    },
-    danger: {
-      button: 'btn-error',
-      icon: <Trash2 className="w-6 h-6 text-error" aria-hidden="true" />,
-    },
-  };
-
-  const styles = variantStyles[variant];
+  const styles = CONFIRM_VARIANT_STYLES[variant];
 
   if (!open) return null;
 

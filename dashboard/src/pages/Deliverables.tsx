@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useApi } from '@/hooks/useApi';
 import { DeliverableGrid } from '@/components/publications';
-import { ExpandableSection } from '@/components/ui';
+import { ExpandableSection, Spinner } from '@/components/ui';
 import { Package, RefreshCw, FolderOpen } from 'lucide-react';
 import type { BuildOutputsResponse } from '@/api/types';
 
@@ -37,7 +37,7 @@ export default function Deliverables() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <span className="loading loading-spinner loading-lg text-primary" />
+        <Spinner size="lg" className="text-primary" />
       </div>
     );
   }

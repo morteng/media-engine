@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { Spinner } from '@/components/ui';
 import { Search as SearchIcon, FileText } from 'lucide-react';
 import * as api from '@/api/client';
 
@@ -61,7 +62,7 @@ export function SearchPage() {
             <button type="submit" className="btn btn-primary" disabled={isSearching}>
               {isSearching ? (
                 <>
-                  <span className="loading loading-spinner loading-sm" />
+                  <Spinner size="sm" />
                   Searching...
                 </>
               ) : (

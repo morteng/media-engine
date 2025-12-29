@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@/test/utils';
-import { Card, CardHeader, CardContent } from './Card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './Card';
 
 describe('Card', () => {
   it('renders children correctly', () => {
@@ -36,27 +36,50 @@ describe('Card', () => {
 
 describe('CardHeader', () => {
   it('renders title', () => {
-    render(<CardHeader title="Card Title" />);
+    render(
+      <CardHeader>
+        <CardTitle>Card Title</CardTitle>
+      </CardHeader>
+    );
     expect(screen.getByText('Card Title')).toBeInTheDocument();
   });
 
-  it('renders subtitle when provided', () => {
-    render(<CardHeader title="Title" subtitle="Subtitle text" />);
-    expect(screen.getByText('Subtitle text')).toBeInTheDocument();
+  it('renders description when provided', () => {
+    render(
+      <CardHeader>
+        <CardTitle>Title</CardTitle>
+        <CardDescription>Description text</CardDescription>
+      </CardHeader>
+    );
+    expect(screen.getByText('Description text')).toBeInTheDocument();
   });
 
-  it('does not render subtitle when not provided', () => {
-    render(<CardHeader title="Title Only" />);
+  it('renders title only without description', () => {
+    render(
+      <CardHeader>
+        <CardTitle>Title Only</CardTitle>
+      </CardHeader>
+    );
+    expect(screen.getByText('Title Only')).toBeInTheDocument();
     expect(screen.queryByText('undefined')).not.toBeInTheDocument();
   });
 
-  it('renders action when provided', () => {
-    render(<CardHeader title="Title" action={<button>Action</button>} />);
+  it('renders action when provided alongside title', () => {
+    render(
+      <CardHeader className="flex-row items-center justify-between">
+        <CardTitle>Title</CardTitle>
+        <button>Action</button>
+      </CardHeader>
+    );
     expect(screen.getByRole('button', { name: 'Action' })).toBeInTheDocument();
   });
 
   it('renders title with proper styling', () => {
-    render(<CardHeader title="Test" />);
+    render(
+      <CardHeader>
+        <CardTitle>Test</CardTitle>
+      </CardHeader>
+    );
     const title = screen.getByText('Test');
     expect(title).toHaveClass('text-base', 'font-semibold');
   });

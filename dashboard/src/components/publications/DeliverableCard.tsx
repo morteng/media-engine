@@ -74,8 +74,9 @@ export function DeliverableCard({ output, onDownload, onPreview }: DeliverableCa
                 className="btn btn-ghost btn-sm btn-square"
                 onClick={() => onPreview(output.path)}
                 title="Preview"
+                aria-label="Preview HTML output"
               >
-                <ExternalLink size={16} />
+                <ExternalLink size={16} aria-hidden="true" />
               </button>
             )}
             {onDownload && (
@@ -83,8 +84,9 @@ export function DeliverableCard({ output, onDownload, onPreview }: DeliverableCa
                 className="btn btn-primary btn-sm btn-square"
                 onClick={() => onDownload(output.path)}
                 title="Download"
+                aria-label="Download file"
               >
-                <Download size={16} />
+                <Download size={16} aria-hidden="true" />
               </button>
             )}
           </div>

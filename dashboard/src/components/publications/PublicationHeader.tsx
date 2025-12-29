@@ -1,17 +1,8 @@
 import { Link } from 'react-router-dom';
-import { ChevronLeft, Book, Presentation, FileText, Video, Package, Globe } from 'lucide-react';
+import { ChevronLeft, Globe } from 'lucide-react';
 import { StatusBadge, ValidationBadge, SyncBadge } from './PublicationStatus';
 import type { PublicationDetail } from '@/api/types';
-
-// Icon map for publication types
-const typeIcons: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
-  book: Book,
-  deck: Presentation,
-  video: Video,
-  report: FileText,
-  website: Globe,
-  package: Package,
-};
+import { getPublicationTypeIcon } from '@/utils/iconMappings';
 
 interface PublicationHeaderProps {
   publication: PublicationDetail;
@@ -24,7 +15,7 @@ export function PublicationHeader({
   backLink = '/publications',
   actions,
 }: PublicationHeaderProps) {
-  const TypeIcon = typeIcons[publication.status] || Book;
+  const TypeIcon = getPublicationTypeIcon(publication.pub_type || 'book');
 
   return (
     <div className="bg-base-200 rounded-lg p-6">

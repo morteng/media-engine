@@ -40,7 +40,7 @@ export function VoiceoverPanel({ text = '', className = '' }: VoiceoverPanelProp
     queryKey: ['video', 'voices'],
     queryFn: async () => {
       try {
-        const response = await api.get('/api/video/voices');
+        const response = await api.get('/video/voices');
         return response.data.voices as Voice[];
       } catch {
         return MOCK_VOICES;
@@ -52,7 +52,7 @@ export function VoiceoverPanel({ text = '', className = '' }: VoiceoverPanelProp
   // Preview voiceover mutation
   const previewMutation = useMutation({
     mutationFn: async (params: { text: string; voice_id: string; speed: number; pitch: number }) => {
-      const response = await api.post('/api/video/voiceover/preview', params);
+      const response = await api.post('/video/voiceover/preview', params);
       return response.data;
     },
     onSuccess: (data) => {

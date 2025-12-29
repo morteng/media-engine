@@ -1,5 +1,5 @@
 // Publication components - shared across dashboard
-export { PublicationCard } from './PublicationCard';
+export { PublicationStatusCard, PublicationCard } from './PublicationStatusCard';
 export { PublicationGrid } from './PublicationGrid';
 export { PublicationStatus } from './PublicationStatus';
 export { ComponentList } from './ComponentList';

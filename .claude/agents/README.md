@@ -1,9 +1,9 @@
 ---
 id: agents-readme
 title: "Media Engine Agent Architecture"
-version: "1.0.0"
+version: "1.1.0"
 created: 2025-12-16
-last_updated: 2025-12-16
+last_updated: 2025-12-30
 ---
 
 # Media Engine Agent Architecture
@@ -16,7 +16,7 @@ last_updated: 2025-12-16
 
 Media Engine uses a **Guardian Pattern architecture** where specialized agents maintain project health, content quality, and release readiness for documentation and media production workflows.
 
-**Architecture Pattern**: Focused agents handle specific domains (content quality, testing, security) and coordinate through quality gates.
+**Architecture Pattern**: Focused agents handle specific domains (content quality, testing, security, video production) and coordinate through quality gates.
 
 ---
 
@@ -27,6 +27,9 @@ Media Engine uses a **Guardian Pattern architecture** where specialized agents m
 | **[content-guardian](./content-guardian.md)** | Content Quality | Readability, gap analysis, quality checks |
 | **[test-guardian](./test-guardian.md)** | Test Quality | Coverage, test execution, validation |
 | **[security-scanner](./security-scanner.md)** | Security | Secrets detection, PII scanning |
+| **[video-editor](./video-editor.md)** | Video Production | Scripts, props, timeline, render queue |
+| **[media-engine-ops](./media-engine-ops.md)** | Operations | Document CRUD, file operations |
+| **[project-manager](./project-manager.md)** | GitHub | Issues, PRs, releases, project boards |
 
 ---
 
@@ -41,6 +44,11 @@ Media Engine uses a **Guardian Pattern architecture** where specialized agents m
 | Check coverage | test-guardian | `use test-guardian for coverage analysis` |
 | Scan for secrets | security-scanner | `use security-scanner` |
 | Pre-release security check | security-scanner | `use security-scanner for release validation` |
+| Edit video scripts | video-editor | `use video-editor` |
+| View props/timing | video-editor | `use video-editor for props analysis` |
+| Manage render queue | video-editor | `use video-editor for rendering` |
+| Create documents | media-engine-ops | `use media-engine-ops` |
+| Manage GitHub issues | project-manager | `use project-manager` |
 
 ---
 

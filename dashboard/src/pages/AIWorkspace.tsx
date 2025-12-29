@@ -24,6 +24,7 @@ import type {
   AIDecisionsResponse,
 } from '@/api/types';
 import clsx from 'clsx';
+import { Spinner } from '@/components/ui';
 
 // Tab configuration
 const tabs = [
@@ -45,7 +46,7 @@ function AIOverview() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <span className="loading loading-spinner loading-lg text-primary" />
+        <Spinner size="lg" className="text-primary" />
       </div>
     );
   }
@@ -140,7 +141,7 @@ function AISessions() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <span className="loading loading-spinner loading-lg text-primary" />
+        <Spinner size="lg" className="text-primary" />
       </div>
     );
   }
@@ -164,7 +165,7 @@ function AINotes() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <span className="loading loading-spinner loading-lg text-primary" />
+        <Spinner size="lg" className="text-primary" />
       </div>
     );
   }
@@ -188,7 +189,7 @@ function AIQueue() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <span className="loading loading-spinner loading-lg text-primary" />
+        <Spinner size="lg" className="text-primary" />
       </div>
     );
   }
@@ -212,7 +213,7 @@ function AIResearch() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <span className="loading loading-spinner loading-lg text-primary" />
+        <Spinner size="lg" className="text-primary" />
       </div>
     );
   }
@@ -253,7 +254,7 @@ function AIDecisions() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <span className="loading loading-spinner loading-lg text-primary" />
+        <Spinner size="lg" className="text-primary" />
       </div>
     );
   }

@@ -5,7 +5,7 @@ import {
   useSettingsDefaults,
   useUpdateSettings,
 } from '@/hooks/useApi';
-import { ExpandableSection } from '@/components/ui';
+import { ExpandableSection, Spinner } from '@/components/ui';
 import { SettingField, SettingsSection } from '@/components/settings';
 import { InfoTooltip } from '@/components/ui/InfoTooltip';
 import type { SettingValue } from '@/api/types';
@@ -366,7 +366,7 @@ export function Settings() {
                       disabled={updateMutation.isPending}
                     >
                       {updateMutation.isPending ? (
-                        <span className="loading loading-spinner loading-xs" />
+                        <Spinner size="sm" />
                       ) : (
                         'Save'
                       )}

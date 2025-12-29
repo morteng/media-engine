@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useStatus, useInsights, useFreshness, usePublicationsStatus, useApi } from '@/hooks/useApi';
 import { StatCard } from '@/components/ui/StatCard';
+import { Spinner } from '@/components/ui';
 import { PublicationGrid } from '@/components/publications';
 import { AIWorkspaceSummary } from '@/components/ai';
 import type {
@@ -40,7 +41,7 @@ export function Dashboard() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <Spinner size="lg" className="text-primary" />
           <p className="mt-4 text-base-content/60">Loading project overview...</p>
         </div>
       </div>

@@ -24,47 +24,16 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
 );
 Card.displayName = 'Card';
 
-// Legacy CardHeader with title/subtitle/action props for backward compatibility
-interface LegacyCardHeaderProps {
-  title: string;
-  subtitle?: React.ReactNode;
-  action?: React.ReactNode;
-}
-
-// New shadcn-style CardHeader
-type NewCardHeaderProps = React.HTMLAttributes<HTMLDivElement>;
-
-type CardHeaderProps = LegacyCardHeaderProps | NewCardHeaderProps;
-
-function isLegacyProps(props: CardHeaderProps): props is LegacyCardHeaderProps {
-  return 'title' in props && typeof props.title === 'string';
-}
-
-const CardHeader = React.forwardRef<HTMLDivElement, CardHeaderProps>(
-  (props, ref) => {
-    if (isLegacyProps(props)) {
-      const { title, subtitle, action } = props;
-      return (
-        <div ref={ref} className="flex items-start justify-between p-4 pb-2">
-          <div className="space-y-1">
-            <h3 className="text-base font-semibold leading-none tracking-tight">{title}</h3>
-            {subtitle && <div className="text-sm text-base-content/60">{subtitle}</div>}
-          </div>
-          {action && <div className="flex-shrink-0">{action}</div>}
-        </div>
-      );
-    }
-
-    const { className, ...rest } = props as NewCardHeaderProps;
-    return (
-      <div
-        ref={ref}
-        className={clsx('flex flex-col space-y-1.5 p-4', className)}
-        {...rest}
-      />
-    );
-  }
-);
+const CardHeader = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={clsx('flex flex-col space-y-1.5 p-4', className)}
+    {...props}
+  />
+));
 CardHeader.displayName = 'CardHeader';
 
 const CardTitle = React.forwardRef<

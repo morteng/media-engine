@@ -39,7 +39,16 @@ export const queryKeys = {
   settingsDefaults: ['settingsDefaults'] as const,
   settingsProject: ['settingsProject'] as const,
   settingsEnv: ['settingsEnv'] as const,
+  // Video query keys
+  videoScripts: ['videoScripts'] as const,
+  videoScript: (id: string) => ['videoScript', id] as const,
+  renderQueue: ['renderQueue'] as const,
+  videoAssets: ['videoAssets'] as const,
+  motionComponents: ['motionComponents'] as const,
 };
+
+// Re-export video hooks for convenience
+export * from './useVideoApi';
 
 // Project Hooks
 export const useProject = () =>

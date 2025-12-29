@@ -1,4 +1,4 @@
-import { PublicationCard } from './PublicationCard';
+import { PublicationStatusCard as PublicationCard } from './PublicationStatusCard';
 import type { PublicationStatusItem } from '@/api/types';
 
 interface PublicationGridProps {

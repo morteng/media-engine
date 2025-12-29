@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, CardHeader, CardContent } from '@/components/ui/Card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
@@ -255,7 +255,7 @@ export function AIAssist() {
       {/* Settings Card */}
       {showSettings && (
         <Card>
-          <CardHeader title="AI Settings" />
+          <CardHeader><CardTitle>AI Settings</CardTitle></CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="form-control">
@@ -424,7 +424,7 @@ export function AIAssist() {
         {/* Main - Processing Options */}
         <div className="space-y-6">
           <Card>
-            <CardHeader title="Processing Options" />
+            <CardHeader><CardTitle>Processing Options</CardTitle></CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="form-control">

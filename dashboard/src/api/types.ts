@@ -306,7 +306,7 @@ export interface AuditLogEntry {
 
 export interface VideoScript {
   title: string;
-  description: string;
+  description?: string;
   language: string;
   scenes: VideoScene[];
   narrator?: {
@@ -317,6 +317,17 @@ export interface VideoScript {
     resolution: { width: number; height: number };
     framerate: number;
     filename: string;
+  };
+  settings?: {
+    fps?: number;
+    width?: number;
+    height?: number;
+    background?: string;
+  };
+  metadata?: {
+    version?: string;
+    author?: string;
+    description?: string;
   };
 }
 

@@ -2,17 +2,20 @@ import * as React from 'react';
 import clsx from 'clsx';
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'success' | 'warning' | 'error' | 'info' | 'accent' | 'outline';
+  variant?: 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'accent' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
 }
 
 const variantClasses: Record<string, string> = {
   default: 'badge-ghost',
+  ghost: 'badge-ghost',
+  primary: 'badge-primary',
+  secondary: 'badge-secondary',
   success: 'badge-success',
   warning: 'badge-warning',
   error: 'badge-error',
   info: 'badge-info',
-  accent: 'badge-primary',
+  accent: 'badge-accent',
   outline: 'badge-outline',
 };
 

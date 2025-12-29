@@ -11,7 +11,7 @@ import {
   useUpdateBrandNote,
   useDeleteBrandNote,
 } from '@/hooks/useApi';
-import { SubTabs, ExpandableSection } from '@/components/ui';
+import { SubTabs, ExpandableSection, Spinner } from '@/components/ui';
 import { InfoTooltip } from '@/components/ui/InfoTooltip';
 import {
   MessageCircle,
@@ -58,7 +58,7 @@ function Loading({ message }: { message: string }) {
   return (
     <div className="flex items-center justify-center min-h-[400px]">
       <div className="text-center">
-        <span className="loading loading-spinner loading-lg text-primary"></span>
+        <Spinner size="lg" className="text-primary" />
         <p className="mt-4 text-base-content/60">{message}</p>
       </div>
     </div>
@@ -811,7 +811,7 @@ function LogoPreview({ path, alt }: { path: string; alt: string }) {
   const { data, isLoading } = useBrandFile(path);
 
   if (isLoading || !data) {
-    return <span className="loading loading-spinner loading-sm"></span>;
+    return <Spinner size="sm" />;
   }
 
   if (data.encoding === 'base64' && data.mime_type.startsWith('image/')) {

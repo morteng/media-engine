@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { MediaPlayer } from '@/components/ui';
+import { MediaPlayer, Spinner } from '@/components/ui';
 import { getDocuments, getFile, getSceneNotes, saveSceneNote } from '@/api/client';
 import type { FileResponse } from '@/api/client';
 import type { Document, VideoScene } from '@/api/types';
@@ -107,7 +107,7 @@ export function Video() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <Spinner size="lg" className="text-primary" />
           <p className="mt-4 text-base-content/60">Loading video scripts...</p>
         </div>
       </div>
@@ -159,7 +159,7 @@ export function Video() {
           scriptLoading ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
-                <span className="loading loading-spinner loading-md text-primary"></span>
+                <Spinner size="md" className="text-primary" />
                 <p className="mt-2 text-sm text-base-content/60">Loading script...</p>
               </div>
             </div>

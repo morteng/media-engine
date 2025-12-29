@@ -42,7 +42,13 @@ export function AgentActivityPanel({ variant = 'compact' }: AgentActivityPanelPr
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen]);
 
-  const stats = statsData || { pending: 0, in_progress: 0, completed_today: 0 };
+  // Normalize stats to handle both API response formats
+  const rawStats = statsData as Record<string, number> | undefined;
+  const stats = {
+    pending: rawStats?.pending ?? 0,
+    in_progress: rawStats?.in_progress ?? rawStats?.processing ?? 0,
+    completed_today: rawStats?.completed_today ?? rawStats?.completed ?? 0,
+  };
   const tasks = tasksData?.tasks || [];
   const hasActivity = stats.pending > 0 || stats.in_progress > 0;
   const isProcessing = stats.in_progress > 0;
@@ -221,24 +227,25 @@ export function AgentActivityPanel({ variant = 'compact' }: AgentActivityPanelPr
 interface TaskItemProps {
   task: {
     id: string;
-    type: string;
-    description: string;
-    priority: 'low' | 'medium' | 'high' | 'critical';
+    operation: string;
+    instructions: string;
+    priority: 'low' | 'normal' | 'high' | 'urgent';
     status: string;
   };
 }
 
 function TaskItem({ task }: TaskItemProps) {
   const priorityColors = {
-    critical: 'badge-error',
+    urgent: 'badge-error',
     high: 'badge-warning',
-    medium: 'badge-info',
+    normal: 'badge-info',
     low: 'badge-ghost',
   };
 
   const statusIcons = {
     pending: Clock,
-    in_progress: Sparkles,
+    claimed: Clock,
+    processing: Sparkles,
     completed: CheckCircle,
     failed: AlertCircle,
   };
@@ -250,20 +257,20 @@ function TaskItem({ task }: TaskItemProps) {
       <StatusIcon
         size={14}
         className={clsx('flex-shrink-0 mt-0.5', {
-          'text-base-content/50': task.status === 'pending',
-          'text-primary animate-pulse': task.status === 'in_progress',
+          'text-base-content/50': task.status === 'pending' || task.status === 'claimed',
+          'text-primary animate-pulse': task.status === 'processing',
           'text-success': task.status === 'completed',
           'text-error': task.status === 'failed',
         })}
         aria-hidden="true"
       />
       <div className="flex-1 min-w-0">
-        <p className="text-sm truncate">{task.description}</p>
+        <p className="text-sm truncate">{task.instructions}</p>
         <div className="flex items-center gap-2 mt-1">
           <span className={clsx('badge badge-xs', priorityColors[task.priority])}>
             {task.priority}
           </span>
-          <span className="text-xs text-base-content/50">{task.type}</span>
+          <span className="text-xs text-base-content/50">{task.operation}</span>
         </div>
       </div>
     </div>

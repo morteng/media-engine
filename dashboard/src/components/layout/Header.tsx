@@ -133,8 +133,9 @@ export function Header() {
                             removeRecentProject.mutate(p.path);
                           }}
                           title="Remove from recent"
+                          aria-label={`Remove ${p.name} from recent projects`}
                         >
-                          <X size={14} />
+                          <X size={14} aria-hidden="true" />
                         </button>
                       </div>
                     ))}

@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useProject, useDocuments, useDocument, useInsights, useSaveDocument, useHierarchyTree, useBreadcrumbs, useHierarchyNode, useFlowGraph, useUnifiedGraph } from '@/hooks/useApi';
 import { SubTabs } from '@/components/ui/SubTabs';
 import { MarkdownPreview } from '@/components/ui/MarkdownPreview';
 import { SelectionAnnotation } from '@/components/ui/SelectionAnnotation';
+import { Spinner } from '@/components/ui';
 import { HierarchyTree, Breadcrumbs, FlowDiagram, ReagraphFlow, LanguagePanelGraph } from '@/components/hierarchy';
 import {
   FileText,
@@ -28,14 +29,12 @@ import {
   Book,
   FileQuestion,
 } from 'lucide-react';
-import { Video as VideoView } from './Video';
 import { Media as MediaView } from './Media';
 
 const tabs = [
   { path: '', label: 'Documents' },
   { path: 'hierarchy', label: 'Hierarchy' },
   { path: 'translations', label: 'Translations' },
-  { path: 'video', label: 'Video' },
   { path: 'media', label: 'Media' },
 ];
 
@@ -124,7 +123,7 @@ function DocumentsView() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <Spinner size="lg" className="text-primary" />
           <p className="mt-4 text-base-content/60">Loading documents...</p>
         </div>
       </div>
@@ -253,7 +252,7 @@ function DocumentsView() {
             <div className="flex-1 overflow-y-auto p-4">
               {docLoading ? (
                 <div className="flex items-center justify-center h-full">
-                  <span className="loading loading-spinner loading-md text-primary"></span>
+                  <Spinner size="md" className="text-primary" />
                 </div>
               ) : (
                 <div className="document-content">
@@ -493,7 +492,7 @@ function HierarchyView() {
         {renderHeader()}
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <span className="loading loading-spinner loading-lg text-primary"></span>
+            <Spinner size="lg" className="text-primary" />
             <p className="mt-4 text-base-content/60">
               {viewMode === 'tree' ? 'Loading hierarchy...' : 'Loading flow graph...'}
             </p>
@@ -624,7 +623,7 @@ function HierarchyView() {
               <div className="flex-1 overflow-y-auto p-4">
                 {nodeLoading ? (
                   <div className="flex items-center justify-center h-full">
-                    <span className="loading loading-spinner loading-md text-primary"></span>
+                    <Spinner size="md" className="text-primary" />
                   </div>
                 ) : nodeDetail ? (
                   <div className="space-y-6">
@@ -832,7 +831,7 @@ function TranslationsView() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <Spinner size="lg" className="text-primary" />
           <p className="mt-4 text-base-content/60">Loading translations...</p>
         </div>
       </div>
@@ -994,7 +993,7 @@ export function Content() {
         <Route index element={<DocumentsView />} />
         <Route path="hierarchy" element={<HierarchyView />} />
         <Route path="translations" element={<TranslationsView />} />
-        <Route path="video/*" element={<VideoView />} />
+        <Route path="video/*" element={<Navigate to="/video" replace />} />
         <Route path="media" element={<MediaView />} />
       </Routes>
     </div>

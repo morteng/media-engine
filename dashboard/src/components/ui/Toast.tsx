@@ -1,5 +1,6 @@
 import { useState, useEffect, createContext, useContext, useCallback, type ReactNode } from 'react';
-import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from 'lucide-react';
+import { X } from 'lucide-react';
+import { getToastIcon } from '@/utils/iconMappings';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -79,13 +80,6 @@ const typeStyles: Record<ToastType, string> = {
   info: 'alert-info',
 };
 
-const typeIcons: Record<ToastType, typeof CheckCircle> = {
-  success: CheckCircle,
-  error: AlertCircle,
-  warning: AlertTriangle,
-  info: Info,
-};
-
 function ToastItem({ toast, onRemove }: ToastItemProps) {
   const [isExiting, setIsExiting] = useState(false);
 
@@ -104,7 +98,7 @@ function ToastItem({ toast, onRemove }: ToastItemProps) {
     setTimeout(() => onRemove(toast.id), 200);
   };
 
-  const Icon = typeIcons[toast.type];
+  const Icon = getToastIcon(toast.type);
 
   return (
     <div
