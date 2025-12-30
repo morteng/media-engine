@@ -53,7 +53,7 @@ slides:
 
   - type: image
     title: "Input to Output"
-    image: assets/images/transformation.png
+    image: ../assets/images/transformation.svg
     caption: "Write once, publish everywhere"
     notes: "Visual transformation diagram"
 
@@ -126,7 +126,7 @@ slides:
 
   - type: image
     title: "Video Production Pipeline"
-    image: assets/images/video_pipeline.png
+    image: ../assets/images/video_pipeline.svg
     caption: "YAML script to rendered video with smart caching"
     notes: "Visual of video pipeline"
 
@@ -162,7 +162,7 @@ slides:
 
   - type: image
     title: "Brand System Architecture"
-    image: assets/images/brand_system.png
+    image: ../assets/images/brand_system.svg
     caption: "Single source of truth for all outputs"
     notes: "Visual of brand flow"
 
@@ -239,7 +239,7 @@ slides:
 
   - type: image
     title: "AI Workspace Flow"
-    image: assets/images/ai_workspace.png
+    image: ../assets/images/ai_workspace.svg
     caption: "Complete agent collaboration system"
     notes: "Visual of AI workspace components"
 
@@ -308,7 +308,7 @@ slides:
 
   - type: image
     title: "Dashboard Navigation"
-    image: assets/images/dashboard.png
+    image: ../assets/images/dashboard.svg
     caption: "Complete dashboard structure"
     notes: "Visual of dashboard navigation"
 

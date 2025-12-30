@@ -31,7 +31,7 @@ slides:
 
   - type: image
     title: "Write Once, Publish Everywhere"
-    image: assets/images/transformation.png
+    image: ../assets/images/transformation.svg
     caption: "Simple inputs transform into professional outputs"
     notes: "Show the transformation diagram - inputs on left, outputs on right"
 
@@ -71,7 +71,7 @@ slides:
 
   - type: image
     title: "System Architecture"
-    image: assets/images/architecture.png
+    image: ../assets/images/architecture.svg
     caption: "Publication-centric workflow from content to deliverables"
     notes: "Show how content flows through the system"
 
@@ -90,7 +90,7 @@ slides:
 
   - type: image
     title: "Video Production Pipeline"
-    image: assets/images/video_pipeline.png
+    image: ../assets/images/video_pipeline.svg
     caption: "From YAML script to rendered video with AI voiceover"
     notes: "Show the video pipeline with smart caching"
 
@@ -105,7 +105,7 @@ slides:
 
   - type: image
     title: "Brand System"
-    image: assets/images/brand_system.png
+    image: ../assets/images/brand_system.svg
     caption: "Single source of truth for consistent identity"
     notes: "Show how brand.yaml flows to all outputs"
 
