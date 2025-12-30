@@ -1,0 +1,280 @@
+{
+  "title": "Media Engine Walkthrough",
+  "name": "walkthrough",
+  "language": "en",
+  "duration": 98.0,
+  "fps": 30,
+  "width": 1920,
+  "height": 1080,
+  "quality": "preview",
+  "is_releasable": false,
+  "resolution": {
+    "width": 1920,
+    "height": 1080
+  },
+  "scenes": [
+    {
+      "id": "hook",
+      "type": "intro",
+      "title": "The Problem",
+      "text": "You write great documentation. But turning it into polished deliverables? That takes forever... until now.",
+      "startFrame": 0,
+      "endFrame": 150,
+      "durationFrames": 150,
+      "visual": {
+        "background": "cyber",
+        "transition_in": "glitch",
+        "text_effect": "bounce"
+      }
+    },
+    {
+      "id": "intro",
+      "type": "intro",
+      "title": "Media Engine",
+      "text": "Media Engine automates your entire content pipeline. Write once in Markdown, publish everywhere.",
+      "startFrame": 150,
+      "endFrame": 360,
+      "durationFrames": 210,
+      "visual": {
+        "background": "aurora",
+        "transition_in": "aurora-sweep",
+        "show_logo": true,
+        "gradient_text": true,
+        "glow": true
+      }
+    },
+    {
+      "id": "dashboard-overview",
+      "type": "split",
+      "title": "Complete Visibility",
+      "text": "Track everything in one place",
+      "startFrame": 360,
+      "endFrame": 660,
+      "durationFrames": 300,
+      "demo": {
+        "clipPath": "demos/dashboard_overview.mp4",
+        "state": "dashboard_overview"
+      },
+      "visual": {
+        "transition_in": "fade",
+        "split_screen": {
+          "demo_on_left": true,
+          "split_angle": 15,
+          "demo_width": 58,
+          "highlight": "cyan",
+          "bullets": [
+            "Health Score tracking",
+            "Publications overview",
+            "AI Workspace activity",
+            "Content metrics"
+          ]
+        }
+      }
+    },
+    {
+      "id": "content",
+      "type": "split",
+      "title": "Content Browser",
+      "text": "Navigate your documents visually",
+      "startFrame": 660,
+      "endFrame": 1020,
+      "durationFrames": 360,
+      "demo": {
+        "clipPath": "demos/content_hierarchy_graph.mp4",
+        "state": "content_hierarchy_graph"
+      },
+      "visual": {
+        "transition_in": "slide-left",
+        "split_screen": {
+          "demo_on_left": true,
+          "split_angle": 12,
+          "demo_width": 60,
+          "highlight": "purple",
+          "bullets": [
+            "Rich document previews",
+            "Panel, Tree, Flow, Graph views",
+            "Edit mode toggle",
+            "Relationship visualization"
+          ]
+        }
+      }
+    },
+    {
+      "id": "quality",
+      "type": "split",
+      "title": "Quality Dashboard",
+      "text": "Built-in quality gates",
+      "startFrame": 1020,
+      "endFrame": 1320,
+      "durationFrames": 300,
+      "demo": {
+        "clipPath": "demos/quality_overview.mp4",
+        "state": "quality_overview"
+      },
+      "visual": {
+        "transition_in": "slide-left",
+        "split_screen": {
+          "demo_on_left": false,
+          "split_angle": 15,
+          "demo_width": 55,
+          "highlight": "neon",
+          "bullets": [
+            "Health score breakdown",
+            "Freshness tracking",
+            "Semantic analysis",
+            "Knowledge graph"
+          ]
+        }
+      }
+    },
+    {
+      "id": "brand",
+      "type": "split",
+      "title": "Brand Identity",
+      "text": "One source of truth",
+      "startFrame": 1320,
+      "endFrame": 1560,
+      "durationFrames": 240,
+      "demo": {
+        "clipPath": "demos/brand_design.mp4",
+        "state": "brand_design"
+      },
+      "visual": {
+        "transition_in": "slide-left",
+        "split_screen": {
+          "demo_on_left": true,
+          "split_angle": 18,
+          "demo_width": 55,
+          "highlight": "hot",
+          "bullets": [
+            "Color palette system",
+            "Typography preview",
+            "Logo variants",
+            "Voice guidelines"
+          ]
+        }
+      }
+    },
+    {
+      "id": "build",
+      "type": "split",
+      "title": "One-Click Publishing",
+      "text": "Multiple formats, instant output",
+      "startFrame": 1560,
+      "endFrame": 1920,
+      "durationFrames": 360,
+      "demo": {
+        "clipPath": "demos/build_page.mp4",
+        "state": "build_page"
+      },
+      "visual": {
+        "transition_in": "slice",
+        "split_screen": {
+          "demo_on_left": false,
+          "split_angle": 15,
+          "demo_width": 58,
+          "highlight": "cyan",
+          "bullets": [
+            "Publication selection",
+            "Format toggles: HTML, PDF, PPTX, XLSX",
+            "Multi-language output",
+            "Real-time build progress"
+          ]
+        }
+      }
+    },
+    {
+      "id": "ai-workspace",
+      "type": "split",
+      "title": "Agent Collaboration",
+      "text": "AI-native content production",
+      "startFrame": 1920,
+      "endFrame": 2340,
+      "durationFrames": 420,
+      "demo": {
+        "clipPath": "demos/ai_overview.mp4",
+        "state": "ai_overview"
+      },
+      "visual": {
+        "transition_in": "diagonal-split",
+        "split_screen": {
+          "demo_on_left": true,
+          "split_angle": 15,
+          "demo_width": 55,
+          "highlight": "purple",
+          "bullets": [
+            "Session tracking",
+            "Task queue management",
+            "Research storage",
+            "Decision capture",
+            "20+ MCP tools"
+          ]
+        }
+      }
+    },
+    {
+      "id": "video",
+      "type": "feature",
+      "title": "Video Production",
+      "text": "Define video scripts in YAML. Media Engine generates voiceovers, creates captions, and renders motion graphics. This video? Built with Media Engine.",
+      "startFrame": 2340,
+      "endFrame": 2580,
+      "durationFrames": 240,
+      "visual": {
+        "background": "aurora",
+        "transition_in": "zoom-burst",
+        "feature_card": {
+          "icon": "video",
+          "highlight": "cyan"
+        },
+        "pipeline": [
+          "YAML Script",
+          "AI Voiceover",
+          "Auto Captions",
+          "Motion Graphics"
+        ]
+      }
+    },
+    {
+      "id": "install",
+      "type": "demo",
+      "title": "Get Started",
+      "text": "Get started in seconds.",
+      "startFrame": 2580,
+      "endFrame": 2730,
+      "durationFrames": 150,
+      "visual": {
+        "background": "grid",
+        "transition_in": "rotate-wipe",
+        "terminal": {
+          "commands": [
+            "pip install media-engine",
+            "media-engine dashboard"
+          ]
+        }
+      }
+    },
+    {
+      "id": "closing",
+      "type": "outro",
+      "title": "Media Engine",
+      "text": "Media Engine. Write content. Generate media. Ship faster.",
+      "startFrame": 2730,
+      "endFrame": 2940,
+      "durationFrames": 210,
+      "visual": {
+        "background": "waves",
+        "transition_in": "aurora-sweep",
+        "show_logo": true,
+        "gradient_text": true,
+        "logo_glow": true,
+        "pulse_animation": true,
+        "cta": {
+          "primary": "pip install media-engine",
+          "secondary": "github.com/morteng/media-engine"
+        },
+        "fade_out": true
+      }
+    }
+  ]
+}

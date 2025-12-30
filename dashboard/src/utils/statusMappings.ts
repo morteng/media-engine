@@ -47,7 +47,8 @@ export const PUBLICATION_STATUS_BADGES: Record<string, BadgeVariant> = {
 /**
  * Get badge class for a publication status
  */
-export function getPublicationStatusBadge(status: string): string {
+export function getPublicationStatusBadge(status: string | undefined): string {
+  if (!status) return BADGE_CLASSES.ghost;
   const variant = PUBLICATION_STATUS_BADGES[status.toLowerCase()] || 'ghost';
   return BADGE_CLASSES[variant];
 }

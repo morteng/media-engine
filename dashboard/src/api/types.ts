@@ -930,6 +930,7 @@ export interface Publication {
 }
 
 export interface PublicationDetail extends Publication {
+  pub_type?: string;
   description: string;
   metadata: PublicationMetadata;
   chapters: PublicationChapter[];

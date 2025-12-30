@@ -10,7 +10,6 @@
 
 import React, { useState } from 'react';
 import { FileJson, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
-import { cn } from '@/utils/cn';
 import { useVideoPropsData } from '@/hooks/useVideoApi';
 import { Spinner } from '@/components/ui';
 import { PropsViewer } from '../PropsViewer';

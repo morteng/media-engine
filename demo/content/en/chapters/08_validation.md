@@ -31,7 +31,9 @@ derived_from:
 
 # Validation
 
-Media Engine provides schema validation for frontmatter and reference checking for links.
+Media Engine validates your frontmatter against JSON Schema and checks all internal links.
+
+See [Content Management](02_content_management.md) for the document structure this validates.
 
 ## Overview
 
@@ -130,7 +132,7 @@ properties:
 
 ## Default Schema
 
-If no schema is provided, a default schema is used:
+If you don't provide a schema, the system uses a default:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -256,3 +258,5 @@ properties:
 ```
 
 This ensures translations properly reference their source documents.
+
+See [Quality Checks](04_quality_checks.md) for broader quality validation and [Content Analysis](15_analysis.md) for readability and gap checks.

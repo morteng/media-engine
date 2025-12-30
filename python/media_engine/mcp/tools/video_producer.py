@@ -522,6 +522,106 @@ def register_video_producer_tools(mcp, server_instance):
         }, indent=2)
 
     @mcp.tool()
+    async def get_camera_presets() -> str:
+        """
+        List all available camera animation presets.
+
+        Returns:
+            JSON with camera presets and their configurations
+        """
+        from ...video.camera_presets import CAMERA_PRESETS
+
+        presets = {}
+        for preset_id, preset in CAMERA_PRESETS.items():
+            presets[preset_id] = {
+                "name": preset.name,
+                "description": preset.description,
+                "pattern": preset.pattern,
+                "default_zoom": preset.default_zoom,
+                "default_duration": preset.default_duration,
+                "default_hold": preset.default_hold,
+                "default_easing": preset.default_easing,
+            }
+
+        return json.dumps({
+            "presets": presets,
+            "count": len(presets),
+            "patterns": ["sequential", "zoom_out", "focus_main", "flow", "overview"],
+            "usage_example": {
+                "yaml": """visual:
+  camera:
+    mode: animated
+    preset: "guided_tour"  # Use preset name here
+    capture_scale: 2.0
+    # Or define manual focus sequence:
+    focus_sequence:
+      - target: "fullpage"
+        zoom: 1.0
+        duration: 0.5
+      - target: "#sidebar"
+        zoom: 2.5
+        duration: 1.2
+        hold: 2.0
+        easing: "easeInOutCubic"
+""",
+            },
+        }, indent=2)
+
+    @mcp.tool()
+    async def get_effect_presets() -> str:
+        """
+        List all available visual effects presets.
+
+        Returns:
+            JSON with effects presets and their configurations
+        """
+        from ...video.camera_effects import EFFECT_PRESETS
+
+        presets = {}
+        for name, config in EFFECT_PRESETS.items():
+            enabled_effects = []
+            if config.vignette.enabled:
+                enabled_effects.append("vignette")
+            if config.perspective_tilt.enabled:
+                enabled_effects.append("perspective_tilt")
+            if config.camera_shake.enabled:
+                enabled_effects.append("camera_shake")
+            if config.depth_of_field.enabled:
+                enabled_effects.append("depth_of_field")
+            if config.parallax.enabled:
+                enabled_effects.append("parallax")
+            if config.motion_blur.enabled:
+                enabled_effects.append("motion_blur")
+
+            presets[name] = {
+                "enabled_effects": enabled_effects,
+                "effect_count": len(enabled_effects),
+            }
+
+        return json.dumps({
+            "presets": presets,
+            "count": len(presets),
+            "all_effect_types": [
+                "vignette",
+                "perspective_tilt",
+                "camera_shake",
+                "depth_of_field",
+                "parallax",
+                "motion_blur",
+            ],
+            "usage_example": {
+                "yaml": """visual:
+  camera:
+    mode: animated
+    effects_preset: "cinematic"  # Use preset name here
+    effects:  # Optional: override specific settings
+      vignette:
+        intensity: 0.6
+""",
+            },
+        }, indent=2)
+
+    @mcp.tool()
     async def list_video_scripts(language: str = None) -> str:
         """
         List all video scripts in the project.

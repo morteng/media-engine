@@ -1,4 +1,3 @@
-import { Routes, Route } from 'react-router-dom';
 import { useMemo } from 'react';
 import {
   useInsights,
@@ -7,7 +6,7 @@ import {
   useAuditLog,
 } from '@/hooks/useApi';
 import { useSettings } from '@/contexts';
-import { SubTabs, ExpandableSection, Spinner } from '@/components/ui';
+import { ExpandableSection, Spinner } from '@/components/ui';
 import { InfoTooltip, METRIC_EXPLANATIONS } from '@/components/ui/InfoTooltip';
 import {
   GraphCanvas,
@@ -37,14 +36,8 @@ import {
   Link2,
   HelpCircle,
   BarChart3,
+  ListChecks,
 } from 'lucide-react';
-
-// Simplified to 3 tabs
-const tabs = [
-  { path: '', label: 'Overview' },
-  { path: 'analysis', label: 'Analysis' },
-  { path: 'activity', label: 'Activity' },
-];
 
 // Loading component
 function Loading({ message }: { message: string }) {
@@ -58,23 +51,62 @@ function Loading({ message }: { message: string }) {
   );
 }
 
-// ============== OVERVIEW TAB ==============
-function OverviewView() {
-  const { data: insights, isLoading } = useInsights();
+
+// ============== MAIN QUALITY PAGE (Single Page View) ==============
+export function Quality() {
+  const { data: insights, isLoading: insightsLoading } = useInsights();
+  const { data: freshness, isLoading: freshnessLoading } = useFreshness();
+  const { data: advanced, isLoading: advancedLoading } = useAdvancedInsights();
+  const { data: auditLog, isLoading: auditLoading } = useAuditLog();
+  const { isDark } = useSettings();
+
+  const isLoading = insightsLoading || freshnessLoading || advancedLoading || auditLoading;
+
+  // Memoize graph data conversion
+  const graphData = insights?.graph;
+  const reagraphNodes = useMemo(() => {
+    if (!graphData?.nodes) return [];
+    return toReagraphNodesFromKnowledgeGraph(graphData.nodes, isDark);
+  }, [graphData?.nodes, isDark]);
+
+  const reagraphEdges = useMemo(() => {
+    if (!graphData?.links) return [];
+    return toReagraphEdgesFromKnowledgeGraph(graphData.links);
+  }, [graphData?.links]);
 
   if (isLoading) {
-    return <Loading message="Loading quality overview..." />;
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-semibold">Quality</h1>
+        <Loading message="Loading quality data..." />
+      </div>
+    );
   }
 
   const health = insights?.health;
   const issues = health?.issues ?? [];
   const components = health?.components;
-
   const errorCount = issues.filter(i => i.severity === 'critical').length;
   const warningCount = issues.filter(i => i.severity === 'warning').length;
 
+  const semantic = advanced?.semantic;
+  const kg = advanced?.knowledge_graph;
+  const norwegian = advanced?.norwegian_readability;
+  const predictive = advanced?.predictive_freshness;
+  const codesync = advanced?.enhanced_codesync;
+  const analysis = advanced?.advanced_analysis;
+
+  const totalItems = freshness?.total_items ?? 0;
+  const freshCount = freshness?.fresh_count ?? 0;
+  const freshPercent = totalItems > 0 ? Math.round((freshCount / totalItems) * 100) : 0;
+
+  const recentChanges = insights?.statistics?.activity?.recent_changes ?? [];
+  const entries = auditLog?.entries ?? [];
+
   return (
     <div className="space-y-6">
+      <h1 className="text-2xl font-semibold">Quality</h1>
+
       {/* Score Hero */}
       <div className="card bg-gradient-to-br from-base-200 to-base-300 border border-base-300">
         <div className="card-body">
@@ -106,7 +138,7 @@ function OverviewView() {
               Critical
               <InfoTooltip
                 title="Critical Issues"
-                content="Blocking issues that must be resolved before publishing. Includes broken links, missing required content, and validation errors."
+                content="Blocking issues that must be resolved before publishing."
               />
             </span>
           </div>
@@ -131,119 +163,67 @@ function OverviewView() {
       </div>
 
       {/* Component Scores */}
-      <div className="card bg-base-200">
-        <div className="card-body">
-          <h3 className="card-title text-lg">Component Scores</h3>
-          <p className="text-sm text-base-content/60 mb-4">Weighted health factors</p>
-          <div className="space-y-4">
-            {components && Object.entries(components).map(([key, value]) => {
-              const explanation = METRIC_EXPLANATIONS[key as keyof typeof METRIC_EXPLANATIONS];
-              const numValue = value as number;
-              return (
-                <div key={key} className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-1 capitalize">
-                      {key}
-                      {explanation && <InfoTooltip title={explanation.title} content={explanation.content} />}
-                    </span>
-                    <span>{numValue}%</span>
-                  </div>
-                  <progress
-                    className={`progress w-full ${numValue >= 90 ? 'progress-success' : numValue >= 70 ? 'progress-warning' : 'progress-error'}`}
-                    value={numValue}
-                    max="100"
-                  ></progress>
+      <ExpandableSection
+        title="Component Scores"
+        description="Weighted health factors across all quality dimensions"
+        icon={<ListChecks size={20} />}
+        defaultExpanded={true}
+      >
+        <div className="space-y-4">
+          {components && Object.entries(components).map(([key, value]) => {
+            const explanation = METRIC_EXPLANATIONS[key as keyof typeof METRIC_EXPLANATIONS];
+            const numValue = value as number;
+            return (
+              <div key={key} className="space-y-1">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-1 capitalize">
+                    {key}
+                    {explanation && <InfoTooltip title={explanation.title} content={explanation.content} />}
+                  </span>
+                  <span>{numValue}%</span>
                 </div>
-              );
-            })}
-          </div>
+                <progress
+                  className={`progress w-full ${numValue >= 90 ? 'progress-success' : numValue >= 70 ? 'progress-warning' : 'progress-error'}`}
+                  value={numValue}
+                  max="100"
+                ></progress>
+              </div>
+            );
+          })}
         </div>
-      </div>
+      </ExpandableSection>
 
       {/* Issues */}
       {issues.length > 0 && (
-        <div className="card bg-base-200">
-          <div className="card-body">
-            <h3 className="card-title text-lg">Issues</h3>
-            <p className="text-sm text-base-content/60 mb-4">{issues.length} to address</p>
-            <div className="space-y-3">
-              {issues.slice(0, 10).map((issue, idx) => (
-                <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-base-300">
-                  <AlertTriangle size={14} className={issue.severity === 'critical' ? 'text-error' : 'text-warning'} />
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <div className={`badge badge-sm ${issue.severity === 'critical' ? 'badge-error' : 'badge-warning'}`}>
-                        {issue.category}
-                      </div>
-                      <span className="text-sm text-base-content/60 truncate">{issue.document}</span>
+        <ExpandableSection
+          title="Issues"
+          description={`${issues.length} issues to address`}
+          icon={<AlertTriangle size={20} />}
+          statusBadge={errorCount > 0 ? 'error' : 'warning'}
+          statusCount={issues.length}
+          defaultExpanded={true}
+        >
+          <div className="space-y-3">
+            {issues.slice(0, 10).map((issue, idx) => (
+              <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-base-300">
+                <AlertTriangle size={14} className={issue.severity === 'critical' ? 'text-error' : 'text-warning'} />
+                <div className="flex-1 min-w-0 space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className={`badge badge-sm ${issue.severity === 'critical' ? 'badge-error' : 'badge-warning'}`}>
+                      {issue.category}
                     </div>
-                    <p className="text-sm">{issue.message}</p>
+                    <span className="text-sm text-base-content/60 truncate">{issue.document}</span>
                   </div>
+                  <p className="text-sm">{issue.message}</p>
                 </div>
-              ))}
-              {issues.length > 10 && (
-                <p className="text-sm text-base-content/60 text-center">...and {issues.length - 10} more</p>
-              )}
-            </div>
+              </div>
+            ))}
+            {issues.length > 10 && (
+              <p className="text-sm text-base-content/60 text-center">...and {issues.length - 10} more</p>
+            )}
           </div>
-        </div>
+        </ExpandableSection>
       )}
-
-      {issues.length === 0 && (
-        <div className="card bg-base-200">
-          <div className="card-body items-center text-center py-12">
-            <CheckCircle size={48} className="text-success mb-4" />
-            <h3 className="text-lg font-semibold">All Clear!</h3>
-            <p className="text-base-content/60">No quality issues found.</p>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ============== ANALYSIS TAB (Consolidated from 6 tabs) ==============
-function AnalysisView() {
-  const { data: advanced, isLoading: advancedLoading } = useAdvancedInsights();
-  const { data: insights, isLoading: insightsLoading } = useInsights();
-  const { data: freshness, isLoading: freshnessLoading } = useFreshness();
-  const { isDark } = useSettings();
-
-  const isLoading = advancedLoading || insightsLoading || freshnessLoading;
-
-  // Memoize graph data conversion
-  const graphData = insights?.graph;
-  const reagraphNodes = useMemo(() => {
-    if (!graphData?.nodes) return [];
-    return toReagraphNodesFromKnowledgeGraph(graphData.nodes, isDark);
-  }, [graphData?.nodes, isDark]);
-
-  const reagraphEdges = useMemo(() => {
-    if (!graphData?.links) return [];
-    return toReagraphEdgesFromKnowledgeGraph(graphData.links);
-  }, [graphData?.links]);
-
-  if (isLoading) {
-    return <Loading message="Loading analysis modules..." />;
-  }
-
-  const semantic = advanced?.semantic;
-  const kg = advanced?.knowledge_graph;
-  const norwegian = advanced?.norwegian_readability;
-  const predictive = advanced?.predictive_freshness;
-  const codesync = advanced?.enhanced_codesync;
-  const analysis = advanced?.advanced_analysis;
-
-  // Calculate summary metrics
-  const totalItems = freshness?.total_items ?? 0;
-  const freshCount = freshness?.fresh_count ?? 0;
-  const freshPercent = totalItems > 0 ? Math.round((freshCount / totalItems) * 100) : 0;
-
-  return (
-    <div className="space-y-4">
-      <p className="text-base-content/60 mb-2">
-        Expand each section to view detailed analysis. Modules with issues show warning badges.
-      </p>
 
       {/* Semantic Analysis */}
       <ExpandableSection
@@ -266,7 +246,6 @@ function AnalysisView() {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Metrics */}
             <div className="grid grid-cols-3 gap-4">
               <div className="text-center p-3 rounded-lg bg-base-300">
                 <div className="text-2xl font-bold text-warning">{semantic.near_duplicate_count ?? 0}</div>
@@ -288,7 +267,6 @@ function AnalysisView() {
               </div>
             </div>
 
-            {/* Near Duplicates */}
             {semantic.near_duplicates && semantic.near_duplicates.length > 0 && (
               <div className="pt-4 border-t border-base-300">
                 <h4 className="font-medium mb-2">Near-Duplicate Pairs</h4>
@@ -330,7 +308,6 @@ function AnalysisView() {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Metrics */}
             <div className="grid grid-cols-4 gap-4">
               <div className="text-center p-3 rounded-lg bg-base-300">
                 <div className="text-2xl font-bold text-primary">{kg.metrics?.total_nodes ?? kg.node_count ?? 0}</div>
@@ -356,7 +333,6 @@ function AnalysisView() {
               </div>
             </div>
 
-            {/* Graph Visualization */}
             {reagraphNodes.length > 0 && (
               <div className="pt-4 border-t border-base-300">
                 <h4 className="font-medium mb-2">Interactive Graph</h4>
@@ -375,7 +351,6 @@ function AnalysisView() {
               </div>
             )}
 
-            {/* Orphan Concepts */}
             {kg.orphan_concepts && kg.orphan_concepts.length > 0 && (
               <div className="pt-4 border-t border-base-300">
                 <h4 className="font-medium mb-2">Orphan Concepts</h4>
@@ -409,7 +384,6 @@ function AnalysisView() {
         statusCount={norwegian?.difficult_count}
       >
         <div className="space-y-4">
-          {/* General Score */}
           <div className="flex items-center gap-4 p-4 rounded-lg bg-base-300">
             <BookOpen size={32} className={insights?.health?.components?.readability && insights.health.components.readability >= 80 ? 'text-success' : 'text-warning'} />
             <div>
@@ -421,7 +395,6 @@ function AnalysisView() {
             </div>
           </div>
 
-          {/* Norwegian LIX */}
           {norwegian?.available ? (
             <div className="pt-4 border-t border-base-300">
               <h4 className="font-medium mb-2 flex items-center gap-2">
@@ -454,7 +427,7 @@ function AnalysisView() {
         </div>
       </ExpandableSection>
 
-      {/* Freshness & Predictive */}
+      {/* Freshness & Staleness */}
       <ExpandableSection
         title="Freshness & Staleness"
         description="Content freshness tracking and predictive analysis"
@@ -464,7 +437,6 @@ function AnalysisView() {
         statusCount={freshness?.stale_count}
       >
         <div className="space-y-4">
-          {/* Freshness Summary */}
           <div className="grid grid-cols-4 gap-4">
             <div className="text-center p-3 rounded-lg bg-success/10">
               <div className="text-2xl font-bold text-success">{freshCount}</div>
@@ -487,7 +459,6 @@ function AnalysisView() {
             </div>
           </div>
 
-          {/* Predictive Staleness */}
           {predictive?.available && (
             <div className="pt-4 border-t border-base-300">
               <h4 className="font-medium mb-2 flex items-center gap-2">
@@ -562,7 +533,6 @@ function AnalysisView() {
               </div>
             </div>
 
-            {/* Syntax Errors List */}
             {codesync.syntax_errors && codesync.syntax_errors.length > 0 && (
               <div className="pt-4 border-t border-base-300">
                 <h4 className="font-medium mb-2">Syntax Errors</h4>
@@ -633,7 +603,6 @@ function AnalysisView() {
               )}
             </div>
 
-            {/* Unanswered Questions */}
             {(analysis.question_coverage?.unanswered_questions?.length ?? 0) > 0 && (
               <div className="pt-4 border-t border-base-300">
                 <h4 className="font-medium mb-2">Unanswered Questions</h4>
@@ -650,106 +619,85 @@ function AnalysisView() {
           </div>
         )}
       </ExpandableSection>
-    </div>
-  );
-}
 
-// ============== ACTIVITY TAB ==============
-function ActivityView() {
-  const { data: auditLog, isLoading: auditLoading } = useAuditLog();
-  const { data: insights, isLoading: insightsLoading } = useInsights();
-
-  if (auditLoading || insightsLoading) {
-    return <Loading message="Loading activity..." />;
-  }
-
-  const recentChanges = insights?.statistics?.activity?.recent_changes ?? [];
-  const entries = auditLog?.entries ?? [];
-
-  return (
-    <div className="space-y-6">
-      {/* Recent Commits */}
-      <div className="card bg-base-200">
-        <div className="card-body">
-          <h3 className="card-title text-lg flex items-center gap-2">
-            Recent Commits
-            <InfoTooltip {...METRIC_EXPLANATIONS.recentCommits} />
-          </h3>
-          <p className="text-sm text-base-content/60 mb-4">Git activity affecting content files</p>
-          {recentChanges.length > 0 ? (
-            <div className="space-y-3">
-              {recentChanges.slice(0, 8).map((change, idx) => (
-                <div key={idx} className="p-3 rounded-lg bg-base-300">
-                  <div className="flex items-start gap-3">
-                    <GitCommit size={16} className="text-primary flex-shrink-0 mt-0.5" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium truncate">{change.message}</span>
-                        <div className="badge badge-ghost badge-sm">{change.hash.substring(0, 7)}</div>
-                      </div>
-                      <div className="flex items-center gap-4 text-xs text-base-content/60">
-                        <span className="flex items-center gap-1"><User size={10} /> {change.author}</span>
-                        <span className="flex items-center gap-1"><Clock size={10} /> {new Date(change.date).toLocaleDateString()}</span>
-                        <span className="flex items-center gap-1"><FileText size={10} /> {change.files.length} files</span>
+      {/* Activity Section */}
+      <ExpandableSection
+        title="Recent Activity"
+        description="Git commits and system audit log"
+        icon={<GitCommit size={20} />}
+      >
+        <div className="space-y-6">
+          {/* Recent Commits */}
+          <div>
+            <h4 className="font-medium mb-3 flex items-center gap-2">
+              Recent Commits
+              <InfoTooltip {...METRIC_EXPLANATIONS.recentCommits} />
+            </h4>
+            {recentChanges.length > 0 ? (
+              <div className="space-y-2">
+                {recentChanges.slice(0, 5).map((change, idx) => (
+                  <div key={idx} className="p-3 rounded-lg bg-base-300">
+                    <div className="flex items-start gap-3">
+                      <GitCommit size={14} className="text-primary flex-shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium truncate text-sm">{change.message}</span>
+                          <div className="badge badge-ghost badge-sm">{change.hash.substring(0, 7)}</div>
+                        </div>
+                        <div className="flex items-center gap-4 text-xs text-base-content/60">
+                          <span className="flex items-center gap-1"><User size={10} /> {change.author}</span>
+                          <span className="flex items-center gap-1"><Clock size={10} /> {new Date(change.date).toLocaleDateString()}</span>
+                          <span className="flex items-center gap-1"><FileText size={10} /> {change.files.length} files</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <GitCommit size={24} className="text-base-content/30 mx-auto mb-2" />
-              <p className="text-sm text-base-content/60">No recent commits</p>
-            </div>
-          )}
-        </div>
-      </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <GitCommit size={20} className="text-base-content/30 mx-auto mb-2" />
+                <p className="text-sm text-base-content/60">No recent commits</p>
+              </div>
+            )}
+          </div>
 
-      {/* Audit Log */}
-      <div className="card bg-base-200">
-        <div className="card-body">
-          <h3 className="card-title text-lg">Audit Log</h3>
-          <p className="text-sm text-base-content/60 mb-4">System activity and actions</p>
-          {entries.length > 0 ? (
-            <div className="space-y-2">
-              {entries.slice(0, 15).map((entry, idx) => (
-                <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-base-300">
-                  <ActivityIcon size={14} className="text-base-content/40 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <span className="font-medium">{entry.action}</span>
-                    {entry.details && <span className="text-sm text-base-content/60 ml-2">{entry.details}</span>}
+          {/* Audit Log */}
+          <div className="pt-4 border-t border-base-300">
+            <h4 className="font-medium mb-3">Audit Log</h4>
+            {entries.length > 0 ? (
+              <div className="space-y-2">
+                {entries.slice(0, 8).map((entry, idx) => (
+                  <div key={idx} className="flex items-center gap-3 p-2 rounded-lg bg-base-300 text-sm">
+                    <ActivityIcon size={12} className="text-base-content/40 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <span className="font-medium">{entry.action}</span>
+                      {entry.details && <span className="text-base-content/60 ml-2">{entry.details}</span>}
+                    </div>
+                    <span className="text-xs text-base-content/50">{new Date(entry.timestamp).toLocaleString()}</span>
                   </div>
-                  <span className="text-xs text-base-content/50">{new Date(entry.timestamp).toLocaleString()}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <ActivityIcon size={24} className="text-base-content/30 mx-auto mb-2" />
-              <p className="text-sm text-base-content/60">No audit log entries</p>
-            </div>
-          )}
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <ActivityIcon size={20} className="text-base-content/30 mx-auto mb-2" />
+                <p className="text-sm text-base-content/60">No audit log entries</p>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </div>
-  );
-}
+      </ExpandableSection>
 
-// ============== MAIN QUALITY PAGE ==============
-export function Quality() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold">Quality</h1>
-        <SubTabs tabs={tabs} basePath="/quality" />
-      </div>
-
-      <Routes>
-        <Route index element={<OverviewView />} />
-        <Route path="analysis" element={<AnalysisView />} />
-        <Route path="activity" element={<ActivityView />} />
-      </Routes>
+      {/* All Clear Message */}
+      {issues.length === 0 && (
+        <div className="card bg-base-200">
+          <div className="card-body items-center text-center py-8">
+            <CheckCircle size={40} className="text-success mb-2" />
+            <h3 className="font-semibold">All Clear!</h3>
+            <p className="text-base-content/60 text-sm">No quality issues found.</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

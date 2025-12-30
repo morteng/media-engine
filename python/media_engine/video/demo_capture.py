@@ -30,9 +30,10 @@ class DemoState:
 
     id: str
     description: str
-    setup: str  # JavaScript to execute
+    setup: str  # JavaScript to execute before capture
     wait_for: str  # CSS selector to wait for
     duration: float = 5.0  # Capture duration in seconds
+    actions: str = ""  # JavaScript for runtime actions during capture (optional)
 
 
 @dataclass
@@ -56,6 +57,11 @@ class DemoDefinition:
     states: Dict[str, DemoState] = field(default_factory=dict)
     sequences: Dict[str, DemoSequence] = field(default_factory=dict)
 
+    @property
+    def scaled_viewport(self) -> tuple:
+        """Get viewport dimensions at capture scale."""
+        return (self.viewport_width, self.viewport_height)
+
 
 def load_demo_definition(yaml_path: Path) -> DemoDefinition:
     """Load demo definition from YAML file."""
@@ -74,6 +80,7 @@ def load_demo_definition(yaml_path: Path) -> DemoDefinition:
             setup=state_data.get("setup", ""),
             wait_for=state_data.get("wait_for", "body"),
             duration=state_data.get("duration", 5.0),
+            actions=state_data.get("actions", ""),
         )
 
     # Parse sequences
@@ -94,6 +101,52 @@ def load_demo_definition(yaml_path: Path) -> DemoDefinition:
         states=states,
         sequences=sequences,
     )
+
+
+async def capture_screenshot(
+    page: "Page",
+    state: DemoState,
+    output_path: Path,
+    capture_scale: float = 1.0,
+) -> Path:
+    """
+    Capture a single high-resolution screenshot of a demo state.
+
+    Args:
+        page: Playwright page instance
+        state: DemoState to capture
+        output_path: Where to save the screenshot
+        capture_scale: Scale factor for high-res capture (e.g., 2.0 for 4K)
+
+    Returns:
+        Path to captured screenshot file
+    """
+    print(f"  Capturing screenshot: {state.id} at {capture_scale}x scale")
+
+    # Execute setup JavaScript
+    if state.setup:
+        await page.evaluate(f"""
+            (async () => {{
+                {state.setup}
+            }})()
+        """)
+
+    # Wait for element to appear
+    try:
+        await page.wait_for_selector(state.wait_for, timeout=10000)
+    except Exception as e:
+        print(f"    Warning: wait_for element '{state.wait_for}' not found: {e}")
+
+    # Small delay to let animations settle
+    await asyncio.sleep(0.5)
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Capture screenshot (viewport is already set to scaled dimensions)
+    await page.screenshot(path=str(output_path))
+    print(f"    Saved screenshot: {output_path}")
+
+    return output_path
 
 
 async def capture_state(
@@ -145,7 +198,69 @@ async def capture_state(
     temp_dir = output_path.parent / ".temp" / state.id
     temp_dir.mkdir(parents=True, exist_ok=True)
 
+    # Prepare actions script with timing control
+    actions_script = ""
+    if state.actions:
+        # Wrap actions in async function with duration parameter
+        actions_script = f"""
+            (async () => {{
+                const duration = {duration * 1000};  // milliseconds
+                const startTime = Date.now();
+                const elapsed = () => Date.now() - startTime;
+                const progress = () => Math.min(elapsed() / duration, 1);
+
+                // Helper functions for actions
+                const wait = (ms) => new Promise(r => setTimeout(r, ms));
+                const smoothScroll = async (el, distance, duration) => {{
+                    const start = el.scrollTop;
+                    const startTime = Date.now();
+                    while (Date.now() - startTime < duration) {{
+                        const t = (Date.now() - startTime) / duration;
+                        const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+                        el.scrollTop = start + distance * eased;
+                        await wait(16);
+                    }}
+                    el.scrollTop = start + distance;
+                }};
+                const moveCursor = async (cursor, x, y, dur) => {{
+                    if (!cursor) return;
+                    const startX = parseFloat(cursor.style.left) || 0;
+                    const startY = parseFloat(cursor.style.top) || 0;
+                    const startTime = Date.now();
+                    while (Date.now() - startTime < dur) {{
+                        const t = (Date.now() - startTime) / dur;
+                        const eased = 1 - Math.pow(1 - t, 3);
+                        cursor.style.left = (startX + (x - startX) * eased) + 'px';
+                        cursor.style.top = (startY + (y - startY) * eased) + 'px';
+                        await wait(16);
+                    }}
+                    cursor.style.left = x + 'px';
+                    cursor.style.top = y + 'px';
+                }};
+
+                // Create virtual cursor for visual feedback
+                let cursor = document.getElementById('demo-cursor');
+                if (!cursor) {{
+                    cursor = document.createElement('div');
+                    cursor.id = 'demo-cursor';
+                    cursor.style.cssText = 'position:fixed;width:20px;height:20px;border-radius:50%;background:rgba(0,212,255,0.8);box-shadow:0 0 20px rgba(0,212,255,0.6);pointer-events:none;z-index:99999;transform:translate(-50%,-50%);transition:transform 0.1s;left:50%;top:50%;';
+                    document.body.appendChild(cursor);
+                }}
+
+                // Run the state-specific actions
+                {state.actions}
+
+                // Remove cursor at end
+                cursor?.remove();
+            }})()
+        """
+
     try:
+        # Start actions in background if present
+        actions_task = None
+        if actions_script:
+            actions_task = asyncio.create_task(page.evaluate(actions_script))
+
         # Capture screenshots at fps rate
         frame_count = int(duration * fps)
         frame_interval = 1.0 / fps
@@ -154,6 +269,13 @@ async def capture_state(
             screenshot_path = temp_dir / f"frame_{i:05d}.png"
             await page.screenshot(path=str(screenshot_path))
             await asyncio.sleep(frame_interval)
+
+        # Wait for actions to complete
+        if actions_task:
+            try:
+                await asyncio.wait_for(actions_task, timeout=2.0)
+            except asyncio.TimeoutError:
+                pass  # Actions may have finished early
 
         # Combine screenshots into video using ffmpeg
         import subprocess

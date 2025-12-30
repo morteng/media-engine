@@ -1,7 +1,15 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { VoiceoverPanel } from './VoiceoverPanel';
+
+// Mock the hooks
+vi.mock('@/hooks/useVideoApi', () => ({
+  useVoiceoverStatus: vi.fn(),
+  useGenerateVoiceover: vi.fn(),
+}));
+
+import { useVoiceoverStatus, useGenerateVoiceover } from '@/hooks/useVideoApi';
 
 // Create a wrapper with QueryClient for tests
 const createWrapper = () => {
@@ -17,173 +25,225 @@ const createWrapper = () => {
   );
 };
 
+// Mock implementations
+const mockMutate = vi.fn();
+const defaultMutationReturn = {
+  mutate: mockMutate,
+  isPending: false,
+  isError: false,
+  isSuccess: false,
+  data: null,
+  error: null,
+};
+
 describe('VoiceoverPanel', () => {
-  it('renders voice selection section', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    // Default mock returns
+    (useVoiceoverStatus as ReturnType<typeof vi.fn>).mockReturnValue({
+      data: null,
+      isLoading: false,
+      refetch: vi.fn(),
+    });
+    (useGenerateVoiceover as ReturnType<typeof vi.fn>).mockReturnValue(defaultMutationReturn);
+  });
+
+  it('shows placeholder when no script is selected', () => {
     render(<VoiceoverPanel />, { wrapper: createWrapper() });
-    expect(screen.getByText('Voice Selection')).toBeInTheDocument();
+    expect(screen.getByText('Select a script to manage voiceover')).toBeInTheDocument();
   });
 
-  it('renders voice options', () => {
-    render(<VoiceoverPanel />, { wrapper: createWrapper() });
+  it('shows loading state when checking status', () => {
+    (useVoiceoverStatus as ReturnType<typeof vi.fn>).mockReturnValue({
+      data: null,
+      isLoading: true,
+      refetch: vi.fn(),
+    });
 
-    // Should have mock voices available
-    expect(screen.getByText('Alex')).toBeInTheDocument();
-    expect(screen.getByText('Sarah')).toBeInTheDocument();
+    render(<VoiceoverPanel scriptId="test-script" />, { wrapper: createWrapper() });
+    expect(screen.getByText('Checking status...')).toBeInTheDocument();
   });
 
-  it('can select a voice', () => {
-    render(<VoiceoverPanel />, { wrapper: createWrapper() });
+  it('shows voiceover exists status', () => {
+    (useVoiceoverStatus as ReturnType<typeof vi.fn>).mockReturnValue({
+      data: {
+        has_voiceover: true,
+        has_props: true,
+        audio_path: '/path/to/audio.mp3',
+        audio_size: 1024000,
+        audio_modified: '2024-01-15T10:00:00Z',
+      },
+      isLoading: false,
+      refetch: vi.fn(),
+    });
 
-    // Click on Sarah voice
-    const sarahButton = screen.getByText('Sarah').closest('button');
-    fireEvent.click(sarahButton!);
+    render(<VoiceoverPanel scriptId="test-script" />, { wrapper: createWrapper() });
 
-    // Button should be highlighted (btn-primary class)
-    expect(sarahButton).toHaveClass('btn-primary');
+    expect(screen.getByText('Voiceover exists')).toBeInTheDocument();
+    expect(screen.getByText('Props generated')).toBeInTheDocument();
+    expect(screen.getByText(/1000\.0 KB/)).toBeInTheDocument();
   });
 
-  it('renders speed control', () => {
-    render(<VoiceoverPanel />, { wrapper: createWrapper() });
+  it('shows no voiceover warning', () => {
+    (useVoiceoverStatus as ReturnType<typeof vi.fn>).mockReturnValue({
+      data: {
+        has_voiceover: false,
+        has_props: false,
+        audio_path: null,
+        audio_size: null,
+        audio_modified: null,
+      },
+      isLoading: false,
+      refetch: vi.fn(),
+    });
 
-    // Speed label should be visible
-    expect(screen.getByText(/speed/i)).toBeInTheDocument();
-
-    // Should have a range input for speed
-    const speedSliders = screen.getAllByRole('slider');
-    expect(speedSliders.length).toBeGreaterThan(0);
+    render(<VoiceoverPanel scriptId="test-script" />, { wrapper: createWrapper() });
+    expect(screen.getByText('No voiceover generated yet')).toBeInTheDocument();
   });
 
-  it('renders pitch control', () => {
-    render(<VoiceoverPanel />, { wrapper: createWrapper() });
+  it('renders generation mode options', () => {
+    render(<VoiceoverPanel scriptId="test-script" />, { wrapper: createWrapper() });
 
-    // Pitch label should be visible
-    expect(screen.getByText(/pitch/i)).toBeInTheDocument();
+    expect(screen.getByText('Mock (Silent)')).toBeInTheDocument();
+    expect(screen.getByText('macOS TTS')).toBeInTheDocument();
+    expect(screen.getByText('ElevenLabs')).toBeInTheDocument();
   });
 
-  it('renders preview text area', () => {
-    render(<VoiceoverPanel />, { wrapper: createWrapper() });
+  it('can select generation mode', () => {
+    render(<VoiceoverPanel scriptId="test-script" />, { wrapper: createWrapper() });
 
-    // Preview text label should be visible
-    expect(screen.getByText('Preview Text')).toBeInTheDocument();
+    const elevenlabsRadio = screen.getByLabelText(/elevenlabs/i);
+    fireEvent.click(elevenlabsRadio);
 
-    // Textarea should be visible
-    const textarea = screen.getByPlaceholderText(/enter text to preview/i);
-    expect(textarea).toBeInTheDocument();
+    expect(elevenlabsRadio).toBeChecked();
   });
 
-  it('can update preview text', () => {
-    render(<VoiceoverPanel />, { wrapper: createWrapper() });
+  it('renders force regenerate checkbox', () => {
+    render(<VoiceoverPanel scriptId="test-script" />, { wrapper: createWrapper() });
 
-    const textarea = screen.getByPlaceholderText(/enter text to preview/i);
-    fireEvent.change(textarea, { target: { value: 'Hello world' } });
-
-    expect(textarea).toHaveValue('Hello world');
+    expect(screen.getByText('Force regenerate')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox')).toBeInTheDocument();
   });
 
-  it('uses initial text prop', () => {
-    render(<VoiceoverPanel text="Initial text content" />, { wrapper: createWrapper() });
+  it('can toggle force regenerate', () => {
+    render(<VoiceoverPanel scriptId="test-script" />, { wrapper: createWrapper() });
 
-    const textarea = screen.getByPlaceholderText(/enter text to preview/i);
-    expect(textarea).toHaveValue('Initial text content');
+    const checkbox = screen.getByRole('checkbox');
+    expect(checkbox).not.toBeChecked();
+
+    fireEvent.click(checkbox);
+    expect(checkbox).toBeChecked();
   });
 
-  it('renders preview button', () => {
-    render(<VoiceoverPanel />, { wrapper: createWrapper() });
+  it('renders generate button', () => {
+    render(<VoiceoverPanel scriptId="test-script" />, { wrapper: createWrapper() });
 
-    const previewButton = screen.getByRole('button', { name: /preview/i });
-    expect(previewButton).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /generate voiceover/i })).toBeInTheDocument();
   });
 
-  it('disables preview button when no text', () => {
-    render(<VoiceoverPanel />, { wrapper: createWrapper() });
+  it('shows regenerate when voiceover exists', () => {
+    (useVoiceoverStatus as ReturnType<typeof vi.fn>).mockReturnValue({
+      data: {
+        has_voiceover: true,
+        has_props: true,
+        audio_path: '/path/to/audio.mp3',
+        audio_size: 1024,
+        audio_modified: '2024-01-15T10:00:00Z',
+      },
+      isLoading: false,
+      refetch: vi.fn(),
+    });
 
-    const previewButton = screen.getByRole('button', { name: /preview/i });
-    expect(previewButton).toBeDisabled();
+    render(<VoiceoverPanel scriptId="test-script" />, { wrapper: createWrapper() });
+    expect(screen.getByRole('button', { name: /regenerate voiceover/i })).toBeInTheDocument();
   });
 
-  it('enables preview button when text is entered', () => {
-    render(<VoiceoverPanel />, { wrapper: createWrapper() });
+  it('calls generate mutation on button click', () => {
+    render(<VoiceoverPanel scriptId="test-script" />, { wrapper: createWrapper() });
 
-    const textarea = screen.getByPlaceholderText(/enter text to preview/i);
-    fireEvent.change(textarea, { target: { value: 'Some preview text' } });
+    const generateButton = screen.getByRole('button', { name: /generate voiceover/i });
+    fireEvent.click(generateButton);
 
-    const previewButton = screen.getByRole('button', { name: /preview/i });
-    expect(previewButton).not.toBeDisabled();
+    expect(mockMutate).toHaveBeenCalledWith(
+      { scriptId: 'test-script', mode: 'mock', force: false },
+      expect.any(Object)
+    );
   });
 
-  it('shows word count', () => {
-    render(<VoiceoverPanel text="one two three four five" />, { wrapper: createWrapper() });
+  it('shows loading state during generation', () => {
+    (useGenerateVoiceover as ReturnType<typeof vi.fn>).mockReturnValue({
+      ...defaultMutationReturn,
+      isPending: true,
+    });
 
-    // Should show word count
-    expect(screen.getByText(/5 words/i)).toBeInTheDocument();
+    render(<VoiceoverPanel scriptId="test-script" />, { wrapper: createWrapper() });
+    expect(screen.getByText('Generating...')).toBeInTheDocument();
+    expect(screen.getByRole('button')).toBeDisabled();
   });
 
-  it('shows estimated duration', () => {
-    render(<VoiceoverPanel text="word" />, { wrapper: createWrapper() });
+  it('shows error message on failure', () => {
+    (useGenerateVoiceover as ReturnType<typeof vi.fn>).mockReturnValue({
+      ...defaultMutationReturn,
+      isError: true,
+      error: new Error('Generation failed'),
+    });
 
-    // Should show estimated duration (format: ~X.Xs)
-    const durationElement = screen.getByText(/~\d+\.\d+s/);
-    expect(durationElement).toBeInTheDocument();
+    render(<VoiceoverPanel scriptId="test-script" />, { wrapper: createWrapper() });
+    expect(screen.getByText(/failed to generate voiceover/i)).toBeInTheDocument();
   });
 
-  it('renders reset button', () => {
-    render(<VoiceoverPanel />, { wrapper: createWrapper() });
+  it('shows success message after generation', () => {
+    (useGenerateVoiceover as ReturnType<typeof vi.fn>).mockReturnValue({
+      ...defaultMutationReturn,
+      isSuccess: true,
+      data: { status: 'generating', job_id: 'job-123', audio_path: '/path/to/audio.mp3' },
+    });
 
-    // Reset button should be present (has RefreshCw icon)
-    const resetButton = screen.getByTitle(/reset to original/i);
-    expect(resetButton).toBeInTheDocument();
-  });
-
-  it('resets text when reset button clicked', () => {
-    render(<VoiceoverPanel text="Original text" />, { wrapper: createWrapper() });
-
-    const textarea = screen.getByPlaceholderText(/enter text to preview/i);
-
-    // Change the text
-    fireEvent.change(textarea, { target: { value: 'Modified text' } });
-    expect(textarea).toHaveValue('Modified text');
-
-    // Click reset
-    const resetButton = screen.getByTitle(/reset to original/i);
-    fireEvent.click(resetButton);
-
-    // Should reset to original
-    expect(textarea).toHaveValue('Original text');
-  });
-
-  it('shows voice language and gender info', () => {
-    render(<VoiceoverPanel />, { wrapper: createWrapper() });
-
-    // Should show language info for voices
-    expect(screen.getAllByText(/en-US|en-GB/i).length).toBeGreaterThan(0);
+    render(<VoiceoverPanel scriptId="test-script" />, { wrapper: createWrapper() });
+    expect(screen.getByText(/voiceover generation started/i)).toBeInTheDocument();
   });
 
   it('applies className prop correctly', () => {
     const { container } = render(
-      <VoiceoverPanel className="custom-class" />,
+      <VoiceoverPanel scriptId="test-script" className="custom-class" />,
       { wrapper: createWrapper() }
     );
 
     expect(container.firstChild).toHaveClass('custom-class');
   });
 
-  it('adjusts speed slider', () => {
-    render(<VoiceoverPanel />, { wrapper: createWrapper() });
+  it('calls onGenerated callback after successful generation', () => {
+    const onGenerated = vi.fn();
+    const refetchMock = vi.fn();
 
-    const speedSliders = screen.getAllByRole('slider');
-    const speedSlider = speedSliders[0];
+    (useVoiceoverStatus as ReturnType<typeof vi.fn>).mockReturnValue({
+      data: null,
+      isLoading: false,
+      refetch: refetchMock,
+    });
 
-    fireEvent.change(speedSlider, { target: { value: '1.5' } });
-    expect(speedSlider).toHaveValue('1.5');
-  });
+    // Capture the onSuccess callback
+    let capturedOnSuccess: () => void = () => {};
+    (useGenerateVoiceover as ReturnType<typeof vi.fn>).mockReturnValue({
+      ...defaultMutationReturn,
+      mutate: (_params: unknown, options?: { onSuccess?: () => void }) => {
+        capturedOnSuccess = options?.onSuccess || (() => {});
+      },
+    });
 
-  it('adjusts pitch slider', () => {
-    render(<VoiceoverPanel />, { wrapper: createWrapper() });
+    render(<VoiceoverPanel scriptId="test-script" onGenerated={onGenerated} />, {
+      wrapper: createWrapper(),
+    });
 
-    const pitchSliders = screen.getAllByRole('slider');
-    const pitchSlider = pitchSliders[1];
+    // Trigger the generation
+    const generateButton = screen.getByRole('button', { name: /generate voiceover/i });
+    fireEvent.click(generateButton);
 
-    fireEvent.change(pitchSlider, { target: { value: '1.2' } });
-    expect(pitchSlider).toHaveValue('1.2');
+    // Simulate successful generation
+    capturedOnSuccess();
+
+    expect(refetchMock).toHaveBeenCalled();
+    expect(onGenerated).toHaveBeenCalled();
   });
 });

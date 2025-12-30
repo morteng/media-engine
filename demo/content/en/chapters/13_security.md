@@ -16,6 +16,8 @@ tags:
 
 Media Engine includes comprehensive security scanning to detect sensitive content before publishing.
 
+See [Quality Checks](04_quality_checks.md) for the broader quality system.
+
 ## Overview
 
 The security scanner detects:
@@ -94,10 +96,10 @@ The scanner recognizes common secret patterns.
 
 ## Sensitivity Levels
 
-Findings are categorized by severity:
+The scanner categorizes findings by severity:
 
-- **Critical**: Must be removed before publishing (API keys, SSNs)
-- **High**: Should be reviewed (emails, phone numbers)
+- **Critical**: Remove before publishing (API keys, SSNs)
+- **High**: Review carefully (emails, phone numbers)
 - **Medium**: May be intentional (internal URLs)
 - **Low**: Informational (localhost references)
 

@@ -168,6 +168,7 @@ class MediaEngineMCPServer:
             suggestions,
             translation,
             video_producer,
+            video_project,
             video_render,
             webhooks,
         )
@@ -206,6 +207,7 @@ class MediaEngineMCPServer:
 
         # Video production tools (autonomous video producer agent)
         video_producer.register_video_producer_tools(self.mcp, self)
+        video_project.register_video_project_tools(self.mcp, self)
         motion_design.register_motion_design_tools(self.mcp, self)
         video_render.register_video_render_tools(self.mcp, self)
 

@@ -10,12 +10,8 @@ import {
   useVideoScripts,
   useVideoScript,
   useRenderQueue,
-  useVideoAssets,
-  useMotionComponents,
   useScriptMutations,
-  useRenderMutation,
   useVideoOverviewData,
-  useVideoScriptsData,
   videoQueryKeys,
 } from './useVideoApi';
 
@@ -72,8 +68,9 @@ describe('useVideoScripts', () => {
   it('fetches video scripts', async () => {
     const mockScripts = {
       scripts: [
-        { id: 'script-1', name: 'Test Script', scenes: 3 },
+        { id: 'script-1', name: 'Test Script', scenes: 3, path: '/scripts/test.yaml', language: 'en' },
       ],
+      count: 1,
     };
     vi.mocked(videoApi.getVideoScripts).mockResolvedValue(mockScripts);
 
@@ -139,7 +136,7 @@ describe('useRenderQueue', () => {
   });
 
   it('fetches render queue', async () => {
-    const mockQueue = { jobs: [], active: 0 };
+    const mockQueue = { jobs: [], active: 0, completed: 0, failed: 0 };
     vi.mocked(videoApi.getRenderQueue).mockResolvedValue(mockQueue);
 
     const { result } = renderHook(() => useRenderQueue(), {
@@ -154,7 +151,7 @@ describe('useRenderQueue', () => {
   });
 
   it('enables polling when option set', async () => {
-    const mockQueue = { jobs: [], active: 0 };
+    const mockQueue = { jobs: [], active: 0, completed: 0, failed: 0 };
     vi.mocked(videoApi.getRenderQueue).mockResolvedValue(mockQueue);
 
     renderHook(() => useRenderQueue({ polling: true }), {
@@ -169,8 +166,8 @@ describe('useRenderQueue', () => {
 describe('useVideoOverviewData', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(videoApi.getVideoScripts).mockResolvedValue({ scripts: [] });
-    vi.mocked(videoApi.getRenderQueue).mockResolvedValue({ jobs: [], active: 0 });
+    vi.mocked(videoApi.getVideoScripts).mockResolvedValue({ scripts: [], count: 0 });
+    vi.mocked(videoApi.getRenderQueue).mockResolvedValue({ jobs: [], active: 0, completed: 0, failed: 0 });
     vi.mocked(videoApi.getVideoAssets).mockResolvedValue({
       demos: [],
       audio: [],

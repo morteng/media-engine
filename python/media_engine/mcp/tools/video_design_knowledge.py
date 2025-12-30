@@ -53,6 +53,18 @@ MOTION_DESIGN_PRINCIPLES = {
         "hierarchy": "Primary actions use primary colors",
         "animation": "Color transitions should be subtle",
     },
+    "camera": {
+        "establish_context": "Start with wide shot to show full interface",
+        "progressive_reveal": "Zoom in to details after establishing context",
+        "smooth_motion": "Use Catmull-Rom splines for natural paths",
+        "hold_for_readability": "Hold at each focus point for voiceover",
+        "zoom_limits": "Stay within 1x-3x for quality (2x capture scale)",
+        "padding": "Include 40px+ padding around focus elements",
+        "easing": "Use ease-in-out for professional feel",
+        "transition_timing": "1-2 seconds for transitions, 2-4 seconds holds",
+        "avoid_jarring": "No sudden direction changes or quick zooms",
+        "match_narration": "Camera moves should sync with voiceover beats",
+    },
 }
 
 SCENE_TYPE_RECOMMENDATIONS = {
@@ -85,6 +97,17 @@ SCENE_TYPE_RECOMMENDATIONS = {
         "guidelines": "Let demo breathe, minimal overlays, focus on action",
         "elements": ["Demo video", "Subtle highlights", "Minimal text"],
         "pacing": "Follow the action, don't rush",
+        "camera": {
+            "recommended_presets": ["guided_tour", "follow_flow"],
+            "capture_scale": 2.0,
+            "max_zoom": 2.5,
+            "hold_time": "2-4 seconds per focus point",
+            "tips": [
+                "Start wide to establish context",
+                "Zoom to elements as narrator mentions them",
+                "Use padding to keep context visible",
+            ],
+        },
     },
     "split": {
         "duration": "10-20 seconds",
@@ -233,6 +256,94 @@ BACKGROUND_CATALOG = {
         "mood": "calm",
         "use_for": ["outros", "testimonials", "soft content"],
         "contrast": "medium",
+    },
+}
+
+CAMERA_MOVEMENT_CATALOG = {
+    "pan": {
+        "description": "Horizontal camera movement across the interface",
+        "energy": "low",
+        "use_for": ["navigating between sections", "revealing horizontal layouts"],
+        "avoid_for": ["quick transitions", "small UI elements"],
+        "easing": ["easeInOutCubic", "easeOutCubic"],
+    },
+    "tilt": {
+        "description": "Vertical camera movement up or down",
+        "energy": "low",
+        "use_for": ["scrolling content", "revealing lists"],
+        "avoid_for": ["horizontal interfaces"],
+        "easing": ["easeInOutCubic"],
+    },
+    "zoom_in": {
+        "description": "Camera moves closer to focus on detail",
+        "energy": "medium",
+        "use_for": ["highlighting specific elements", "drawing attention"],
+        "avoid_for": ["overview shots", "context establishment"],
+        "easing": ["easeOutCubic", "easeOutQuart"],
+        "max_zoom": 3.0,
+    },
+    "zoom_out": {
+        "description": "Camera pulls back to reveal context",
+        "energy": "low",
+        "use_for": ["revealing full interface", "establishing shots", "outros"],
+        "avoid_for": ["detail focus"],
+        "easing": ["easeInCubic", "easeInOutCubic"],
+    },
+    "compound": {
+        "description": "Combined pan/tilt with zoom for complex movements",
+        "energy": "medium",
+        "use_for": ["guided tours", "feature walkthroughs"],
+        "avoid_for": ["simple transitions"],
+        "easing": ["easeInOutCubic"],
+    },
+    "hold": {
+        "description": "Camera stays still on a focus point",
+        "energy": "low",
+        "use_for": ["letting viewer read/understand", "syncing with voiceover"],
+        "avoid_for": ["quick sequences"],
+        "duration": "2-4 seconds minimum",
+    },
+    "drift": {
+        "description": "Very slow, subtle camera movement",
+        "energy": "very low",
+        "use_for": ["title cards", "static content", "atmospheric feel"],
+        "avoid_for": ["action sequences", "demos with specific focus"],
+        "easing": ["linear", "easeInOutCubic"],
+        "speed": "0.1-0.3 units per second",
+    },
+}
+
+CAMERA_EASING_CATALOG = {
+    "linear": {
+        "description": "Constant speed, no acceleration",
+        "use_for": ["mechanical feel", "subtle drifts"],
+        "avoid_for": ["most camera moves"],
+    },
+    "easeInOutCubic": {
+        "description": "Smooth acceleration and deceleration",
+        "use_for": ["most camera movements", "professional feel"],
+        "recommended": True,
+    },
+    "easeOutCubic": {
+        "description": "Quick start, gentle stop",
+        "use_for": ["zoom ins", "arrivals at focus points"],
+    },
+    "easeOutQuart": {
+        "description": "Very quick start, smooth stop",
+        "use_for": ["dramatic zoom ins", "emphatic arrivals"],
+    },
+    "easeInCubic": {
+        "description": "Gentle start, quick finish",
+        "use_for": ["zoom outs", "departures"],
+    },
+    "easeOutBack": {
+        "description": "Overshoot then settle",
+        "use_for": ["playful/energetic content", "emphasis"],
+        "avoid_for": ["professional/conservative brands"],
+    },
+    "easeInOutExpo": {
+        "description": "Very dramatic acceleration curve",
+        "use_for": ["dramatic reveals", "high-energy content"],
     },
 }
 

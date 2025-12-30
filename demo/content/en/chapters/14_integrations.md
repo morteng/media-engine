@@ -17,6 +17,8 @@ tags:
 
 Media Engine integrates with AI agents, web interfaces, and CI/CD pipelines.
 
+See [Introduction](01_introduction.md) for an overview of the system.
+
 ## MCP Server
 
 The Model Context Protocol (MCP) server exposes Media Engine functionality to AI agents like Claude.
@@ -239,7 +241,7 @@ Track all operations for compliance and debugging.
 
 ### Automatic Logging
 
-Operations are logged to `.media-engine/audit.log`:
+The system logs operations to `.media-engine/audit.log`:
 
 ```
 2025-12-16T10:30:00 | document_updated | intro.md | user@example.com

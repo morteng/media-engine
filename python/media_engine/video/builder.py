@@ -13,6 +13,7 @@ Usage:
 """
 
 import json
+import os
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -30,6 +31,8 @@ from .voiceover import (
     clean_text,
     generate_voiceover,
 )
+from .camera_capture import CameraConfig, CaptureResult
+from .camera_path import CameraPathGenerator
 
 if TYPE_CHECKING:
     from ..core.project import Project
@@ -95,6 +98,8 @@ class VideoScene:
     duration_frames: int = 0
     # Scene-based demo capture
     demo_clip_path: Optional[Path] = None  # Path to captured clip for this scene
+    # Camera animation data
+    camera_data: Optional[dict] = None  # Camera animation data for Remotion
 
 
 @dataclass
@@ -211,6 +216,7 @@ class VideoBuilder:
         render: bool = False,
         remotion_project: Optional[Path] = None,
         capture_demos: bool = True,
+        mock_voiceover: bool = False,
     ) -> VideoBuildResult:
         """
         Build video from script.
@@ -221,6 +227,7 @@ class VideoBuilder:
             render: Whether to render video with Remotion
             remotion_project: Path to Remotion project for rendering
             capture_demos: Whether to capture per-scene demo clips
+            mock_voiceover: Use silent mock audio instead of TTS (for testing)
 
         Returns:
             VideoBuildResult with paths to generated files
@@ -247,7 +254,7 @@ class VideoBuilder:
 
             # Generate voiceover (always full quality - audio doesn't need preview)
             audio_path = output_dir / f"{script.name}.mp3"
-            voiceover = await self._generate_voiceover(script, audio_path)
+            voiceover = await self._generate_voiceover(script, audio_path, mock=mock_voiceover)
             result.audio_path = audio_path
             result.duration = voiceover.total_duration
 
@@ -258,6 +265,11 @@ class VideoBuilder:
             demo_clips = {}
             if capture_demos and self._has_scene_demos(script):
                 demo_clips = await self._capture_scene_demos(script, output_dir)
+
+            # Process camera animation scenes (after timing is set)
+            camera_data = {}
+            if self._has_camera_scenes(script):
+                camera_data = await self._process_camera_scenes(script, output_dir)
 
             # Generate captions (reuse for all quality levels)
             captions_path = output_dir / f"{script.name}.vtt"
@@ -292,8 +304,11 @@ class VideoBuilder:
         self,
         script: VideoScript,
         output_path: Path,
+        mock: bool = False,
     ) -> VoiceoverResult:
         """Generate voiceover audio from script."""
+        from .voiceover import generate_voiceover_mock
+
         # Collect text segments
         texts = []
         for scene in script.scenes:
@@ -302,6 +317,13 @@ class VideoBuilder:
 
         if not texts:
             raise ValueError("No voiceover text in script")
+
+        # Use mock voiceover if requested (silent audio with estimated timing)
+        if mock:
+            return await generate_voiceover_mock(
+                texts=texts,
+                output_path=output_path,
+            )
 
         # Get voice configuration
         voice_id = None
@@ -469,6 +491,115 @@ class VideoBuilder:
 
         return clips
 
+    def _has_camera_scenes(self, script: VideoScript) -> bool:
+        """Check if any scene has camera animation config."""
+        for scene in script.scenes:
+            camera_config = scene.visual.get("camera", {})
+            if camera_config.get("mode") == "animated":
+                return True
+        return False
+
+    async def _process_camera_scenes(
+        self,
+        script: VideoScript,
+        output_dir: Path,
+    ) -> dict[str, dict]:
+        """
+        Process scenes with camera animation.
+
+        For each scene with camera config:
+        1. Capture high-res screenshot with element bounds
+        2. Generate resolved camera keyframes
+        3. Store camera data for props export
+
+        Returns:
+            Dict mapping scene_id to camera data
+        """
+        from .camera_capture import CameraCaptureEngine, capture_demo_for_camera
+        from .camera_path import CameraPathGenerator
+        from .camera_presets import resolve_preset
+
+        camera_data = {}
+
+        for scene in script.scenes:
+            camera_config_dict = scene.visual.get("camera", {})
+            if camera_config_dict.get("mode") != "animated":
+                continue
+
+            # Get demo reference
+            demo_ref = scene.visual.get("demo", {})
+            if not demo_ref or not isinstance(demo_ref, dict):
+                continue
+
+            demo_source = demo_ref.get("source")
+            demo_state = demo_ref.get("state")
+            if not demo_source or not demo_state:
+                continue
+
+            # Parse camera config
+            camera_config = CameraConfig.from_dict(camera_config_dict)
+
+            # Handle preset-based focus sequence
+            if camera_config.preset and not camera_config.focus_sequence:
+                selectors = camera_config.get_all_selectors()
+                camera_config.focus_sequence = resolve_preset(
+                    camera_config.preset,
+                    selectors,
+                )
+
+            # Find demo definition file
+            demo_path = None
+            if self.project:
+                # Look in demo folder
+                demo_path = self.project.content_dir / "demos" / f"{demo_source}.yaml"
+                if not demo_path.exists():
+                    demo_path = self.project.root / "content" / "en" / "demos" / f"{demo_source}.yaml"
+
+            if not demo_path or not demo_path.exists():
+                import logging
+                logging.warning(f"Demo definition not found for {demo_source}")
+                continue
+
+            # Capture high-res screenshot with element bounds
+            try:
+                capture_output = output_dir / "camera_captures"
+                capture_result = await capture_demo_for_camera(
+                    demo_path=demo_path,
+                    state_id=demo_state,
+                    output_dir=capture_output,
+                    camera_config=camera_config,
+                    headless=True,
+                )
+
+                # Generate camera path data
+                path_generator = CameraPathGenerator(
+                    viewport_width=self.config.width,
+                    viewport_height=self.config.height,
+                    capture_scale=camera_config.capture_scale,
+                )
+
+                scene_camera_data = path_generator.generate_camera_data(
+                    camera_config=camera_config,
+                    element_bounds=capture_result.element_bounds,
+                    total_frames=scene.duration_frames,
+                    fps=self.config.fps,
+                )
+
+                # Add image path
+                rel_path = capture_result.image_path.relative_to(output_dir)
+                scene_camera_data["image_path"] = str(rel_path)
+
+                # Store on scene
+                scene.camera_data = scene_camera_data
+                camera_data[scene.id] = scene_camera_data
+
+            except Exception as e:
+                import logging
+                logging.error(f"Camera capture failed for {scene.id}: {e}")
+                continue
+
+        return camera_data
+
     def _export_remotion_props(
         self,
         script: VideoScript,
@@ -520,6 +651,10 @@ class VideoBuilder:
                     "state": scene.visual.get("demo", {}).get("state", ""),
                 }
 
+            # Add camera animation data if present
+            if scene.camera_data:
+                scene_props["cameraData"] = scene.camera_data
+
             props["scenes"].append(scene_props)
 
         output_path.write_text(json.dumps(props, indent=2))
@@ -532,13 +667,9 @@ class VideoBuilder:
         output_path: Path,
     ):
         """Render video using Remotion CLI with quality settings."""
-        # Check if Remotion is available
-        result = subprocess.run(
-            ["npx", "remotion", "--version"],
-            capture_output=True,
-            cwd=remotion_project,
-        )
-        if result.returncode != 0:
+        # Check if Remotion is available (check node_modules since --version exits with 1)
+        remotion_cli_path = remotion_project / "node_modules" / "@remotion" / "cli"
+        if not remotion_cli_path.exists():
             raise RuntimeError("Remotion not available. Install with: npm install @remotion/cli")
 
         # Render video with quality settings
@@ -554,6 +685,8 @@ class VideoBuilder:
             str(audio_path),
             "--codec",
             self.config.codec,
+            "--audio-codec",
+            "aac",  # Use built-in AAC (system ffmpeg lacks libfdk_aac)
             "--crf",
             str(self.config.crf),
             # Apply quality settings
@@ -563,13 +696,22 @@ class VideoBuilder:
             str(self.config.height),
             "--fps",
             str(self.config.fps),
+            # Suppress per-frame progress output
+            "--log",
+            "error",
         ]
+
+        # Use system ffmpeg to avoid macOS compatibility issues
+        env = os.environ.copy()
+        env["REMOTION_FFMPEG_EXECUTABLE"] = "/usr/local/bin/ffmpeg"
+        env["REMOTION_FFPROBE_EXECUTABLE"] = "/usr/local/bin/ffprobe"
 
         result = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
             cwd=remotion_project,
+            env=env,
         )
 
         if result.returncode != 0:

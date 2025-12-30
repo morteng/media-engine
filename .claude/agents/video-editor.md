@@ -74,6 +74,8 @@ get_video_props          - Get props.json for a script
 get_video_assets         - List all video assets by type
 render_video             - Queue a video for rendering
 get_render_status        - Check render queue status
+get_camera_presets       - List available camera animation presets
+get_effect_presets       - List available visual effects presets
 ```
 
 ### Script Management
@@ -140,13 +142,27 @@ scenes:
       background: logo_animation
 
   - id: feature_1
-    type: content
+    type: demo
     title: "Core Feature"
-    voiceover: "The first key feature is..."
-    duration: 10
+    voiceover: "The sidebar provides quick navigation to all sections..."
+    demo: dashboard
+    state: main_view
     visual:
-      demo: true
-      highlight: feature_panel
+      camera:
+        mode: animated
+        capture_scale: 2.0
+        background: "#1a1a2e"
+        shadow: true
+        focus_sequence:
+          - target: "fullpage"
+            zoom: 1.0
+            duration: 0.5
+          - target: "#sidebar"
+            zoom: 2.5
+            padding: 40
+            duration: 1.2
+            easing: "easeInOutCubic"
+            hold: 2.0
 
   - id: outro
     type: outro
@@ -265,6 +281,225 @@ mcp: get_video_assets type="captions" # VTT caption files
 
 ---
 
+## Camera Animation System
+
+The camera system enables professional pan/zoom movements over high-resolution demo captures with cinematic visual effects.
+
+### Camera Workflow
+
+```bash
+# Step 1: Create script with camera config
+# Add camera settings to demo scene visual block
+
+# Step 2: Get available presets
+mcp: get_camera_presets
+mcp: get_effect_presets
+
+# Step 3: Build video (auto-captures at high-res)
+mcp: render_video script_id="walkthrough" quality="production"
+# Camera scenes automatically:
+# - Capture at 2x scale (4K for 1080p)
+# - Extract element bounds for selectors
+# - Generate smooth keyframe paths
+# - Apply visual effects
+```
+
+### Camera Configuration
+
+```yaml
+visual:
+  camera:
+    mode: animated           # static | animated
+    capture_scale: 2.0       # 2x = 4K capture for zoom headroom
+    background: "#1a1a2e"    # Canvas background color
+    shadow: true             # Drop shadow on floating page
+    focus_sequence:
+      - target: "fullpage"   # Start with full page
+        zoom: 1.0
+        duration: 0.5
+      - target: "#sidebar"   # CSS selector
+        zoom: 2.5
+        padding: 40          # Padding around element
+        duration: 1.2
+        easing: "easeInOutCubic"
+        hold: 2.0            # Hold at this position
+    preset: "guided_tour"    # Or use a camera preset
+    effects_preset: "cinematic"  # Or use an effects preset
+    effects:                 # Or configure effects manually
+      vignette:
+        enabled: true
+        intensity: 0.4
+```
+
+### Camera Presets
+
+| Preset | Description | Use Case |
+|--------|-------------|----------|
+| `guided_tour` | Sequential walkthrough | Feature demos |
+| `quick_overview` | Fast overview, subtle zoom | Intro sections |
+| `dramatic_reveal` | Start zoomed, reveal page | Opening scenes |
+| `follow_flow` | Natural reading flow | Content navigation |
+| `focus_main` | Focus on main content | Hero sections |
+| `cinematic` | Wide shots, slow movements | Atmospheric intros |
+| `scan` | Systematic coverage | Full page review |
+
+### Easing Functions
+
+Standard: `linear`, `easeIn`, `easeOut`, `easeInOut`
+Cubic: `easeInCubic`, `easeOutCubic`, `easeInOutCubic`
+Quart: `easeInQuart`, `easeOutQuart`, `easeInOutQuart`
+Expo: `easeInExpo`, `easeOutExpo`, `easeInOutExpo`
+Sine: `easeInSine`, `easeOutSine`, `easeInOutSine`
+
+---
+
+## Visual Effects System
+
+Professional cinematic effects for enhanced video quality.
+
+### Effects Presets
+
+| Preset | Effects Enabled | Best For |
+|--------|-----------------|----------|
+| `cinematic` | Vignette + Dynamic Tilt | Feature showcases, hero sections |
+| `documentary` | Light Shake + Subtle Vignette | Authentic feel, walkthroughs |
+| `professional` | Light Vignette only | Clean, corporate content |
+| `dramatic` | Tilt + Strong Vignette + DoF | Impactful reveals, intros |
+| `tech_demo` | Vignette + Light DoF | Software demonstrations |
+| `minimal` | No effects | Raw footage, tutorials |
+| `immersive` | All effects (subtle) | Immersive experiences |
+
+### Effect Types
+
+#### 3D Perspective Tilt
+Adds subtle 3D depth perception through CSS perspective transforms.
+
+```yaml
+effects:
+  perspective_tilt:
+    enabled: true
+    tilt_x: 2.0              # Static X rotation (degrees)
+    tilt_y: 0.0              # Static Y rotation (degrees)
+    dynamic: true            # React to camera movement
+    dynamic_intensity: 0.3   # How much movement affects tilt
+    perspective: 1200        # CSS perspective distance (px)
+```
+
+#### Camera Shake
+Organic handheld camera feel using Perlin noise.
+
+```yaml
+effects:
+  camera_shake:
+    enabled: true
+    intensity: 0.3           # Overall shake amount (0-1)
+    frequency: 2.0           # Shake speed (Hz)
+    max_offset: 5.0          # Maximum pixel offset
+    rotation_intensity: 0.0  # Rotation shake (degrees)
+    decay: 0.0               # Fade out over time
+    seed: 42                 # Reproducible randomness
+```
+
+#### Vignette Overlay
+Cinematic darkened edges focusing viewer attention.
+
+```yaml
+effects:
+  vignette:
+    enabled: true
+    intensity: 0.4           # Darkness strength (0-1)
+    spread: 0.3              # How far from center
+    color: "#000000"         # Vignette color (usually black)
+    softness: 0.5            # Edge softness
+    dynamic: false           # Intensify when zoomed
+    dynamic_scale: 0.5       # Dynamic zoom factor
+```
+
+#### Depth of Field
+Simulated focus blur for depth perception.
+
+```yaml
+effects:
+  depth_of_field:
+    enabled: true
+    blur_amount: 8.0         # Blur radius (px)
+    falloff: 0.5             # Blur gradient falloff
+    blur_background: true    # Blur areas outside focus
+    track_focus: true        # Follow camera focus target
+```
+
+#### Parallax Layers
+Multi-layer movement for depth effect.
+
+```yaml
+effects:
+  parallax:
+    enabled: true
+    intensity: 0.3           # Overall parallax strength
+    auto_layers: true        # Auto-generate layers
+    auto_layer_count: 3      # Number of auto layers
+    layers:                  # Or define manually
+      - id: "background"
+        depth: 1.0           # 0=foreground, 1=background
+        opacity: 0.5
+        blur: 4
+```
+
+#### Motion Blur
+Velocity-based blur during fast camera movements.
+
+```yaml
+effects:
+  motion_blur:
+    enabled: true
+    intensity: 0.5           # Blur strength
+    threshold: 10.0          # Min velocity to trigger
+    samples: 8               # Blur quality
+    directional: true        # Blur in movement direction
+```
+
+### Full Effects Example
+
+```yaml
+visual:
+  camera:
+    mode: animated
+    capture_scale: 2.0
+    background: "#1a1a2e"
+    focus_sequence:
+      - target: "fullpage"
+        zoom: 1.0
+        duration: 0.5
+      - target: "#main-feature"
+        zoom: 2.0
+        duration: 1.5
+        hold: 3.0
+    effects_preset: "cinematic"    # Use preset as base
+    effects:                        # Override specific settings
+      vignette:
+        enabled: true
+        intensity: 0.5              # Stronger vignette
+      camera_shake:
+        enabled: true
+        intensity: 0.15             # Subtle shake
+```
+
+### Combining Presets with Overrides
+
+You can use a preset and override specific settings:
+
+```yaml
+effects_preset: "documentary"  # Base: shake + vignette
+effects:
+  camera_shake:
+    intensity: 0.4             # More shake than default
+  depth_of_field:
+    enabled: true              # Add DoF (not in documentary)
+    blur_amount: 6.0
+```
+
+---
+
 ## Scene Types and Colors
 
 | Type | Description | Color |
@@ -289,22 +524,36 @@ mcp: get_video_assets type="captions" # VTT caption files
    - "Add a scene about user authentication"
    - "Update the voiceover text for the intro"
 
-2. **Props Management**:
+2. **Camera Animation**:
+   - "Add animated camera to focus on the sidebar"
+   - "Use the guided_tour preset for this demo"
+   - "Show available camera presets"
+   - "Configure zoom sequence for feature highlight"
+
+3. **Visual Effects**:
+   - "Add cinematic vignette to this video"
+   - "Apply the dramatic effects preset"
+   - "Enable subtle camera shake for documentary feel"
+   - "Add depth of field to focus on the main content"
+   - "Show available effects presets"
+   - "Configure 3D perspective tilt for depth"
+
+4. **Props Management**:
    - "Show me the props for the walkthrough video"
    - "What are the scene timings for this script?"
    - "Validate the frame ranges are correct"
 
-3. **Render Operations**:
+5. **Render Operations**:
    - "Render the feature demo in production quality"
    - "Check the render queue status"
    - "What videos are ready for release?"
 
-4. **Asset Management**:
+6. **Asset Management**:
    - "List all generated voiceovers"
    - "Find the demo recording for the settings page"
    - "Check if captions exist for this video"
 
-5. **Timeline Operations**:
+7. **Timeline Operations**:
    - "Show the scene timeline for walkthrough"
    - "Which scene is at frame 500?"
    - "Calculate total video duration"
@@ -334,8 +583,31 @@ cd remotion && npm run dev
 
 ### Available Compositions
 ```
-Main           - Standard video with scenes
-SplitScreenDemo - Side-by-side demo layout
+Main             - Standard video with scenes
+SplitScreenDemo  - Side-by-side demo layout
+```
+
+### Camera Components
+```
+CameraCanvas         - Core camera transform component with effects
+AnimatedDemoScene    - Scene with camera animation
+StaticDemoScene      - Ken Burns effect for static images
+FocusHighlight       - Highlight target elements (glow/outline/dim)
+CaptionOverlay       - Voiceover text captions
+```
+
+### Effects Components
+```
+VignetteOverlay      - Cinematic vignette overlay
+DepthOfFieldOverlay  - Simulated depth of field blur
+CameraEffectsWrapper - Combined effects container
+```
+
+### Camera & Effects Libraries
+```
+lib/camera.ts        - Catmull-Rom interpolation, camera state
+lib/motion.ts        - Keyframe system, easing functions
+lib/effects.ts       - Visual effects (shake, tilt, vignette, DoF, parallax, motion blur)
 ```
 
 ---

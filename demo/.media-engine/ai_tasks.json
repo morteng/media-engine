@@ -104,5 +104,77 @@
       "content/en/chapters/01_introduction.md"
     ],
     "error": null
+  },
+  {
+    "id": "799be14a",
+    "operation": "analyze",
+    "instructions": "Review and analyze the following selection from \"Introduction to Media Engine\":\n\n\"ate a project with media-engine init\"\n\nUser comment: Expand on this a bit",
+    "selections": [
+      {
+        "path": "/Users/Morten/media-engine/demo/content/en/chapters/01_introduction.md",
+        "title": "Introduction to Media Engine",
+        "content": "ate a project with media-engine init",
+        "content_type": "document",
+        "target_id": "offset-1136-1172",
+        "notes": [
+          {
+            "text": "Expand on this a bit",
+            "priority": "normal"
+          }
+        ],
+        "metadata": {
+          "startOffset": 1136,
+          "endOffset": 1172,
+          "selectedText": "ate a project with media-engine init"
+        }
+      }
+    ],
+    "status": "pending",
+    "priority": "normal",
+    "target_language": null,
+    "created_at": "2025-12-29T11:28:52.316161",
+    "claimed_at": null,
+    "completed_at": null,
+    "claimed_by": null,
+    "summary": null,
+    "result": null,
+    "files_modified": [],
+    "error": null
+  },
+  {
+    "id": "78c8b81f",
+    "operation": "analyze",
+    "instructions": "Review and analyze the following selection from \"Quality Checks\":\n\n\"Media\"\n\nUser comment: Make more enticing",
+    "selections": [
+      {
+        "path": "/Users/Morten/media-engine/demo/content/en/chapters/04_quality_checks.md",
+        "title": "Quality Checks",
+        "content": "Media",
+        "content_type": "document",
+        "target_id": "offset-15-20",
+        "notes": [
+          {
+            "text": "Make more enticing",
+            "priority": "normal"
+          }
+        ],
+        "metadata": {
+          "startOffset": 15,
+          "endOffset": 20,
+          "selectedText": "Media"
+        }
+      }
+    ],
+    "status": "pending",
+    "priority": "normal",
+    "target_language": null,
+    "created_at": "2025-12-29T11:29:04.360564",
+    "claimed_at": null,
+    "completed_at": null,
+    "claimed_by": null,
+    "summary": null,
+    "result": null,
+    "files_modified": [],
+    "error": null
   }
 ]

@@ -11,3 +11,5 @@ export { VideoRender } from './VideoRender';
 export { VideoAssets } from './VideoAssets';
 export { VideoTools } from './VideoTools';
 export { VideoPreview } from './VideoPreview';
+export { VideoProjects } from './VideoProjects';
+export { VideoProjectDetail } from './VideoProjectDetail';

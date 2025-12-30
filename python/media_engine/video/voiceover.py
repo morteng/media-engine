@@ -495,3 +495,79 @@ async def generate_voiceover_macos(
 
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+async def generate_voiceover_mock(
+    texts: List[tuple[str, str]],
+    output_path: Path,
+) -> VoiceoverResult:
+    """
+    Generate mock voiceover with silent audio and estimated timing.
+
+    Useful for testing renders without consuming TTS credits.
+    Estimates ~150 words per minute speaking rate.
+    """
+    import subprocess
+    import tempfile
+
+    temp_dir = Path(tempfile.mkdtemp())
+    segments = []
+
+    try:
+        for i, (seg_id, text) in enumerate(texts):
+            is_last = i == len(texts) - 1
+            clean = clean_text(text)
+
+            if not clean:
+                continue
+
+            # Estimate duration: ~150 words/minute = 2.5 words/second
+            word_count = len(clean.split())
+            duration = max(1.0, word_count / 2.5)
+
+            # Calculate pause
+            pause = calculate_pause(clean, is_last)
+
+            segment_path = temp_dir / f"{i:03d}.mp3"
+
+            # Generate silent audio segment using ffmpeg
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-y",
+                    "-f",
+                    "lavfi",
+                    "-i",
+                    f"anullsrc=r=44100:cl=mono",
+                    "-t",
+                    str(duration),
+                    "-q:a",
+                    "9",
+                    str(segment_path),
+                ],
+                check=True,
+                capture_output=True,
+            )
+
+            segments.append(
+                AudioSegment(
+                    id=seg_id,
+                    text=clean,
+                    duration=duration,
+                    audio_path=segment_path,
+                    pause_after=pause,
+                )
+            )
+
+        # Concatenate
+        total_duration = await concatenate_segments(segments, output_path)
+
+        return VoiceoverResult(
+            audio_path=output_path,
+            total_duration=total_duration,
+            segments=segments,
+            cached=False,
+        )
+
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)

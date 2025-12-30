@@ -34,15 +34,16 @@ def register_document_routes(
             raise HTTPException(404, f"Language '{language}' not found")
 
         chapters = project.list_chapters(language)
-        return [
-            {
+        result = []
+        for c in chapters:
+            doc = Document.load(c)  # Load once per chapter
+            result.append({
                 "path": str(c),
                 "filename": c.name,
-                "title": Document.load(c).title,
-                "metadata": Document.load(c).metadata,
-            }
-            for c in chapters
-        ]
+                "title": doc.title,
+                "metadata": doc.metadata,
+            })
+        return result
 
     @router.get("/api/document")
     async def get_document(path: str):

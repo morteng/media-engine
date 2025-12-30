@@ -41,11 +41,13 @@ anchors:
 
 # Video Production
 
-Media Engine provides a complete video production pipeline, integrating Remotion for programmatic video rendering and ElevenLabs for high-quality AI voiceovers. This allows you to generate professional videos directly from YAML script definitions—no video editing software required.
+Media Engine provides a complete video production pipeline. It integrates Remotion for programmatic video rendering and ElevenLabs for AI voiceovers. You generate professional videos directly from YAML script definitions—no video editing software required.
+
+See [Content Management](02_content_management.md) for how scripts fit into the content structure.
 
 ## Video Scripts
 
-Video scripts are YAML files that define the video structure:
+Write video scripts as YAML files that define your video structure:
 
 ```yaml
 metadata:
@@ -77,7 +79,7 @@ The engine generates voiceovers using ElevenLabs:
 
 ## Smart Caching
 
-Voiceover audio is cached by content hash:
+The system caches voiceover audio by content hash:
 
 ```
 .cache/voiceover/
@@ -86,11 +88,11 @@ Voiceover audio is cached by content hash:
 └── manifest.json # Hash → filename mapping
 ```
 
-If the script text hasn't changed, the cached audio is reused.
+If the script text hasn't changed, Media Engine reuses the cached audio.
 
 ## Remotion Integration
 
-Video composition is handled by Remotion components:
+Remotion components handle video composition:
 
 - **TitleCard**: Animated title slides
 - **FeatureCard**: Feature highlights with icons
@@ -106,3 +108,5 @@ Video composition is handled by Remotion components:
 | Voiceover | AI narration | Auto-generated from script text |
 | Cache | Avoid regeneration | `.cache/voiceover/` |
 | Remotion | Video rendering | TypeScript components in `remotion/` |
+
+See [Voiceover](10_voiceover.md) for detailed TTS configuration and [GitHub Showcase](16_github_showcase.md) for a complete video example.

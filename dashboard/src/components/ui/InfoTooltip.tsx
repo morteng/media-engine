@@ -279,11 +279,13 @@ export function MetricLabel({ label, metric, className }: MetricLabelProps) {
 // Nav tooltip component for sidebar icons
 interface NavTooltipProps {
   label: string;
+  description?: string;
   children: React.ReactNode;
   show?: boolean;
+  compact?: boolean; // When true, only show description (label already visible)
 }
 
-export function NavTooltip({ label, children, show = true }: NavTooltipProps) {
+export function NavTooltip({ label, description, children, show = true, compact = false }: NavTooltipProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
@@ -314,10 +316,14 @@ export function NavTooltip({ label, children, show = true }: NavTooltipProps) {
     }
   }, [isHovered, show, updatePosition]);
 
-  // Only render tooltip when we have a valid position
-  const tooltipContent = isHovered && show && position ? (
+  // Only render tooltip when we have a valid position and content to show
+  const hasContent = compact ? !!description : true;
+  const tooltipContent = isHovered && show && position && hasContent ? (
     <div
-      className="z-[9999] px-3 py-1.5 rounded-md shadow-lg bg-base-300 text-base-content text-sm font-medium whitespace-nowrap border border-base-content/10"
+      className={clsx(
+        "z-[9999] rounded-md shadow-lg bg-base-300 text-base-content border border-base-content/10",
+        compact ? "px-2.5 py-1.5 max-w-xs" : "px-3 py-1.5"
+      )}
       style={{
         position: 'fixed',
         top: `${position.top}px`,
@@ -326,7 +332,15 @@ export function NavTooltip({ label, children, show = true }: NavTooltipProps) {
       }}
       role="tooltip"
     >
-      {label}
+      {!compact && <div className="text-sm font-medium whitespace-nowrap">{label}</div>}
+      {description && (
+        <div className={clsx(
+          "text-xs text-base-content/70",
+          !compact && "mt-0.5"
+        )}>
+          {description}
+        </div>
+      )}
     </div>
   ) : null;
 

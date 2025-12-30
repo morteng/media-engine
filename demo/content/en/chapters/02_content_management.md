@@ -26,11 +26,11 @@ derived_from:
 
 # Content Management
 
-Media Engine uses a file-based content management system. Documents are Markdown files with YAML frontmatter for metadata.
+Media Engine stores all content as Markdown files with YAML frontmatter. You organize documents in a simple folder structure and track changes through version metadata.
 
 ## Document Structure
 
-Every document follows this structure:
+Write every document with this structure:
 
 ```markdown
 ---
@@ -42,7 +42,7 @@ last_modified: "2025-12-16"
 
 # Heading
 
-Your content is written here in standard Markdown format.
+Write your content here in standard Markdown.
 ```
 
 ## Frontmatter Fields
@@ -53,23 +53,29 @@ Your content is written here in standard Markdown format.
 | `version` | Yes | Semantic version (major.minor.patch) |
 | `status` | Yes | draft, review, or final |
 | `last_modified` | Yes | Date of last edit |
-| `freshness_days` | No | Days before content is considered stale |
-| `depends_on` | No | List of documents this depends on |
+| `freshness_days` | No | Days before the system marks content stale |
+| `depends_on` | No | List of documents this one requires |
 | `tags` | No | List of tags for categorization |
+
+See [Validation](08_validation.md) for details on how Media Engine checks these fields.
 
 ## Staleness Tracking
 
-Documents become stale when:
-- They haven't been modified in `freshness_days`
-- A document they depend on has been updated
+Media Engine marks documents as stale when:
+- You haven't modified them within `freshness_days`
+- You updated a document they depend on
 
-Check stale content with:
+Check stale content:
 
 ```bash
 media-engine stale
 ```
 
+See [Quality Checks](04_quality_checks.md) for more freshness monitoring options.
+
 ## Directory Structure
+
+Organize your content by language and type:
 
 ```
 content/
@@ -83,3 +89,5 @@ content/
     ├── chapters/
     └── scripts/
 ```
+
+See [Publishing](09_publishing.md) to learn how Media Engine builds these files into outputs.

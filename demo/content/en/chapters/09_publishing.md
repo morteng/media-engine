@@ -34,7 +34,9 @@ anchor_refs:
 
 # Publishing
 
-Media Engine creates complete, self-contained deliverable packages ready for distribution.
+Media Engine creates complete, self-contained packages ready for distribution.
+
+See [Builders](05_builders.md) for how outputs are generated before publishing.
 
 ## Overview
 
@@ -112,7 +114,7 @@ deliverables/my-project/
 
 ## Navigation Index
 
-When `generate_indexes=True`, an `index.html` is created with:
+When you set `generate_indexes=True`, the system creates an `index.html` with:
 
 - Links to all documents by language
 - Links to presentations and spreadsheets
@@ -157,11 +159,11 @@ typography:
   code: "JetBrains Mono"
 ```
 
-These fonts are downloaded from Google Fonts and embedded in the package for offline use.
+The system downloads these fonts from Google Fonts and embeds them for offline use.
 
 ## Manifest File
 
-A `manifest.json` is generated with package metadata:
+The system generates a `manifest.json` with package metadata:
 
 ```json
 {
@@ -181,7 +183,7 @@ A `manifest.json` is generated with package metadata:
 
 ## ZIP Archives
 
-With `--zip`, a timestamped archive is created:
+With `--zip`, the system creates a timestamped archive:
 
 ```
 my-project-2025-12-16.zip

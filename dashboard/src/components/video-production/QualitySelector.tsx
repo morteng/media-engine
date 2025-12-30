@@ -7,7 +7,6 @@
  * - Clear quality difference indication
  */
 
-import React from 'react';
 import { Monitor, Zap, CheckCircle, Clock, Film } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { QUALITY_PRESETS, type VideoQuality } from '@/api/types/video';

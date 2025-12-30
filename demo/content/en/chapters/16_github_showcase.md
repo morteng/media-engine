@@ -13,7 +13,9 @@ tags:
 
 # GitHub README Showcase
 
-This chapter documents the comprehensive showcase content created for the Media Engine GitHub README. The showcase demonstrates all major features of the framework through video scripts, diagrams, interactive demos, presentations, and data spreadsheets.
+This chapter describes the showcase content we built for the Media Engine GitHub README. The showcase demonstrates all major features through video scripts, diagrams, interactive demos, presentations, and data spreadsheets.
+
+See [Video Production](03_video_production.md) for how to build these videos.
 
 ## Overview
 
@@ -32,7 +34,7 @@ The showcase package includes:
 
 ## Main Showcase Video (3 minutes)
 
-The main showcase video (`github_readme_showcase.yaml`) is structured in five acts:
+The main showcase video (`github_readme_showcase.yaml`) follows five acts:
 
 ### Act 1: Introduction (0:00 - 0:25)
 - **Opening Hook**: Problem statement about content creation overhead
@@ -94,7 +96,7 @@ The main showcase video (`github_readme_showcase.yaml`) is structured in five ac
 
 ## Teaser Video (30 seconds)
 
-The teaser (`teaser_30s.yaml`) is designed for social media and quick README embeds:
+We designed the teaser (`teaser_30s.yaml`) for social media and quick README embeds:
 
 1. **Hook** (4s): "What if your content could build itself?"
 2. **Pain** (5s): Show manual content creation burden
@@ -264,7 +266,7 @@ media-engine demos build      # Demos → HTML
 
 ## Rendering Videos
 
-The video scripts are designed to work with the Remotion renderer:
+The video scripts work with the Remotion renderer:
 
 ```bash
 # Generate voiceover and props
@@ -299,10 +301,12 @@ Both video scripts use ElevenLabs TTS with:
 - Fast/energetic pace (teaser)
 - Smart pause calculation based on punctuation
 
-The voiceover text is designed for:
+We wrote the voiceover text for:
 - Clear pronunciation
 - Natural rhythm
 - Emphasis on key terms (Media Engine, automatically, powerful)
+
+See [Voiceover](10_voiceover.md) for TTS configuration details.
 
 ## Design System
 
@@ -320,9 +324,11 @@ typography:
   code: "JetBrains Mono"
 ```
 
+See [Theming](07_theming.md) for how to customize your design system.
+
 ## Customization
 
-To adapt the showcase for your own project:
+Adapt the showcase for your own project:
 
 1. **Branding**: Update `theme.yaml` colors and fonts
 2. **Voice**: Set `voice_id` in project configuration

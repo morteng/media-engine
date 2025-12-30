@@ -1,13 +1,14 @@
 # Media Engine Walkthrough
 # A complete tour of Media Engine's capabilities
 # Duration: ~120 seconds | Resolution: 1920x1080 @ 60fps
+# UPDATED: 2024 - Reflects current dashboard features and structure
 
 title: "Media Engine Walkthrough"
 description: "Complete tour of the agent-operated media production framework"
 language: "en"
 
 metadata:
-  version: "3.1.0"
+  version: "3.2.0"
   status: "production"
 
 narrator:
@@ -37,7 +38,8 @@ scenes:
     visual:
       background: cyber
       transition_in: glitch
-      text_effect: bounce
+      text_effect: glitch
+      intensity: high
 
   # ============================================================
   # SOLUTION (0:05 - 0:12)
@@ -53,6 +55,8 @@ scenes:
       show_logo: true
       gradient_text: true
       glow: true
+      pulse_animation: true
+      intensity: high
 
   # ============================================================
   # DASHBOARD OVERVIEW (0:12 - 0:22) - SPLIT SCREEN
@@ -63,22 +67,54 @@ scenes:
     duration: 10
     title: "Complete Visibility"
     text: "Track everything in one place"
-    voiceover: "The dashboard gives you complete visibility. Track your health score, publications status, AI workspace activity, and content metrics at a glance."
+    voiceover: "The dashboard gives you complete visibility. Track your health score, publication status, AI workspace activity, and content metrics at a glance."
     demo:
       state: dashboard_overview
       clipPath: "demos/dashboard_overview.mp4"
     visual:
-      transition_in: fade
+      transition_in: diagonal-split
+      text_effect: elastic
       split_screen:
         demo_on_left: true
-        split_angle: 15
-        demo_width: 58
+        split_angle: 18
+        demo_width: 56
         highlight: cyan
         bullets:
           - "Health Score tracking"
-          - "Publications status"
+          - "Publications overview"
           - "AI Workspace activity"
           - "Content metrics"
+      camera:
+        mode: animated
+        capture_scale: 2.0
+        background: "#0f0f1a"
+        shadow: true
+        effects_preset: "cinematic"
+        effects:
+          vignette:
+            intensity: 0.45
+            dynamic: true
+          perspective_tilt:
+            enabled: true
+            dynamic: true
+            dynamic_intensity: 0.15
+        focus_sequence:
+          - target: ".health-score"
+            zoom: 2.8
+            padding: 40
+            duration: 0.4
+            easing: "easeOutExpo"
+            hold: 1.8
+          - target: ".publications-card"
+            zoom: 2.0
+            padding: 50
+            duration: 1.4
+            easing: "easeInOutQuint"
+            hold: 1.4
+          - target: "fullpage"
+            zoom: 1.0
+            duration: 1.2
+            easing: "easeOutBack"
 
   # ============================================================
   # CONTENT & HIERARCHY (0:22 - 0:34) - SPLIT SCREEN
@@ -89,22 +125,60 @@ scenes:
     duration: 12
     title: "Content Browser"
     text: "Navigate your documents visually"
-    voiceover: "Browse documents with rich previews. Toggle between preview, source, and edit modes. Visualize your content hierarchy with tree, flow, graph, and panel views. Navigate document relationships effortlessly."
+    voiceover: "Browse documents with rich previews. Toggle between preview, source, and edit modes. Visualize your content hierarchy with Panel, Tree, Flow, and Graph views. Navigate document relationships effortlessly."
     demo:
       state: content_hierarchy_graph
       clipPath: "demos/content_hierarchy_graph.mp4"
     visual:
-      transition_in: slide-left
+      transition_in: zoom-burst
+      text_effect: wave
       split_screen:
         demo_on_left: true
-        split_angle: 12
-        demo_width: 60
+        split_angle: 14
+        demo_width: 58
         highlight: purple
         bullets:
           - "Rich document previews"
-          - "Tree, flow, graph views"
+          - "Panel, Tree, Flow, Graph views"
           - "Edit mode toggle"
           - "Relationship visualization"
+      camera:
+        mode: animated
+        capture_scale: 2.0
+        background: "#0a0a14"
+        shadow: true
+        effects_preset: "dramatic"
+        effects:
+          vignette:
+            intensity: 0.55
+            spread: 0.45
+            dynamic: true
+            dynamic_scale: 0.6
+          perspective_tilt:
+            enabled: true
+            tilt_x: 4.0
+            tilt_y: 3.0
+            dynamic: true
+            dynamic_intensity: 0.25
+          depth_of_field:
+            enabled: true
+            blur_amount: 10.0
+        focus_sequence:
+          - target: "fullpage"
+            zoom: 0.85
+            duration: 0.6
+            easing: "easeOutQuart"
+            hold: 0.3
+          - target: ".graph-container"
+            zoom: 1.7
+            padding: 70
+            duration: 2.2
+            easing: "easeInOutQuart"
+            hold: 2.5
+          - target: "fullpage"
+            zoom: 1.0
+            duration: 1.5
+            easing: "easeInOutSine"
 
   # ============================================================
   # QUALITY CHECKS (0:34 - 0:44) - SPLIT SCREEN
@@ -115,22 +189,55 @@ scenes:
     duration: 10
     title: "Quality Dashboard"
     text: "Built-in quality gates"
-    voiceover: "Quality checks run automatically. See your health score with component breakdowns for freshness, translations, and consistency. Analyze with the knowledge graph and catch issues before production."
+    voiceover: "Quality checks run automatically. See your health score with component breakdowns for freshness, translations, and consistency. Expandable analysis modules for semantic, knowledge graph, readability, and code sync."
     demo:
       state: quality_overview
       clipPath: "demos/quality_overview.mp4"
     visual:
-      transition_in: slide-left
+      transition_in: rotate-wipe
+      text_effect: scale-pop
       split_screen:
         demo_on_left: false
-        split_angle: 15
-        demo_width: 55
+        split_angle: 16
+        demo_width: 54
         highlight: neon
         bullets:
           - "Health score breakdown"
           - "Freshness tracking"
-          - "Translation coverage"
-          - "Knowledge graph analysis"
+          - "Semantic analysis"
+          - "Knowledge graph"
+      camera:
+        mode: animated
+        capture_scale: 2.0
+        background: "#0f1218"
+        shadow: true
+        effects_preset: "professional"
+        effects:
+          camera_shake:
+            enabled: true
+            intensity: 0.15
+            frequency: 1.2
+            max_offset: 3.0
+          vignette:
+            intensity: 0.3
+            spread: 0.25
+        focus_sequence:
+          - target: ".health-ring"
+            zoom: 3.0
+            padding: 40
+            duration: 0.5
+            easing: "easeOutCirc"
+            hold: 2.2
+          - target: ".metrics-breakdown"
+            zoom: 1.8
+            padding: 45
+            duration: 0.8
+            easing: "easeOutBounce"
+            hold: 1.8
+          - target: "fullpage"
+            zoom: 1.0
+            duration: 1.0
+            easing: "easeInOutCubic"
 
   # ============================================================
   # BRAND SYSTEM (0:44 - 0:52) - SPLIT SCREEN
@@ -141,22 +248,51 @@ scenes:
     duration: 8
     title: "Brand Identity"
     text: "One source of truth"
-    voiceover: "Manage your complete brand identity. Colors, typography, logos, and voice guidelines in one place. Every output stays on brand automatically."
+    voiceover: "Manage your complete brand identity. Color palettes, typography, logos, and voice guidelines in one place. Every output stays on brand automatically."
     demo:
       state: brand_design
       clipPath: "demos/brand_design.mp4"
     visual:
-      transition_in: slide-left
+      transition_in: slice
+      text_effect: rotate
       split_screen:
         demo_on_left: true
-        split_angle: 18
-        demo_width: 55
+        split_angle: 20
+        demo_width: 54
         highlight: hot
         bullets:
-          - "Color palettes"
-          - "Typography system"
+          - "Color palette system"
+          - "Typography preview"
           - "Logo variants"
           - "Voice guidelines"
+      camera:
+        mode: animated
+        capture_scale: 2.0
+        background: "#0f0f1a"
+        shadow: true
+        effects_preset: "professional"
+        effects:
+          vignette:
+            intensity: 0.2
+            spread: 0.2
+            softness: 0.7
+        focus_sequence:
+          - target: ".color-palette"
+            zoom: 2.2
+            padding: 35
+            duration: 0.7
+            easing: "easeOutQuint"
+            hold: 1.6
+          - target: ".typography-preview"
+            zoom: 1.9
+            padding: 45
+            duration: 1.2
+            easing: "easeInOutSine"
+            hold: 1.4
+          - target: "fullpage"
+            zoom: 1.0
+            duration: 0.9
+            easing: "easeOutQuad"
 
   # ============================================================
   # BUILD SYSTEM (0:52 - 1:04) - SPLIT SCREEN
@@ -167,22 +303,64 @@ scenes:
     duration: 12
     title: "One-Click Publishing"
     text: "Multiple formats, instant output"
-    voiceover: "Ready to publish? Select publications, choose formats and languages. HTML, PDF, PowerPoint, Excel. Configure output options, click build, and watch your content transform into polished deliverables."
+    voiceover: "Ready to publish? Select publications, choose formats and languages. HTML, PDF, PowerPoint, Excel. Toggle options, click build, and watch your content transform into polished deliverables."
     demo:
       state: build_page
       clipPath: "demos/build_page.mp4"
     visual:
-      transition_in: slice
+      transition_in: diagonal-split
+      text_effect: bounce
       split_screen:
         demo_on_left: false
-        split_angle: 15
-        demo_width: 58
+        split_angle: 17
+        demo_width: 56
         highlight: cyan
         bullets:
           - "Publication selection"
           - "Format toggles: HTML, PDF, PPTX, XLSX"
           - "Multi-language output"
           - "Real-time build progress"
+      camera:
+        mode: animated
+        capture_scale: 2.0
+        background: "#0f1218"
+        shadow: true
+        effects_preset: "tech_demo"
+        effects:
+          depth_of_field:
+            enabled: true
+            blur_amount: 8.0
+            track_focus: true
+          motion_blur:
+            enabled: true
+            intensity: 0.3
+        focus_sequence:
+          - target: "fullpage"
+            zoom: 0.95
+            duration: 0.3
+            easing: "easeOutQuad"
+          - target: ".publication-cards"
+            zoom: 1.6
+            padding: 60
+            duration: 0.6
+            easing: "easeOutBack"
+            hold: 1.2
+          - target: ".format-toggles"
+            zoom: 2.2
+            padding: 35
+            duration: 0.5
+            easing: "easeOutExpo"
+            hold: 1.0
+          - target: ".build-button"
+            zoom: 2.5
+            padding: 50
+            duration: 0.4
+            easing: "easeOutElastic"
+            hold: 1.3
+          - target: "fullpage"
+            zoom: 1.0
+            duration: 0.7
+            easing: "easeInOutSine"
 
   # ============================================================
   # AI WORKSPACE (1:04 - 1:18) - SPLIT SCREEN
@@ -198,7 +376,8 @@ scenes:
       state: ai_overview
       clipPath: "demos/ai_overview.mp4"
     visual:
-      transition_in: diagonal-split
+      transition_in: glitch
+      text_effect: split
       split_screen:
         demo_on_left: true
         split_angle: 15
@@ -210,6 +389,54 @@ scenes:
           - "Research storage"
           - "Decision capture"
           - "20+ MCP tools"
+      camera:
+        mode: animated
+        capture_scale: 2.0
+        background: "#0a0a18"
+        shadow: true
+        effects_preset: "immersive"
+        effects:
+          perspective_tilt:
+            enabled: true
+            tilt_x: 2.5
+            tilt_y: 1.5
+            dynamic: true
+            dynamic_intensity: 0.3
+          parallax:
+            enabled: true
+            intensity: 0.35
+            auto_layers: true
+          vignette:
+            intensity: 0.4
+            dynamic: true
+        focus_sequence:
+          - target: "fullpage"
+            zoom: 0.9
+            duration: 0.5
+            easing: "easeOutQuad"
+            hold: 0.4
+          - target: ".ai-context-card"
+            zoom: 2.3
+            padding: 45
+            duration: 0.6
+            easing: "easeOutExpo"
+            hold: 2.0
+          - target: ".sessions-panel"
+            zoom: 1.9
+            padding: 50
+            duration: 1.3
+            easing: "easeInOutQuint"
+            hold: 1.6
+          - target: ".task-queue"
+            zoom: 1.7
+            padding: 45
+            duration: 0.7
+            easing: "easeOutBack"
+            hold: 1.8
+          - target: "fullpage"
+            zoom: 1.0
+            duration: 1.1
+            easing: "easeInOutQuart"
 
   # ============================================================
   # VIDEO PIPELINE (1:18 - 1:26)
@@ -218,13 +445,16 @@ scenes:
     name: "Video Production"
     type: feature
     duration: 8
+    title: "Video Production"
     voiceover: "Define video scripts in YAML. Media Engine generates voiceovers, creates captions, and renders motion graphics. This video? Built with Media Engine."
     visual:
       background: aurora
-      transition_in: zoom-burst
+      transition_in: aurora-sweep
+      text_effect: elastic
+      intensity: high
       feature_card:
         icon: video
-        highlight: cyan
+        highlight: hot
       pipeline:
         - YAML Script
         - AI Voiceover
@@ -238,10 +468,13 @@ scenes:
     name: "Get Started"
     type: demo
     duration: 5
+    title: "Get Started"
     voiceover: "Get started in seconds."
     visual:
       background: grid
-      transition_in: rotate-wipe
+      transition_in: slice
+      text_effect: bounce
+      intensity: medium
       terminal:
         commands:
           - "pip install media-engine"
@@ -257,11 +490,13 @@ scenes:
     voiceover: "Media Engine. Write content. Generate media. Ship faster."
     visual:
       background: waves
-      transition_in: aurora-sweep
+      transition_in: zoom-burst
+      text_effect: wave
       show_logo: true
       gradient_text: true
       logo_glow: true
       pulse_animation: true
+      intensity: high
       cta:
         primary: "pip install media-engine"
         secondary: "github.com/morteng/media-engine"

@@ -15,11 +15,13 @@ tags:
 
 # Content Analysis
 
-Media Engine provides advanced analysis tools for content quality, readability, and completeness.
+Media Engine provides advanced analysis tools for content quality, readability, and completeness. These tools help you maintain high-quality documentation.
+
+See [Quality Checks](04_quality_checks.md) for the related quality system.
 
 ## Link Validation
 
-Check all internal and external links in your documentation.
+Check all internal and external links in your documentation:
 
 ### CLI
 
@@ -52,12 +54,12 @@ for broken in results['broken_links']:
 
 ### Features
 
-The link checker provides comprehensive validation.
+The link checker provides comprehensive validation:
 
 | Feature | Description |
 |---------|-------------|
-| Parallel checking | Fast external URL validation |
-| Result caching | Avoid repeated checks (24h TTL) |
+| Parallel checking | Validates external URLs quickly |
+| Result caching | Avoids repeated checks (24h TTL) |
 | Code block skipping | Ignores example links in code |
 | Internal resolution | Validates relative paths |
 
@@ -80,7 +82,7 @@ media-engine readability --json
 
 ### Metrics
 
-Multiple readability formulas are calculated.
+The analyzer calculates multiple readability formulas:
 
 | Metric | Range | Interpretation |
 |--------|-------|----------------|
@@ -242,3 +244,5 @@ print(changelog)
 3. **Track gaps systematically**: Review gap reports before releases
 4. **Use variables for consistency**: Avoid hardcoded values
 5. **Generate changelogs automatically**: Keep users informed
+
+See [Validation](08_validation.md) for document schema validation and [Security](13_security.md) for security scanning.

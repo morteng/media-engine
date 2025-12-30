@@ -9,7 +9,6 @@ import {
   FileText,
   Presentation,
   Table,
-  Table2,
   FileSpreadsheet,
   Film,
   Video,

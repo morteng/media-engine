@@ -14,7 +14,9 @@ tags:
 
 # Search Indexing
 
-Media Engine provides full-text search capabilities for project content with relevance scoring.
+Media Engine provides full-text search for your project content with relevance scoring.
+
+See [Content Management](02_content_management.md) for how documents are structured.
 
 ## Overview
 
@@ -153,7 +155,7 @@ media-engine search "video" --json
 
 ## Index Persistence
 
-Indexes are stored as JSON for fast loading:
+The system stores indexes as JSON for fast loading:
 
 ```python
 # Save after building

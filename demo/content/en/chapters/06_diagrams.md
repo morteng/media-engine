@@ -14,20 +14,22 @@ tags:
 
 # Diagram Generation
 
-Media Engine includes a diagram generator that creates professional visualizations from YAML definitions.
+Media Engine generates professional diagrams from YAML definitions. You write simple YAML, and the system renders polished visualizations.
 
 ## Overview
 
-The diagram system uses Matplotlib to render box-and-arrow diagrams commonly used in technical documentation:
+The diagram system renders box-and-arrow diagrams for technical documentation:
 
 - Architecture diagrams
 - Flow charts
 - System overviews
 - Component relationships
 
+See [Builders](05_builders.md) for how diagrams integrate with other output formats.
+
 ## YAML Definition Format
 
-Diagrams are defined in YAML files:
+Define your diagrams in YAML files:
 
 ```yaml
 # diagrams/architecture.yaml
@@ -97,7 +99,7 @@ arrows:
 
 ## Generating Diagrams
 
-Generate diagrams from YAML definitions using either the CLI or Python API.
+Use either the CLI or Python API to generate diagrams from YAML definitions.
 
 ### Python API
 
@@ -107,7 +109,7 @@ from media_engine.diagrams import DiagramGenerator, DiagramDefinition
 # Load definition
 definition = DiagramDefinition.from_yaml(Path("diagrams/architecture.yaml"))
 
-# Create generator with theme
+# Set up generator with theme
 generator = DiagramGenerator(theme=project.theme)
 
 # Generate both themes
@@ -116,7 +118,7 @@ light_path, dark_path = generator.generate_both_themes(
     output_dir=Path("output/diagrams"),
     base_name="architecture"
 )
-# Creates: architecture_light.png, architecture_dark.png
+# Output: architecture_light.png, architecture_dark.png
 ```
 
 ### CLI
@@ -125,18 +127,18 @@ light_path, dark_path = generator.generate_both_themes(
 # Build all diagrams
 media-engine build --only diagrams
 
-# Diagrams are generated in output/{lang}/diagrams/
+# Find outputs in output/{lang}/diagrams/
 ```
 
 ## Theme Integration
 
-The diagram generator uses your theme colors:
+The diagram generator applies your theme colors automatically:
 
-- **Light mode**: Uses `theme.colors.background`, `theme.colors.text`
-- **Dark mode**: Uses `theme.dark.background`, `theme.dark.text`
-- **Accent colors**: Arrow heads and highlights
+- **Light mode**: Reads `theme.colors.background` and `theme.colors.text`
+- **Dark mode**: Reads `theme.dark.background` and `theme.dark.text`
+- **Accent colors**: Styles arrow heads and highlights
 
-Both light and dark versions are generated automatically for each diagram.
+The generator creates both light and dark versions for every diagram. See [Theming](07_theming.md) for theme configuration.
 
 ## Styling Options
 
@@ -171,7 +173,7 @@ arrows:
 
 ## Output Formats
 
-The generator supports multiple output formats:
+Choose from multiple output formats:
 
 | Format | Use Case |
 |--------|----------|
@@ -179,7 +181,7 @@ The generator supports multiple output formats:
 | `svg` | Scalable graphics |
 | `pdf` | Print and LaTeX |
 
-Configure in the YAML:
+Set the format in your YAML:
 
 ```yaml
 config:
@@ -188,10 +190,12 @@ config:
 
 ## Best Practices
 
-1. **Consistent positioning**: Use a grid system for alignment
-2. **Readable labels**: Keep labels short, use `\n` for multi-line
-3. **Color meaning**: Use consistent colors for component types
-4. **Both themes**: Always generate light and dark versions
+1. **Use a grid**: Align boxes on consistent coordinates
+2. **Keep labels short**: Use `\n` for multi-line text
+3. **Apply color meaning**: Pick consistent colors for component types
+4. **Generate both themes**: Always include light and dark versions
+
+See [Quality Checks](04_quality_checks.md) for diagram validation options.
 
 ## Example: Architecture Diagram
 

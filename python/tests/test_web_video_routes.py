@@ -769,7 +769,7 @@ class TestPreviewConfig:
         assert data["enabled"] is True
         assert "studio_url" in data
         assert "compositions" in data
-        assert data["studio_port"] == 3000
+        assert data["studio_port"] == 3001
 
     @pytest.mark.asyncio
     async def test_get_preview_config_without_remotion(self, project_without_remotion, mock_manager):
@@ -790,6 +790,105 @@ class TestPreviewConfig:
         assert response.status_code == 200
         data = response.json()
         assert data["enabled"] is False
+
+
+class TestCameraPresets:
+    """Tests for camera preset API routes."""
+
+    def test_list_camera_presets(self):
+        """Test listing camera animation presets."""
+        from fastapi import FastAPI, APIRouter
+        from fastapi.testclient import TestClient
+
+        from media_engine.web.routes.video import register_video_routes
+
+        app = FastAPI()
+        router = APIRouter()
+        register_video_routes(router, lambda: None, MagicMock())
+        app.include_router(router)
+
+        client = TestClient(app)
+        response = client.get("/api/video/camera/presets")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "presets" in data
+        assert "count" in data
+        assert data["count"] >= 5  # Should have at least 5 presets
+
+        # Check preset structure
+        presets = data["presets"]
+        assert len(presets) > 0
+
+        preset = presets[0]
+        assert "id" in preset
+        assert "name" in preset
+        assert "description" in preset
+        assert "pattern" in preset
+        assert "default_zoom" in preset
+
+    def test_list_camera_easings(self):
+        """Test listing camera easing functions."""
+        from fastapi import FastAPI, APIRouter
+        from fastapi.testclient import TestClient
+
+        from media_engine.web.routes.video import register_video_routes
+
+        app = FastAPI()
+        router = APIRouter()
+        register_video_routes(router, lambda: None, MagicMock())
+        app.include_router(router)
+
+        client = TestClient(app)
+        response = client.get("/api/video/camera/easings")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "easings" in data
+        assert "count" in data
+        assert "recommended" in data
+
+        # Check easing structure
+        easings = data["easings"]
+        assert len(easings) > 0
+
+        easing = easings[0]
+        assert "name" in easing
+        assert "recommended" in easing
+
+        # Should have recommended easing functions
+        recommended_names = [e["name"] for e in easings if e["recommended"]]
+        assert "easeInOutCubic" in recommended_names
+
+    def test_list_effect_presets(self):
+        """Test listing visual effects presets."""
+        from fastapi import FastAPI, APIRouter
+        from fastapi.testclient import TestClient
+
+        from media_engine.web.routes.video import register_video_routes
+
+        app = FastAPI()
+        router = APIRouter()
+        register_video_routes(router, lambda: None, MagicMock())
+        app.include_router(router)
+
+        client = TestClient(app)
+        response = client.get("/api/video/effects/presets")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "presets" in data
+        assert "count" in data
+
+        # Check preset structure
+        presets = data["presets"]
+        assert len(presets) > 0
+
+        preset = presets[0]
+        assert "id" in preset
+        assert "name" in preset
+        assert "description" in preset
+        assert "vignette_enabled" in preset
 
 
 @pytest.fixture

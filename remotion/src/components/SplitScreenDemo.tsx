@@ -4,6 +4,11 @@
  * Displays demo video alongside motion graphics with a diagonal split.
  * The split can animate in/out and supports various layouts.
  *
+ * Features:
+ * - Ken Burns effect on demo video (subtle zoom/pan)
+ * - Scaled typography for split-screen context
+ * - Animated bullet points with stagger
+ *
  * Visual:
  * ┌─────────────────────────────┐
  * │    Demo Video       ╱╱      │
@@ -26,6 +31,14 @@ import {
   staticFile,
 } from 'remotion';
 import { colors, typography, gradients, glows } from '../lib/theme';
+
+// Scaled typography for split-screen (LARGER for better readability)
+const splitTypography = {
+  title: 52,      // Increased from 36 - much more prominent
+  subtitle: 28,   // Increased from 22 - easier to read
+  body: 20,       // Increased from 16 - standard body size
+  bullet: 19,     // Increased from 15 - better visibility
+};
 
 interface SplitScreenDemoProps {
   /** Path to demo video clip (relative to public folder) */
@@ -111,7 +124,7 @@ export const SplitScreenDemo: React.FC<SplitScreenDemoProps> = ({
 
   // Points for the diagonal clip path
   // If demo is on left: starts at 0, goes to demoWidth at top, then angles back
-  const demoClipPath = demoOnLeft
+  const demoSideClipPath = demoOnLeft
     ? `polygon(0 0, ${demoWidthPx + skewOffset}px 0, ${demoWidthPx - skewOffset}px 100%, 0 100%)`
     : `polygon(${width - demoWidthPx - skewOffset}px 0, 100% 0, 100% 100%, ${width - demoWidthPx + skewOffset}px 100%)`;
 
@@ -153,6 +166,26 @@ export const SplitScreenDemo: React.FC<SplitScreenDemoProps> = ({
   // Diagonal edge glow effect
   const glowPulse = Math.sin(sceneFrame * 0.08) * 0.3 + 0.7;
 
+  // Ken Burns effect - subtle zoom and pan over the demo duration
+  const kenBurnsScale = interpolate(
+    sceneFrame,
+    [0, durationFrames],
+    [1.05, 1.15],
+    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
+  );
+  const kenBurnsX = interpolate(
+    sceneFrame,
+    [0, durationFrames],
+    [demoOnLeft ? -2 : 2, demoOnLeft ? 2 : -2],
+    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
+  );
+  const kenBurnsY = interpolate(
+    sceneFrame,
+    [0, durationFrames],
+    [-1, 1],
+    { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
+  );
+
   return (
     <AbsoluteFill style={{ opacity }}>
       {/* Demo Video Side */}
@@ -163,21 +196,30 @@ export const SplitScreenDemo: React.FC<SplitScreenDemoProps> = ({
           left: 0,
           width: '100%',
           height: '100%',
-          clipPath: demoClipPath,
+          clipPath: demoSideClipPath,
           transform: `translateX(${demoTranslateX}px)`,
           overflow: 'hidden',
         }}
       >
-        {/* Video player */}
-        <RemotionVideo
-          src={staticFile(demoClipPath)}
-          startFrom={0}
+        {/* Video player with Ken Burns effect */}
+        <div
           style={{
             width: '100%',
             height: '100%',
-            objectFit: 'cover',
+            transform: `scale(${kenBurnsScale}) translate(${kenBurnsX}%, ${kenBurnsY}%)`,
+            transformOrigin: 'center center',
           }}
-        />
+        >
+          <RemotionVideo
+            src={staticFile(demoClipPath)}
+            startFrom={0}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+            }}
+          />
+        </div>
 
         {/* Subtle vignette on video */}
         <div
@@ -292,19 +334,19 @@ export const SplitScreenDemo: React.FC<SplitScreenDemoProps> = ({
             padding: '60px 40px',
           }}
         >
-          {/* Accent line */}
+          {/* Accent line - LARGER and more prominent */}
           <div
             style={{
-              width: interpolate(sceneFrame, [fps * 0.3, fps * 0.7], [0, 100], {
+              width: interpolate(sceneFrame, [fps * 0.3, fps * 0.7], [0, 140], {
                 extrapolateLeft: 'clamp',
                 extrapolateRight: 'clamp',
                 easing: Easing.out(Easing.cubic),
               }),
-              height: 4,
+              height: 6,
               background: `linear-gradient(90deg, ${accentColor}, ${colors.accentSecondary})`,
-              borderRadius: 2,
-              marginBottom: 24,
-              boxShadow: `0 0 20px ${accentColor}66`,
+              borderRadius: 3,
+              marginBottom: 28,
+              boxShadow: `0 0 30px ${accentColor}88, 0 0 60px ${accentColor}44`,
             }}
           />
 
@@ -313,14 +355,15 @@ export const SplitScreenDemo: React.FC<SplitScreenDemoProps> = ({
             <h2
               style={{
                 fontFamily: typography.fonts.heading,
-                fontSize: typography.sizes.h2,
+                fontSize: splitTypography.title,
                 fontWeight: typography.weights.bold,
                 color: colors.dark.textPrimary,
                 margin: 0,
-                marginBottom: 20,
+                marginBottom: 12,
                 opacity: titleOpacity,
                 transform: `translateY(${titleY}px)`,
                 lineHeight: 1.2,
+                textShadow: `0 2px 20px ${colors.dark.bgPrimary}`,
               }}
             >
               {title}
@@ -332,14 +375,14 @@ export const SplitScreenDemo: React.FC<SplitScreenDemoProps> = ({
             <p
               style={{
                 fontFamily: typography.fonts.body,
-                fontSize: typography.sizes.h4,
+                fontSize: splitTypography.subtitle,
                 fontWeight: typography.weights.normal,
                 color: colors.dark.textSecondary,
                 margin: 0,
-                marginBottom: 30,
+                marginBottom: 24,
                 opacity: textOpacity,
-                lineHeight: 1.6,
-                maxWidth: 500,
+                lineHeight: 1.5,
+                maxWidth: 400,
               }}
             >
               {text}
@@ -348,20 +391,31 @@ export const SplitScreenDemo: React.FC<SplitScreenDemoProps> = ({
 
           {/* Bullet points */}
           {bullets.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {bullets.map((bullet, index) => {
-                const bulletDelay = fps * 0.8 + index * 8;
+                const bulletDelay = fps * 0.6 + index * 6;
+                const bulletProgress = spring({
+                  frame: sceneFrame - bulletDelay,
+                  fps,
+                  config: { damping: 15, stiffness: 100, mass: 0.6 },
+                });
                 const bulletOpacity = interpolate(
-                  sceneFrame - bulletDelay,
-                  [0, 15],
+                  bulletProgress,
+                  [0, 1],
                   [0, 1],
                   { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
                 );
                 const bulletX = interpolate(
-                  sceneFrame - bulletDelay,
-                  [0, 20],
-                  [-20, 0],
-                  { extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) }
+                  bulletProgress,
+                  [0, 1],
+                  [-15, 0],
+                  { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
+                );
+                const bulletScale = interpolate(
+                  bulletProgress,
+                  [0, 1],
+                  [0.9, 1],
+                  { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
                 );
 
                 return (
@@ -370,27 +424,30 @@ export const SplitScreenDemo: React.FC<SplitScreenDemoProps> = ({
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 16,
+                      gap: 12,
                       opacity: bulletOpacity,
-                      transform: `translateX(${bulletX}px)`,
+                      transform: `translateX(${bulletX}px) scale(${bulletScale})`,
+                      transformOrigin: 'left center',
                     }}
                   >
-                    {/* Bullet marker */}
+                    {/* Bullet marker with enhanced glow */}
                     <div
                       style={{
-                        width: 8,
-                        height: 8,
+                        width: 10,
+                        height: 10,
                         borderRadius: '50%',
-                        background: accentColor,
-                        boxShadow: `0 0 12px ${accentColor}`,
+                        background: `radial-gradient(circle, ${accentColor} 30%, ${accentColor}88 100%)`,
+                        boxShadow: `0 0 12px ${accentColor}, 0 0 24px ${accentColor}88, 0 0 36px ${accentColor}44`,
                         flexShrink: 0,
                       }}
                     />
                     <span
                       style={{
                         fontFamily: typography.fonts.body,
-                        fontSize: typography.sizes.body,
+                        fontSize: splitTypography.bullet,
+                        fontWeight: typography.weights.medium,
                         color: colors.dark.textPrimary,
+                        letterSpacing: '0.01em',
                       }}
                     >
                       {bullet}

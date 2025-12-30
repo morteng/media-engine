@@ -10,7 +10,7 @@
  * - Video player integration
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   ZoomIn,
   ZoomOut,
@@ -21,11 +21,13 @@ import {
   Maximize2,
   List,
   LayoutGrid,
+  Film,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
-import { useVideoTimelineData } from '@/hooks/useVideoApi';
+import { useVideoTimelineData, useVideoAssets } from '@/hooks/useVideoApi';
 import { Spinner } from '@/components/ui';
 import { SceneCard, SceneList } from '../SceneCard';
+import { VideoPlayer } from '../VideoPlayer';
 import { getSceneTypeColors } from '@/utils/statusMappings';
 import type { UnifiedScene } from '@/api/types/video';
 
@@ -215,8 +217,10 @@ export function VideoTimeline() {
   const [zoom, setZoom] = useState(1);
   const [isPlaying, setIsPlaying] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [showPlayer, setShowPlayer] = useState(true);
 
   const { scripts, scriptsLoading, props, propsLoading } = useVideoTimelineData(selectedScriptId);
+  const { data: assets } = useVideoAssets();
 
   // Auto-select first script
   React.useEffect(() => {
@@ -235,8 +239,31 @@ export function VideoTimeline() {
     [scenes, selectedSceneId]
   );
 
+  // Find video URL for current script from assets
+  const videoUrl = useMemo(() => {
+    if (!selectedScriptId || !assets?.outputs) return null;
+    // Look for rendered video matching script ID
+    const video = assets.outputs.find((f: { name: string; path: string }) =>
+      f.name.includes(selectedScriptId) && (f.name.endsWith('.mp4') || f.name.endsWith('.webm'))
+    );
+    return video ? `/api/assets/output/${encodeURIComponent(video.name)}` : null;
+  }, [selectedScriptId, assets]);
+
+  // Prepare scenes for VideoPlayer (map UnifiedScene to expected format)
+  const playerScenes = useMemo(() =>
+    scenes.map((s) => ({
+      id: s.id,
+      type: s.type,
+      title: s.title || s.name,
+      duration: (s.durationFrames || 0) / fps,
+      startFrame: s.startFrame || 0,
+      endFrame: s.endFrame || 0,
+    })),
+    [scenes, fps]
+  );
+
   // Handlers
-  const handleSeek = (frame: number) => {
+  const handleSeek = useCallback((frame: number) => {
     setCurrentFrame(Math.max(0, Math.min(frame, totalFrames)));
     // Find which scene this frame is in and select it
     const scene = scenes.find(
@@ -245,7 +272,28 @@ export function VideoTimeline() {
     if (scene) {
       setSelectedSceneId(scene.id);
     }
-  };
+  }, [scenes, totalFrames]);
+
+  // Handle frame changes from VideoPlayer
+  const handleFrameChange = useCallback((frame: number) => {
+    setCurrentFrame(frame);
+    // Update selected scene based on current frame
+    const scene = scenes.find(
+      (s) => frame >= (s.startFrame || 0) && frame < (s.endFrame || 0)
+    );
+    if (scene && scene.id !== selectedSceneId) {
+      setSelectedSceneId(scene.id);
+    }
+  }, [scenes, selectedSceneId]);
+
+  // Handle scene selection from VideoPlayer
+  const handleSceneChange = useCallback((sceneId: string) => {
+    setSelectedSceneId(sceneId);
+    const scene = scenes.find((s) => s.id === sceneId);
+    if (scene) {
+      setCurrentFrame(scene.startFrame || 0);
+    }
+  }, [scenes]);
 
   const handleZoomIn = () => setZoom((z) => Math.min(z + 0.25, 3));
   const handleZoomOut = () => setZoom((z) => Math.max(z - 0.25, 0.5));
@@ -301,6 +349,15 @@ export function VideoTimeline() {
 
         {/* Zoom controls */}
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowPlayer(!showPlayer)}
+            className={cn('btn btn-sm gap-2', showPlayer ? 'btn-secondary' : 'btn-ghost')}
+            title="Toggle video player"
+          >
+            <Film size={16} />
+            Player
+          </button>
+          <div className="divider divider-horizontal mx-1" />
           <button onClick={handleZoomOut} className="btn btn-ghost btn-sm">
             <ZoomOut size={16} />
           </button>
@@ -319,6 +376,21 @@ export function VideoTimeline() {
         <div className="flex items-center justify-center h-32">
           <Spinner />
           <span className="ml-2 text-base-content/60">Loading props...</span>
+        </div>
+      )}
+
+      {/* Video Player */}
+      {showPlayer && props && (
+        <div className="mb-4">
+          <VideoPlayer
+            videoUrl={videoUrl}
+            scenes={playerScenes}
+            fps={fps}
+            currentFrame={currentFrame}
+            onFrameChange={handleFrameChange}
+            onSceneChange={handleSceneChange}
+            className="h-80 w-full"
+          />
         </div>
       )}
 

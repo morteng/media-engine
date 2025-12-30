@@ -1,5 +1,6 @@
 # Dashboard Demo Definition
 # Defines named states for video capture with setup actions
+# UPDATED: 2024 - Reflects current dashboard structure with BrowserRouter navigation
 
 name: "Media Engine Dashboard"
 url: "http://localhost:8080"
@@ -10,113 +11,812 @@ viewport:
 
 metadata:
   description: "Dashboard demo for walkthrough video"
-  version: "1.0.0"
+  version: "2.0.0"
+
+# Note: Dashboard uses BrowserRouter (path-based routing, not hash)
+# Navigation via: window.location.pathname = '/path' or clicking links
 
 states:
-  # Overview Section
+  # ============================================================
+  # OVERVIEW SECTION
+  # ============================================================
   dashboard_overview:
     description: "Main dashboard with health score and publications"
     setup: |
-      // Navigate to dashboard
-      window.location.hash = '/';
+      // Navigate to dashboard home
+      if (window.location.pathname !== '/') {
+        const link = document.querySelector('a[href="/"]');
+        if (link) link.click();
+        await new Promise(r => setTimeout(r, 800));
+      }
+      // Wait for content to load
       await new Promise(r => setTimeout(r, 500));
     wait_for: ".card"
+    duration: 10
+    # Camera animation for cinematic dashboard tour - DRAMATIC REVEAL pattern
+    camera:
+      mode: animated
+      capture_scale: 2.0
+      background: "#0f0f1a"
+      shadow: true
+      effects_preset: "cinematic"
+      effects:
+        vignette:
+          intensity: 0.45
+          dynamic: true
+        perspective_tilt:
+          enabled: true
+          dynamic: true
+          dynamic_intensity: 0.15
+      focus_sequence:
+        # Start zoomed on health score, then reveal
+        - target: ".health-score"
+          zoom: 2.8
+          padding: 40
+          duration: 0.4
+          easing: "easeOutExpo"
+          hold: 1.8
+        - target: ".publications-card"
+          zoom: 2.0
+          padding: 50
+          duration: 1.4
+          easing: "easeInOutQuint"
+          hold: 1.4
+        - target: "fullpage"
+          zoom: 1.0
+          duration: 1.2
+          easing: "easeOutBack"
+    actions: |
+      // Animate cursor across dashboard elements
+      await wait(400);
 
+      // Move to health score area (top left card)
+      await moveCursor(cursor, 350, 280, 700);
+      await wait(400);
+      cursor.style.transform = 'translate(-50%,-50%) scale(1.15)';
+      await wait(500);
+      cursor.style.transform = 'translate(-50%,-50%) scale(1)';
+
+      // Move to publications section
+      await wait(300);
+      await moveCursor(cursor, 900, 320, 800);
+      await wait(500);
+
+      // Hover effect - pulsate cursor
+      cursor.style.transform = 'translate(-50%,-50%) scale(1.2)';
+      await wait(200);
+      cursor.style.transform = 'translate(-50%,-50%) scale(1)';
+
+      // Move down to AI workspace section
+      await wait(400);
+      await moveCursor(cursor, 600, 550, 900);
+      await wait(400);
+
+      // Scroll down slightly to show more content
+      const mainContent = document.querySelector('main');
+      if (mainContent) {
+        await smoothScroll(mainContent, 200, 1200);
+        await wait(600);
+        await smoothScroll(mainContent, -200, 1000);
+      }
+
+      // Final position - center
+      await moveCursor(cursor, 960, 400, 700);
+      await wait(300);
+
+  # ============================================================
+  # BUILD & PUBLISH SECTION
+  # ============================================================
   build_page:
     description: "Build & Publish page with publication selection"
     setup: |
-      window.location.hash = '/build';
+      // Navigate to Build page
+      const buildLink = document.querySelector('a[href="/build"]');
+      if (buildLink) {
+        buildLink.click();
+        await new Promise(r => setTimeout(r, 800));
+      }
+      // Wait for publications to load
       await new Promise(r => setTimeout(r, 500));
-    wait_for: "[data-testid='publication-card']"
+    wait_for: ".card"
+    duration: 12
+    # FAST SCAN pattern - snappy movements with punchy timing
+    camera:
+      mode: animated
+      capture_scale: 2.0
+      background: "#0f1218"
+      shadow: true
+      effects_preset: "tech_demo"
+      effects:
+        depth_of_field:
+          enabled: true
+          blur_amount: 8.0
+          track_focus: true
+        motion_blur:
+          enabled: true
+          intensity: 0.3
+      focus_sequence:
+        - target: "fullpage"
+          zoom: 0.95
+          duration: 0.3
+          easing: "easeOutQuad"
+        - target: ".publication-cards"
+          zoom: 1.6
+          padding: 60
+          duration: 0.6
+          easing: "easeOutBack"
+          hold: 1.2
+        - target: ".format-toggles"
+          zoom: 2.2
+          padding: 35
+          duration: 0.5
+          easing: "easeOutExpo"
+          hold: 1.0
+        - target: ".build-button"
+          zoom: 2.5
+          padding: 50
+          duration: 0.4
+          easing: "easeOutElastic"
+          hold: 1.3
+        - target: "fullpage"
+          zoom: 1.0
+          duration: 0.7
+          easing: "easeInOutSine"
+    actions: |
+      // Interactive build page demonstration
+      await wait(300);
 
-  # Content Section
+      // Move cursor to publication cards area
+      await moveCursor(cursor, 400, 350, 600);
+      await wait(400);
+
+      // Hover over first publication card
+      const cards = document.querySelectorAll('.card');
+      if (cards[0]) {
+        cards[0].style.transition = 'transform 0.3s, box-shadow 0.3s';
+        cards[0].style.transform = 'scale(1.02)';
+        cards[0].style.boxShadow = '0 8px 32px rgba(0,212,255,0.3)';
+      }
+      cursor.style.transform = 'translate(-50%,-50%) scale(1.15)';
+      await wait(600);
+
+      // Click animation
+      cursor.style.transform = 'translate(-50%,-50%) scale(0.9)';
+      await wait(100);
+      cursor.style.transform = 'translate(-50%,-50%) scale(1)';
+      if (cards[0]) {
+        cards[0].style.transform = 'scale(1)';
+        cards[0].style.boxShadow = '';
+      }
+
+      await wait(400);
+
+      // Move to format toggles area (right side)
+      await moveCursor(cursor, 1200, 400, 800);
+      await wait(500);
+
+      // Demonstrate format selection - hover over buttons
+      const buttons = document.querySelectorAll('button');
+      for (let i = 0; i < Math.min(3, buttons.length); i++) {
+        const btn = buttons[i];
+        if (btn && btn.textContent && !btn.textContent.includes('Build')) {
+          const rect = btn.getBoundingClientRect();
+          await moveCursor(cursor, rect.left + rect.width/2, rect.top + rect.height/2, 400);
+          cursor.style.transform = 'translate(-50%,-50%) scale(1.1)';
+          await wait(300);
+          cursor.style.transform = 'translate(-50%,-50%) scale(1)';
+          await wait(200);
+        }
+      }
+
+      // Move to Build button area
+      await wait(300);
+      await moveCursor(cursor, 1400, 600, 700);
+      await wait(400);
+
+      // Hover effect on build button
+      cursor.style.transform = 'translate(-50%,-50%) scale(1.2)';
+      cursor.style.boxShadow = '0 0 30px rgba(0,212,255,0.8)';
+      await wait(800);
+      cursor.style.transform = 'translate(-50%,-50%) scale(1)';
+      cursor.style.boxShadow = '0 0 20px rgba(0,212,255,0.6)';
+
+  # ============================================================
+  # CONTENT SECTION
+  # ============================================================
   content_documents:
     description: "Document browser with preview"
     setup: |
-      window.location.hash = '/content';
+      // Navigate to Content page
+      const contentLink = document.querySelector('a[href="/content"]');
+      if (contentLink) {
+        contentLink.click();
+        await new Promise(r => setTimeout(r, 800));
+      }
+      // Wait for document tree
       await new Promise(r => setTimeout(r, 500));
-    wait_for: ".document-tree"
+      // Click first document if available
+      const docBtn = document.querySelector('aside nav button');
+      if (docBtn) {
+        docBtn.click();
+        await new Promise(r => setTimeout(r, 300));
+      }
+    wait_for: "aside"
+    duration: 10
 
   content_hierarchy_tree:
     description: "Hierarchy view - tree mode"
     setup: |
-      window.location.hash = '/content/hierarchy';
-      await new Promise(r => setTimeout(r, 300));
-      // Click tree view button
-      document.querySelector('[data-view="tree"]')?.click();
-      await new Promise(r => setTimeout(r, 300));
-    wait_for: ".hierarchy-tree"
+      // Navigate to Content -> Hierarchy
+      const contentLink = document.querySelector('a[href="/content"]');
+      if (contentLink) contentLink.click();
+      await new Promise(r => setTimeout(r, 600));
+      // Click Hierarchy tab
+      const hierTab = document.querySelector('a[href="/content/hierarchy"]');
+      if (hierTab) {
+        hierTab.click();
+        await new Promise(r => setTimeout(r, 600));
+      }
+      // Click Tree view button
+      const treeBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent?.includes('Tree'));
+      if (treeBtn) {
+        treeBtn.click();
+        await new Promise(r => setTimeout(r, 500));
+      }
+    wait_for: "aside"
+    duration: 8
 
   content_hierarchy_graph:
-    description: "Hierarchy view - graph mode"
+    description: "Hierarchy view - graph mode with interactive visualization"
     setup: |
-      window.location.hash = '/content/hierarchy';
-      await new Promise(r => setTimeout(r, 300));
-      // Click graph view button
-      document.querySelector('[data-view="graph"]')?.click();
-      await new Promise(r => setTimeout(r, 500));
-    wait_for: "canvas"
+      // Navigate to Content -> Hierarchy
+      const contentLink = document.querySelector('a[href="/content"]');
+      if (contentLink) contentLink.click();
+      await new Promise(r => setTimeout(r, 600));
+      // Click Hierarchy tab
+      const hierTab = document.querySelector('a[href="/content/hierarchy"]');
+      if (hierTab) {
+        hierTab.click();
+        await new Promise(r => setTimeout(r, 600));
+      }
+      // Click Graph view button (the one with Network icon)
+      const graphBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent?.includes('Graph'));
+      if (graphBtn) {
+        graphBtn.click();
+        await new Promise(r => setTimeout(r, 800));
+      }
+    wait_for: ".rounded-lg"
+    duration: 12
+    # SLOW CINEMATIC SWEEP - dramatic with perspective
+    camera:
+      mode: animated
+      capture_scale: 2.0
+      background: "#0a0a14"
+      shadow: true
+      effects_preset: "dramatic"
+      effects:
+        vignette:
+          intensity: 0.55
+          spread: 0.45
+          dynamic: true
+          dynamic_scale: 0.6
+        perspective_tilt:
+          enabled: true
+          tilt_x: 4.0
+          tilt_y: 3.0
+          dynamic: true
+          dynamic_intensity: 0.25
+        depth_of_field:
+          enabled: true
+          blur_amount: 10.0
+      focus_sequence:
+        # Start pulled back with perspective
+        - target: "fullpage"
+          zoom: 0.85
+          duration: 0.6
+          easing: "easeOutQuart"
+          hold: 0.3
+        # Slow dramatic push into graph
+        - target: ".graph-container"
+          zoom: 1.7
+          padding: 70
+          duration: 2.2
+          easing: "easeInOutQuart"
+          hold: 2.5
+        # Graceful pull back
+        - target: "fullpage"
+          zoom: 1.0
+          duration: 1.5
+          easing: "easeInOutSine"
+    actions: |
+      // Interactive graph visualization demo
+      await wait(500);
+
+      // Start at center of graph area
+      await moveCursor(cursor, 960, 450, 500);
+      await wait(400);
+
+      // Simulate clicking a node - move to approximate node position
+      await moveCursor(cursor, 700, 380, 600);
+      cursor.style.transform = 'translate(-50%,-50%) scale(1.15)';
+      await wait(500);
+
+      // Click effect
+      cursor.style.transform = 'translate(-50%,-50%) scale(0.85)';
+      await wait(100);
+      cursor.style.transform = 'translate(-50%,-50%) scale(1)';
+      await wait(600);
+
+      // Pan across graph - explore relationships
+      await moveCursor(cursor, 1100, 350, 900);
+      await wait(400);
+
+      // Hover on another node
+      cursor.style.transform = 'translate(-50%,-50%) scale(1.1)';
+      await wait(400);
+      cursor.style.transform = 'translate(-50%,-50%) scale(1)';
+
+      // Move diagonally to show edge
+      await wait(300);
+      await moveCursor(cursor, 850, 520, 800);
+      await wait(500);
+
+      // Click on edge/relationship
+      cursor.style.transform = 'translate(-50%,-50%) scale(1.15)';
+      await wait(400);
+      cursor.style.transform = 'translate(-50%,-50%) scale(0.9)';
+      await wait(100);
+      cursor.style.transform = 'translate(-50%,-50%) scale(1)';
+
+      // Explore more nodes
+      await wait(400);
+      await moveCursor(cursor, 1200, 480, 700);
+      await wait(500);
+
+      // Final sweep across graph
+      await moveCursor(cursor, 600, 400, 1000);
+      await wait(300);
 
   content_translations:
     description: "Translation coverage matrix"
     setup: |
-      window.location.hash = '/content/translations';
-      await new Promise(r => setTimeout(r, 500));
-    wait_for: ".translation-matrix"
+      // Navigate to Content -> Translations
+      const contentLink = document.querySelector('a[href="/content"]');
+      if (contentLink) contentLink.click();
+      await new Promise(r => setTimeout(r, 600));
+      // Click Translations tab
+      const transTab = document.querySelector('a[href="/content/translations"]');
+      if (transTab) {
+        transTab.click();
+        await new Promise(r => setTimeout(r, 600));
+      }
+    wait_for: ".card"
+    duration: 10
 
-  # Quality Section
+  # ============================================================
+  # QUALITY SECTION
+  # ============================================================
   quality_overview:
     description: "Quality overview with health score ring"
     setup: |
-      window.location.hash = '/quality';
+      // Navigate to Quality page
+      const qualityLink = document.querySelector('a[href="/quality"]');
+      if (qualityLink) {
+        qualityLink.click();
+        await new Promise(r => setTimeout(r, 800));
+      }
+      // Wait for quality data to load
       await new Promise(r => setTimeout(r, 500));
-    wait_for: ".health-score"
+    wait_for: ".card"
+    duration: 10
+    # FOCUS ZOOM pattern - tight focus on metrics with organic movement
+    camera:
+      mode: animated
+      capture_scale: 2.0
+      background: "#0f1218"
+      shadow: true
+      effects_preset: "professional"
+      effects:
+        camera_shake:
+          enabled: true
+          intensity: 0.15
+          frequency: 1.2
+          max_offset: 3.0
+        vignette:
+          intensity: 0.3
+          spread: 0.25
+      focus_sequence:
+        # Tight zoom on health ring immediately
+        - target: ".health-ring"
+          zoom: 3.0
+          padding: 40
+          duration: 0.5
+          easing: "easeOutCirc"
+          hold: 2.2
+        # Quick pan to metrics with bounce
+        - target: ".metrics-breakdown"
+          zoom: 1.8
+          padding: 45
+          duration: 0.8
+          easing: "easeOutBounce"
+          hold: 1.8
+        # Smooth zoom out
+        - target: "fullpage"
+          zoom: 1.0
+          duration: 1.0
+          easing: "easeInOutCubic"
+    actions: |
+      // Quality dashboard exploration
+      await wait(300);
+
+      // Move to health score ring (prominent feature)
+      await moveCursor(cursor, 350, 320, 600);
+      await wait(500);
+
+      // Circle around the health score ring
+      const centerX = 350, centerY = 320, radius = 80;
+      for (let angle = 0; angle <= 360; angle += 30) {
+        const rad = (angle * Math.PI) / 180;
+        const x = centerX + Math.cos(rad) * radius;
+        const y = centerY + Math.sin(rad) * radius;
+        await moveCursor(cursor, x, y, 100);
+      }
+      await wait(400);
+
+      // Move to breakdown section
+      await moveCursor(cursor, 700, 350, 700);
+      cursor.style.transform = 'translate(-50%,-50%) scale(1.1)';
+      await wait(500);
+      cursor.style.transform = 'translate(-50%,-50%) scale(1)';
+
+      // Scan across quality metrics
+      await wait(300);
+      await moveCursor(cursor, 1100, 300, 800);
+      await wait(400);
+
+      // Move to freshness section
+      await moveCursor(cursor, 1100, 500, 600);
+      await wait(500);
+
+      // Scroll to show more content
+      const mainContent = document.querySelector('main');
+      if (mainContent) {
+        await smoothScroll(mainContent, 150, 800);
+        await wait(500);
+      }
+
+      // Hover on a metric card
+      cursor.style.transform = 'translate(-50%,-50%) scale(1.15)';
+      await wait(400);
+      cursor.style.transform = 'translate(-50%,-50%) scale(1)';
+
+      // Return to center
+      await moveCursor(cursor, 700, 400, 600);
+      await wait(300);
 
   quality_analysis:
-    description: "Quality analysis with knowledge graph"
+    description: "Quality analysis with expandable sections"
     setup: |
-      window.location.hash = '/quality/analysis';
-      await new Promise(r => setTimeout(r, 500));
-    wait_for: "canvas"
+      // Navigate to Quality -> Analysis
+      const qualityLink = document.querySelector('a[href="/quality"]');
+      if (qualityLink) qualityLink.click();
+      await new Promise(r => setTimeout(r, 600));
+      // Click Analysis tab
+      const analysisTab = document.querySelector('a[href="/quality/analysis"]');
+      if (analysisTab) {
+        analysisTab.click();
+        await new Promise(r => setTimeout(r, 600));
+      }
+      // Expand first section if collapsed
+      const expandBtn = document.querySelector('button[class*="ExpandableSection"]');
+      if (expandBtn) expandBtn.click();
+      await new Promise(r => setTimeout(r, 300));
+    wait_for: ".card"
+    duration: 10
 
-  # Brand Section
+  # ============================================================
+  # BRAND SECTION
+  # ============================================================
   brand_design:
     description: "Brand design system - colors and typography"
     setup: |
-      window.location.hash = '/brand';
+      // Navigate to Brand page
+      const brandLink = document.querySelector('a[href="/brand"]');
+      if (brandLink) {
+        brandLink.click();
+        await new Promise(r => setTimeout(r, 800));
+      }
+      // Wait for brand assets to load
       await new Promise(r => setTimeout(r, 500));
-    wait_for: ".color-palette"
+    wait_for: ".card"
+    duration: 8
+    # ELEGANT FLOW pattern - smooth gliding movements
+    camera:
+      mode: animated
+      capture_scale: 2.0
+      background: "#0f0f1a"
+      shadow: true
+      effects_preset: "professional"
+      effects:
+        vignette:
+          intensity: 0.2
+          spread: 0.2
+          softness: 0.7
+      focus_sequence:
+        # Start on colors
+        - target: ".color-palette"
+          zoom: 2.2
+          padding: 35
+          duration: 0.7
+          easing: "easeOutQuint"
+          hold: 1.6
+        # Glide to typography
+        - target: ".typography-preview"
+          zoom: 1.9
+          padding: 45
+          duration: 1.2
+          easing: "easeInOutSine"
+          hold: 1.4
+        # Elegant reveal of full page
+        - target: "fullpage"
+          zoom: 1.0
+          duration: 0.9
+          easing: "easeOutQuad"
+    actions: |
+      // Brand design system tour
+      await wait(400);
+
+      // Move to color palette area
+      await moveCursor(cursor, 400, 300, 600);
+      await wait(400);
+
+      // Scan across color swatches
+      const colorPositions = [
+        {x: 300, y: 320}, {x: 400, y: 320}, {x: 500, y: 320},
+        {x: 300, y: 400}, {x: 400, y: 400}, {x: 500, y: 400}
+      ];
+
+      for (const pos of colorPositions) {
+        await moveCursor(cursor, pos.x, pos.y, 200);
+        cursor.style.transform = 'translate(-50%,-50%) scale(1.1)';
+        await wait(150);
+        cursor.style.transform = 'translate(-50%,-50%) scale(1)';
+      }
+
+      await wait(300);
+
+      // Move to typography section
+      await moveCursor(cursor, 900, 350, 700);
+      await wait(500);
+
+      // Highlight font previews
+      cursor.style.transform = 'translate(-50%,-50%) scale(1.15)';
+      await wait(400);
+      cursor.style.transform = 'translate(-50%,-50%) scale(1)';
+
+      // Move to logo area
+      await wait(300);
+      await moveCursor(cursor, 1200, 300, 600);
+      await wait(500);
+
+      // Hover effect on logo
+      cursor.style.boxShadow = '0 0 40px rgba(255,100,200,0.6)';
+      await wait(600);
+      cursor.style.boxShadow = '0 0 20px rgba(0,212,255,0.6)';
+
+      // Return to center
+      await moveCursor(cursor, 700, 400, 500);
+      await wait(200);
 
   brand_voice:
     description: "Brand voice and guidelines"
     setup: |
-      window.location.hash = '/brand/voice';
-      await new Promise(r => setTimeout(r, 500));
-    wait_for: ".voice-guidelines"
+      // Navigate to Brand -> Voice
+      const brandLink = document.querySelector('a[href="/brand"]');
+      if (brandLink) brandLink.click();
+      await new Promise(r => setTimeout(r, 600));
+      // Click Voice tab
+      const voiceTab = document.querySelector('a[href="/brand/voice"]');
+      if (voiceTab) {
+        voiceTab.click();
+        await new Promise(r => setTimeout(r, 600));
+      }
+    wait_for: ".card"
+    duration: 8
 
-  # AI Workspace Section
+  # ============================================================
+  # AI WORKSPACE SECTION
+  # ============================================================
   ai_overview:
-    description: "AI Workspace overview"
+    description: "AI Workspace overview with context, sessions, notes, queue"
     setup: |
-      window.location.hash = '/ai-assist';
+      // Navigate to AI Workspace
+      const aiLink = document.querySelector('a[href="/ai-assist"]');
+      if (aiLink) {
+        aiLink.click();
+        await new Promise(r => setTimeout(r, 800));
+      }
+      // Wait for AI data to load
       await new Promise(r => setTimeout(r, 500));
-    wait_for: ".ai-context"
+    wait_for: ".card"
+    duration: 14
+    # DYNAMIC TRACKING pattern - follow the action with energy
+    camera:
+      mode: animated
+      capture_scale: 2.0
+      background: "#0a0a18"
+      shadow: true
+      effects_preset: "immersive"
+      effects:
+        perspective_tilt:
+          enabled: true
+          tilt_x: 2.5
+          tilt_y: 1.5
+          dynamic: true
+          dynamic_intensity: 0.3
+        parallax:
+          enabled: true
+          intensity: 0.35
+          auto_layers: true
+        vignette:
+          intensity: 0.4
+          dynamic: true
+      focus_sequence:
+        # Wide establishing shot
+        - target: "fullpage"
+          zoom: 0.9
+          duration: 0.5
+          easing: "easeOutQuad"
+          hold: 0.4
+        # Quick snap to AI context
+        - target: ".ai-context-card"
+          zoom: 2.3
+          padding: 45
+          duration: 0.6
+          easing: "easeOutExpo"
+          hold: 2.0
+        # Smooth track to sessions
+        - target: ".sessions-panel"
+          zoom: 1.9
+          padding: 50
+          duration: 1.3
+          easing: "easeInOutQuint"
+          hold: 1.6
+        # Punchy move to queue
+        - target: ".task-queue"
+          zoom: 1.7
+          padding: 45
+          duration: 0.7
+          easing: "easeOutBack"
+          hold: 1.8
+        # Dramatic wide pullback
+        - target: "fullpage"
+          zoom: 1.0
+          duration: 1.1
+          easing: "easeInOutQuart"
+    actions: |
+      // AI Workspace comprehensive tour
+      await wait(400);
+
+      // Start at AI context section
+      await moveCursor(cursor, 350, 300, 600);
+      await wait(400);
+
+      // Hover over context card
+      cursor.style.transform = 'translate(-50%,-50%) scale(1.1)';
+      cursor.style.boxShadow = '0 0 30px rgba(147,51,234,0.6)';
+      await wait(600);
+      cursor.style.transform = 'translate(-50%,-50%) scale(1)';
+
+      // Move to sessions section
+      await wait(300);
+      await moveCursor(cursor, 700, 320, 700);
+      await wait(500);
+
+      // Click on a session row
+      cursor.style.transform = 'translate(-50%,-50%) scale(0.9)';
+      await wait(100);
+      cursor.style.transform = 'translate(-50%,-50%) scale(1)';
+      await wait(400);
+
+      // Move to task queue section
+      await moveCursor(cursor, 1100, 350, 800);
+      await wait(500);
+
+      // Hover over queue item
+      cursor.style.transform = 'translate(-50%,-50%) scale(1.15)';
+      await wait(400);
+      cursor.style.transform = 'translate(-50%,-50%) scale(1)';
+
+      // Scroll to show more content
+      const mainContent = document.querySelector('main');
+      if (mainContent) {
+        await smoothScroll(mainContent, 250, 1000);
+        await wait(600);
+      }
+
+      // Move to research/notes section
+      await moveCursor(cursor, 500, 450, 700);
+      await wait(500);
+
+      // Explore decisions area
+      await moveCursor(cursor, 900, 500, 600);
+      cursor.style.transform = 'translate(-50%,-50%) scale(1.1)';
+      await wait(400);
+      cursor.style.transform = 'translate(-50%,-50%) scale(1)';
+
+      // Move to MCP tools section
+      await wait(300);
+      await moveCursor(cursor, 1200, 550, 700);
+      await wait(500);
+
+      // Highlight tools
+      cursor.style.boxShadow = '0 0 35px rgba(0,212,255,0.7)';
+      await wait(600);
+
+      // Scroll back up
+      if (mainContent) {
+        await smoothScroll(mainContent, -250, 800);
+        await wait(400);
+      }
+
+      // Return to center
+      await moveCursor(cursor, 700, 400, 600);
+      cursor.style.boxShadow = '0 0 20px rgba(0,212,255,0.6)';
+      await wait(300);
 
   ai_sessions:
     description: "AI session tracking"
     setup: |
-      window.location.hash = '/ai-assist/sessions';
-      await new Promise(r => setTimeout(r, 500));
-    wait_for: ".session-list"
+      // Navigate to AI Workspace -> Sessions
+      const aiLink = document.querySelector('a[href="/ai-assist"]');
+      if (aiLink) aiLink.click();
+      await new Promise(r => setTimeout(r, 600));
+      // Click Sessions tab
+      const sessionsTab = document.querySelector('a[href="/ai-assist/sessions"]');
+      if (sessionsTab) {
+        sessionsTab.click();
+        await new Promise(r => setTimeout(r, 500));
+      }
+    wait_for: ".card"
+    duration: 8
 
   ai_queue:
     description: "AI task queue"
     setup: |
-      window.location.hash = '/ai-assist/queue';
-      await new Promise(r => setTimeout(r, 500));
-    wait_for: ".task-queue"
+      // Navigate to AI Workspace -> Queue
+      const aiLink = document.querySelector('a[href="/ai-assist"]');
+      if (aiLink) aiLink.click();
+      await new Promise(r => setTimeout(r, 600));
+      // Click Queue tab
+      const queueTab = document.querySelector('a[href="/ai-assist/queue"]');
+      if (queueTab) {
+        queueTab.click();
+        await new Promise(r => setTimeout(r, 500));
+      }
+    wait_for: ".card"
+    duration: 10
 
-# Sequences for multi-state captures (smooth transitions)
+  # ============================================================
+  # VIDEO PRODUCTION SECTION
+  # ============================================================
+  video_production:
+    description: "Video production with scripts and preview"
+    setup: |
+      // Navigate to Video page
+      const videoLink = document.querySelector('a[href="/video"]');
+      if (videoLink) {
+        videoLink.click();
+        await new Promise(r => setTimeout(r, 800));
+      }
+      // Wait for video page to load
+      await new Promise(r => setTimeout(r, 500));
+    wait_for: ".card"
+    duration: 10
+
+# ============================================================
+# SEQUENCES - Multi-state captures with smooth transitions
+# ============================================================
 sequences:
   content_tour:
     description: "Tour through content section"
@@ -140,3 +840,15 @@ sequences:
       - ai_sessions
       - ai_queue
     transition_delay: 1.0
+
+  full_dashboard_tour:
+    description: "Complete dashboard walkthrough"
+    states:
+      - dashboard_overview
+      - build_page
+      - content_documents
+      - content_hierarchy_graph
+      - quality_overview
+      - brand_design
+      - ai_overview
+    transition_delay: 1.5

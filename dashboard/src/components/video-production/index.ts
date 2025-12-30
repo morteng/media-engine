@@ -14,6 +14,10 @@ export { VideoPlayer } from './VideoPlayer';
 export { SceneCard, SceneList, SceneGrid } from './SceneCard';
 export { QualitySelector, QualityToggle } from './QualitySelector';
 export { PropsViewer } from './PropsViewer';
+export { YamlEditor } from './YamlEditor';
 
 // Section components (page-level tabs)
 export * from './sections';
+
+// Review components
+export * from './review';

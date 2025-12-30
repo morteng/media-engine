@@ -14,11 +14,17 @@ import {
   X,
   Loader2,
   CheckCircle,
+  Mic,
+  ChevronRight,
+  RefreshCw,
+  AlertTriangle,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { Spinner } from '@/components/ui';
-import { useVideoScriptsData } from '@/hooks/useVideoApi';
+import { useVideoScriptsData, useVoiceoverStatus, useGenerateVoiceover } from '@/hooks/useVideoApi';
 import { DEFAULT_SCRIPT_TEMPLATE } from '@/api/video';
+import { VoiceoverPanel } from '../VoiceoverPanel';
+import { YamlEditor } from '../YamlEditor';
 import type { VideoScriptItem } from '@/api/types';
 
 export function VideoScripts() {
@@ -27,6 +33,9 @@ export function VideoScripts() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newScriptName, setNewScriptName] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [showVoiceover, setShowVoiceover] = useState(false);
+  const [showRegeneratePrompt, setShowRegeneratePrompt] = useState(false);
+  const [needsRegenerate, setNeedsRegenerate] = useState(false);
 
   const {
     scripts,
@@ -38,6 +47,12 @@ export function VideoScripts() {
     remove,
     duplicate,
   } = useVideoScriptsData(selectedScript);
+
+  // Get voiceover status to show in script list
+  const { data: voiceoverStatus, refetch: refetchVoiceoverStatus } = useVoiceoverStatus(selectedScript);
+
+  // Voiceover generation mutation
+  const generateVoiceover = useGenerateVoiceover();
 
   // Update edit content when script loads
   useEffect(() => {
@@ -198,7 +213,28 @@ export function VideoScripts() {
                   {scriptDetail.parsed?.metadata?.version && (
                     <span className="badge badge-info">v{scriptDetail.parsed.metadata.version}</span>
                   )}
+                  {voiceoverStatus?.has_voiceover && (
+                    <span className="badge badge-success gap-1">
+                      <Mic size={10} />
+                      Audio
+                    </span>
+                  )}
                   <div className="flex-1" />
+                  <button
+                    onClick={() => setShowVoiceover(!showVoiceover)}
+                    className={clsx(
+                      'btn btn-sm gap-2',
+                      showVoiceover ? 'btn-secondary' : 'btn-ghost'
+                    )}
+                    aria-label="Toggle voiceover panel"
+                  >
+                    <Mic size={14} />
+                    Voiceover
+                    <ChevronRight
+                      size={14}
+                      className={clsx('transition-transform', showVoiceover && 'rotate-180')}
+                    />
+                  </button>
                   <button
                     onClick={() => handleDuplicate(selectedScript, scriptDetail.parsed?.title || selectedScript)}
                     className="btn btn-ghost btn-sm gap-2"
@@ -214,7 +250,20 @@ export function VideoScripts() {
                     <Trash2 size={14} />
                   </button>
                   <button
-                    onClick={() => update.mutate({ scriptId: selectedScript, content: editContent })}
+                    onClick={() => {
+                      update.mutate(
+                        { scriptId: selectedScript, content: editContent },
+                        {
+                          onSuccess: () => {
+                            // If voiceover exists, show regenerate prompt
+                            if (voiceoverStatus?.has_voiceover) {
+                              setNeedsRegenerate(true);
+                              setShowRegeneratePrompt(true);
+                            }
+                          },
+                        }
+                      );
+                    }}
                     disabled={update.isPending || editContent === scriptDetail.content}
                     className="btn btn-primary btn-sm gap-2"
                   >
@@ -225,12 +274,67 @@ export function VideoScripts() {
                     )}
                   </button>
                 </div>
-                <textarea
-                  className="textarea textarea-bordered flex-1 w-full font-mono text-sm resize-none"
-                  value={editContent || scriptDetail.content}
-                  onChange={(e) => setEditContent(e.target.value)}
-                  placeholder="Script content..."
-                />
+
+                {/* Regenerate notification */}
+                {needsRegenerate && showRegeneratePrompt && (
+                  <div className="alert alert-warning py-2 mb-4">
+                    <AlertTriangle size={16} />
+                    <span className="text-sm">Script changed. Voiceover may need to be regenerated.</span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          if (!selectedScript) return;
+                          generateVoiceover.mutate(
+                            { scriptId: selectedScript, mode: 'mock', force: true },
+                            {
+                              onSuccess: () => {
+                                setNeedsRegenerate(false);
+                                setShowRegeneratePrompt(false);
+                                refetchVoiceoverStatus();
+                              },
+                            }
+                          );
+                        }}
+                        disabled={generateVoiceover.isPending}
+                        className="btn btn-warning btn-xs gap-1"
+                      >
+                        {generateVoiceover.isPending ? (
+                          <Loader2 size={12} className="animate-spin" />
+                        ) : (
+                          <RefreshCw size={12} />
+                        )}
+                        Regenerate
+                      </button>
+                      <button
+                        onClick={() => setShowRegeneratePrompt(false)}
+                        className="btn btn-ghost btn-xs"
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex flex-1 gap-4 min-h-0">
+                  <YamlEditor
+                    value={editContent || scriptDetail.content}
+                    onChange={setEditContent}
+                    placeholder="Script content..."
+                    className="flex-1 bg-base-200"
+                  />
+                  {showVoiceover && (
+                    <aside className="w-80 flex-shrink-0 bg-base-200 rounded-lg overflow-hidden">
+                      <VoiceoverPanel
+                        scriptId={selectedScript}
+                        className="h-full"
+                        onGenerated={() => {
+                          setNeedsRegenerate(false);
+                          setShowRegeneratePrompt(false);
+                        }}
+                      />
+                    </aside>
+                  )}
+                </div>
               </>
             ) : (
               <div className="flex items-center justify-center h-full text-base-content/60">

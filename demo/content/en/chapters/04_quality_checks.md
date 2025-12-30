@@ -34,6 +34,8 @@ anchor_refs:
 
 Media Engine includes a comprehensive quality assurance system that scans content for common issues before publication.
 
+See [Content Management](02_content_management.md) for document structure basics.
+
 ## Overview
 
 The quality checking system detects:
@@ -85,7 +87,7 @@ The system detects common placeholder patterns:
 | `${...}` | Template variables |
 | `{{...}}` | Template variables |
 
-These are flagged as warnings since they indicate incomplete content.
+The system flags these as warnings since they indicate incomplete content.
 
 ## Encoding Validation
 
@@ -139,10 +141,10 @@ The "This Section Is Empty" header would be flagged.
 
 ## Issue Severity Levels
 
-Issues are categorized by severity:
+The system categorizes issues by severity:
 
-- **Error**: Must be fixed before publishing (encoding corruption)
-- **Warning**: Should be addressed (placeholders, empty sections)
+- **Error**: Fix before publishing (encoding corruption)
+- **Warning**: Address soon (placeholders, empty sections)
 - **Info**: Suggestions for improvement (terminology)
 
 ## Quality Report

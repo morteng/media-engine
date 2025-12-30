@@ -14,7 +14,9 @@ tags:
 
 # Audience Packs
 
-Media Engine can generate curated content packages tailored for specific audiences.
+Media Engine generates curated content packages tailored for specific audiences.
+
+See [Publishing](09_publishing.md) for the base publishing workflow.
 
 ## Overview
 
@@ -114,7 +116,7 @@ if result.items_missing:
         print(f"  - {item}")
 ```
 
-Missing items don't cause failure—packs are generated with available content.
+Missing items don't cause failure—the system generates packs with available content.
 
 ## Custom Pack Types
 

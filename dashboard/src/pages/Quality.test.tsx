@@ -6,7 +6,7 @@ import { SidebarProvider } from '@/contexts/SidebarContext';
 import { SettingsProvider } from '@/contexts/SettingsContext';
 import { Quality } from './Quality';
 
-// Custom render for Quality with proper nested routes
+// Custom render for Quality page
 function renderQuality(initialRoute = '/quality') {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
@@ -18,7 +18,7 @@ function renderQuality(initialRoute = '/quality') {
         <SidebarProvider>
           <MemoryRouter initialEntries={[initialRoute]}>
             <Routes>
-              <Route path="/quality/*" element={<Quality />} />
+              <Route path="/quality" element={<Quality />} />
             </Routes>
           </MemoryRouter>
         </SidebarProvider>
@@ -75,33 +75,22 @@ describe('Quality', () => {
       expect(screen.getByText(/documents/i)).toBeInTheDocument();
     }, { timeout: 5000 });
   });
-});
 
-describe('Quality Tabs', () => {
-  it('renders all sub-tabs', async () => {
+  it('displays expandable analysis sections', async () => {
     renderQuality();
     await waitFor(() => {
-      expect(screen.getByRole('tab', { name: /overview/i })).toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: /analysis/i })).toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: /activity/i })).toBeInTheDocument();
-    });
+      // Check for expandable section titles
+      expect(screen.getByText(/semantic analysis/i)).toBeInTheDocument();
+      expect(screen.getByText(/knowledge graph/i)).toBeInTheDocument();
+      expect(screen.getByText(/readability/i)).toBeInTheDocument();
+      expect(screen.getByText(/freshness/i)).toBeInTheDocument();
+    }, { timeout: 5000 });
   });
 
-  it('renders analysis tab when navigated to /quality/analysis', async () => {
-    renderQuality('/quality/analysis');
+  it('displays activity section', async () => {
+    renderQuality();
     await waitFor(() => {
-      // Analysis tab should be active
-      const analysisTab = screen.getByRole('tab', { name: /analysis/i });
-      expect(analysisTab).toHaveClass('tab-active');
-    });
-  });
-
-  it('renders activity tab when navigated to /quality/activity', async () => {
-    renderQuality('/quality/activity');
-    await waitFor(() => {
-      // Activity tab should be active
-      const activityTab = screen.getByRole('tab', { name: /activity/i });
-      expect(activityTab).toHaveClass('tab-active');
-    });
+      expect(screen.getByText(/recent activity/i)).toBeInTheDocument();
+    }, { timeout: 5000 });
   });
 });

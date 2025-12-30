@@ -146,6 +146,52 @@ video_production:
       crf: 18
       description: "Release quality, larger file"
 
+  camera:
+    description: "Animated camera system for demo recordings with pan/zoom"
+    capture_scale:
+      default: 2.0
+      description: "2x = 4K capture for 1080p output, provides 4x zoom headroom"
+    presets:
+      - guided_tour     # Sequential element walkthrough
+      - quick_overview  # Fast overview with subtle zoom
+      - dramatic_reveal # Start zoomed, reveal full page
+      - follow_flow     # Natural reading flow
+      - focus_main      # Focus on main content
+      - cinematic       # Wide shots, slow movements
+      - scan            # Systematic coverage
+    easings:
+      recommended:
+        - easeInOutCubic  # Smooth acceleration/deceleration
+        - easeOutCubic    # Quick start, gentle stop
+        - easeOutQuart    # Very quick start, smooth stop
+      available:
+        - linear
+        - easeIn
+        - easeOut
+        - easeInOut
+        - easeInCubic
+        - easeOutCubic
+        - easeInOutCubic
+        - easeInQuart
+        - easeOutQuart
+        - easeInOutQuart
+        - easeInExpo
+        - easeOutExpo
+        - easeInOutExpo
+        - easeInBack
+        - easeOutBack
+        - easeInOutBack
+    focus_highlight_styles:
+      - glow        # Pulsing glow effect
+      - outline     # Simple border
+      - dim-others  # Dim everything except focus
+    best_practices:
+      - "Start with fullpage view to establish context"
+      - "Use 2-4 second holds for voiceover sync"
+      - "Stay within 1x-3x zoom for quality"
+      - "Use padding (40px+) around focus elements"
+      - "Match camera moves to narration beats"
+
   dashboard:
     tool: media-engine
     command: "media-engine dashboard"

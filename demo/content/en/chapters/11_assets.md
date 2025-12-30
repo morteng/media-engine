@@ -16,11 +16,13 @@ tags:
 
 # Assets and Fonts
 
-Media Engine manages project assets and can download fonts for offline use.
+Media Engine manages project assets and downloads fonts for offline use.
+
+See [Builders](05_builders.md) for how assets flow into output formats.
 
 ## Asset Structure
 
-Projects organize assets in a dedicated directory:
+Organize your assets in a dedicated directory:
 
 ```
 project/
@@ -213,7 +215,7 @@ if logo.exists():
 
 ## CLI Asset Commands
 
-Assets are bundled during publishing:
+The system bundles assets during publishing:
 
 ```bash
 # Publish with fonts
@@ -222,6 +224,8 @@ media-engine publish
 # Publish without fonts (faster, smaller)
 media-engine publish --no-fonts
 ```
+
+See [Publishing](09_publishing.md) for the full publishing workflow.
 
 ## Font Licensing
 

@@ -32,6 +32,7 @@ from . import (
     translation,
     video_design_knowledge,
     video_producer,
+    video_project,
     video_render,
     webhooks,
 )
@@ -64,6 +65,7 @@ __all__ = [
     "translation",
     "video_design_knowledge",
     "video_producer",
+    "video_project",
     "video_render",
     "webhooks",
 ]

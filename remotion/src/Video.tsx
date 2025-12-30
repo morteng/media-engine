@@ -1279,11 +1279,13 @@ export const Video: React.FC<VideoProps> = ({ title, scenes, theme }) => {
         return <OutroScene scene={currentScene} sceneFrame={sceneFrame} />;
       case 'split':
         // Split-screen with demo video and motion graphics
-        if (currentScene.demo?.clipPath) {
+        // Demo clip can be at scene.demo or scene.visual.demo
+        const demoInfo = currentScene.demo || visual.demo;
+        if (demoInfo?.clipPath) {
           const splitConfig = visual.split_screen || {};
           return (
             <SplitScreenDemo
-              demoClipPath={currentScene.demo.clipPath}
+              demoClipPath={demoInfo.clipPath}
               demoOnLeft={splitConfig.demo_on_left ?? true}
               splitAngle={splitConfig.split_angle ?? 15}
               demoWidth={splitConfig.demo_width ?? 55}
@@ -1304,7 +1306,9 @@ export const Video: React.FC<VideoProps> = ({ title, scenes, theme }) => {
   };
 
   // Check if scene has a demo clip (not for split scenes - they handle their own rendering)
-  const hasDemoClip = currentScene.demo?.clipPath && currentScene.type !== 'split';
+  // Demo clip can be at scene.demo or scene.visual.demo
+  const sceneDemoClip = currentScene.demo?.clipPath || visual.demo?.clipPath;
+  const hasDemoClip = sceneDemoClip && currentScene.type !== 'split';
   const isSplitScene = currentScene.type === 'split';
 
   return (
@@ -1313,7 +1317,7 @@ export const Video: React.FC<VideoProps> = ({ title, scenes, theme }) => {
       {!isSplitScene && (
         hasDemoClip ? (
           <DemoClipBackground
-            clipPath={currentScene.demo!.clipPath}
+            clipPath={sceneDemoClip!}
             sceneFrame={sceneFrame}
           />
         ) : (

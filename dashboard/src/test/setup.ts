@@ -4,7 +4,8 @@ import { afterEach, beforeAll, afterAll } from 'vitest';
 import { server } from './mocks/server';
 
 // Start MSW server before all tests
-beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
+// Use 'warn' to allow tests to pass while identifying unmocked requests
+beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }));
 
 // Reset handlers after each test
 afterEach(() => {

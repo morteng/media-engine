@@ -9,8 +9,7 @@
  * - Compact and expanded modes
  */
 
-import React from 'react';
-import { Clock, MessageSquare, Play, Layers } from 'lucide-react';
+import { Clock, MessageSquare } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { getSceneTypeColors, getSceneTypeBadge } from '@/utils/statusMappings';
 import type { UnifiedScene } from '@/api/types/video';

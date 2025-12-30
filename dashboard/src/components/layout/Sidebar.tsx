@@ -10,38 +10,42 @@ import {
   Settings,
   X,
   Film,
+  Camera,
+  Play,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { NavTooltip } from '@/components/ui/InfoTooltip';
 
-// Streamlined navigation structure
+// Streamlined navigation structure with descriptions for tooltips
 const navSections = [
   {
     title: 'Overview',
     items: [
-      { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
-      { path: '/build', icon: Hammer, label: 'Build & Publish' },
+      { path: '/', icon: LayoutDashboard, label: 'Dashboard', description: 'Project overview and health metrics' },
+      { path: '/build', icon: Hammer, label: 'Build & Publish', description: 'Build outputs and publish deliverables' },
     ],
   },
   {
     title: 'Content',
     items: [
-      { path: '/content', icon: FileText, label: 'Content' },
-      { path: '/quality', icon: Shield, label: 'Quality' },
-      { path: '/brand', icon: Palette, label: 'Brand' },
+      { path: '/content', icon: FileText, label: 'Content', description: 'Browse and edit documents' },
+      { path: '/quality', icon: Shield, label: 'Quality', description: 'Quality analysis and validation' },
+      { path: '/brand', icon: Palette, label: 'Brand', description: 'Design system and brand guidelines' },
     ],
   },
   {
     title: 'Production',
     items: [
-      { path: '/video', icon: Film, label: 'Video Production' },
+      { path: '/video', icon: Film, label: 'Video Production', description: 'Create videos from YAML scripts' },
+      { path: '/demos', icon: Camera, label: 'Demo Recorder', description: 'Configure camera animations for demos' },
+      { path: '/remotion', icon: Play, label: 'Remotion Preview', description: 'Real-time camera animation preview' },
     ],
   },
   {
     title: 'Tools',
     items: [
-      { path: '/ai-assist', icon: Sparkles, label: 'AI Workspace' },
-      { path: '/settings', icon: Settings, label: 'Settings' },
+      { path: '/ai-assist', icon: Sparkles, label: 'AI Workspace', description: 'AI-assisted content operations' },
+      { path: '/settings', icon: Settings, label: 'Settings', description: 'Project and dashboard settings' },
     ],
   },
 ];
@@ -63,7 +67,9 @@ export function Sidebar() {
     <NavTooltip
       key={item.path}
       label={item.label}
-      show={isCollapsed && !isMobile}
+      description={item.description}
+      show={true}
+      compact={!isCollapsed || isMobile}
     >
       <NavLink
         to={item.path}

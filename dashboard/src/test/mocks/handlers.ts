@@ -597,4 +597,36 @@ export const handlers = [
   })),
   http.post('/api/video/preview/start', () => HttpResponse.json({ success: true, message: 'Server starting' })),
   http.post('/api/video/voiceover/preview', () => HttpResponse.json({ audio_url: '/audio/preview.mp3' })),
+
+  // Camera System
+  http.get('/api/video/camera/presets', () => HttpResponse.json({
+    presets: [
+      { id: 'guided_tour', name: 'Guided Tour', description: 'Sequential walkthrough', pattern: 'sequential', default_zoom: 2.0, default_duration: 1.2, default_hold: 1.5, default_easing: 'easeInOutCubic' },
+      { id: 'quick_overview', name: 'Quick Overview', description: 'Fast overview', pattern: 'sequential', default_zoom: 1.3, default_duration: 0.6, default_hold: 0.8, default_easing: 'easeOutQuart' },
+      { id: 'dramatic_reveal', name: 'Dramatic Reveal', description: 'Zoom out reveal', pattern: 'zoom_out', default_zoom: 1.0, default_duration: 2.0, default_hold: 2.0, default_easing: 'easeOutExpo', start_zoom: 3.0, end_zoom: 1.0 },
+      { id: 'cinematic', name: 'Cinematic', description: 'Slow dramatic movements', pattern: 'sequential', default_zoom: 2.8, default_duration: 2.0, default_hold: 2.5, default_easing: 'easeInOutQuart' },
+    ],
+    count: 4,
+  })),
+  http.get('/api/video/camera/easings', () => HttpResponse.json({
+    easings: [
+      { name: 'linear', recommended: false },
+      { name: 'easeInOutCubic', recommended: true },
+      { name: 'easeOutCubic', recommended: true },
+      { name: 'easeOutQuart', recommended: true },
+      { name: 'easeOutExpo', recommended: false },
+      { name: 'easeInOutSine', recommended: false },
+    ],
+    count: 6,
+    recommended: 'easeInOutCubic',
+  })),
+  http.get('/api/video/effects/presets', () => HttpResponse.json({
+    presets: [
+      { id: 'cinematic', name: 'Cinematic', description: 'Vignette + Dynamic Tilt for feature showcases', vignette_enabled: true, shake_enabled: false, perspective_enabled: true, depth_of_field_enabled: false, motion_blur_enabled: false },
+      { id: 'documentary', name: 'Documentary', description: 'Light Shake + Subtle Vignette for authentic feel', vignette_enabled: true, shake_enabled: true, perspective_enabled: false, depth_of_field_enabled: false, motion_blur_enabled: false },
+      { id: 'professional', name: 'Professional', description: 'Light Vignette only for clean corporate content', vignette_enabled: true, shake_enabled: false, perspective_enabled: false, depth_of_field_enabled: false, motion_blur_enabled: false },
+      { id: 'minimal', name: 'Minimal', description: 'No effects for raw footage', vignette_enabled: false, shake_enabled: false, perspective_enabled: false, depth_of_field_enabled: false, motion_blur_enabled: false },
+    ],
+    count: 4,
+  })),
 ];

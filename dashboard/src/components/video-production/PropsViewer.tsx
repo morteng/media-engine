@@ -99,7 +99,7 @@ interface TimelineVizProps {
   fps: number;
 }
 
-function TimelineVisualization({ scenes, totalFrames, fps }: TimelineVizProps) {
+function TimelineVisualization({ scenes, totalFrames, fps: _fps }: TimelineVizProps) {
   return (
     <div className="space-y-2">
       {/* Visual timeline bar */}

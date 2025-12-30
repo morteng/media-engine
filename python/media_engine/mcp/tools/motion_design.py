@@ -95,6 +95,48 @@ def register_motion_design_tools(mcp, server_instance):
                 "usage": "Use for product demos with context overlay",
             },
             {
+                "id": "CameraCanvas",
+                "name": "Camera Canvas",
+                "category": "camera",
+                "description": "Core camera transform component for pan/zoom over high-res screenshots",
+                "props": ["imagePath", "captureWidth", "captureHeight", "keyframes", "background", "shadow"],
+                "usage": "Use for animated demo scenes with CSS selector-based focus targeting",
+            },
+            {
+                "id": "AnimatedDemoScene",
+                "name": "Animated Demo Scene",
+                "category": "camera",
+                "description": "Scene wrapper with camera animation, voiceover captions, and focus highlights",
+                "props": ["demo", "state", "cameraData", "text", "showCaptions", "showFocusHighlight"],
+                "usage": "Use for demo recordings with professional camera movements",
+            },
+            {
+                "id": "StaticDemoScene",
+                "name": "Static Demo Scene",
+                "category": "camera",
+                "description": "Static demo image with optional Ken Burns effect",
+                "props": ["imagePath", "text", "showCaptions", "background", "kenBurns"],
+                "usage": "Use for simple demo screenshots with subtle motion",
+            },
+            {
+                "id": "FocusHighlight",
+                "name": "Focus Highlight",
+                "category": "camera",
+                "description": "Highlight overlay for target elements during camera animation",
+                "props": ["bounds", "style", "color", "cameraState"],
+                "styles": ["glow", "outline", "dim-others"],
+                "usage": "Use to draw attention to specific UI elements during demos",
+            },
+            {
+                "id": "CaptionOverlay",
+                "name": "Caption Overlay",
+                "category": "camera",
+                "description": "Voiceover text overlay with animated fade",
+                "props": ["text", "position", "fontSize", "backgroundStyle"],
+                "positions": ["bottom", "top", "center"],
+                "usage": "Use for displaying voiceover text synced to narration",
+            },
+            {
                 "id": "ComparisonView",
                 "name": "Comparison View",
                 "category": "layout",
@@ -129,7 +171,7 @@ def register_motion_design_tools(mcp, server_instance):
         return json.dumps({
             "components": components,
             "count": len(components),
-            "categories": ["title", "text", "layout", "data", "background", "transition"],
+            "categories": ["title", "text", "layout", "data", "background", "transition", "camera"],
             "backgrounds": list(BACKGROUND_CATALOG.keys()),
             "transitions": list(TRANSITION_CATALOG.keys()),
             "text_effects": list(TEXT_EFFECT_CATALOG.keys()),
@@ -493,6 +535,8 @@ def register_motion_design_tools(mcp, server_instance):
         """
         from .video_design_knowledge import (
             BACKGROUND_CATALOG,
+            CAMERA_EASING_CATALOG,
+            CAMERA_MOVEMENT_CATALOG,
             MOTION_DESIGN_PRINCIPLES,
             SCENE_TYPE_RECOMMENDATIONS,
             TEXT_EFFECT_CATALOG,
@@ -506,6 +550,8 @@ def register_motion_design_tools(mcp, server_instance):
                 "transitions": list(TRANSITION_CATALOG.keys()),
                 "backgrounds": list(BACKGROUND_CATALOG.keys()),
                 "text_effects": list(TEXT_EFFECT_CATALOG.keys()),
+                "camera_movements": list(CAMERA_MOVEMENT_CATALOG.keys()),
+                "camera_easings": list(CAMERA_EASING_CATALOG.keys()),
             }, indent=2)
 
         if topic in MOTION_DESIGN_PRINCIPLES:
@@ -538,7 +584,179 @@ def register_motion_design_tools(mcp, server_instance):
                 "recommendations": SCENE_TYPE_RECOMMENDATIONS,
             }, indent=2)
 
+        if topic == "camera":
+            return json.dumps({
+                "topic": "camera",
+                "principles": MOTION_DESIGN_PRINCIPLES.get("camera", {}),
+                "movements": CAMERA_MOVEMENT_CATALOG,
+                "easings": CAMERA_EASING_CATALOG,
+            }, indent=2)
+
         return json.dumps({
             "error": f"Unknown topic: {topic}",
-            "available_topics": ["timing", "composition", "transitions", "pacing", "typography", "color", "backgrounds", "text_effects", "scenes", "all"],
+            "available_topics": ["timing", "composition", "transitions", "pacing", "typography", "color", "backgrounds", "text_effects", "scenes", "camera", "all"],
         }, indent=2)
+
+    @mcp.tool()
+    async def get_camera_presets() -> str:
+        """
+        List available camera animation presets for demo recordings.
+
+        Returns:
+            JSON with preset catalog including focus sequences and use cases
+        """
+        from media_engine.video.camera_presets import CAMERA_PRESETS
+
+        presets = []
+        for name, preset in CAMERA_PRESETS.items():
+            presets.append({
+                "name": name,
+                "description": preset.description,
+                "selectors": preset.target_selectors,
+                "style": {
+                    "base_zoom": preset.base_zoom,
+                    "zoom_range": preset.zoom_range,
+                    "hold_time": preset.hold_time,
+                    "transition_time": preset.transition_time,
+                    "easing": preset.easing,
+                },
+                "use_case": _get_preset_use_case(name),
+            })
+
+        return json.dumps({
+            "presets": presets,
+            "count": len(presets),
+            "usage": "Add 'preset: <name>' to camera config in scene visual block",
+            "easing_options": [
+                "linear", "easeIn", "easeOut", "easeInOut",
+                "easeInCubic", "easeOutCubic", "easeInOutCubic",
+                "easeInQuart", "easeOutQuart", "easeInOutQuart",
+                "easeInExpo", "easeOutExpo", "easeInOutExpo",
+                "easeInBack", "easeOutBack", "easeInOutBack",
+            ],
+        }, indent=2)
+
+    @mcp.tool()
+    async def suggest_camera_motion(
+        scene_purpose: str,
+        target_elements: str,
+        duration: float = 10.0,
+        energy_level: str = "medium",
+    ) -> str:
+        """
+        Get context-aware camera motion recommendations for a demo scene.
+
+        Args:
+            scene_purpose: Purpose of the scene (intro, feature_demo, walkthrough, overview, outro)
+            target_elements: JSON array of CSS selectors to highlight (e.g., '["#sidebar", ".main-content"]')
+            duration: Scene duration in seconds
+            energy_level: Desired energy (low, medium, high)
+
+        Returns:
+            JSON with camera motion recommendations and YAML config
+        """
+        from media_engine.video.camera_presets import CAMERA_PRESETS
+
+        try:
+            elements = json.loads(target_elements)
+        except json.JSONDecodeError:
+            elements = [e.strip() for e in target_elements.split(",")]
+
+        # Match purpose to preset
+        purpose_presets = {
+            "intro": ["dramatic_reveal", "cinematic"],
+            "feature_demo": ["guided_tour", "focus_main"],
+            "walkthrough": ["guided_tour", "follow_flow"],
+            "overview": ["quick_overview", "scan"],
+            "outro": ["cinematic", "quick_overview"],
+        }
+
+        recommended_presets = purpose_presets.get(scene_purpose, ["guided_tour"])
+
+        # Calculate timing based on elements and duration
+        num_elements = len(elements) + 1  # +1 for fullpage
+        time_per_element = duration / num_elements
+        hold_time = max(1.0, time_per_element * 0.6)
+        transition_time = max(0.5, time_per_element * 0.4)
+
+        # Energy affects zoom and speed
+        energy_config = {
+            "low": {"max_zoom": 1.8, "easing": "easeInOutCubic", "transition_mult": 1.5},
+            "medium": {"max_zoom": 2.5, "easing": "easeInOutCubic", "transition_mult": 1.0},
+            "high": {"max_zoom": 3.5, "easing": "easeOutBack", "transition_mult": 0.7},
+        }
+        energy = energy_config.get(energy_level, energy_config["medium"])
+
+        # Build focus sequence
+        focus_sequence = [
+            {
+                "target": "fullpage",
+                "zoom": 1.0,
+                "duration": transition_time * energy["transition_mult"],
+                "easing": energy["easing"],
+            }
+        ]
+
+        for i, selector in enumerate(elements):
+            zoom = min(energy["max_zoom"], 1.5 + (i * 0.3))
+            focus_sequence.append({
+                "target": selector,
+                "zoom": round(zoom, 1),
+                "padding": 40,
+                "duration": round(transition_time * energy["transition_mult"], 2),
+                "easing": energy["easing"],
+                "hold": round(hold_time, 1),
+            })
+
+        # Generate YAML config
+        yaml_config = f"""visual:
+  camera:
+    mode: animated
+    capture_scale: 2.0
+    background: "#1a1a2e"
+    shadow: true
+    focus_sequence:"""
+
+        for step in focus_sequence:
+            yaml_config += f"""
+      - target: "{step['target']}"
+        zoom: {step['zoom']}"""
+            if step.get("padding"):
+                yaml_config += f"""
+        padding: {step['padding']}"""
+            yaml_config += f"""
+        duration: {step['duration']}
+        easing: "{step['easing']}" """
+            if step.get("hold"):
+                yaml_config += f"""
+        hold: {step['hold']}"""
+
+        return json.dumps({
+            "scene_purpose": scene_purpose,
+            "target_elements": elements,
+            "duration": duration,
+            "energy_level": energy_level,
+            "recommended_presets": recommended_presets,
+            "focus_sequence": focus_sequence,
+            "yaml_config": yaml_config,
+            "tips": [
+                "Start with fullpage view to establish context",
+                "Use padding to avoid cutting off element edges",
+                "Hold time should match voiceover pacing",
+                f"At {energy_level} energy, max zoom is {energy['max_zoom']}x",
+            ],
+        }, indent=2)
+
+
+def _get_preset_use_case(preset_name: str) -> str:
+    """Get use case description for a camera preset."""
+    use_cases = {
+        "guided_tour": "Feature demos with sequential element walkthrough",
+        "quick_overview": "Introduction sections with subtle zoom movements",
+        "dramatic_reveal": "Opening scenes that start zoomed and reveal full page",
+        "follow_flow": "Content navigation following natural reading patterns",
+        "focus_main": "Hero sections focusing on main content area",
+        "cinematic": "Atmospheric intros with wide shots and slow movements",
+        "scan": "Full page reviews with systematic coverage",
+    }
+    return use_cases.get(preset_name, "General purpose camera motion")

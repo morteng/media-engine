@@ -12,7 +12,7 @@ import * as React from 'react';
 import clsx from 'clsx';
 
 export interface CheckboxProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'size'> {
   /** Visual variant */
   variant?: 'default' | 'primary' | 'secondary' | 'accent' | 'success' | 'warning' | 'error';
   /** Checkbox size */
