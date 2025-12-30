@@ -148,7 +148,7 @@ If you don't provide a schema, the system uses a default:
 
 The system checks:
 
-1. **Internal links**: Markdown links to other documents resolve correctly
+1. **Internal links**: Markdown links to other documents work correctly
 2. **Image references**: Image embeds reference files that exist
 3. **Document dependencies**: `depends_on` entries are valid
 4. **Citations**: Numbered references like `[1]` have matching entries

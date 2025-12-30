@@ -135,7 +135,7 @@ media-engine provenance queue
 
 - [Natural History Museum - Capybara Facts](https://www.nhm.ac.uk/discover/things-you-might-not-know-about-capybaras.html)
 - [The Nature Conservancy - Meet the Capybara](https://blog.nature.org/2020/02/11/capybara-meet-the-worlds-largest-rodent/)
-- [World Wildlife Fund - Capybara Facts](https://www.worldwildlife.org/stories/are-capybaras-rodents-and-5-other-capybara-facts)
+- [WWF Canada - Capybara Facts](https://wwf.ca/stories/eight-facts-about-capybara/)
 
 ---
 

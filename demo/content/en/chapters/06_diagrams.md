@@ -18,14 +18,16 @@ Media Engine generates professional diagrams from YAML definitions. You write si
 
 ## Overview
 
-The diagram system renders box-and-arrow diagrams for technical documentation:
+The diagram system renders box-and-arrow diagrams for technical documentation. You define boxes and arrows in YAML, and the generator produces PNG or SVG outputs in both light and dark modes.
+
+Use diagrams for:
 
 - Architecture diagrams
 - Flow charts
 - System overviews
 - Component relationships
 
-See [Builders](05_builders.md) for how diagrams integrate with other output formats.
+The generator automatically applies your brand colors and fonts. See [Builders](05_builders.md) for how diagrams integrate with other output formats.
 
 ## YAML Definition Format
 
@@ -138,7 +140,7 @@ The diagram generator applies your theme colors automatically:
 - **Dark mode**: Reads `theme.dark.background` and `theme.dark.text`
 - **Accent colors**: Styles arrow heads and highlights
 
-The generator creates both light and dark versions for every diagram. See [Theming](07_theming.md) for theme configuration.
+The generator creates both light and dark versions for every diagram. Theme colors are configured in `brand.yaml`.
 
 ## Styling Options
 

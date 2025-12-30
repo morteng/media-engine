@@ -109,4 +109,4 @@ Remotion components handle video composition:
 | Cache | Avoid regeneration | `.cache/voiceover/` |
 | Remotion | Video rendering | TypeScript components in `remotion/` |
 
-See [Voiceover](10_voiceover.md) for detailed TTS configuration and [GitHub Showcase](16_github_showcase.md) for a complete video example.
+See [GitHub Showcase](16_github_showcase.md) for a complete video example with voiceover configuration.

@@ -13,13 +13,13 @@ tags:
 
 # GitHub README Showcase
 
-This chapter describes the showcase content we built for the Media Engine GitHub README. The showcase demonstrates all major features through video scripts, diagrams, interactive demos, presentations, and data spreadsheets.
+This chapter describes the showcase content we built for the Media Engine GitHub README. We designed this showcase to show all major features through video scripts, diagrams, interactive demos, presentations, and data spreadsheets.
 
 See [Video Production](03_video_production.md) for how to build these videos.
 
 ## Overview
 
-The showcase package includes:
+We assembled the showcase package with the following components. Each component serves a specific purpose in demonstrating Media Engine capabilities:
 
 | Asset Type | File | Duration/Size | Purpose |
 |------------|------|---------------|---------|
@@ -306,7 +306,7 @@ We wrote the voiceover text for:
 - Natural rhythm
 - Emphasis on key terms (Media Engine, automatically, powerful)
 
-See [Voiceover](10_voiceover.md) for TTS configuration details.
+Voiceover settings are configured in `project.yaml` and script YAML files.
 
 ## Design System
 
@@ -324,7 +324,7 @@ typography:
   code: "JetBrains Mono"
 ```
 
-See [Theming](07_theming.md) for how to customize your design system.
+Design systems are configured in `brand.yaml` at the project root.
 
 ## Customization
 
@@ -332,7 +332,7 @@ Adapt the showcase for your own project:
 
 1. **Branding**: Update `theme.yaml` colors and fonts
 2. **Voice**: Set `voice_id` in project configuration
-3. **Content**: Modify scene text and visuals
+3. **Content**: Change scene text and visuals
 4. **Statistics**: Update stat values in closing scenes
 5. **Links**: Change GitHub and documentation URLs
 
