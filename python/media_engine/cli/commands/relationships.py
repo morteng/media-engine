@@ -45,6 +45,10 @@ def cmd_relationships(args):
             _sync(project, registry, args)
         elif args.relationships_command == "anchors":
             _show_anchors(project, registry, args)
+        elif args.relationships_command == "orphans":
+            _show_orphans(project, registry, registry_manager, args)
+        elif args.relationships_command == "assets":
+            _show_assets(project, registry, registry_manager, args)
         else:
             _show_status(project, registry, args)
     else:
@@ -343,6 +347,116 @@ def _generate_mermaid(registry, edge_types=None) -> str:
             lines.append(f"    {source} {arrow}|{edge_type}| {target}")
 
     return "\n".join(lines)
+
+
+def _show_orphans(project, registry, registry_manager, args):
+    """Show orphaned assets (not referenced by any document)."""
+    orphans = registry_manager.get_orphan_assets()
+    missing = registry_manager.get_missing_assets()
+
+    if hasattr(args, "json") and args.json:
+        output = {
+            "orphans": [{"path": str(n.path), "type": n.doc_type} for n in orphans],
+            "missing": [{"path": str(p), "referenced_by": str(e.source)} for p, e in missing],
+        }
+        print(json.dumps(output, indent=2))
+        return
+
+    # Show orphaned assets
+    if orphans:
+        console.print(Panel(f"[yellow]Found {len(orphans)} orphaned assets[/yellow]", expand=False))
+        table = Table(box=box.ROUNDED)
+        table.add_column("Asset", style="cyan")
+        table.add_column("Type", style="dim")
+        table.add_column("Size", justify="right")
+
+        for node in orphans:
+            size = "-"
+            if node.path.exists():
+                size_bytes = node.path.stat().st_size
+                if size_bytes > 1024 * 1024:
+                    size = f"{size_bytes / (1024 * 1024):.1f} MB"
+                elif size_bytes > 1024:
+                    size = f"{size_bytes / 1024:.1f} KB"
+                else:
+                    size = f"{size_bytes} B"
+            table.add_row(str(node.path.name), node.doc_type, size)
+
+        console.print(table)
+        console.print("\n[dim]These assets are not referenced by any document.[/dim]")
+        console.print("[dim]Use --cleanup to remove them (dry run by default).[/dim]")
+    else:
+        console.print("[green]No orphaned assets found.[/green]")
+
+    # Show missing assets
+    if missing:
+        console.print(f"\n[red]Found {len(missing)} missing assets:[/red]")
+        for path, edge in missing:
+            console.print(f"  [red]✗[/red] {path.name}")
+            console.print(f"    [dim]Referenced by: {edge.source.name}[/dim]")
+
+    # Handle cleanup flag
+    if hasattr(args, "cleanup") and args.cleanup:
+        dry_run = not getattr(args, "force", False)
+        cleaned = registry_manager.cleanup_orphans(dry_run=dry_run)
+        if dry_run:
+            console.print(f"\n[yellow]Would remove {len(cleaned)} orphan assets (use --force to delete)[/yellow]")
+        else:
+            console.print(f"\n[green]Removed {len(cleaned)} orphan assets[/green]")
+
+
+def _show_assets(project, registry, registry_manager, args):
+    """Show all tracked assets and their usage."""
+    usage = registry_manager.get_asset_usage()
+
+    if hasattr(args, "json") and args.json:
+        output = {
+            path: [str(p) for p in users]
+            for path, users in usage.items()
+        }
+        print(json.dumps(output, indent=2))
+        return
+
+    if not usage:
+        console.print("[dim]No assets tracked yet. Run 'relationships refresh' first.[/dim]")
+        return
+
+    console.print(Panel(f"[bold]Tracked Assets: {len(usage)}[/bold]", expand=False))
+
+    # Group by type
+    by_type = {}
+    for path_str, users in usage.items():
+        path = Path(path_str)
+        suffix = path.suffix.lower()
+        asset_type = {
+            ".mp4": "video",
+            ".webm": "video",
+            ".mov": "video",
+            ".png": "image",
+            ".jpg": "image",
+            ".jpeg": "image",
+            ".svg": "image",
+            ".gif": "image",
+            ".mp3": "audio",
+            ".wav": "audio",
+        }.get(suffix, "other")
+
+        if asset_type not in by_type:
+            by_type[asset_type] = []
+        by_type[asset_type].append((path, users))
+
+    for asset_type, assets in sorted(by_type.items()):
+        console.print(f"\n[bold]{asset_type.upper()}[/bold] ({len(assets)} assets)")
+        table = Table(box=box.SIMPLE)
+        table.add_column("Asset", style="cyan")
+        table.add_column("Used By", justify="right")
+        table.add_column("Status")
+
+        for path, users in sorted(assets, key=lambda x: -len(x[1])):
+            status = "[green]✓[/green]" if path.exists() else "[red]✗ missing[/red]"
+            table.add_row(path.name, str(len(users)), status)
+
+        console.print(table)
 
 
 __all__ = ["cmd_relationships"]

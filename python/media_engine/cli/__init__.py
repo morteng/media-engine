@@ -540,6 +540,14 @@ def main():
     rel_anchors = rel_subparsers.add_parser("anchors", help="Show consistency anchors")
     rel_anchors.add_argument("--json", action="store_true", help="Output as JSON")
 
+    rel_orphans = rel_subparsers.add_parser("orphans", help="Show orphaned assets")
+    rel_orphans.add_argument("--json", action="store_true", help="Output as JSON")
+    rel_orphans.add_argument("--cleanup", action="store_true", help="Clean up orphans (dry run)")
+    rel_orphans.add_argument("--force", action="store_true", help="Actually delete orphans")
+
+    rel_assets = rel_subparsers.add_parser("assets", help="Show all tracked assets")
+    rel_assets.add_argument("--json", action="store_true", help="Output as JSON")
+
     # publications (deliverable management)
     from .commands.publications import add_publications_parser
     add_publications_parser(subparsers)

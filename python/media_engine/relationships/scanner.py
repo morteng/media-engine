@@ -1,20 +1,32 @@
 """
 Relationship Scanner for Media Engine
 
-Scans documents to detect all types of relationships:
+Comprehensive scanning of ALL content types:
+- Markdown documents (chapters, research)
+- YAML video scripts → demo clips, voiceover files
+- Demo definitions → states, captured videos
+- Props.json → demo clip paths
+- Publications → components, assets
+- Slides → images, diagrams
+- Diagrams → generated outputs
+
+Tracks relationships:
 - Structural hierarchy (parent_document)
 - Semantic derivation (derived_from)
 - Translation (source_document)
 - Content references (markdown links)
-- Assets (images, files)
+- Assets (images, video clips, audio)
 - Anchors (consistency constraints)
 - Explicit dependencies (depends_on)
 """
 
+import json
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
+
+import yaml
 
 from ..core import compute_document_hash, compute_file_hash
 from .types import DocumentNode, EdgeType, RelationshipEdge
@@ -39,18 +51,53 @@ class RelationshipScanner:
         self.content_dir = project.content_dir
 
     def full_scan(self):
-        """Scan all documents and populate the registry."""
-        # Scan all languages
+        """Scan ALL content types and populate the registry."""
+        # Scan all languages - markdown chapters
         for lang in self.project.languages:
             chapters = self.project.list_chapters(lang)
             for chapter_path in chapters:
                 self.scan_document(chapter_path)
 
-        # Also scan any documents in research, scripts, etc.
-        for pattern in ["research/**/*.md", "scripts/**/*.yaml", "diagrams/**/*.yaml"]:
+        # Scan markdown in research
+        for pattern in ["research/**/*.md"]:
             for doc_path in self.content_dir.glob(pattern):
                 if doc_path.is_file():
                     self.scan_document(doc_path)
+
+        # Scan all YAML configurations
+        for lang in self.project.languages:
+            lang_dir = self.content_dir / lang
+
+            # Video scripts
+            for script_path in lang_dir.glob("scripts/*.yaml"):
+                self._scan_video_script(script_path)
+
+            # Demo definitions
+            for demo_path in lang_dir.glob("demos/*.yaml"):
+                self._scan_demo_definition(demo_path)
+
+            # Publications
+            for pub_path in lang_dir.glob("publications/*.yaml"):
+                self._scan_publication(pub_path)
+
+            # Slides
+            for slide_path in lang_dir.glob("slides/*.yaml"):
+                self._scan_slides(slide_path)
+
+            # Diagrams (YAML and D2)
+            for diag_path in lang_dir.glob("diagrams/*.yaml"):
+                self._scan_diagram(diag_path)
+            for diag_path in lang_dir.glob("diagrams/*.d2"):
+                self._scan_d2_diagram(diag_path)
+
+        # Scan props.json files in remotion
+        remotion_dir = self.project.root / "remotion"
+        if remotion_dir.exists():
+            for props_path in remotion_dir.glob("**/props.json"):
+                self._scan_props_json(props_path)
+
+        # Track all assets to detect orphans
+        self._scan_all_assets()
 
     def scan_document(self, doc_path: Path):
         """
@@ -383,6 +430,435 @@ class RelationshipScanner:
             else:
                 # Document was deleted
                 self.registry.remove_node(doc_path)
+
+    # =========================================================================
+    # YAML Configuration Scanners
+    # =========================================================================
+
+    def _scan_video_script(self, script_path: Path):
+        """
+        Scan a video script YAML for demo clip references.
+
+        Detects:
+        - demo.clipPath references to video files
+        - voiceover audio references
+        - source document references
+        """
+        try:
+            with open(script_path) as f:
+                script = yaml.safe_load(f)
+        except Exception as e:
+            print(f"Warning: Could not load video script {script_path}: {e}")
+            return
+
+        if not script:
+            return
+
+        # Create node for the script
+        node = DocumentNode(
+            path=script_path,
+            title=script.get("title", script_path.stem),
+            language=self._detect_language(script_path),
+            doc_type="video_script",
+            content_hash=compute_file_hash(script_path),
+            last_modified=datetime.now(),
+        )
+        self.registry.add_node(node)
+        self.registry.remove_edges(script_path)
+
+        # Scan scenes for demo clips
+        scenes = script.get("scenes", [])
+        demo_base = script.get("demo_base_path", "demos/")
+
+        for scene in scenes:
+            demo = scene.get("demo", {})
+            clip_path = demo.get("clipPath")
+
+            if clip_path:
+                # Resolve clip path relative to remotion/public or project root
+                target = self._resolve_video_clip(script_path, clip_path, demo_base)
+                if target:
+                    edge = RelationshipEdge(
+                        source=script_path,
+                        target=target,
+                        edge_type=EdgeType.USES_ASSET,
+                        context=f"Scene: {scene.get('id', 'unknown')}",
+                        target_hash=compute_file_hash(target) if target.exists() else None,
+                        recorded_at=datetime.now(),
+                    )
+                    self.registry.add_edge(edge, save=False)
+
+        # Check for source documents reference
+        source_docs = script.get("source_documents", [])
+        for source in source_docs:
+            target = self._resolve_path(script_path, source)
+            if target:
+                edge = RelationshipEdge(
+                    source=script_path,
+                    target=target,
+                    edge_type=EdgeType.DEPENDS_ON,
+                    context="Source document",
+                    recorded_at=datetime.now(),
+                )
+                self.registry.add_edge(edge, save=False)
+
+    def _scan_demo_definition(self, demo_path: Path):
+        """
+        Scan a demo definition YAML for state and video mappings.
+
+        Detects:
+        - States that should have corresponding video clips
+        - Sequences of states
+        """
+        try:
+            with open(demo_path) as f:
+                demo = yaml.safe_load(f)
+        except Exception as e:
+            print(f"Warning: Could not load demo definition {demo_path}: {e}")
+            return
+
+        if not demo:
+            return
+
+        # Create node for the demo definition
+        node = DocumentNode(
+            path=demo_path,
+            title=demo.get("title", demo_path.stem),
+            language=self._detect_language(demo_path),
+            doc_type="demo_definition",
+            content_hash=compute_file_hash(demo_path),
+            last_modified=datetime.now(),
+        )
+        self.registry.add_node(node)
+        self.registry.remove_edges(demo_path)
+
+        # Scan states for expected video outputs
+        states = demo.get("states", {})
+        for state_id, state_config in states.items():
+            # Each state may generate a video clip
+            expected_clip = self.project.root / "demos" / f"{state_id}.mp4"
+            if expected_clip.exists():
+                edge = RelationshipEdge(
+                    source=demo_path,
+                    target=expected_clip,
+                    edge_type=EdgeType.GENERATES,
+                    context=f"State: {state_id}",
+                    target_hash=compute_file_hash(expected_clip),
+                    recorded_at=datetime.now(),
+                )
+                self.registry.add_edge(edge, save=False)
+
+    def _scan_publication(self, pub_path: Path):
+        """
+        Scan a publication YAML for component references.
+
+        Detects:
+        - Component source paths
+        - Asset references
+        """
+        try:
+            with open(pub_path) as f:
+                pub = yaml.safe_load(f)
+        except Exception as e:
+            print(f"Warning: Could not load publication {pub_path}: {e}")
+            return
+
+        if not pub:
+            return
+
+        # Create node
+        node = DocumentNode(
+            path=pub_path,
+            title=pub.get("title", pub_path.stem),
+            language=self._detect_language(pub_path),
+            doc_type="publication",
+            content_hash=compute_file_hash(pub_path),
+            last_modified=datetime.now(),
+        )
+        self.registry.add_node(node)
+        self.registry.remove_edges(pub_path)
+
+        # Scan parts and components
+        parts = pub.get("parts", [])
+        for part in parts:
+            components = part.get("components", [])
+            for comp in components:
+                source = comp.get("source")
+                if source:
+                    target = self._resolve_path(pub_path, source)
+                    if target:
+                        edge = RelationshipEdge(
+                            source=pub_path,
+                            target=target,
+                            edge_type=EdgeType.DEPENDS_ON,
+                            context=f"Component: {comp.get('type', 'unknown')}",
+                            target_hash=compute_file_hash(target) if target.exists() else None,
+                            recorded_at=datetime.now(),
+                        )
+                        self.registry.add_edge(edge, save=False)
+
+    def _scan_slides(self, slide_path: Path):
+        """
+        Scan a slides YAML for image and asset references.
+        """
+        try:
+            with open(slide_path) as f:
+                slides = yaml.safe_load(f)
+        except Exception as e:
+            print(f"Warning: Could not load slides {slide_path}: {e}")
+            return
+
+        if not slides:
+            return
+
+        # Create node
+        node = DocumentNode(
+            path=slide_path,
+            title=slides.get("title", slide_path.stem),
+            language=self._detect_language(slide_path),
+            doc_type="slides",
+            content_hash=compute_file_hash(slide_path),
+            last_modified=datetime.now(),
+        )
+        self.registry.add_node(node)
+        self.registry.remove_edges(slide_path)
+
+        # Recursively find image references
+        self._scan_yaml_for_images(slide_path, slides)
+
+    def _scan_diagram(self, diag_path: Path):
+        """
+        Scan a diagram YAML definition.
+        """
+        try:
+            with open(diag_path) as f:
+                diag = yaml.safe_load(f)
+        except Exception as e:
+            print(f"Warning: Could not load diagram {diag_path}: {e}")
+            return
+
+        if not diag:
+            return
+
+        # Create node
+        node = DocumentNode(
+            path=diag_path,
+            title=diag.get("title", diag_path.stem),
+            language=self._detect_language(diag_path),
+            doc_type="diagram",
+            content_hash=compute_file_hash(diag_path),
+            last_modified=datetime.now(),
+        )
+        self.registry.add_node(node)
+
+        # Check for generated outputs
+        output_dir = self.project.root / "output" / "diagrams"
+        for ext in [".png", ".svg"]:
+            output_file = output_dir / (diag_path.stem + ext)
+            if output_file.exists():
+                edge = RelationshipEdge(
+                    source=diag_path,
+                    target=output_file,
+                    edge_type=EdgeType.GENERATES,
+                    context=f"Generated {ext}",
+                    target_hash=compute_file_hash(output_file),
+                    recorded_at=datetime.now(),
+                )
+                self.registry.add_edge(edge, save=False)
+
+    def _scan_d2_diagram(self, diag_path: Path):
+        """
+        Scan a D2 diagram file.
+        """
+        # Create node
+        node = DocumentNode(
+            path=diag_path,
+            title=diag_path.stem,
+            language=self._detect_language(diag_path),
+            doc_type="diagram_d2",
+            content_hash=compute_file_hash(diag_path),
+            last_modified=datetime.now(),
+        )
+        self.registry.add_node(node)
+
+        # Check for generated outputs
+        output_dir = self.project.root / "output" / "diagrams"
+        for ext in [".png", ".svg"]:
+            output_file = output_dir / (diag_path.stem + ext)
+            if output_file.exists():
+                edge = RelationshipEdge(
+                    source=diag_path,
+                    target=output_file,
+                    edge_type=EdgeType.GENERATES,
+                    context=f"Generated {ext}",
+                    target_hash=compute_file_hash(output_file),
+                    recorded_at=datetime.now(),
+                )
+                self.registry.add_edge(edge, save=False)
+
+    def _scan_props_json(self, props_path: Path):
+        """
+        Scan a Remotion props.json for demo clip references.
+        """
+        try:
+            with open(props_path) as f:
+                props = json.load(f)
+        except Exception as e:
+            print(f"Warning: Could not load props.json {props_path}: {e}")
+            return
+
+        if not props:
+            return
+
+        # Create node
+        node = DocumentNode(
+            path=props_path,
+            title=props.get("title", "props"),
+            doc_type="remotion_props",
+            content_hash=compute_file_hash(props_path),
+            last_modified=datetime.now(),
+        )
+        self.registry.add_node(node)
+        self.registry.remove_edges(props_path)
+
+        # Scan scenes for demo clips
+        scenes = props.get("scenes", [])
+        for scene in scenes:
+            demo = scene.get("demo", {})
+            clip_path = demo.get("clipPath")
+
+            if clip_path:
+                # Resolve relative to props.json location
+                target = (props_path.parent / clip_path).resolve()
+                if target.exists():
+                    edge = RelationshipEdge(
+                        source=props_path,
+                        target=target,
+                        edge_type=EdgeType.USES_ASSET,
+                        context=f"Scene: {scene.get('id', 'unknown')}",
+                        target_hash=compute_file_hash(target),
+                        recorded_at=datetime.now(),
+                    )
+                    self.registry.add_edge(edge, save=False)
+
+    def _scan_all_assets(self):
+        """
+        Scan all asset directories and register assets as nodes.
+
+        This enables orphan detection - assets not referenced by anything.
+        """
+        asset_patterns = [
+            ("demos/*.mp4", "video_clip"),
+            ("assets/images/*.png", "image"),
+            ("assets/images/*.svg", "image"),
+            ("assets/images/*.jpg", "image"),
+            ("brand/logos/*.png", "logo"),
+            ("brand/logos/*.svg", "logo"),
+        ]
+
+        # Scan project root assets
+        for pattern, asset_type in asset_patterns:
+            for asset_path in self.project.root.glob(pattern):
+                if asset_path.is_file():
+                    self._register_asset(asset_path, asset_type)
+
+        # Scan content assets per language
+        for lang in self.project.languages:
+            lang_dir = self.content_dir / lang
+            for pattern, asset_type in asset_patterns:
+                for asset_path in lang_dir.glob(pattern):
+                    if asset_path.is_file():
+                        self._register_asset(asset_path, asset_type)
+
+        # Scan remotion assets
+        remotion_dir = self.project.root / "remotion" / "public"
+        if remotion_dir.exists():
+            for asset_path in remotion_dir.glob("demos/*.mp4"):
+                self._register_asset(asset_path, "video_clip")
+
+    def _register_asset(self, asset_path: Path, asset_type: str):
+        """Register an asset as a node for orphan detection."""
+        if str(asset_path) in [str(n.path) for n in self.registry._nodes.values()]:
+            return  # Already registered
+
+        node = DocumentNode(
+            path=asset_path,
+            title=asset_path.name,
+            doc_type=asset_type,
+            content_hash=compute_file_hash(asset_path),
+            last_modified=datetime.now(),
+        )
+        self.registry.add_node(node)
+
+    # =========================================================================
+    # Helper Methods
+    # =========================================================================
+
+    def _detect_language(self, path: Path) -> Optional[str]:
+        """Detect language from path."""
+        try:
+            rel_path = path.relative_to(self.content_dir)
+            parts = rel_path.parts
+            if parts and parts[0] in self.project.languages:
+                return parts[0]
+        except ValueError:
+            pass
+        return None
+
+    def _resolve_video_clip(
+        self, base: Path, clip_path: str, demo_base: str
+    ) -> Optional[Path]:
+        """Resolve a video clip path."""
+        # Try relative to remotion/public
+        remotion_public = self.project.root / "remotion" / "public"
+        target = remotion_public / clip_path
+        if target.exists():
+            return target
+
+        # Try relative to project demos
+        target = self.project.root / "demos" / clip_path.replace(demo_base, "")
+        if target.exists():
+            return target
+
+        # Try as given
+        target = self.project.root / clip_path
+        if target.exists():
+            return target
+
+        return None
+
+    def _scan_yaml_for_images(self, source_path: Path, data: Any, depth: int = 0):
+        """Recursively scan YAML data for image references."""
+        if depth > 10:  # Prevent infinite recursion
+            return
+
+        if isinstance(data, dict):
+            for key, value in data.items():
+                # Check for image keys
+                if key in ("image", "icon", "logo", "background", "src"):
+                    if isinstance(value, str) and self._looks_like_image(value):
+                        target = self._resolve_path(source_path, value)
+                        if target:
+                            edge = RelationshipEdge(
+                                source=source_path,
+                                target=target,
+                                edge_type=EdgeType.USES_ASSET,
+                                context=f"YAML key: {key}",
+                                target_hash=compute_file_hash(target) if target.exists() else None,
+                                recorded_at=datetime.now(),
+                            )
+                            self.registry.add_edge(edge, save=False)
+                else:
+                    self._scan_yaml_for_images(source_path, value, depth + 1)
+        elif isinstance(data, list):
+            for item in data:
+                self._scan_yaml_for_images(source_path, item, depth + 1)
+
+    def _looks_like_image(self, value: str) -> bool:
+        """Check if a string looks like an image path."""
+        if not isinstance(value, str):
+            return False
+        return value.lower().endswith((".png", ".jpg", ".jpeg", ".svg", ".gif", ".webp"))
 
 
 __all__ = ["RelationshipScanner"]

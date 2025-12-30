@@ -473,6 +473,86 @@ class RegistryManager:
         """Generate a comprehensive relationship report."""
         return self.registry.generate_report()
 
+    # =========================================================================
+    # Orphan Detection
+    # =========================================================================
+
+    def get_orphan_assets(self) -> list[DocumentNode]:
+        """
+        Find assets that are not referenced by any document.
+
+        Returns:
+            List of asset nodes with no incoming edges
+        """
+        orphans = []
+        asset_types = {"video_clip", "image", "logo"}
+
+        for node in self.registry.all_nodes():
+            if node.doc_type in asset_types:
+                incoming = self.registry.get_incoming_edges(node.path)
+                if not incoming:
+                    orphans.append(node)
+
+        return orphans
+
+    def get_missing_assets(self) -> list[tuple[Path, RelationshipEdge]]:
+        """
+        Find assets that are referenced but don't exist.
+
+        Returns:
+            List of (missing_path, referencing_edge) tuples
+        """
+        missing = []
+
+        for source_path in self.registry._forward:
+            for edge in self.registry._forward[source_path]:
+                if edge.edge_type == EdgeType.USES_ASSET:
+                    if not edge.target.exists():
+                        missing.append((edge.target, edge))
+
+        return missing
+
+    def get_asset_usage(self) -> dict[str, list[Path]]:
+        """
+        Get usage count for all assets.
+
+        Returns:
+            Dict mapping asset path to list of documents using it
+        """
+        usage = {}
+
+        for source_path in self.registry._forward:
+            for edge in self.registry._forward[source_path]:
+                if edge.edge_type == EdgeType.USES_ASSET:
+                    target_str = str(edge.target)
+                    if target_str not in usage:
+                        usage[target_str] = []
+                    usage[target_str].append(edge.source)
+
+        return usage
+
+    def cleanup_orphans(self, dry_run: bool = True) -> list[Path]:
+        """
+        Identify orphan assets for cleanup.
+
+        Args:
+            dry_run: If True, only report what would be deleted
+
+        Returns:
+            List of orphan asset paths
+        """
+        orphans = self.get_orphan_assets()
+        orphan_paths = [n.path for n in orphans]
+
+        if not dry_run:
+            for path in orphan_paths:
+                if path.exists():
+                    path.unlink()
+                self.registry.remove_node(path)
+            self.registry.save()
+
+        return orphan_paths
+
 
 # =========================================================================
 # Module-level convenience functions
