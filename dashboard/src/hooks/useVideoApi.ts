@@ -3,7 +3,9 @@
  * Provides reusable data fetching and mutations for video features
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient, useQueries } from '@tanstack/react-query';
+import type { VideoChapter, ChapterTimelineData } from '@/api/types/video';
 import * as videoApi from '@/api/video';
 
 // Query Keys for video-related data
@@ -197,17 +199,6 @@ export function useVideoProps(scriptId: string | null) {
 }
 
 /**
- * Fetch captions (VTT) for a script
- */
-export function useVideoCaptions(scriptId: string | null) {
-  return useQuery({
-    queryKey: videoQueryKeys.captions(scriptId || ''),
-    queryFn: () => videoApi.getVideoCaptions(scriptId!),
-    enabled: !!scriptId,
-  });
-}
-
-/**
  * Fetch voiceover status for a script
  * Returns info about whether voiceover exists and its metadata
  */
@@ -273,15 +264,6 @@ export function useRenderMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: videoQueryKeys.renderQueue });
     },
-  });
-}
-
-/**
- * Hook for downloading rendered videos
- */
-export function useDownloadRender() {
-  return useMutation({
-    mutationFn: videoApi.downloadRender,
   });
 }
 
@@ -535,16 +517,6 @@ export function useVideoComments(
 }
 
 /**
- * Fetch all pending comments across projects
- */
-export function usePendingVideoComments() {
-  return useQuery({
-    queryKey: videoQueryKeys.pendingComments,
-    queryFn: videoApi.getPendingVideoComments,
-  });
-}
-
-/**
  * Hook providing all comment-related mutations
  */
 export function useVideoCommentMutations(projectId: string | null) {
@@ -605,4 +577,169 @@ export function useVideoReviewData(
     refetch: comments.refetch,
     ...mutations,
   };
+}
+
+// ============================================================================
+// Unified Video Review Hooks
+// ============================================================================
+
+/**
+ * Hook for chapter-aggregated video data with comments
+ * Combines all video scripts into chapters with global frame offsets
+ */
+export function useChapterVideoData(projectId: string | null): {
+  chapters: VideoChapter[];
+  timelineData: ChapterTimelineData | null;
+  isLoading: boolean;
+  error: Error | null;
+} {
+  const scripts = useVideoScripts();
+  const { comments } = useVideoReviewData(projectId, { include_resolved: true });
+
+  // Get script IDs to fetch props for each
+  const scriptIds = useMemo(() =>
+    scripts.data?.scripts?.map(s => s.id) || [],
+    [scripts.data]
+  );
+
+  // Fetch props for all scripts to get frame timing
+  const propsQueries = useQueries({
+    queries: scriptIds.map(id => ({
+      queryKey: videoQueryKeys.props(id),
+      queryFn: () => videoApi.getVideoProps(id),
+      enabled: !!id,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    })),
+  });
+
+  // Build chapter data from scripts + props
+  const chaptersData = useMemo((): ChapterTimelineData | null => {
+    if (!scripts.data?.scripts || scripts.data.scripts.length === 0) {
+      return null;
+    }
+
+    let globalFrameOffset = 0;
+    let maxFps = 30; // Default FPS
+
+    const chapters: VideoChapter[] = scripts.data.scripts.map((script, index) => {
+      // Get corresponding props query result
+      const propsQuery = propsQueries[index];
+      const props = propsQuery?.data;
+
+      // Use props data if available, otherwise estimate
+      const fps = props?.fps || 30;
+      const duration = props?.duration || script.duration || 60;
+      const totalFrames = Math.ceil(duration * fps);
+      const scenes = props?.scenes || [];
+
+      maxFps = Math.max(maxFps, fps);
+
+      // Get comments for this script/chapter
+      const chapterComments = comments.filter(
+        c => c.component_id === script.id
+      );
+
+      // Build video URL if output exists
+      const scriptName = script.id.includes('/')
+        ? script.id.split('/').pop()
+        : script.id;
+      const videoUrl = script.has_output
+        ? `/api/video/asset?path=output/${script.language}/videos/${scriptName}.mp4`
+        : null;
+      const audioUrl = script.has_output
+        ? `/api/video/asset?path=output/${script.language}/videos/${scriptName}.mp3`
+        : null;
+
+      const chapter: VideoChapter = {
+        id: script.id,
+        name: script.name || scriptName || script.id,
+        scriptPath: script.path || script.id,
+        language: script.language || 'en',
+        duration,
+        totalFrames,
+        fps,
+        videoUrl,
+        audioUrl,
+        scenes,
+        startGlobalFrame: globalFrameOffset,
+        endGlobalFrame: globalFrameOffset + totalFrames,
+        comments: chapterComments,
+        hasVideo: script.has_output || false,
+        hasAudio: script.has_output || false,
+      };
+
+      globalFrameOffset += totalFrames;
+      return chapter;
+    });
+
+    return {
+      chapters,
+      totalDuration: chapters.reduce((sum, c) => sum + c.duration, 0),
+      totalFrames: globalFrameOffset,
+      globalFps: maxFps,
+    };
+  }, [scripts.data, propsQueries, comments]);
+
+  const isLoading = scripts.isLoading || propsQueries.some(q => q.isLoading);
+  const error = scripts.error || propsQueries.find(q => q.error)?.error || null;
+
+  return {
+    chapters: chaptersData?.chapters || [],
+    timelineData: chaptersData,
+    isLoading,
+    error: error as Error | null,
+  };
+}
+
+/**
+ * Utility: Convert global frame to chapter + local frame
+ */
+export function globalToLocalFrame(
+  globalFrame: number,
+  chapters: VideoChapter[]
+): { chapter: VideoChapter; localFrame: number } | null {
+  for (const chapter of chapters) {
+    if (globalFrame >= chapter.startGlobalFrame && globalFrame < chapter.endGlobalFrame) {
+      return {
+        chapter,
+        localFrame: globalFrame - chapter.startGlobalFrame,
+      };
+    }
+  }
+  // Return last chapter if past end
+  if (chapters.length > 0) {
+    const last = chapters[chapters.length - 1];
+    return {
+      chapter: last,
+      localFrame: last.totalFrames - 1,
+    };
+  }
+  return null;
+}
+
+/**
+ * Utility: Convert chapter + local frame to global frame
+ */
+export function localToGlobalFrame(
+  chapter: VideoChapter,
+  localFrame: number
+): number {
+  return chapter.startGlobalFrame + localFrame;
+}
+
+/**
+ * Utility: Format time as M:SS or H:MM:SS
+ */
+export function formatTime(seconds: number): string {
+  const s = Math.floor(seconds);
+  const mins = Math.floor(s / 60);
+  const secs = s % 60;
+
+  if (mins >= 60) {
+    const hours = Math.floor(mins / 60);
+    const remainingMins = mins % 60;
+    return `${hours}:${remainingMins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
 }

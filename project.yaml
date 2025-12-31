@@ -4,9 +4,10 @@
 # This project.yaml configures the media-engine documentation system.
 # The demo/ directory contains example content for testing.
 
-name: "Media Engine"
-version: "1.0.0"
-description: "Agent-based media production framework for automated content generation"
+project:
+  name: "Media Engine"
+  version: "1.0.0"
+  description: "Agent-based media production framework for automated content generation"
 
 # Paths configuration
 paths:

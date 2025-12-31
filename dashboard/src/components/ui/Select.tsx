@@ -3,33 +3,87 @@ import * as SelectPrimitive from '@radix-ui/react-select';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import clsx from 'clsx';
 
+let selectIdCounter = 0;
+function generateSelectId() {
+  return `select-${++selectIdCounter}`;
+}
+
 const Select = SelectPrimitive.Root;
 
 const SelectGroup = SelectPrimitive.Group;
 
 const SelectValue = SelectPrimitive.Value;
 
+export interface SelectTriggerProps extends React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger> {
+  /**
+   * Description text that provides additional context for the select.
+   * Creates an aria-describedby relationship for screen readers.
+   */
+  description?: string;
+  /**
+   * Error message to display when the select is in an error state.
+   * Sets aria-invalid="true" and creates aria-describedby relationship.
+   */
+  error?: string;
+  /**
+   * Whether to render the description and error elements.
+   * Set to false if you want to manage these externally.
+   * @default true
+   */
+  renderMessages?: boolean;
+}
+
 const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
->(({ className, children, ...props }, ref) => (
-  <SelectPrimitive.Trigger
-    ref={ref}
-    className={clsx(
-      'flex h-10 w-full items-center justify-between whitespace-nowrap rounded-lg border border-base-300 bg-base-200 px-3 py-2 text-sm',
-      'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-base-100',
-      'disabled:cursor-not-allowed disabled:opacity-50',
-      '[&>span]:line-clamp-1',
-      className
-    )}
-    {...props}
-  >
-    {children}
-    <SelectPrimitive.Icon asChild>
-      <ChevronDown className="h-4 w-4 opacity-50" />
-    </SelectPrimitive.Icon>
-  </SelectPrimitive.Trigger>
-));
+  SelectTriggerProps
+>(({ className, children, id, description, error, renderMessages = true, 'aria-describedby': ariaDescribedBy, ...props }, ref) => {
+  // Generate a stable ID if not provided
+  const generatedId = React.useMemo(() => id || generateSelectId(), [id]);
+  const descriptionId = `${generatedId}-description`;
+  const errorId = `${generatedId}-error`;
+
+  // Build aria-describedby from description, error, and any passed aria-describedby
+  const describedByParts: string[] = [];
+  if (ariaDescribedBy) describedByParts.push(ariaDescribedBy);
+  if (description) describedByParts.push(descriptionId);
+  if (error) describedByParts.push(errorId);
+  const describedBy = describedByParts.length > 0 ? describedByParts.join(' ') : undefined;
+
+  return (
+    <>
+      <SelectPrimitive.Trigger
+        ref={ref}
+        id={generatedId}
+        className={clsx(
+          'flex h-10 w-full items-center justify-between whitespace-nowrap rounded-lg border border-base-300 bg-base-200 px-3 py-2 text-sm',
+          'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-base-100',
+          'disabled:cursor-not-allowed disabled:opacity-50',
+          '[&>span]:line-clamp-1',
+          error && 'border-error',
+          className
+        )}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={describedBy}
+        {...props}
+      >
+        {children}
+        <SelectPrimitive.Icon asChild>
+          <ChevronDown className="h-4 w-4 opacity-50" />
+        </SelectPrimitive.Icon>
+      </SelectPrimitive.Trigger>
+      {renderMessages && description && !error && (
+        <p id={descriptionId} className="mt-1 text-sm text-base-content/70">
+          {description}
+        </p>
+      )}
+      {renderMessages && error && (
+        <p id={errorId} className="mt-1 text-sm text-error" role="alert">
+          {error}
+        </p>
+      )}
+    </>
+  );
+});
 SelectTrigger.displayName = SelectPrimitive.Trigger.displayName;
 
 const SelectScrollUpButton = React.forwardRef<

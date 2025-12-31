@@ -1,9 +1,10 @@
 import type { ReactElement, ReactNode } from 'react';
 import { render, type RenderOptions } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter, MemoryRouter } from 'react-router-dom';
+import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { SidebarProvider } from '@/contexts/SidebarContext';
 import { SettingsProvider } from '@/contexts/SettingsContext';
+import { ConfirmProvider } from '@/components/ui/ConfirmDialog';
 
 // Create a fresh QueryClient for each test
 function createTestQueryClient() {
@@ -26,46 +27,53 @@ interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
   useMemoryRouter?: boolean;
 }
 
-// All-in-one wrapper with QueryClient, Router, SidebarProvider, and SettingsProvider
-function AllProviders({ children }: WrapperProps) {
+// Providers wrapper without router (router is added separately)
+function ProvidersWrapper({ children }: WrapperProps) {
   const queryClient = createTestQueryClient();
   return (
     <QueryClientProvider client={queryClient}>
       <SettingsProvider>
-        <SidebarProvider>
-          <BrowserRouter>{children}</BrowserRouter>
-        </SidebarProvider>
+        <ConfirmProvider>
+          <SidebarProvider>
+            {children}
+          </SidebarProvider>
+        </ConfirmProvider>
       </SettingsProvider>
     </QueryClientProvider>
   );
 }
 
-// Wrapper with MemoryRouter for testing specific routes
-function createMemoryRouterWrapper(initialRoute: string) {
-  return function MemoryRouterWrapper({ children }: WrapperProps) {
-    const queryClient = createTestQueryClient();
-    return (
-      <QueryClientProvider client={queryClient}>
-        <SettingsProvider>
-          <SidebarProvider>
-            <MemoryRouter initialEntries={[initialRoute]}>{children}</MemoryRouter>
-          </SidebarProvider>
-        </SettingsProvider>
-      </QueryClientProvider>
-    );
-  };
-}
-
-// Custom render function
+// Custom render function using data router (supports useBlocker)
 function customRender(
   ui: ReactElement,
-  { route = '/', useMemoryRouter = false, ...options }: CustomRenderOptions = {}
+  { route = '/', ...options }: CustomRenderOptions = {}
 ) {
-  const Wrapper = useMemoryRouter
-    ? createMemoryRouterWrapper(route)
-    : AllProviders;
+  const queryClient = createTestQueryClient();
 
-  return render(ui, { wrapper: Wrapper, ...options });
+  // Create a data router that supports useBlocker
+  const router = createMemoryRouter(
+    [
+      {
+        path: '*',
+        element: (
+          <QueryClientProvider client={queryClient}>
+            <SettingsProvider>
+              <ConfirmProvider>
+                <SidebarProvider>
+                  {ui}
+                </SidebarProvider>
+              </ConfirmProvider>
+            </SettingsProvider>
+          </QueryClientProvider>
+        ),
+      },
+    ],
+    {
+      initialEntries: [route],
+    }
+  );
+
+  return render(<RouterProvider router={router} />, options);
 }
 
 // Re-export everything from testing-library
@@ -74,3 +82,6 @@ export { default as userEvent } from '@testing-library/user-event';
 
 // Override render with our custom version
 export { customRender as render };
+
+// Export ProvidersWrapper for use cases that don't need routing
+export { ProvidersWrapper };

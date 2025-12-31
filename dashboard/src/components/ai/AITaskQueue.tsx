@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import {
-  ListTodo,
   Play,
   Clock,
   CheckCircle,
@@ -10,6 +9,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { NoTasksState } from '@/components/ui';
 
 export interface AITask {
   id: string;
@@ -138,15 +138,7 @@ export function AITaskQueue({
   const hasMore = maxItems && filteredTasks.length > maxItems;
 
   if (tasks.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <ListTodo size={32} className="mx-auto text-base-content/30 mb-3" />
-        <p className="text-base-content/60">No tasks in queue</p>
-        <p className="text-sm text-base-content/40 mt-1">
-          Tasks are added when Claude identifies work to be done
-        </p>
-      </div>
-    );
+    return <NoTasksState />;
   }
 
   // Group by status

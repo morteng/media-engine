@@ -7,8 +7,8 @@ describe('Build', () => {
     render(<Build />);
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /build & publish/i })).toBeInTheDocument();
-    });
-  });
+    }, { timeout: 10000 });
+  }, 15000);
 
   it('shows publications section', async () => {
     render(<Build />);

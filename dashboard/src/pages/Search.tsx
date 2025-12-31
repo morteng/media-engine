@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { Spinner } from '@/components/ui';
+import { Spinner, NoResultsState } from '@/components/ui';
 import { Search as SearchIcon, FileText } from 'lucide-react';
 import * as api from '@/api/client';
 
@@ -102,11 +102,7 @@ export function SearchPage() {
               ))}
             </>
           ) : (
-            <div className="text-center py-12">
-              <SearchIcon size={48} className="mx-auto text-base-content/30 mb-4" />
-              <h3 className="text-lg font-medium mb-1">No results found</h3>
-              <p className="text-base-content/60">Try different keywords or check your spelling.</p>
-            </div>
+            <NoResultsState query={query} />
           )}
         </div>
       )}

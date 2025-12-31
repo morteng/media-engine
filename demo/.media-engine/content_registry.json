@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "project": "Media Engine Demo",
-  "last_scan": "2025-12-30T16:10:08.901075",
+  "last_scan": "2025-12-31T15:40:16.112337",
   "items": {
     "content/en/chapters/04_quality_checks.md": {
       "path": "content/en/chapters/04_quality_checks.md",
@@ -9,8 +9,8 @@
       "depends_on": [
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
-      "last_modified": "2025-12-29T11:44:55.486132",
-      "last_checked": "2025-12-30T16:10:08.765168",
+      "last_modified": "2025-12-30T21:30:03.633048",
+      "last_checked": "2025-12-31T15:40:16.080706",
       "content_hash": "6d59631d06d0286d",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -22,8 +22,8 @@
       "depends_on": [
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
-      "last_modified": "2025-12-24T00:24:05.424987",
-      "last_checked": "2025-12-30T16:10:08.765168",
+      "last_modified": "2025-12-30T21:30:03.656619",
+      "last_checked": "2025-12-31T15:40:16.080706",
       "content_hash": "ef289304cb159518",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -35,8 +35,8 @@
       "depends_on": [
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
-      "last_modified": "2025-12-29T11:40:04.379777",
-      "last_checked": "2025-12-30T16:10:08.765168",
+      "last_modified": "2025-12-30T21:30:03.662210",
+      "last_checked": "2025-12-31T15:40:16.080706",
       "content_hash": "14fa4e1ae5c796ba",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -48,8 +48,8 @@
       "depends_on": [
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
-      "last_modified": "2025-12-24T13:07:56.396694",
-      "last_checked": "2025-12-30T16:10:08.765168",
+      "last_modified": "2025-12-30T21:30:03.634992",
+      "last_checked": "2025-12-31T15:40:16.080706",
       "content_hash": "2007c14ced678b18",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -61,9 +61,9 @@
       "depends_on": [
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
-      "last_modified": "2025-12-29T11:40:40.805896",
-      "last_checked": "2025-12-30T16:10:08.765168",
-      "content_hash": "3798e51c55692aa8",
+      "last_modified": "2025-12-30T21:57:51.470018",
+      "last_checked": "2025-12-31T15:40:16.080706",
+      "content_hash": "9dcc918b2f672a0f",
       "freshness_status": "fresh",
       "freshness_days": null,
       "metadata": {}
@@ -74,8 +74,8 @@
       "depends_on": [
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
-      "last_modified": "2025-12-28T14:50:27.093856",
-      "last_checked": "2025-12-30T16:10:08.765168",
+      "last_modified": "2025-12-30T21:30:03.627702",
+      "last_checked": "2025-12-31T15:40:16.080706",
       "content_hash": "6185d9b8dec487ca",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -87,9 +87,9 @@
       "depends_on": [
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
-      "last_modified": "2025-12-20T14:15:37.232057",
-      "last_checked": "2025-12-30T16:10:08.765168",
-      "content_hash": "30e9b169966df107",
+      "last_modified": "2025-12-30T21:54:30.045983",
+      "last_checked": "2025-12-31T15:40:16.080706",
+      "content_hash": "b04800319c4bc068",
       "freshness_status": "claims_issue",
       "freshness_days": null,
       "metadata": {
@@ -104,8 +104,8 @@
       "depends_on": [
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
-      "last_modified": "2025-12-29T11:44:01.750391",
-      "last_checked": "2025-12-30T16:10:08.765168",
+      "last_modified": "2025-12-30T21:30:03.658413",
+      "last_checked": "2025-12-31T15:40:16.080706",
       "content_hash": "f5275c09d4160ee3",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -117,9 +117,9 @@
       "depends_on": [
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
-      "last_modified": "2025-12-29T11:38:03.425161",
-      "last_checked": "2025-12-30T16:10:08.765168",
-      "content_hash": "0937a256bac276f0",
+      "last_modified": "2025-12-30T21:59:03.143673",
+      "last_checked": "2025-12-31T15:40:16.080706",
+      "content_hash": "b73e4dc4faf76c0e",
       "freshness_status": "fresh",
       "freshness_days": null,
       "metadata": {}
@@ -130,8 +130,8 @@
       "depends_on": [
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
-      "last_modified": "2025-12-29T11:34:46.037098",
-      "last_checked": "2025-12-30T16:10:08.765168",
+      "last_modified": "2025-12-30T21:30:03.628940",
+      "last_checked": "2025-12-31T15:40:16.080706",
       "content_hash": "c96cbff660b89e95",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -143,9 +143,9 @@
       "depends_on": [
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
-      "last_modified": "2025-12-29T11:38:53.096753",
-      "last_checked": "2025-12-30T16:10:08.765168",
-      "content_hash": "ba767f0b0a0cba71",
+      "last_modified": "2025-12-30T21:53:16.175417",
+      "last_checked": "2025-12-31T15:40:16.080706",
+      "content_hash": "e4c61af6467531f2",
       "freshness_status": "fresh",
       "freshness_days": null,
       "metadata": {}
@@ -156,9 +156,9 @@
       "depends_on": [
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
-      "last_modified": "2025-12-29T11:36:37.552047",
-      "last_checked": "2025-12-30T16:10:08.765168",
-      "content_hash": "f4a762c43c581e16",
+      "last_modified": "2025-12-30T21:58:24.330173",
+      "last_checked": "2025-12-31T15:40:16.080706",
+      "content_hash": "983a78aba2c3400d",
       "freshness_status": "fresh",
       "freshness_days": null,
       "metadata": {}
@@ -169,8 +169,8 @@
       "depends_on": [
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
-      "last_modified": "2025-12-29T11:43:18.640224",
-      "last_checked": "2025-12-30T16:10:08.765168",
+      "last_modified": "2025-12-30T21:30:03.659925",
+      "last_checked": "2025-12-31T15:40:16.080706",
       "content_hash": "2494c34b709deb7a",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -182,8 +182,8 @@
       "depends_on": [
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
-      "last_modified": "2025-12-29T11:45:40.341102",
-      "last_checked": "2025-12-30T16:10:08.765168",
+      "last_modified": "2025-12-30T21:30:03.649730",
+      "last_checked": "2025-12-31T15:40:16.080706",
       "content_hash": "52776a58cd337b96",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -195,8 +195,8 @@
       "depends_on": [
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
-      "last_modified": "2025-12-29T11:41:08.610702",
-      "last_checked": "2025-12-30T16:10:08.765168",
+      "last_modified": "2025-12-30T21:30:03.654194",
+      "last_checked": "2025-12-31T15:40:16.080706",
       "content_hash": "8dfd860b6c54fcdf",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -208,8 +208,8 @@
       "depends_on": [
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
-      "last_modified": "2025-12-29T11:43:45.291623",
-      "last_checked": "2025-12-30T16:10:08.765168",
+      "last_modified": "2025-12-30T21:30:03.651986",
+      "last_checked": "2025-12-31T15:40:16.080706",
       "content_hash": "f59ccbec21d6412f",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -221,8 +221,8 @@
       "depends_on": [
         "/Users/Morten/media-engine/demo/theme.yaml"
       ],
-      "last_modified": "2025-12-29T11:44:31.039433",
-      "last_checked": "2025-12-30T16:10:08.765168",
+      "last_modified": "2025-12-30T21:30:03.640055",
+      "last_checked": "2025-12-31T15:40:16.080706",
       "content_hash": "67d4403e703fa437",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -232,8 +232,8 @@
       "path": "content/en/scripts/walkthrough.yaml",
       "type": "source_document",
       "depends_on": [],
-      "last_modified": "2025-12-30T12:40:27.436383",
-      "last_checked": "2025-12-30T16:10:08.765168",
+      "last_modified": "2025-12-30T21:30:03.681715",
+      "last_checked": "2025-12-31T15:40:16.080706",
       "content_hash": "2a0be4afaca59083",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -244,7 +244,7 @@
       "type": "source_document",
       "depends_on": [],
       "last_modified": "2025-12-16T13:12:09.763515",
-      "last_checked": "2025-12-30T16:10:08.765168",
+      "last_checked": "2025-12-31T15:40:16.080706",
       "content_hash": "df9a7798ee9cccb7",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -255,7 +255,7 @@
       "type": "source_document",
       "depends_on": [],
       "last_modified": "2025-12-16T16:49:07.645527",
-      "last_checked": "2025-12-30T16:10:08.765168",
+      "last_checked": "2025-12-31T15:40:16.080706",
       "content_hash": "fb42ef2a62a1b5a1",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -266,7 +266,7 @@
       "type": "theme",
       "depends_on": [],
       "last_modified": "2025-12-16T13:12:09.767283",
-      "last_checked": "2025-12-30T16:10:08.765168",
+      "last_checked": "2025-12-31T15:40:16.080706",
       "content_hash": "8dd73987176c62ad",
       "freshness_status": "fresh",
       "freshness_days": null,
@@ -276,8 +276,8 @@
       "path": "project.yaml",
       "type": "config",
       "depends_on": [],
-      "last_modified": "2025-12-26T17:26:39.725557",
-      "last_checked": "2025-12-30T16:10:08.765168",
+      "last_modified": "2025-12-30T21:30:03.952359",
+      "last_checked": "2025-12-31T15:40:16.080706",
       "content_hash": "07ed2cd62f22c1ce",
       "freshness_status": "fresh",
       "freshness_days": null,

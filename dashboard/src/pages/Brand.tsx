@@ -11,7 +11,7 @@ import {
   useUpdateBrandNote,
   useDeleteBrandNote,
 } from '@/hooks/useApi';
-import { SubTabs, ExpandableSection, Spinner } from '@/components/ui';
+import { SubTabs, ExpandableSection, Spinner, EmptyState } from '@/components/ui';
 import { InfoTooltip } from '@/components/ui/InfoTooltip';
 import {
   MessageCircle,
@@ -471,13 +471,11 @@ function VoiceView() {
   if (!voice?.has_voice) {
     return (
       <div className="card bg-base-200">
-        <div className="card-body items-center text-center py-16">
-          <MessageCircle size={48} className="text-base-content/30 mb-4" />
-          <h3 className="text-lg font-semibold">No Voice Profile</h3>
-          <p className="text-base-content/60 max-w-md">
-            {voice?.warning || 'Add a voice section to your brand.yaml to define voice guidelines.'}
-          </p>
-        </div>
+        <EmptyState
+          icon={<MessageCircle size={48} strokeWidth={1.5} />}
+          title="No Voice Profile"
+          description={voice?.warning || 'Add a voice section to your brand.yaml to define voice guidelines.'}
+        />
       </div>
     );
   }

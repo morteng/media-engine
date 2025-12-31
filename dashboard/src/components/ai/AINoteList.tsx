@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AINoteCard, type AINote, type NoteType } from './AINoteCard';
-import { StickyNote, Filter } from 'lucide-react';
+import { Filter } from 'lucide-react';
+import { NoNotesState, EmptyState } from '@/components/ui';
 
 interface AINoteListProps {
   notes: AINote[];
@@ -44,15 +45,7 @@ export function AINoteList({
   }, {} as Record<string, number>);
 
   if (notes.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <StickyNote size={32} className="mx-auto text-base-content/30 mb-3" />
-        <p className="text-base-content/60">No AI notes</p>
-        <p className="text-sm text-base-content/40 mt-1">
-          Notes appear when Claude has questions or suggestions
-        </p>
-      </div>
-    );
+    return <NoNotesState />;
   }
 
   return (
@@ -91,10 +84,10 @@ export function AINoteList({
 
       {/* Notes list */}
       {displayNotes.length === 0 ? (
-        <div className="text-center py-6 text-base-content/60 text-sm">
-          No {filter !== 'all' ? filter.replace('_', ' ') + ' ' : ''}notes
-          {!showResolvedNotes && ' (excluding resolved)'}
-        </div>
+        <EmptyState
+          title={`No ${filter !== 'all' ? filter.replace('_', ' ') + ' ' : ''}notes${!showResolvedNotes ? ' (excluding resolved)' : ''}`}
+          variant="compact"
+        />
       ) : compact ? (
         <div className="space-y-2">
           {displayNotes.map((note) => (

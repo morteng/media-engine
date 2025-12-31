@@ -9,7 +9,7 @@ import {
   ArrowLeft,
   Film,
   FileText,
-  Video,
+  Video as VideoIcon,
   Mic,
   Subtitles,
   FileJson,
@@ -23,9 +23,10 @@ import {
   MessageSquare,
   ChevronDown,
   ChevronRight,
+  FolderOpen,
 } from 'lucide-react';
 import clsx from 'clsx';
-import { Spinner } from '@/components/ui';
+import { Spinner, Breadcrumbs, type BreadcrumbItem } from '@/components/ui';
 import { useVideoProjectDetail, useVideoReviewData } from '@/hooks/useVideoApi';
 import type {
   ComponentType,
@@ -38,7 +39,7 @@ import type {
 const COMPONENT_CONFIG: Record<ComponentType, { label: string; icon: typeof FileText; color: string }> = {
   script: { label: 'Script', icon: FileText, color: 'text-blue-500' },
   demo_definition: { label: 'Demo Definition', icon: FileJson, color: 'text-purple-500' },
-  demo_clip: { label: 'Demo Clip', icon: Video, color: 'text-green-500' },
+  demo_clip: { label: 'Demo Clip', icon: VideoIcon, color: 'text-green-500' },
   voiceover: { label: 'Voiceover', icon: Mic, color: 'text-orange-500' },
   captions: { label: 'Captions', icon: Subtitles, color: 'text-yellow-500' },
   props: { label: 'Props', icon: FileJson, color: 'text-pink-500' },
@@ -236,8 +237,18 @@ export function VideoProjectDetail() {
 
   const statusConfig = PROJECT_STATUS_CONFIG[project.status];
 
+  // Breadcrumb navigation
+  const breadcrumbItems: BreadcrumbItem[] = [
+    { label: 'Video', href: '/video', icon: <VideoIcon size={14} /> },
+    { label: 'Projects', href: '/video/projects', icon: <FolderOpen size={14} /> },
+    { label: project.name },
+  ];
+
   return (
     <div className="space-y-6">
+      {/* Breadcrumbs */}
+      <Breadcrumbs items={breadcrumbItems} className="mb-2" />
+
       {/* Header */}
       <div className="flex items-center gap-4">
         <button
@@ -261,14 +272,20 @@ export function VideoProjectDetail() {
         </div>
 
         <div className="flex items-center gap-2">
-          <button className="btn btn-outline gap-2">
+          <button
+            className="btn btn-outline gap-2"
+            onClick={() => navigate(`/video/review?project=${projectId}`)}
+          >
             <MessageSquare size={16} />
             Comments
             {commentStats && commentStats.pending > 0 && (
               <span className="badge badge-warning badge-sm">{commentStats.pending}</span>
             )}
           </button>
-          <button className="btn btn-primary gap-2">
+          <button
+            className="btn btn-primary gap-2"
+            onClick={() => navigate(`/video/timeline?project=${projectId}`)}
+          >
             <Play size={16} />
             Preview
           </button>

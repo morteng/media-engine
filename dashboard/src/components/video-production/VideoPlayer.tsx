@@ -6,7 +6,7 @@
  * - Playing rendered video files
  * - Scene markers on timeline
  * - Seeking to specific scenes
- * - Keyboard shortcuts (space, arrows)
+ * - Full keyboard shortcuts (space, arrows, JKL, Home/End)
  * - Playback speed control
  */
 
@@ -24,6 +24,7 @@ import {
   Film,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { useVideoKeyboardShortcuts } from '@/hooks/useVideoKeyboardShortcuts';
 
 interface Scene {
   id: string;
@@ -202,44 +203,57 @@ export function VideoPlayer({
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+  // Handle frame stepping
+  const handleFrameStep = useCallback((frames: number) => {
+    if (videoRef.current) {
+      const frameDuration = 1 / fps;
+      const newTime = videoRef.current.currentTime + (frames * frameDuration);
+      videoRef.current.currentTime = Math.max(0, Math.min(duration, newTime));
+    }
+  }, [fps, duration]);
 
-      switch (e.key) {
-        case ' ':
-          e.preventDefault();
-          togglePlay();
-          break;
-        case 'ArrowLeft':
-          e.preventDefault();
-          if (e.shiftKey) {
-            goToScene('prev');
-          } else {
-            seekTo(Math.max(0, currentTime - 5));
-          }
-          break;
-        case 'ArrowRight':
-          e.preventDefault();
-          if (e.shiftKey) {
-            goToScene('next');
-          } else {
-            seekTo(Math.min(duration, currentTime + 5));
-          }
-          break;
-        case 'm':
-          toggleMute();
-          break;
-        case 'f':
-          toggleFullscreen();
-          break;
+  // Handle playback speed change (for JKL control)
+  const handlePlaybackSpeedChange = useCallback((speed: number) => {
+    if (videoRef.current) {
+      if (speed === 0) {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      } else if (speed < 0) {
+        // For reverse playback, we simulate by seeking backward
+        // Real reverse playback is complex, so we just seek and pause
+        videoRef.current.pause();
+        setIsPlaying(false);
+        const seekAmount = Math.abs(speed) * 0.5; // Seek by half-second increments
+        seekTo(Math.max(0, currentTime - seekAmount));
+      } else {
+        videoRef.current.playbackRate = speed;
+        if (!isPlaying) {
+          videoRef.current.play();
+          setIsPlaying(true);
+        }
+        setPlaybackSpeed(speed);
       }
-    };
+    }
+  }, [currentTime, isPlaying, seekTo]);
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [togglePlay, goToScene, seekTo, toggleMute, toggleFullscreen, currentTime, duration]);
+  // Use the video keyboard shortcuts hook
+  const { currentJKLSpeed } = useVideoKeyboardShortcuts({
+    onPlayPause: togglePlay,
+    onSeek: seekTo,
+    onFrameStep: handleFrameStep,
+    onPlaybackSpeedChange: handlePlaybackSpeedChange,
+    onGoToStart: () => seekTo(0),
+    onGoToEnd: () => seekTo(duration),
+    onPreviousScene: () => goToScene('prev'),
+    onNextScene: () => goToScene('next'),
+    onToggleMute: toggleMute,
+    onToggleFullscreen: toggleFullscreen,
+    currentTime,
+    duration,
+    fps,
+    enabled: isLoaded,
+    containerRef: containerRef as React.RefObject<HTMLElement>,
+  });
 
   // Format time
   const formatTime = (seconds: number) => {
@@ -459,7 +473,10 @@ export function VideoPlayer({
       {/* Keyboard shortcuts hint */}
       {isLoaded && (
         <div className="text-xs text-base-content/40 text-center py-1 bg-base-300/50">
-          Space: Play/Pause | Arrows: Seek | Shift+Arrows: Scene | M: Mute | F: Fullscreen
+          Space: Play/Pause | J/K/L: Shuttle | Arrows: Seek | ,/.: Frame step | Home/End: Start/End | ?: Help
+          {currentJKLSpeed !== 0 && currentJKLSpeed !== 1 && (
+            <span className="ml-2 text-primary">({currentJKLSpeed > 0 ? '+' : ''}{currentJKLSpeed}x)</span>
+          )}
         </div>
       )}
     </div>

@@ -1,4 +1,5 @@
 import { FileText, Image, Film, PieChart, Database, FileCode, Layout } from 'lucide-react';
+import { NoComponentsState } from '@/components/ui';
 import type { PublicationChapter } from '@/api/types';
 
 // Component type icons
@@ -26,11 +27,7 @@ export function ComponentList({
   compact = false,
 }: ComponentListProps) {
   if (!components || components.length === 0) {
-    return (
-      <div className="text-center py-6 text-base-content/60 text-sm">
-        No components defined
-      </div>
-    );
+    return <NoComponentsState />;
   }
 
   if (compact) {

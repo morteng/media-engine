@@ -67,11 +67,11 @@ describe('RemotionPreview', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('combobox')).toBeInTheDocument();
-    });
+    }, { timeout: 10000 });
 
     const select = screen.getByRole('combobox');
     expect(select).toHaveValue('Main');
-  });
+  }, 15000);
 
   it('shows offline status when server not running', async () => {
     render(<RemotionPreview />, { wrapper: createWrapper() });

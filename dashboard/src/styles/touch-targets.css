@@ -1,0 +1,237 @@
+/* Touch Target Accessibility - Media Engine Dashboard */
+/* Ensures minimum 44x44px touch targets on touch devices per WCAG 2.1 */
+
+/* ========================================
+ * TOUCH TARGET TOKENS
+ * ======================================== */
+:root {
+  --touch-target-min: 44px;
+  --touch-target-comfortable: 48px;
+}
+
+/* ========================================
+ * TOUCH DEVICE DETECTION
+ * Uses pointer: coarse to detect touch-primary devices
+ * ======================================== */
+@media (pointer: coarse) {
+  /* -----------------------------------------
+   * BUTTONS - DaisyUI btn-sm and btn-xs
+   * ----------------------------------------- */
+  .btn-xs,
+  .btn-sm {
+    min-height: var(--touch-target-min);
+    min-width: var(--touch-target-min);
+  }
+
+  /* Square/icon buttons need both dimensions */
+  .btn-square.btn-xs,
+  .btn-square.btn-sm,
+  .btn-circle.btn-xs,
+  .btn-circle.btn-sm {
+    min-height: var(--touch-target-min);
+    min-width: var(--touch-target-min);
+    height: var(--touch-target-min);
+    width: var(--touch-target-min);
+  }
+
+  /* Touch-friendly utility class for explicit opt-in */
+  .touch-target {
+    min-height: var(--touch-target-min);
+    min-width: var(--touch-target-min);
+  }
+
+  .touch-target-comfortable {
+    min-height: var(--touch-target-comfortable);
+    min-width: var(--touch-target-comfortable);
+  }
+
+  /* -----------------------------------------
+   * FORM INPUTS
+   * ----------------------------------------- */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  textarea,
+  select,
+  .input,
+  .select,
+  .textarea {
+    min-height: var(--touch-target-min);
+  }
+
+  /* Small input variants */
+  .input-sm,
+  .select-sm,
+  .textarea-sm {
+    min-height: var(--touch-target-min);
+  }
+
+  /* -----------------------------------------
+   * CHECKBOXES AND RADIOS
+   * Use padding/margin to expand hit area without changing visual size
+   * ----------------------------------------- */
+  input[type="checkbox"],
+  input[type="radio"],
+  .checkbox,
+  .radio {
+    position: relative;
+  }
+
+  input[type="checkbox"]::before,
+  input[type="radio"]::before,
+  .checkbox::before,
+  .radio::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: var(--touch-target-min);
+    min-height: var(--touch-target-min);
+  }
+
+  /* Checkbox/radio in labels - ensure parent has adequate size */
+  label:has(input[type="checkbox"]),
+  label:has(input[type="radio"]),
+  .label:has(.checkbox),
+  .label:has(.radio) {
+    min-height: var(--touch-target-min);
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* -----------------------------------------
+   * TOGGLE SWITCHES
+   * ----------------------------------------- */
+  .toggle {
+    min-height: var(--touch-target-min);
+  }
+
+  .toggle-sm {
+    min-height: var(--touch-target-min);
+  }
+
+  /* -----------------------------------------
+   * DROPDOWN AND MENU ITEMS
+   * ----------------------------------------- */
+  .dropdown-content li > a,
+  .dropdown-content li > button,
+  .menu li > a,
+  .menu li > button,
+  .menu-item {
+    min-height: var(--touch-target-min);
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
+  }
+
+  /* -----------------------------------------
+   * TABS
+   * ----------------------------------------- */
+  .tabs .tab,
+  .tab {
+    min-height: var(--touch-target-min);
+  }
+
+  .tabs-sm .tab,
+  .tab-sm {
+    min-height: var(--touch-target-min);
+  }
+
+  /* -----------------------------------------
+   * PAGINATION
+   * ----------------------------------------- */
+  .pagination button,
+  .pagination a,
+  .join .btn {
+    min-height: var(--touch-target-min);
+    min-width: var(--touch-target-min);
+  }
+
+  /* -----------------------------------------
+   * BADGES AS BUTTONS
+   * When badges are clickable
+   * ----------------------------------------- */
+  button.badge,
+  a.badge,
+  .badge[role="button"] {
+    min-height: var(--touch-target-min);
+    min-width: var(--touch-target-min);
+  }
+
+  /* -----------------------------------------
+   * CLOSE BUTTONS / ICON-ONLY BUTTONS
+   * ----------------------------------------- */
+  .btn-close,
+  [aria-label="Close"],
+  [aria-label="close"],
+  .close-button {
+    min-height: var(--touch-target-min);
+    min-width: var(--touch-target-min);
+  }
+
+  /* -----------------------------------------
+   * LINKS IN NAVIGATION
+   * ----------------------------------------- */
+  nav a,
+  .nav a,
+  .navbar a,
+  .breadcrumbs a {
+    min-height: var(--touch-target-min);
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* -----------------------------------------
+   * ACCORDION / COLLAPSE HEADERS
+   * ----------------------------------------- */
+  .collapse-title,
+  .accordion-title,
+  details > summary {
+    min-height: var(--touch-target-min);
+  }
+
+  /* -----------------------------------------
+   * RANGE SLIDER THUMB
+   * ----------------------------------------- */
+  input[type="range"]::-webkit-slider-thumb {
+    width: var(--touch-target-min);
+    height: var(--touch-target-min);
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: var(--touch-target-min);
+    height: var(--touch-target-min);
+  }
+
+  /* -----------------------------------------
+   * FILE INPUT
+   * ----------------------------------------- */
+  .file-input,
+  input[type="file"] {
+    min-height: var(--touch-target-min);
+  }
+
+  /* -----------------------------------------
+   * RATING STARS
+   * ----------------------------------------- */
+  .rating input {
+    min-height: var(--touch-target-min);
+    min-width: var(--touch-target-min);
+  }
+}
+
+/* ========================================
+ * HOVER DEVICE OVERRIDES
+ * On devices with fine pointer (mouse), allow smaller targets
+ * ======================================== */
+@media (pointer: fine) and (hover: hover) {
+  /* Reset to default sizes for mouse users */
+  .touch-target-mouse-reset {
+    min-height: unset;
+    min-width: unset;
+  }
+}

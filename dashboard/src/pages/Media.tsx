@@ -16,7 +16,7 @@ import {
   HardDrive,
 } from 'lucide-react';
 import { formatSize, formatDate } from '@/utils/format';
-import { Spinner } from '@/components/ui';
+import { Spinner, NoMediaState, EmptyState } from '@/components/ui';
 
 interface MediaSource {
   path: string;
@@ -87,9 +87,11 @@ export function Media() {
       <div className="space-y-6">
         <h1 className="text-2xl font-semibold">Media</h1>
         <div className="card bg-base-200">
-          <div className="card-body items-center text-center py-12">
-            <p className="text-error">Failed to load media files</p>
-          </div>
+          <EmptyState
+            icon={<Image size={48} strokeWidth={1.5} className="text-error" />}
+            title="Failed to load media files"
+            description="An error occurred while loading media files"
+          />
         </div>
       </div>
     );
@@ -163,10 +165,7 @@ export function Media() {
             </div>
             <div className="flex-1 overflow-y-auto p-2">
               {filteredFiles.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center">
-                  <Image size={48} className="text-base-content/30 mb-4" />
-                  <p className="text-base-content/60">No media files found</p>
-                </div>
+                <NoMediaState />
               ) : (
                 <div className="space-y-1">
                   {filteredFiles.map(file => {
@@ -295,10 +294,12 @@ export function Media() {
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center h-full text-center">
-                  <Play size={48} className="text-base-content/30 mb-4" />
-                  <p className="text-base-content/60">Select a file to preview</p>
-                </div>
+                <EmptyState
+                  icon={<Play size={48} strokeWidth={1.5} />}
+                  title="No file selected"
+                  description="Select a file to preview"
+                  variant="compact"
+                />
               )}
             </div>
           </div>

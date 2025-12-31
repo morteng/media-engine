@@ -13,7 +13,6 @@ import {
   Play,
   StopCircle,
   RefreshCw,
-  Package,
   CheckCircle,
   AlertCircle,
   Eye,
@@ -21,7 +20,7 @@ import {
 } from 'lucide-react';
 import type { UnifiedBuildPublication } from '@/api/types';
 import { formatFileSize, formatTimeAgo } from '@/utils/format';
-import { Spinner } from '@/components/ui';
+import { Spinner, NoPublicationsState } from '@/components/ui';
 import { getFormatIcon } from '@/utils/iconMappings';
 import { getFormatBadge } from '@/utils/statusMappings';
 
@@ -248,13 +247,7 @@ export function Build() {
             </div>
           ) : (
             <div className="card bg-base-200">
-              <div className="card-body text-center py-12">
-                <Package size={48} className="mx-auto text-base-content/30" />
-                <p className="text-base-content/60 mt-4">No publications found</p>
-                <p className="text-sm text-base-content/40">
-                  Create publications in your project to build outputs
-                </p>
-              </div>
+              <NoPublicationsState />
             </div>
           )}
 

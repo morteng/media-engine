@@ -90,4 +90,14 @@ describe('Button', () => {
     const button = screen.getByTestId('submit-btn');
     expect(button).toHaveAttribute('type', 'submit');
   });
+
+  it('applies touch-target class when touchFriendly is true', () => {
+    render(<Button touchFriendly>Touch Friendly</Button>);
+    expect(screen.getByRole('button')).toHaveClass('touch-target');
+  });
+
+  it('does not apply touch-target class by default', () => {
+    render(<Button>Normal</Button>);
+    expect(screen.getByRole('button')).not.toHaveClass('touch-target');
+  });
 });

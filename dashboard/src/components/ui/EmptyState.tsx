@@ -1,5 +1,22 @@
 import type { ReactNode } from 'react';
-import { FileQuestion, Search, FolderOpen, Inbox } from 'lucide-react';
+import {
+  FileQuestion,
+  Search,
+  FolderOpen,
+  Inbox,
+  ListTodo,
+  MessageSquare,
+  Package,
+  History,
+  StickyNote,
+  BookOpen,
+  Brain,
+  Film,
+  FileVideo,
+  FileJson,
+  Image,
+  Layers,
+} from 'lucide-react';
 
 interface EmptyStateProps {
   icon?: ReactNode;
@@ -74,6 +91,143 @@ export function NoFilesState() {
       icon={<FolderOpen size={48} strokeWidth={1.5} />}
       title="No files found"
       description="This folder is empty"
+    />
+  );
+}
+
+export function NoTasksState({ onAdd }: { onAdd?: () => void }) {
+  return (
+    <EmptyState
+      icon={<ListTodo size={48} strokeWidth={1.5} />}
+      title="No tasks in queue"
+      description="Tasks are added when Claude identifies work to be done"
+      action={onAdd ? { label: 'Add Task', onClick: onAdd } : undefined}
+    />
+  );
+}
+
+export function NoCommentsState() {
+  return (
+    <EmptyState
+      icon={<MessageSquare size={48} strokeWidth={1.5} />}
+      title="No comments yet"
+      description="Add comments to provide feedback on this content"
+      variant="compact"
+    />
+  );
+}
+
+export function NoPublicationsState({ onAdd }: { onAdd?: () => void }) {
+  return (
+    <EmptyState
+      icon={<Package size={48} strokeWidth={1.5} />}
+      title="No publications found"
+      description="Create publications in your project.yaml to get started"
+      action={onAdd ? { label: 'Create Publication', onClick: onAdd } : undefined}
+    />
+  );
+}
+
+export function NoDeliverablesState() {
+  return (
+    <EmptyState
+      icon={<Package size={48} strokeWidth={1.5} />}
+      title="No deliverables yet"
+      description="Build a publication to generate outputs"
+    />
+  );
+}
+
+export function NoSessionsState() {
+  return (
+    <EmptyState
+      icon={<History size={48} strokeWidth={1.5} />}
+      title="No AI sessions"
+      description="Sessions appear when Claude starts working on tasks"
+    />
+  );
+}
+
+export function NoNotesState() {
+  return (
+    <EmptyState
+      icon={<StickyNote size={48} strokeWidth={1.5} />}
+      title="No AI notes"
+      description="Notes appear when Claude has questions or suggestions"
+    />
+  );
+}
+
+export function NoResearchState() {
+  return (
+    <EmptyState
+      icon={<BookOpen size={48} strokeWidth={1.5} />}
+      title="No research entries"
+      description="Research is stored when Claude learns about your project"
+    />
+  );
+}
+
+export function NoDecisionsState() {
+  return (
+    <EmptyState
+      icon={<Brain size={48} strokeWidth={1.5} />}
+      title="No decisions recorded"
+      description="Decisions are logged when Claude makes significant choices"
+    />
+  );
+}
+
+export function NoMediaState() {
+  return (
+    <EmptyState
+      icon={<Image size={48} strokeWidth={1.5} />}
+      title="No media files found"
+      description="Media files will appear here after building videos"
+    />
+  );
+}
+
+export function NoScriptsState({ onAdd }: { onAdd?: () => void }) {
+  return (
+    <EmptyState
+      icon={<FileVideo size={48} strokeWidth={1.5} />}
+      title="No scripts yet"
+      description="Create a video script to get started"
+      action={onAdd ? { label: 'Create Script', onClick: onAdd } : undefined}
+      variant="compact"
+    />
+  );
+}
+
+export function NoPropsState() {
+  return (
+    <EmptyState
+      icon={<FileJson size={48} strokeWidth={1.5} />}
+      title="No props available"
+      description="Generate voiceover for a script to create props.json"
+    />
+  );
+}
+
+export function NoScenesState() {
+  return (
+    <EmptyState
+      icon={<Film size={48} strokeWidth={1.5} />}
+      title="No scenes"
+      description="Scenes will appear after props are generated"
+      variant="compact"
+    />
+  );
+}
+
+export function NoComponentsState() {
+  return (
+    <EmptyState
+      icon={<Layers size={48} strokeWidth={1.5} />}
+      title="No components defined"
+      description="Add components to this publication in project.yaml"
+      variant="compact"
     />
   );
 }

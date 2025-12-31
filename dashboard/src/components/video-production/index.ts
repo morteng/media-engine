@@ -4,17 +4,21 @@
 
 // Core components
 export { RemotionPreview } from './RemotionPreview';
-export { SceneNavigator } from './SceneNavigator';
-export { ComponentLibrary } from './ComponentLibrary';
 export { VoiceoverPanel } from './VoiceoverPanel';
-export { SceneDetailPanel } from './SceneDetailPanel';
 export { VideoPlayer } from './VideoPlayer';
+export { WorkflowProgress, useCurrentWorkflowStep } from './WorkflowProgress';
+export type { StepStatus, WorkflowStep } from './WorkflowProgress';
 
-// New unified components
-export { SceneCard, SceneList, SceneGrid } from './SceneCard';
-export { QualitySelector, QualityToggle } from './QualitySelector';
+// Scene components
+export { SceneCard, SceneList } from './SceneCard';
 export { PropsViewer } from './PropsViewer';
 export { YamlEditor } from './YamlEditor';
+
+// Unified video review components
+export { ChapterTimeline } from './ChapterTimeline';
+export { ChapterSelector } from './ChapterSelector';
+export { CommentMarkers } from './CommentMarkers';
+export { UnifiedVideoPlayer } from './UnifiedVideoPlayer';
 
 // Section components (page-level tabs)
 export * from './sections';

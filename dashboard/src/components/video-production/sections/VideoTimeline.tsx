@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { useVideoTimelineData, useVideoAssets } from '@/hooks/useVideoApi';
-import { Spinner } from '@/components/ui';
+import { Spinner, EmptyState } from '@/components/ui';
 import { SceneCard, SceneList } from '../SceneCard';
 import { VideoPlayer } from '../VideoPlayer';
 import { getSceneTypeColors } from '@/utils/statusMappings';
@@ -493,12 +493,11 @@ export function VideoTimeline() {
 
       {/* Empty state */}
       {!props && !propsLoading && selectedScriptId && (
-        <div className="text-center py-12 text-base-content/40">
-          <p>No props generated for this script.</p>
-          <p className="text-sm mt-2">
-            Generate voiceover first to create scene timing data.
-          </p>
-        </div>
+        <EmptyState
+          icon={<Film size={48} strokeWidth={1.5} />}
+          title="No props generated for this script"
+          description="Generate voiceover first to create scene timing data"
+        />
       )}
     </div>
   );

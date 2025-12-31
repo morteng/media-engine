@@ -8,6 +8,8 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   size?: 'sm' | 'md' | 'lg' | 'icon';
   asChild?: boolean;
   loading?: boolean;
+  /** Ensures minimum 44px touch target on all devices, not just touch screens */
+  touchFriendly?: boolean;
 }
 
 const variantClasses: Record<string, string> = {
@@ -27,7 +29,7 @@ const sizeClasses: Record<string, string> = {
 };
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', size = 'md', asChild = false, loading = false, disabled, children, ...props }, ref) => {
+  ({ className, variant = 'primary', size = 'md', asChild = false, loading = false, touchFriendly = false, disabled, children, ...props }, ref) => {
     const Comp = asChild ? Slot : 'button';
     return (
       <Comp
@@ -35,6 +37,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           'btn gap-2',
           variantClasses[variant],
           sizeClasses[size],
+          touchFriendly && 'touch-target',
           className
         )}
         ref={ref}

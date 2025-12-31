@@ -24,7 +24,7 @@ import type {
   AIDecisionsResponse,
 } from '@/api/types';
 import clsx from 'clsx';
-import { Spinner } from '@/components/ui';
+import { Spinner, NoResearchState, NoDecisionsState, EmptyState } from '@/components/ui';
 
 // Tab configuration
 const tabs = [
@@ -124,9 +124,11 @@ function AIOverview() {
                 ))}
               </div>
             ) : (
-              <p className="text-center py-6 text-base-content/60 text-sm">
-                No research entries yet
-              </p>
+              <EmptyState
+                icon={<BookOpen size={32} strokeWidth={1.5} />}
+                title="No research entries yet"
+                variant="compact"
+              />
             )}
           </div>
         </div>
@@ -230,13 +232,7 @@ function AIResearch() {
       </div>
 
       {entries.length === 0 ? (
-        <div className="text-center py-12">
-          <BookOpen size={48} className="mx-auto text-base-content/30 mb-4" />
-          <p className="text-base-content/60">No research entries</p>
-          <p className="text-sm text-base-content/40 mt-1">
-            Research is stored when Claude learns about your project
-          </p>
-        </div>
+        <NoResearchState />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {entries.map((entry) => (
@@ -271,13 +267,7 @@ function AIDecisions() {
       </div>
 
       {decisions.length === 0 ? (
-        <div className="text-center py-12">
-          <Brain size={48} className="mx-auto text-base-content/30 mb-4" />
-          <p className="text-base-content/60">No decisions recorded</p>
-          <p className="text-sm text-base-content/40 mt-1">
-            Decisions are logged when Claude makes significant choices
-          </p>
-        </div>
+        <NoDecisionsState />
       ) : (
         <div className="space-y-4">
           {decisions.map((decision) => (

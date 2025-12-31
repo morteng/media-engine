@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useProject, useDocuments, useDocument, useInsights, useSaveDocument, useHierarchyTree, useBreadcrumbs, useHierarchyNode, useFlowGraph, useUnifiedGraph } from '@/hooks/useApi';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { SubTabs } from '@/components/ui/SubTabs';
 import { MarkdownPreview } from '@/components/ui/MarkdownPreview';
 import { SelectionAnnotation } from '@/components/ui/SelectionAnnotation';
@@ -54,6 +55,19 @@ function DocumentsView() {
   const contentRef = useRef<HTMLDivElement>(null);
 
   const languages = project?.languages ? Object.keys(project.languages) : ['en'];
+
+  // Warn about unsaved changes when navigating away in edit mode
+  const isEditMode = viewMode === 'edit';
+  useUnsavedChanges({
+    hasChanges: isEditMode && hasChanges,
+    title: 'Unsaved Changes',
+    message: 'You have unsaved changes to this document. Are you sure you want to leave without saving?',
+    onDiscard: () => {
+      // Reset the edit state when user confirms leaving
+      setEditContent(docData?.content ?? '');
+      setHasChanges(false);
+    },
+  });
 
   // Auto-expand all categories when documents load
   useEffect(() => {

@@ -1,4 +1,5 @@
 import { DeliverableCard } from './DeliverableCard';
+import { NoDeliverablesState, EmptyState } from '@/components/ui';
 import { FileOutput, Package } from 'lucide-react';
 import type { BuildOutput } from '@/api/types';
 
@@ -18,11 +19,14 @@ export function DeliverableGrid({
   emptyMessage = 'No deliverables available. Build a publication to generate outputs.',
 }: DeliverableGridProps) {
   if (!outputs || outputs.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <Package size={48} className="mx-auto text-base-content/30 mb-4" />
-        <p className="text-base-content/60">{emptyMessage}</p>
-      </div>
+    return emptyMessage ? (
+      <EmptyState
+        icon={<Package size={48} strokeWidth={1.5} />}
+        title="No deliverables yet"
+        description={emptyMessage}
+      />
+    ) : (
+      <NoDeliverablesState />
     );
   }
 

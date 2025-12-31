@@ -6,22 +6,24 @@ test.describe('Video Production Page', () => {
     await waitForApi(page);
   });
 
-  test('displays video production page header', async ({ page }) => {
-    const heading = page.locator('h1, h2').filter({ hasText: /Video Production/i }).first();
-    await expect(heading).toBeVisible({ timeout: 10000 });
+  test('displays video production tab navigation', async ({ page }) => {
+    // Video production page uses tabs instead of a header
+    const tabs = page.locator('.tabs');
+    await expect(tabs).toBeVisible({ timeout: 10000 });
   });
 
   test('shows tab navigation', async ({ page }) => {
     // Check for tab navigation
-    const tabs = page.locator('[class*="tabs"]');
+    const tabs = page.locator('.tabs');
     await expect(tabs).toBeVisible({ timeout: 10000 });
 
-    // Check individual tabs
-    await expect(page.locator('a:has-text("Overview")')).toBeVisible();
-    await expect(page.locator('a:has-text("Scripts")')).toBeVisible();
-    await expect(page.locator('a:has-text("Render")')).toBeVisible();
-    await expect(page.locator('a:has-text("Assets")')).toBeVisible();
-    await expect(page.locator('a:has-text("Tools")')).toBeVisible();
+    // Check individual tabs using the tabs container to avoid sidebar matches
+    await expect(tabs.locator('a:has-text("Overview")')).toBeVisible();
+    await expect(tabs.locator('a:has-text("Projects")')).toBeVisible();
+    await expect(tabs.locator('a:has-text("Review")')).toBeVisible();
+    await expect(tabs.locator('a:has-text("Scripts")')).toBeVisible();
+    await expect(tabs.locator('a:has-text("Render")')).toBeVisible();
+    await expect(tabs.locator('a:has-text("Assets")')).toBeVisible();
   });
 
   test('overview tab shows stats cards', async ({ page }) => {
@@ -116,39 +118,17 @@ test.describe('Video Production - Assets Tab', () => {
   });
 });
 
-test.describe('Video Production - Tools Tab', () => {
+test.describe('Video Production - Projects Tab', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/video/tools');
+    await page.goto('/video/projects');
     await waitForApi(page);
   });
 
-  test('displays component library', async ({ page }) => {
-    await expect(page.locator('text=Component Library')).toBeVisible({ timeout: 10000 });
-  });
-
-  test('displays voiceover preview', async ({ page }) => {
-    await expect(page.locator('text=Voiceover Preview')).toBeVisible({ timeout: 10000 });
-  });
-
-  test('component library has search input', async ({ page }) => {
-    const searchInput = page.locator('input[placeholder*="Search"]');
-    await expect(searchInput).toBeVisible({ timeout: 10000 });
-  });
-
-  test('can filter components by category', async ({ page }) => {
-    // Look for category filter buttons
-    const categoryButtons = page.locator('button:has-text("background"), button:has-text("text"), button:has-text("transition")');
-    const count = await categoryButtons.count();
-    expect(count).toBeGreaterThan(0);
-  });
-
-  test('voiceover panel has voice selection', async ({ page }) => {
-    await expect(page.locator('text=Voice Selection')).toBeVisible({ timeout: 10000 });
-  });
-
-  test('voiceover panel has preview button', async ({ page }) => {
-    const previewButton = page.locator('button:has-text("Preview")');
-    await expect(previewButton).toBeVisible({ timeout: 10000 });
+  test('displays projects list or empty state', async ({ page }) => {
+    // Should show either projects or an empty state message
+    await page.waitForLoadState('networkidle');
+    const content = page.locator('main');
+    await expect(content).toBeVisible();
   });
 });
 
@@ -172,9 +152,9 @@ test.describe('Video Production - Navigation', () => {
     await tabsContainer.locator('a:has-text("Assets")').click();
     await expect(page).toHaveURL(/\/video\/assets/);
 
-    // Navigate to Tools tab
-    await tabsContainer.locator('a:has-text("Tools")').click();
-    await expect(page).toHaveURL(/\/video\/tools/);
+    // Navigate to Projects tab
+    await tabsContainer.locator('a:has-text("Projects")').click();
+    await expect(page).toHaveURL(/\/video\/projects/);
 
     // Navigate back to Overview
     await tabsContainer.locator('a:has-text("Overview")').click();

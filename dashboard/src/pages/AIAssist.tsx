@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
+import { EmptyState, NoTasksState } from '@/components/ui';
 import {
   useAIConfig,
   useAIOperations,
@@ -399,11 +400,12 @@ export function AIAssist() {
               )}
 
               {selections.length === 0 ? (
-                <div className="text-center py-8 text-base-content/60">
-                  <FileText size={32} className="mx-auto mb-2 opacity-50" />
-                  <p className="font-medium">No content selected</p>
-                  <p className="text-sm">Add documents or scenes to process</p>
-                </div>
+                <EmptyState
+                  icon={<FileText size={32} strokeWidth={1.5} />}
+                  title="No content selected"
+                  description="Add documents or scenes to process"
+                  variant="compact"
+                />
               ) : (
                 <div className="space-y-3">
                   {selections.map(item => (
@@ -564,11 +566,7 @@ export function AIAssist() {
                       <span>Loading tasks...</span>
                     </div>
                   ) : tasksData?.tasks.length === 0 ? (
-                    <div className="text-center py-8 text-base-content/60">
-                      <ListTodo size={24} className="mx-auto mb-2 opacity-50" />
-                      <p>No tasks in queue</p>
-                      <p className="text-sm">Submit content above to add tasks</p>
-                    </div>
+                    <NoTasksState />
                   ) : (
                     <div className="space-y-3">
                       {tasksData?.tasks.map(task => (

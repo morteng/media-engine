@@ -1,4 +1,5 @@
 import { PublicationStatusCard as PublicationCard } from './PublicationStatusCard';
+import { NoPublicationsState } from '@/components/ui';
 import type { PublicationStatusItem } from '@/api/types';
 
 interface PublicationGridProps {
@@ -17,12 +18,7 @@ export function PublicationGrid({
   onBuild,
 }: PublicationGridProps) {
   if (!publications || publications.length === 0) {
-    return (
-      <div className="text-center py-12 text-base-content/60">
-        <p>No publications found</p>
-        <p className="text-sm mt-2">Create publications in your project.yaml</p>
-      </div>
-    );
+    return <NoPublicationsState />;
   }
 
   if (groupByLanguage) {

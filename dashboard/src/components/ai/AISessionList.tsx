@@ -1,5 +1,5 @@
 import { AISessionCard, type AISession } from './AISessionCard';
-import { History } from 'lucide-react';
+import { NoSessionsState } from '@/components/ui';
 
 interface AISessionListProps {
   sessions: AISession[];
@@ -22,15 +22,7 @@ export function AISessionList({
   const hasMore = maxItems && sessions.length > maxItems;
 
   if (sessions.length === 0 && showEmpty) {
-    return (
-      <div className="text-center py-8">
-        <History size={32} className="mx-auto text-base-content/30 mb-3" />
-        <p className="text-base-content/60">No AI sessions</p>
-        <p className="text-sm text-base-content/40 mt-1">
-          Sessions appear when Claude starts working on tasks
-        </p>
-      </div>
-    );
+    return <NoSessionsState />;
   }
 
   if (compact) {

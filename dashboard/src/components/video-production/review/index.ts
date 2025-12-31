@@ -4,3 +4,4 @@
  */
 
 export { ReviewPanel } from './ReviewPanel';
+export { QuickAddComment } from './QuickAddComment';

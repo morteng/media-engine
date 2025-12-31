@@ -1,21 +1,48 @@
 import * as React from 'react';
 import clsx from 'clsx';
 
+export type CardVariant =
+  | 'default'
+  | 'elevated'
+  | 'gradient'
+  | 'bordered'
+  | 'ghost'
+  | 'interactive'
+  | 'glow'; // Legacy variant for backward compatibility
+
+export type CardPadding = 'compact' | 'default' | 'spacious' | 'none';
+
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'glow' | 'gradient';
+  variant?: CardVariant;
+  padding?: CardPadding;
 }
 
+const variantStyles: Record<CardVariant, string> = {
+  default: 'bg-base-200 border border-base-300 shadow-sm',
+  elevated: 'bg-base-200 border border-base-300 shadow-lg hover:shadow-xl transition-shadow',
+  gradient: 'bg-gradient-to-br from-base-200 to-base-300 border border-base-300',
+  bordered: 'bg-base-200 border-2 border-base-300',
+  ghost: 'bg-transparent border border-transparent hover:border-base-300 transition-colors',
+  interactive:
+    'bg-base-200 border border-base-300 shadow-sm hover:shadow-md hover:border-primary/50 hover:bg-base-200/80 transition-all cursor-pointer',
+  glow: 'bg-base-200 border border-primary/30 shadow-lg shadow-primary/10',
+};
+
+const paddingStyles: Record<CardPadding, string> = {
+  none: '',
+  compact: 'p-3',
+  default: 'p-4',
+  spacious: 'p-6',
+};
+
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant = 'default', ...props }, ref) => (
+  ({ className, variant = 'default', padding, ...props }, ref) => (
     <div
       ref={ref}
       className={clsx(
-        'card bg-base-200 border border-base-300 rounded-lg',
-        {
-          'shadow-sm': variant === 'default',
-          'border-primary/30 shadow-lg shadow-primary/10': variant === 'glow',
-          'bg-gradient-to-br from-base-200 to-base-300': variant === 'gradient',
-        },
+        'card rounded-lg',
+        variantStyles[variant],
+        padding && paddingStyles[padding],
         className
       )}
       {...props}

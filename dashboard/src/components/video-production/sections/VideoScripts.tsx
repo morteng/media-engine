@@ -1,9 +1,10 @@
 /**
  * VideoScripts - Script editor tab for video production
  * Handles script list, editor, create/delete/duplicate operations
+ * Supports batch selection and batch operations (regenerate voiceover/props)
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Film,
   Code,
@@ -18,14 +19,28 @@ import {
   ChevronRight,
   RefreshCw,
   AlertTriangle,
+  CheckSquare,
+  Square,
+  MinusSquare,
 } from 'lucide-react';
 import clsx from 'clsx';
-import { Spinner } from '@/components/ui';
-import { useVideoScriptsData, useVoiceoverStatus, useGenerateVoiceover } from '@/hooks/useVideoApi';
-import { DEFAULT_SCRIPT_TEMPLATE } from '@/api/video';
+import { Spinner, NoScriptsState, EmptyState } from '@/components/ui';
+import { useVideoScriptsData, useVoiceoverStatus, useGenerateVoiceover, videoQueryKeys } from '@/hooks/useVideoApi';
+import { DEFAULT_SCRIPT_TEMPLATE, getVideoProps } from '@/api/video';
 import { VoiceoverPanel } from '../VoiceoverPanel';
 import { YamlEditor } from '../YamlEditor';
 import type { VideoScriptItem } from '@/api/types';
+import { useQueryClient } from '@tanstack/react-query';
+
+// Batch operation types
+type BatchOperation = 'voiceover' | 'props';
+
+interface BatchProgress {
+  operation: BatchOperation;
+  current: number;
+  total: number;
+  currentScriptId: string | null;
+}
 
 export function VideoScripts() {
   const [selectedScript, setSelectedScript] = useState<string | null>(null);
@@ -36,6 +51,12 @@ export function VideoScripts() {
   const [showVoiceover, setShowVoiceover] = useState(false);
   const [showRegeneratePrompt, setShowRegeneratePrompt] = useState(false);
   const [needsRegenerate, setNeedsRegenerate] = useState(false);
+
+  // Batch selection state
+  const [selectedScriptIds, setSelectedScriptIds] = useState<Set<string>>(new Set());
+  const [batchProgress, setBatchProgress] = useState<BatchProgress | null>(null);
+
+  const queryClient = useQueryClient();
 
   const {
     scripts,
@@ -60,6 +81,123 @@ export function VideoScripts() {
       setEditContent(scriptDetail.content);
     }
   }, [scriptDetail?.content]);
+
+  // Clear selection when scripts change (e.g., after delete)
+  useEffect(() => {
+    // Remove any selected IDs that no longer exist in scripts
+    const scriptIdSet = new Set(scripts.map((s: VideoScriptItem) => s.id));
+    setSelectedScriptIds((prev) => {
+      const newSet = new Set([...prev].filter((id) => scriptIdSet.has(id)));
+      if (newSet.size !== prev.size) return newSet;
+      return prev;
+    });
+  }, [scripts]);
+
+  // Batch selection handlers
+  const toggleScriptSelection = useCallback((scriptId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    setSelectedScriptIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(scriptId)) {
+        newSet.delete(scriptId);
+      } else {
+        newSet.add(scriptId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback(() => {
+    if (selectedScriptIds.size === scripts.length) {
+      setSelectedScriptIds(new Set());
+    } else {
+      setSelectedScriptIds(new Set(scripts.map((s: VideoScriptItem) => s.id)));
+    }
+  }, [scripts, selectedScriptIds.size]);
+
+  const clearSelection = useCallback(() => {
+    setSelectedScriptIds(new Set());
+  }, []);
+
+  // Batch operation handlers
+  const handleBatchRegenerateVoiceover = useCallback(async () => {
+    const scriptIds = Array.from(selectedScriptIds);
+    if (scriptIds.length === 0) return;
+
+    setBatchProgress({
+      operation: 'voiceover',
+      current: 0,
+      total: scriptIds.length,
+      currentScriptId: null,
+    });
+
+    for (let i = 0; i < scriptIds.length; i++) {
+      const scriptId = scriptIds[i];
+      setBatchProgress({
+        operation: 'voiceover',
+        current: i + 1,
+        total: scriptIds.length,
+        currentScriptId: scriptId,
+      });
+
+      try {
+        await generateVoiceover.mutateAsync({
+          scriptId,
+          mode: 'mock',
+          force: true,
+        });
+      } catch {
+        // Continue with next script on error
+        console.error(`Failed to regenerate voiceover for ${scriptId}`);
+      }
+    }
+
+    setBatchProgress(null);
+    clearSelection();
+  }, [selectedScriptIds, generateVoiceover, clearSelection]);
+
+  const handleBatchRegenerateProps = useCallback(async () => {
+    const scriptIds = Array.from(selectedScriptIds);
+    if (scriptIds.length === 0) return;
+
+    setBatchProgress({
+      operation: 'props',
+      current: 0,
+      total: scriptIds.length,
+      currentScriptId: null,
+    });
+
+    for (let i = 0; i < scriptIds.length; i++) {
+      const scriptId = scriptIds[i];
+      setBatchProgress({
+        operation: 'props',
+        current: i + 1,
+        total: scriptIds.length,
+        currentScriptId: scriptId,
+      });
+
+      try {
+        // Calling getVideoProps triggers props regeneration on the backend
+        await getVideoProps(scriptId);
+        // Invalidate the cache to show updated data
+        queryClient.invalidateQueries({
+          queryKey: videoQueryKeys.props(scriptId),
+        });
+      } catch {
+        // Continue with next script on error
+        console.error(`Failed to regenerate props for ${scriptId}`);
+      }
+    }
+
+    setBatchProgress(null);
+    clearSelection();
+  }, [selectedScriptIds, queryClient, clearSelection]);
+
+  // Selection state helpers
+  const isAllSelected = scripts.length > 0 && selectedScriptIds.size === scripts.length;
+  const isPartiallySelected = selectedScriptIds.size > 0 && selectedScriptIds.size < scripts.length;
+  const hasSelection = selectedScriptIds.size > 0;
+  const isBatchOperationInProgress = batchProgress !== null;
 
   if (scriptsLoading) {
     return (
@@ -121,6 +259,23 @@ export function VideoScripts() {
         <aside className="w-72 flex-shrink-0 flex flex-col bg-base-200 rounded-lg overflow-hidden">
           <div className="p-4 border-b border-base-300">
             <div className="flex items-center gap-2">
+              {/* Select All checkbox */}
+              {scripts.length > 0 && (
+                <button
+                  onClick={toggleSelectAll}
+                  className="btn btn-ghost btn-xs p-1"
+                  aria-label={isAllSelected ? 'Deselect all' : 'Select all'}
+                  disabled={isBatchOperationInProgress}
+                >
+                  {isAllSelected ? (
+                    <CheckSquare size={16} className="text-primary" />
+                  ) : isPartiallySelected ? (
+                    <MinusSquare size={16} className="text-primary" />
+                  ) : (
+                    <Square size={16} />
+                  )}
+                </button>
+              )}
               <h3 className="font-semibold flex items-center gap-2 flex-1">
                 <Film size={16} />
                 Scripts
@@ -130,41 +285,112 @@ export function VideoScripts() {
                 onClick={() => setShowCreateModal(true)}
                 className="btn btn-primary btn-xs gap-1"
                 aria-label="Create new script"
+                disabled={isBatchOperationInProgress}
               >
                 <Plus size={12} />
                 New
               </button>
             </div>
           </div>
-          <nav className="flex-1 overflow-y-auto p-2 space-y-1">
-            {scripts.length === 0 ? (
-              <div className="text-center py-8 text-base-content/60 text-sm">
-                <FileVideo size={32} className="mx-auto mb-2 opacity-50" />
-                <p>No scripts yet</p>
+
+          {/* Batch Action Toolbar */}
+          {hasSelection && (
+            <div className="p-2 border-b border-base-300 bg-primary/10">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-medium text-primary">
+                  {selectedScriptIds.size} selected
+                </span>
+                <div className="flex-1" />
                 <button
-                  onClick={() => setShowCreateModal(true)}
-                  className="btn btn-ghost btn-xs mt-2"
+                  onClick={handleBatchRegenerateVoiceover}
+                  disabled={isBatchOperationInProgress}
+                  className="btn btn-xs btn-primary gap-1"
+                  aria-label="Regenerate voiceover for selected scripts"
                 >
-                  Create your first script
+                  {batchProgress?.operation === 'voiceover' ? (
+                    <>
+                      <Loader2 size={12} className="animate-spin" />
+                      {batchProgress.current}/{batchProgress.total}
+                    </>
+                  ) : (
+                    <>
+                      <Mic size={12} />
+                      Voiceover
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={handleBatchRegenerateProps}
+                  disabled={isBatchOperationInProgress}
+                  className="btn btn-xs btn-secondary gap-1"
+                  aria-label="Regenerate props for selected scripts"
+                >
+                  {batchProgress?.operation === 'props' ? (
+                    <>
+                      <Loader2 size={12} className="animate-spin" />
+                      {batchProgress.current}/{batchProgress.total}
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw size={12} />
+                      Props
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={clearSelection}
+                  disabled={isBatchOperationInProgress}
+                  className="btn btn-xs btn-ghost"
+                  aria-label="Clear selection"
+                >
+                  <X size={12} />
                 </button>
               </div>
+              {/* Progress indicator */}
+              {batchProgress && (
+                <div className="mt-2 text-xs text-base-content/70">
+                  Regenerating {batchProgress.operation === 'voiceover' ? 'voiceover' : 'props'}{' '}
+                  {batchProgress.current} of {batchProgress.total}...
+                </div>
+              )}
+            </div>
+          )}
+
+          <nav className="flex-1 overflow-y-auto p-2 space-y-1">
+            {scripts.length === 0 ? (
+              <NoScriptsState onAdd={() => setShowCreateModal(true)} />
             ) : (
               scripts.map((script: VideoScriptItem) => (
                 <div
                   key={script.id}
                   className={clsx(
                     'group flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors',
+                    selectedScriptIds.has(script.id) && 'bg-primary/10',
                     selectedScript === script.id
                       ? 'bg-primary/20 text-primary'
                       : 'hover:bg-base-300 text-base-content/80'
                   )}
                 >
+                  {/* Checkbox for selection */}
+                  <button
+                    onClick={(e) => toggleScriptSelection(script.id, e)}
+                    className="btn btn-ghost btn-xs p-0 min-h-0 h-auto"
+                    aria-label={selectedScriptIds.has(script.id) ? 'Deselect script' : 'Select script'}
+                    disabled={isBatchOperationInProgress}
+                  >
+                    {selectedScriptIds.has(script.id) ? (
+                      <CheckSquare size={14} className="text-primary" />
+                    ) : (
+                      <Square size={14} className="opacity-50 group-hover:opacity-100" />
+                    )}
+                  </button>
                   <button
                     onClick={() => {
                       setSelectedScript(script.id);
                       setEditContent('');
                     }}
                     className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                    disabled={isBatchOperationInProgress}
                   >
                     <FileVideo size={14} className="flex-shrink-0" />
                     <span className="flex-1 truncate">{script.name}</span>
@@ -178,6 +404,7 @@ export function VideoScripts() {
                       }}
                       className="btn btn-ghost btn-xs p-1"
                       aria-label="Duplicate script"
+                      disabled={isBatchOperationInProgress}
                     >
                       <Copy size={12} />
                     </button>
@@ -188,6 +415,7 @@ export function VideoScripts() {
                       }}
                       className="btn btn-ghost btn-xs p-1 text-error"
                       aria-label="Delete script"
+                      disabled={isBatchOperationInProgress}
                     >
                       <Trash2 size={12} />
                     </button>
@@ -342,18 +570,16 @@ export function VideoScripts() {
               </div>
             )
           ) : (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <Code size={48} className="text-base-content/30 mb-4" />
-              <h3 className="text-lg font-semibold">Select a Script</h3>
-              <p className="text-base-content/60 mb-4">Choose a video script to edit</p>
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="btn btn-primary btn-sm gap-2"
-              >
-                <Plus size={14} />
-                Create New Script
-              </button>
-            </div>
+            <EmptyState
+              icon={<Code size={48} strokeWidth={1.5} />}
+              title="Select a Script"
+              description="Choose a video script to edit"
+              action={{
+                label: 'Create New Script',
+                onClick: () => setShowCreateModal(true),
+              }}
+              variant="centered"
+            />
           )}
         </main>
       </div>

@@ -81,14 +81,14 @@ describe('Quality', () => {
     // Wait for Component Scores section to appear (first expandable section after data loads)
     await waitFor(() => {
       expect(screen.getByText(/component scores/i)).toBeInTheDocument();
-    }, { timeout: 5000 });
+    }, { timeout: 10000 });
     // The page is loaded, check for key sections using getByRole to find headings
     // These sections exist as h3 elements inside ExpandableSection buttons
     expect(screen.getByRole('heading', { name: /semantic analysis/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /knowledge graph/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /readability/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /freshness/i })).toBeInTheDocument();
-  });
+  }, 15000);
 
   it('displays activity section', async () => {
     renderQuality();

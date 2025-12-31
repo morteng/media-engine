@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useApi } from '@/hooks/useApi';
 import { DeliverableGrid } from '@/components/publications';
-import { ExpandableSection, Spinner } from '@/components/ui';
+import { ExpandableSection, Spinner, NoDeliverablesState } from '@/components/ui';
 import { Package, RefreshCw, FolderOpen } from 'lucide-react';
 import type { BuildOutputsResponse } from '@/api/types';
 
@@ -135,13 +135,7 @@ export default function Deliverables() {
         onToggle={() => toggleSection('all')}
       >
         {outputs.length === 0 ? (
-          <div className="text-center py-12">
-            <Package size={48} className="mx-auto text-base-content/30 mb-4" />
-            <p className="text-base-content/60">No deliverables yet</p>
-            <p className="text-sm text-base-content/40 mt-1">
-              Build a publication to generate outputs
-            </p>
-          </div>
+          <NoDeliverablesState />
         ) : (
           <DeliverableGrid
             outputs={outputs}

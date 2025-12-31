@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import {
   useInsights,
   useFreshness,
@@ -6,7 +6,7 @@ import {
   useAuditLog,
 } from '@/hooks/useApi';
 import { useSettings } from '@/contexts';
-import { ExpandableSection, Spinner } from '@/components/ui';
+import { ExpandableSection, Skeleton } from '@/components/ui';
 import { InfoTooltip, METRIC_EXPLANATIONS } from '@/components/ui/InfoTooltip';
 import {
   GraphCanvas,
@@ -37,20 +37,194 @@ import {
   HelpCircle,
   BarChart3,
   ListChecks,
+  ChevronRight,
+  ArrowDown,
 } from 'lucide-react';
 
-// Loading component
-function Loading({ message }: { message: string }) {
+// Section IDs for "Jump to" navigation
+const SECTION_IDS = {
+  componentScores: 'section-component-scores',
+  issues: 'section-issues',
+  semantic: 'section-semantic',
+  knowledgeGraph: 'section-knowledge-graph',
+  readability: 'section-readability',
+  freshness: 'section-freshness',
+  codeSync: 'section-code-sync',
+  advanced: 'section-advanced',
+  activity: 'section-activity',
+} as const;
+
+type SectionId = keyof typeof SECTION_IDS;
+
+// localStorage key for expanded sections
+const EXPANDED_SECTIONS_KEY = 'media-engine-quality-expanded';
+
+// Default expanded sections
+const DEFAULT_EXPANDED: Record<SectionId, boolean> = {
+  componentScores: true,
+  issues: true,
+  semantic: false,
+  knowledgeGraph: false,
+  readability: false,
+  freshness: false,
+  codeSync: false,
+  advanced: false,
+  activity: false,
+};
+
+// Load expanded state from localStorage
+function loadExpandedState(): Record<SectionId, boolean> {
+  try {
+    const stored = localStorage.getItem(EXPANDED_SECTIONS_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return { ...DEFAULT_EXPANDED, ...parsed };
+    }
+  } catch (error) {
+    console.error('Failed to load expanded state:', error);
+  }
+  return DEFAULT_EXPANDED;
+}
+
+// Save expanded state to localStorage
+function saveExpandedState(state: Record<SectionId, boolean>): void {
+  try {
+    localStorage.setItem(EXPANDED_SECTIONS_KEY, JSON.stringify(state));
+  } catch (error) {
+    console.error('Failed to save expanded state:', error);
+  }
+}
+
+// Quick summary metric item component
+interface QuickMetricProps {
+  label: string;
+  value: number;
+  icon: React.ReactNode;
+  status: 'success' | 'warning' | 'error';
+  sectionId?: SectionId;
+  onJumpTo?: (id: SectionId) => void;
+}
+
+function QuickMetric({ label, value, icon, status, sectionId, onJumpTo }: QuickMetricProps) {
+  const statusColors = {
+    success: 'bg-success/10 border-success/20 hover:bg-success/20',
+    warning: 'bg-warning/10 border-warning/20 hover:bg-warning/20',
+    error: 'bg-error/10 border-error/20 hover:bg-error/20',
+  };
+  const textColors = {
+    success: 'text-success',
+    warning: 'text-warning',
+    error: 'text-error',
+  };
+
+  const content = (
+    <>
+      <div className={`${textColors[status]} mb-1`}>{icon}</div>
+      <div className={`text-2xl font-bold ${textColors[status]}`}>{value}</div>
+      <div className="text-xs text-base-content/60">{label}</div>
+      {sectionId && onJumpTo && (
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <ArrowDown size={12} className="text-base-content/40" />
+        </div>
+      )}
+    </>
+  );
+
+  if (sectionId && onJumpTo) {
+    return (
+      <button
+        onClick={() => onJumpTo(sectionId)}
+        className={`group relative text-center p-3 rounded-lg border transition-colors cursor-pointer ${statusColors[status]}`}
+      >
+        {content}
+      </button>
+    );
+  }
+
   return (
-    <div className="flex items-center justify-center min-h-[400px]">
-      <div className="text-center">
-        <Spinner size="lg" className="text-primary" />
-        <p className="mt-4 text-base-content/60">{message}</p>
+    <div className={`text-center p-3 rounded-lg border ${statusColors[status]}`}>
+      {content}
+    </div>
+  );
+}
+
+// Top issue component for quick summary
+interface TopIssueProps {
+  issue: {
+    severity: string;
+    category: string;
+    document: string;
+    message: string;
+  };
+  index: number;
+}
+
+function TopIssue({ issue, index }: TopIssueProps) {
+  const isCritical = issue.severity === 'critical';
+  return (
+    <div
+      className={`flex items-start gap-3 p-3 rounded-lg ${
+        isCritical ? 'bg-error/10 border border-error/20' : 'bg-warning/10 border border-warning/20'
+      }`}
+    >
+      <div className="flex-shrink-0 mt-0.5">
+        <span className={`badge badge-sm ${isCritical ? 'badge-error' : 'badge-warning'}`}>
+          #{index + 1}
+        </span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          {isCritical ? (
+            <AlertCircle size={14} className="text-error flex-shrink-0" />
+          ) : (
+            <AlertTriangle size={14} className="text-warning flex-shrink-0" />
+          )}
+          <span className={`badge badge-xs ${isCritical ? 'badge-error' : 'badge-warning'}`}>
+            {issue.category}
+          </span>
+          <span className="text-xs text-base-content/50 truncate">{issue.document}</span>
+        </div>
+        <p className="text-sm">{issue.message}</p>
       </div>
     </div>
   );
 }
 
+// Skeleton for quick summary while loading
+function QuickSummarySkeleton() {
+  return (
+    <div className="card bg-base-200 border border-base-300">
+      <div className="card-body">
+        <div className="flex items-center gap-2 mb-4">
+          <Skeleton width={20} height={20} variant="circular" />
+          <Skeleton width={150} height={18} />
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="text-center p-3 rounded-lg bg-base-300">
+              <Skeleton width={24} height={24} variant="circular" className="mx-auto mb-1" />
+              <Skeleton width={40} height={28} className="mx-auto mb-1" />
+              <Skeleton width={60} height={12} className="mx-auto" />
+            </div>
+          ))}
+        </div>
+        <Skeleton width={120} height={14} className="mb-3" />
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="p-3 rounded-lg bg-base-300">
+              <div className="flex items-center gap-2 mb-2">
+                <Skeleton width={24} height={16} variant="rounded" />
+                <Skeleton width={60} height={14} variant="rounded" />
+                <Skeleton width={100} height={12} />
+              </div>
+              <Skeleton width="90%" height={14} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ============== MAIN QUALITY PAGE (Single Page View) ==============
 export function Quality() {
@@ -60,7 +234,54 @@ export function Quality() {
   const { data: auditLog, isLoading: auditLoading } = useAuditLog();
   const { isDark } = useSettings();
 
-  const isLoading = insightsLoading || freshnessLoading || advancedLoading || auditLoading;
+  // Expanded sections state with localStorage persistence
+  const [expandedSections, setExpandedSections] = useState<Record<SectionId, boolean>>(loadExpandedState);
+
+  // Section refs for scrolling
+  const sectionRefs = useRef<Record<SectionId, HTMLDivElement | null>>({
+    componentScores: null,
+    issues: null,
+    semantic: null,
+    knowledgeGraph: null,
+    readability: null,
+    freshness: null,
+    codeSync: null,
+    advanced: null,
+    activity: null,
+  });
+
+  // Save to localStorage when expanded state changes
+  useEffect(() => {
+    saveExpandedState(expandedSections);
+  }, [expandedSections]);
+
+  // Toggle section expansion
+  const toggleSection = useCallback((sectionId: SectionId) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [sectionId]: !prev[sectionId],
+    }));
+  }, []);
+
+  // Jump to section: expand and scroll into view
+  const jumpToSection = useCallback((sectionId: SectionId) => {
+    // Expand the section if not already expanded
+    setExpandedSections((prev) => ({
+      ...prev,
+      [sectionId]: true,
+    }));
+
+    // Scroll to section after a brief delay to allow expansion
+    setTimeout(() => {
+      const ref = sectionRefs.current[sectionId];
+      if (ref) {
+        ref.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
+  }, []);
+
+  // Check if primary data is loading (show skeleton for summary)
+  const isPrimaryLoading = insightsLoading || freshnessLoading;
 
   // Memoize graph data conversion
   const graphData = insights?.graph;
@@ -74,20 +295,11 @@ export function Quality() {
     return toReagraphEdgesFromKnowledgeGraph(graphData.links);
   }, [graphData?.links]);
 
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-semibold">Quality</h1>
-        <Loading message="Loading quality data..." />
-      </div>
-    );
-  }
-
   const health = insights?.health;
-  const issues = health?.issues ?? [];
+  const issues = useMemo(() => health?.issues ?? [], [health?.issues]);
   const components = health?.components;
-  const errorCount = issues.filter(i => i.severity === 'critical').length;
-  const warningCount = issues.filter(i => i.severity === 'warning').length;
+  const errorCount = useMemo(() => issues.filter(i => i.severity === 'critical').length, [issues]);
+  const warningCount = useMemo(() => issues.filter(i => i.severity === 'warning').length, [issues]);
 
   const semantic = advanced?.semantic;
   const kg = advanced?.knowledge_graph;
@@ -102,6 +314,22 @@ export function Quality() {
 
   const recentChanges = insights?.statistics?.activity?.recent_changes ?? [];
   const entries = auditLog?.entries ?? [];
+
+  // Compute summary metrics for quick view
+  const duplicateCount = semantic?.near_duplicate_count ?? 0;
+  const orphanCount = kg?.orphan_count ?? 0;
+  const staleCount = freshness?.stale_count ?? 0;
+  const syntaxErrorCount = codesync?.syntax_error_count ?? 0;
+
+  // Get top 3 most critical issues (prioritize critical over warning)
+  const topIssues = useMemo(() => {
+    const sorted = [...issues].sort((a, b) => {
+      if (a.severity === 'critical' && b.severity !== 'critical') return -1;
+      if (a.severity !== 'critical' && b.severity === 'critical') return 1;
+      return 0;
+    });
+    return sorted.slice(0, 3);
+  }, [issues]);
 
   return (
     <div className="space-y-6">
@@ -128,47 +356,120 @@ export function Quality() {
         </div>
       </div>
 
-      {/* Issue Summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className={`card bg-base-200 ${errorCount > 0 ? 'border border-error/30' : ''}`}>
-          <div className="card-body p-4 flex-row items-center gap-4">
-            <AlertCircle size={20} className="text-error" />
-            <span className="text-2xl font-bold">{errorCount}</span>
-            <span className="text-base-content/60 flex items-center gap-1">
-              Critical
-              <InfoTooltip
-                title="Critical Issues"
-                content="Blocking issues that must be resolved before publishing."
+      {/* Quick Summary - At a Glance */}
+      {isPrimaryLoading ? (
+        <QuickSummarySkeleton />
+      ) : (
+        <div className="card bg-base-200 border border-base-300">
+          <div className="card-body">
+            {/* Header */}
+            <div className="flex items-center gap-2 mb-4">
+              <Zap size={20} className="text-primary" />
+              <h2 className="font-semibold">At a Glance</h2>
+              <span className="text-sm text-base-content/50">Click metrics to jump to details</span>
+            </div>
+
+            {/* Key Metrics Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+              <QuickMetric
+                label="Duplicates"
+                value={duplicateCount}
+                icon={<Copy size={20} />}
+                status={duplicateCount === 0 ? 'success' : duplicateCount <= 3 ? 'warning' : 'error'}
+                sectionId="semantic"
+                onJumpTo={jumpToSection}
               />
-            </span>
+              <QuickMetric
+                label="Orphan Concepts"
+                value={orphanCount}
+                icon={<Brain size={20} />}
+                status={orphanCount === 0 ? 'success' : orphanCount <= 5 ? 'warning' : 'error'}
+                sectionId="knowledgeGraph"
+                onJumpTo={jumpToSection}
+              />
+              <QuickMetric
+                label="Stale Docs"
+                value={staleCount}
+                icon={<Clock size={20} />}
+                status={staleCount === 0 ? 'success' : staleCount <= 5 ? 'warning' : 'error'}
+                sectionId="freshness"
+                onJumpTo={jumpToSection}
+              />
+              <QuickMetric
+                label="Syntax Errors"
+                value={syntaxErrorCount}
+                icon={<Code size={20} />}
+                status={syntaxErrorCount === 0 ? 'success' : 'error'}
+                sectionId="codeSync"
+                onJumpTo={jumpToSection}
+              />
+            </div>
+
+            {/* Top Issues Preview */}
+            {topIssues.length > 0 ? (
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-medium text-base-content/70">Top Issues</h3>
+                  {issues.length > 3 && (
+                    <button
+                      onClick={() => jumpToSection('issues')}
+                      className="text-xs text-primary hover:underline flex items-center gap-1"
+                    >
+                      View all {issues.length} issues
+                      <ChevronRight size={12} />
+                    </button>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  {topIssues.map((issue, idx) => (
+                    <TopIssue key={idx} issue={issue} index={idx} />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 p-4 rounded-lg bg-success/10 border border-success/20">
+                <CheckCircle size={24} className="text-success" />
+                <div>
+                  <div className="font-medium text-success">No Issues Found</div>
+                  <div className="text-sm text-base-content/60">Your content is in great shape!</div>
+                </div>
+              </div>
+            )}
+
+            {/* Issue Summary Row */}
+            <div className="flex items-center gap-4 pt-4 mt-4 border-t border-base-300">
+              <div className="flex items-center gap-2">
+                <AlertCircle size={16} className="text-error" />
+                <span className="text-sm">
+                  <span className="font-bold">{errorCount}</span> critical
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <AlertTriangle size={16} className="text-warning" />
+                <span className="text-sm">
+                  <span className="font-bold">{warningCount}</span> warnings
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle size={16} className="text-success" />
+                <span className="text-sm">
+                  <span className="font-bold">{health?.document_count ?? 0}</span> documents
+                </span>
+              </div>
+            </div>
           </div>
         </div>
-        <div className={`card bg-base-200 ${warningCount > 0 ? 'border border-warning/30' : ''}`}>
-          <div className="card-body p-4 flex-row items-center gap-4">
-            <AlertTriangle size={20} className="text-warning" />
-            <span className="text-2xl font-bold">{warningCount}</span>
-            <span className="text-base-content/60">Warnings</span>
-          </div>
-        </div>
-        <div className="card bg-base-200 border border-success/30">
-          <div className="card-body p-4 flex-row items-center gap-4">
-            <CheckCircle size={20} className="text-success" />
-            <span className="text-2xl font-bold">{health?.document_count ?? 0}</span>
-            <span className="text-base-content/60 flex items-center gap-1">
-              Documents
-              <InfoTooltip {...METRIC_EXPLANATIONS.documentCount} />
-            </span>
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Component Scores */}
-      <ExpandableSection
-        title="Component Scores"
-        description="Weighted health factors across all quality dimensions"
-        icon={<ListChecks size={20} />}
-        defaultExpanded={true}
-      >
+      <div ref={(el) => { sectionRefs.current.componentScores = el; }} id={SECTION_IDS.componentScores}>
+        <ExpandableSection
+          title="Component Scores"
+          description="Weighted health factors across all quality dimensions"
+          icon={<ListChecks size={20} />}
+          isExpanded={expandedSections.componentScores}
+          onToggle={() => toggleSection('componentScores')}
+        >
         <div className="space-y-4">
           {components && Object.entries(components).map(([key, value]) => {
             const explanation = METRIC_EXPLANATIONS[key as keyof typeof METRIC_EXPLANATIONS];
@@ -191,18 +492,21 @@ export function Quality() {
             );
           })}
         </div>
-      </ExpandableSection>
+        </ExpandableSection>
+      </div>
 
       {/* Issues */}
       {issues.length > 0 && (
-        <ExpandableSection
-          title="Issues"
-          description={`${issues.length} issues to address`}
-          icon={<AlertTriangle size={20} />}
-          statusBadge={errorCount > 0 ? 'error' : 'warning'}
-          statusCount={issues.length}
-          defaultExpanded={true}
-        >
+        <div ref={(el) => { sectionRefs.current.issues = el; }} id={SECTION_IDS.issues}>
+          <ExpandableSection
+            title="Issues"
+            description={`${issues.length} issues to address`}
+            icon={<AlertTriangle size={20} />}
+            statusBadge={errorCount > 0 ? 'error' : 'warning'}
+            statusCount={issues.length}
+            isExpanded={expandedSections.issues}
+            onToggle={() => toggleSection('issues')}
+          >
           <div className="space-y-3">
             {issues.slice(0, 10).map((issue, idx) => (
               <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-base-300">
@@ -222,18 +526,23 @@ export function Quality() {
               <p className="text-sm text-base-content/60 text-center">...and {issues.length - 10} more</p>
             )}
           </div>
-        </ExpandableSection>
+          </ExpandableSection>
+        </div>
       )}
 
       {/* Semantic Analysis */}
-      <ExpandableSection
-        title="Semantic Analysis"
-        description="Content similarity, duplicates, and terminology consistency"
-        icon={<Copy size={20} />}
-        tooltip={METRIC_EXPLANATIONS.semanticDuplicates}
-        statusBadge={(semantic?.near_duplicate_count ?? 0) > 0 ? 'warning' : undefined}
-        statusCount={semantic?.near_duplicate_count}
-      >
+      <div ref={(el) => { sectionRefs.current.semantic = el; }} id={SECTION_IDS.semantic}>
+        <ExpandableSection
+          title="Semantic Analysis"
+          description="Content similarity, duplicates, and terminology consistency"
+          icon={<Copy size={20} />}
+          tooltip={METRIC_EXPLANATIONS.semanticDuplicates}
+          statusBadge={(semantic?.near_duplicate_count ?? 0) > 0 ? 'warning' : undefined}
+          statusCount={semantic?.near_duplicate_count}
+          isExpanded={expandedSections.semantic}
+          onToggle={() => toggleSection('semantic')}
+          isLoading={advancedLoading}
+        >
         {!semantic?.available ? (
           <div className="text-center py-6 text-base-content/60">
             <Zap size={24} className="mx-auto mb-2 opacity-30" />
@@ -285,17 +594,22 @@ export function Quality() {
             )}
           </div>
         )}
-      </ExpandableSection>
+        </ExpandableSection>
+      </div>
 
       {/* Knowledge Graph */}
-      <ExpandableSection
-        title="Knowledge Graph"
-        description="Document relationships, concepts, and prerequisites"
-        icon={<Network size={20} />}
-        tooltip={METRIC_EXPLANATIONS.orphanConcepts}
-        statusBadge={(kg?.orphan_count ?? 0) > 0 ? 'warning' : undefined}
-        statusCount={kg?.orphan_count}
-      >
+      <div ref={(el) => { sectionRefs.current.knowledgeGraph = el; }} id={SECTION_IDS.knowledgeGraph}>
+        <ExpandableSection
+          title="Knowledge Graph"
+          description="Document relationships, concepts, and prerequisites"
+          icon={<Network size={20} />}
+          tooltip={METRIC_EXPLANATIONS.orphanConcepts}
+          statusBadge={(kg?.orphan_count ?? 0) > 0 ? 'warning' : undefined}
+          statusCount={kg?.orphan_count}
+          isExpanded={expandedSections.knowledgeGraph}
+          onToggle={() => toggleSection('knowledgeGraph')}
+          isLoading={advancedLoading}
+        >
         {!kg?.available ? (
           <div className="text-center py-6 text-base-content/60">
             <Zap size={24} className="mx-auto mb-2 opacity-30" />
@@ -372,17 +686,22 @@ export function Quality() {
             )}
           </div>
         )}
-      </ExpandableSection>
+        </ExpandableSection>
+      </div>
 
       {/* Readability */}
-      <ExpandableSection
-        title="Readability"
-        description="Content accessibility and Norwegian LIX analysis"
-        icon={<BookOpen size={20} />}
-        tooltip={METRIC_EXPLANATIONS.readability}
-        statusBadge={norwegian?.difficult_count && norwegian.difficult_count > 0 ? 'warning' : undefined}
-        statusCount={norwegian?.difficult_count}
-      >
+      <div ref={(el) => { sectionRefs.current.readability = el; }} id={SECTION_IDS.readability}>
+        <ExpandableSection
+          title="Readability"
+          description="Content accessibility and Norwegian LIX analysis"
+          icon={<BookOpen size={20} />}
+          tooltip={METRIC_EXPLANATIONS.readability}
+          statusBadge={norwegian?.difficult_count && norwegian.difficult_count > 0 ? 'warning' : undefined}
+          statusCount={norwegian?.difficult_count}
+          isExpanded={expandedSections.readability}
+          onToggle={() => toggleSection('readability')}
+          isLoading={advancedLoading}
+        >
         <div className="space-y-4">
           <div className="flex items-center gap-4 p-4 rounded-lg bg-base-300">
             <BookOpen size={32} className={insights?.health?.components?.readability && insights.health.components.readability >= 80 ? 'text-success' : 'text-warning'} />
@@ -425,17 +744,21 @@ export function Quality() {
             </p>
           ) : null}
         </div>
-      </ExpandableSection>
+        </ExpandableSection>
+      </div>
 
       {/* Freshness & Staleness */}
-      <ExpandableSection
-        title="Freshness & Staleness"
-        description="Content freshness tracking and predictive analysis"
-        icon={<Clock size={20} />}
-        tooltip={METRIC_EXPLANATIONS.freshness}
-        statusBadge={(freshness?.stale_count ?? 0) > 0 ? 'warning' : undefined}
-        statusCount={freshness?.stale_count}
-      >
+      <div ref={(el) => { sectionRefs.current.freshness = el; }} id={SECTION_IDS.freshness}>
+        <ExpandableSection
+          title="Freshness & Staleness"
+          description="Content freshness tracking and predictive analysis"
+          icon={<Clock size={20} />}
+          tooltip={METRIC_EXPLANATIONS.freshness}
+          statusBadge={(freshness?.stale_count ?? 0) > 0 ? 'warning' : undefined}
+          statusCount={freshness?.stale_count}
+          isExpanded={expandedSections.freshness}
+          onToggle={() => toggleSection('freshness')}
+        >
         <div className="space-y-4">
           <div className="grid grid-cols-4 gap-4">
             <div className="text-center p-3 rounded-lg bg-success/10">
@@ -486,17 +809,22 @@ export function Quality() {
             </div>
           )}
         </div>
-      </ExpandableSection>
+        </ExpandableSection>
+      </div>
 
       {/* Code Sync */}
-      <ExpandableSection
-        title="Code Synchronization"
-        description="Code example validation and API reference checks"
-        icon={<Code size={20} />}
-        tooltip={METRIC_EXPLANATIONS.syntaxErrors}
-        statusBadge={(codesync?.syntax_error_count ?? 0) > 0 ? 'error' : (codesync?.deprecated_count ?? 0) > 0 ? 'warning' : undefined}
-        statusCount={(codesync?.syntax_error_count ?? 0) + (codesync?.deprecated_count ?? 0)}
-      >
+      <div ref={(el) => { sectionRefs.current.codeSync = el; }} id={SECTION_IDS.codeSync}>
+        <ExpandableSection
+          title="Code Synchronization"
+          description="Code example validation and API reference checks"
+          icon={<Code size={20} />}
+          tooltip={METRIC_EXPLANATIONS.syntaxErrors}
+          statusBadge={(codesync?.syntax_error_count ?? 0) > 0 ? 'error' : (codesync?.deprecated_count ?? 0) > 0 ? 'warning' : undefined}
+          statusCount={(codesync?.syntax_error_count ?? 0) + (codesync?.deprecated_count ?? 0)}
+          isExpanded={expandedSections.codeSync}
+          onToggle={() => toggleSection('codeSync')}
+          isLoading={advancedLoading}
+        >
         {!codesync?.available ? (
           <div className="text-center py-6 text-base-content/60">
             <Zap size={24} className="mx-auto mb-2 opacity-30" />
@@ -552,14 +880,19 @@ export function Quality() {
             )}
           </div>
         )}
-      </ExpandableSection>
+        </ExpandableSection>
+      </div>
 
       {/* Advanced Analysis */}
-      <ExpandableSection
-        title="Advanced Analysis"
-        description="Audience drift, question coverage, cross-references, and style"
-        icon={<TrendingUp size={20} />}
-      >
+      <div ref={(el) => { sectionRefs.current.advanced = el; }} id={SECTION_IDS.advanced}>
+        <ExpandableSection
+          title="Advanced Analysis"
+          description="Audience drift, question coverage, cross-references, and style"
+          icon={<TrendingUp size={20} />}
+          isExpanded={expandedSections.advanced}
+          onToggle={() => toggleSection('advanced')}
+          isLoading={advancedLoading}
+        >
         {!analysis?.available ? (
           <div className="text-center py-6 text-base-content/60">
             <Zap size={24} className="mx-auto mb-2 opacity-30" />
@@ -618,14 +951,19 @@ export function Quality() {
             )}
           </div>
         )}
-      </ExpandableSection>
+        </ExpandableSection>
+      </div>
 
       {/* Activity Section */}
-      <ExpandableSection
-        title="Recent Activity"
-        description="Git commits and system audit log"
-        icon={<GitCommit size={20} />}
-      >
+      <div ref={(el) => { sectionRefs.current.activity = el; }} id={SECTION_IDS.activity}>
+        <ExpandableSection
+          title="Recent Activity"
+          description="Git commits and system audit log"
+          icon={<GitCommit size={20} />}
+          isExpanded={expandedSections.activity}
+          onToggle={() => toggleSection('activity')}
+          isLoading={auditLoading}
+        >
         <div className="space-y-6">
           {/* Recent Commits */}
           <div>
@@ -686,7 +1024,8 @@ export function Quality() {
             )}
           </div>
         </div>
-      </ExpandableSection>
+        </ExpandableSection>
+      </div>
 
       {/* All Clear Message */}
       {issues.length === 0 && (

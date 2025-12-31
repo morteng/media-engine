@@ -18,7 +18,7 @@ import {
   Filter,
 } from 'lucide-react';
 import clsx from 'clsx';
-import { Spinner } from '@/components/ui';
+import { Spinner, useToast } from '@/components/ui';
 import { useVideoProjectsData } from '@/hooks/useVideoApi';
 import type { ProjectStatus, VideoProjectSummary } from '@/api/video';
 
@@ -190,6 +190,7 @@ export function VideoProjects() {
   const [searchParams, setSearchParams] = useSearchParams();
   const statusFilter = searchParams.get('status') as ProjectStatus | null;
   const navigate = useNavigate();
+  const { addToast } = useToast();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -199,6 +200,7 @@ export function VideoProjects() {
     isLoading,
     error,
     create,
+    remove,
   } = useVideoProjectsData(statusFilter || undefined);
 
   const handleCreateProject = (name: string, language: string) => {
@@ -214,9 +216,19 @@ export function VideoProjects() {
     navigate(`/video/projects/${id}`);
   };
 
-  const handleDeleteProject = (_id: string) => {
-    if (confirm('Are you sure you want to delete this project?')) {
-      // TODO: implement delete
+  const handleDeleteProject = (id: string) => {
+    const project = projects.find(p => p.id === id);
+    const projectName = project?.name || 'project';
+
+    if (confirm(`Are you sure you want to delete "${projectName}"? This action cannot be undone.`)) {
+      remove.mutate(id, {
+        onSuccess: () => {
+          addToast(`Project "${projectName}" deleted successfully`, 'success');
+        },
+        onError: (error) => {
+          addToast(`Failed to delete project: ${error.message}`, 'error');
+        },
+      });
     }
   };
 

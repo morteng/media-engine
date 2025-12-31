@@ -2,16 +2,16 @@
  * TimelineContext - Shared timeline state for video components
  *
  * Provides centralized frame/time synchronization across:
- * - VideoPlayer
- * - SceneNavigator
+ * - VideoPlayer / UnifiedVideoPlayer
+ * - ChapterTimeline / ChapterSelector
  * - Timeline visualization
  * - Scene cards
  *
  * Usage:
  * ```tsx
  * <TimelineProvider fps={30} totalFrames={2679}>
- *   <VideoPlayer />
- *   <SceneNavigator />
+ *   <UnifiedVideoPlayer />
+ *   <ChapterTimeline />
  * </TimelineProvider>
  *
  * // In child components:

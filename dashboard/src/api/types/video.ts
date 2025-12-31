@@ -211,3 +211,67 @@ export interface RenderStatus {
   outputPath?: string;
   error?: string;
 }
+
+// ============================================================================
+// Unified Review System Types
+// ============================================================================
+
+/** Comment status for review workflow */
+export type CommentStatus = 'pending' | 'queued' | 'processing' | 'resolved' | 'rejected';
+
+/** Comment priority levels */
+export type CommentPriority = 'low' | 'normal' | 'high' | 'urgent';
+
+/** Video review comment with timestamp */
+export interface VideoReviewComment {
+  id: string;
+  project_id: string;
+  component_id: string;
+  text: string;
+  author: string;
+  timestamp?: number;  // Time position in seconds
+  frame?: number;      // Frame number
+  status: CommentStatus;
+  priority: CommentPriority;
+  ai_task_id?: string;
+  resolution?: string;
+  created_at: string;
+  resolved_at?: string;
+  resolved_by?: string;
+}
+
+/** Video chapter for unified review (aggregates script data) */
+export interface VideoChapter {
+  id: string;                    // Script ID (e.g., "en/walkthrough")
+  name: string;                  // Display name
+  scriptPath: string;            // Path to YAML script
+  language: string;
+  duration: number;              // Total duration in seconds
+  totalFrames: number;
+  fps: number;
+  videoUrl: string | null;       // Rendered video URL
+  audioUrl: string | null;       // Voiceover audio URL
+  scenes: UnifiedScene[];        // Scene data from props
+  startGlobalFrame: number;      // Frame offset in global timeline
+  endGlobalFrame: number;
+  comments: VideoReviewComment[];
+  hasVideo: boolean;
+  hasAudio: boolean;
+}
+
+/** Chapter timeline data for unified review */
+export interface ChapterTimelineData {
+  chapters: VideoChapter[];
+  totalDuration: number;
+  totalFrames: number;
+  globalFps: number;
+}
+
+/** Comment marker colors by status */
+export const COMMENT_MARKER_COLORS: Record<CommentStatus, string> = {
+  pending: '#facc15',   // yellow-400
+  queued: '#3b82f6',    // blue-500
+  processing: '#f59e0b', // amber-500
+  resolved: '#22c55e',  // green-500
+  rejected: '#ef4444',  // red-500
+};

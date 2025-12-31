@@ -11,7 +11,7 @@
 import React, { useState } from 'react';
 import { FileJson, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
 import { useVideoPropsData } from '@/hooks/useVideoApi';
-import { Spinner } from '@/components/ui';
+import { Spinner, NoPropsState, EmptyState } from '@/components/ui';
 import { PropsViewer } from '../PropsViewer';
 
 // ============================================================================
@@ -162,24 +162,16 @@ export function VideoProps() {
 
       {/* Empty state - no script selected */}
       {!selectedScriptId && !scriptsLoading && (
-        <div className="text-center py-16 text-base-content/40">
-          <FileJson size={48} className="mx-auto mb-4 opacity-30" />
-          <p className="text-lg">Select a script to view its props</p>
-          <p className="text-sm mt-2">
-            Props contain scene timing data used by Remotion for rendering
-          </p>
-        </div>
+        <EmptyState
+          icon={<FileJson size={48} strokeWidth={1.5} />}
+          title="Select a script to view its props"
+          description="Props contain scene timing data used by Remotion for rendering"
+        />
       )}
 
       {/* Empty state - script selected but no props */}
       {selectedScriptId && !props && !propsLoading && !propsError && (
-        <div className="text-center py-16 text-base-content/40">
-          <FileJson size={48} className="mx-auto mb-4 opacity-30" />
-          <p className="text-lg">No props available</p>
-          <p className="text-sm mt-2">
-            Generate voiceover for this script to create props.json
-          </p>
-        </div>
+        <NoPropsState />
       )}
 
       {/* Info box */}

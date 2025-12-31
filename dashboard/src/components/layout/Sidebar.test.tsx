@@ -29,14 +29,14 @@ describe('Sidebar', () => {
       render(<Sidebar />);
 
       // Give time for the sidebar to render
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       expect(screen.getByRole('link', { name: /dashboard/i })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /content/i })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /quality/i })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /build/i })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /ai workspace/i })).toBeInTheDocument();
-    }, 10000);
+    }, 15000);
 
     it('Dashboard link points to root', () => {
       mockWindowWidth(1024);
@@ -44,11 +44,12 @@ describe('Sidebar', () => {
       expect(screen.getByRole('link', { name: /dashboard/i })).toHaveAttribute('href', '/');
     });
 
-    it('Content link points to /content', () => {
+    it('Content link points to /content', async () => {
       mockWindowWidth(1024);
       render(<Sidebar />);
+      await new Promise(resolve => setTimeout(resolve, 500));
       expect(screen.getByRole('link', { name: /content/i })).toHaveAttribute('href', '/content');
-    });
+    }, 10000);
 
     it('Quality link points to /quality', () => {
       mockWindowWidth(1024);

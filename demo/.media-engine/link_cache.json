@@ -1,23 +1,23 @@
 {
-  "https://www.nhm.ac.uk/discover/things-you-might-not-know-about-capybaras.html": {
+  "https://wwf.ca/stories/eight-facts-about-capybara/": {
     "status": "valid",
     "status_code": 200,
     "redirect_url": null,
     "error": null,
-    "cached_at": "2025-12-30T12:23:00.601552"
+    "cached_at": "2025-12-30T21:57:11.224232"
   },
   "https://blog.nature.org/2020/02/11/capybara-meet-the-worlds-largest-rodent/": {
     "status": "valid",
     "status_code": 200,
     "redirect_url": null,
     "error": null,
-    "cached_at": "2025-12-30T12:23:00.601927"
+    "cached_at": "2025-12-31T12:56:08.638821"
   },
-  "https://www.worldwildlife.org/stories/are-capybaras-rodents-and-5-other-capybara-facts": {
-    "status": "broken",
-    "status_code": 403,
+  "https://www.nhm.ac.uk/discover/things-you-might-not-know-about-capybaras.html": {
+    "status": "valid",
+    "status_code": 200,
     "redirect_url": null,
-    "error": "Forbidden",
-    "cached_at": "2025-12-30T12:23:00.602570"
+    "error": null,
+    "cached_at": "2025-12-31T12:56:08.731011"
   }
 }
