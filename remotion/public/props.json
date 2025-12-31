@@ -68,9 +68,9 @@
           "highlight": "cyan",
           "bullets": [
             "Health Score tracking",
-            "Publications overview",
-            "AI Workspace activity",
-            "Content metrics"
+            "Recent Publications list",
+            "AI Workspace summary",
+            "Quick stats cards"
           ]
         }
       }
@@ -125,10 +125,10 @@
           "demo_width": 54,
           "highlight": "neon",
           "bullets": [
-            "Health score breakdown",
-            "Freshness tracking",
-            "Semantic analysis",
-            "Knowledge graph"
+            "Quick summary section",
+            "Expandable quality checks",
+            "Jump-to navigation",
+            "Freshness tracking"
           ]
         }
       }
@@ -216,7 +216,7 @@
             "Task queue management",
             "Research storage",
             "Decision capture",
-            "20+ MCP tools"
+            "30+ MCP tools"
           ]
         }
       }
@@ -225,7 +225,7 @@
       "id": "video",
       "type": "feature",
       "title": "Video Production",
-      "text": "Define video scripts in YAML. Media Engine generates voiceovers, creates captions, and renders motion graphics. This video? Built with Media Engine.",
+      "text": "Define video scripts in YAML. Track projects with component dependencies. Generate voiceovers, create captions, and render motion graphics. This video? Built with Media Engine.",
       "startFrame": 2340,
       "endFrame": 2580,
       "durationFrames": 240,
