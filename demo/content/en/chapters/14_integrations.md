@@ -2,7 +2,7 @@
 title: "Integrations"
 version: "1.1.0"
 status: "final"
-last_modified: "2025-12-23"
+last_modified: "2025-12-31"
 freshness_days: 60
 depends_on:
   - "chapters/01_introduction"
@@ -41,7 +41,7 @@ media-engine-mcp -p .
 
 ### Available Tools
 
-The MCP server exposes 20+ tools for AI agents.
+The MCP server exposes 30+ tools for AI agents across multiple categories.
 
 | Category | Tools |
 |----------|-------|
@@ -52,6 +52,11 @@ The MCP server exposes 20+ tools for AI agents.
 | Search | `search_content` |
 | Build | `build_html`, `build_pptx`, `build_xlsx` |
 | Cache | `cache_status`, `clear_cache` |
+| Video Scripts | `list_video_scripts`, `get_video_script`, `generate_video_script`, `validate_video_script` |
+| Video Assets | `get_video_props`, `get_video_assets`, `generate_voiceover` |
+| Video Render | `start_video_render`, `get_render_status`, `list_render_queue`, `cancel_render` |
+| Video Projects | `create_video_project`, `list_video_projects`, `add_video_component` |
+| Motion Design | `get_camera_presets`, `get_effect_presets`, `suggest_layout_composition` |
 
 ### Claude Desktop Configuration
 
@@ -96,16 +101,19 @@ The dashboard provides visual project management with a modern DaisyUI-based int
 
 | View | Description |
 |------|-------------|
-| Overview | Project status, statistics, and health metrics |
+| Overview | Project health score, recent publications, AI workspace summary |
 | Content | Browse chapters with markdown preview and AI annotations |
 | Translations | Matrix view of translation status |
-| Quality | Issue tracking with semantic, readability, and freshness checks |
+| Quality | Issue tracking with expandable sections for quality checks |
 | Build | Trigger builds, view output, and download artifacts |
+| Publications | Manage composite documents (books, decks, packages) |
 | Media | Media registry and asset management |
 | Insights | Analytics, velocity metrics, and content health |
-| Video | Video timeline and scene management |
+| Video Production | Scripts, timeline, props, assets, render queue, and projects |
 | Brand | Brand profile with colors, typography, and logos |
 | Settings | Theme preferences and dashboard configuration |
+
+The home dashboard features a compact "Recent Publications" list showing publication status at a glance with icons, titles, and validation indicators.
 
 ### Theme System
 
