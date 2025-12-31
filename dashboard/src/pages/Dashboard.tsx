@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useStatus, useInsights, useFreshness, usePublicationsStatus, useApi } from '@/hooks/useApi';
 import { StatCard } from '@/components/ui/StatCard';
 import { Spinner } from '@/components/ui';
-import { PublicationGrid } from '@/components/publications';
+import { RecentPublications } from '@/components/publications';
 import { AIWorkspaceSummary } from '@/components/ai';
 import type {
   AISessionsResponse,
@@ -232,11 +232,11 @@ export function Dashboard() {
         />
       </div>
 
-      {/* Publications Grid */}
+      {/* Recent Publications */}
       {publicationsData?.publications && publicationsData.publications.length > 0 && (
         <div className="card bg-base-200">
           <div className="card-body">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-2">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <Book size={20} className="text-primary" />
                 Recent Publications
@@ -245,10 +245,9 @@ export function Dashboard() {
                 View All <ArrowRight size={14} />
               </Link>
             </div>
-            <PublicationGrid
-              publications={publicationsData.publications.slice(0, 6)}
-              groupByLanguage={false}
-              showActions
+            <RecentPublications
+              publications={publicationsData.publications}
+              maxItems={4}
             />
           </div>
         </div>

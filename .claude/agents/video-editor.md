@@ -66,16 +66,46 @@ Script (YAML) -> Voiceover -> Props.json -> Remotion -> MP4
 
 ## MCP Tools Available
 
-### Video Operations
+### Video Script Tools
 ```
-get_video_scripts        - List all video scripts
-get_video_script         - Get parsed script with scenes
+list_video_scripts       - List all video scripts with metadata
+get_video_script         - Get single script with full parsed details
+plan_video_from_content  - Analyze content and propose video structure
+generate_video_script    - Create YAML script from scene outline
+validate_video_script    - Check script for errors and best practices
+optimize_timing          - Optimize scene timing for better pacing
+suggest_scene_visuals    - Get AI-powered visual recommendations
+```
+
+### Video Props & Assets
+```
 get_video_props          - Get props.json for a script
-get_video_assets         - List all video assets by type
-render_video             - Queue a video for rendering
-get_render_status        - Check render queue status
+get_video_assets         - List all video assets by type (demo_clips, voiceover, captions, output)
+generate_voiceover       - Prepare voiceover generation from script
+```
+
+### Render Management
+```
+start_video_render       - Queue a video for rendering
+get_render_status        - Check render job status
+list_render_queue        - Get all render jobs and statuses
+cancel_render            - Cancel an active render job
+get_render_settings      - Get render settings for quality preset
+estimate_render_time     - Estimate render time for a script
+export_video_assets      - Package video deliverables for export
+```
+
+### Camera & Effects
+```
 get_camera_presets       - List available camera animation presets
 get_effect_presets       - List available visual effects presets
+```
+
+### Motion Design (via motion_design tools)
+```
+suggest_layout_composition  - Get layout suggestions for content
+suggest_camera_motion       - Get camera motion suggestions
+create_title_sequence       - Design title sequence
 ```
 
 ### Script Management

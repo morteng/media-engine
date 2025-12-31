@@ -1,7 +1,7 @@
 import * as React from 'react';
 import clsx from 'clsx';
 
-export interface VisuallyHiddenProps extends React.HTMLAttributes<HTMLSpanElement> {
+export interface VisuallyHiddenProps extends React.HTMLAttributes<HTMLElement> {
   /**
    * When true, the element becomes visible when focused (for skip links)
    */
@@ -29,11 +29,11 @@ export interface VisuallyHiddenProps extends React.HTMLAttributes<HTMLSpanElemen
  *   <a href="#main-content">Skip to main content</a>
  * </VisuallyHidden>
  */
-const VisuallyHidden = React.forwardRef<HTMLSpanElement, VisuallyHiddenProps>(
+const VisuallyHidden = React.forwardRef<HTMLElement, VisuallyHiddenProps>(
   ({ className, focusable = false, as: Component = 'span', children, ...props }, ref) => {
     return (
       <Component
-        ref={ref}
+        ref={ref as React.Ref<HTMLSpanElement & HTMLDivElement>}
         className={clsx(
           // Base styles for screen reader only content
           'absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0',

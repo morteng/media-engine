@@ -6,7 +6,7 @@ import { Spinner } from './Spinner';
 import { Badge } from './Badge';
 import { isMac } from '@/hooks/useKeyboardShortcuts';
 
-export interface SearchInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
+export interface SearchInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value' | 'size'> {
   /**
    * Current search value
    */
@@ -88,7 +88,7 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
   ) => {
     const [internalValue, setInternalValue] = useState(value);
     const inputRef = useRef<HTMLInputElement>(null);
-    const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>();
+    const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const generatedId = React.useMemo(() => id || generateSearchInputId(), [id]);
 
     // Sync external value changes

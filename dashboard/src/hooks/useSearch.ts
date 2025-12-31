@@ -64,7 +64,7 @@ export function useSearch<T>(
   const [query, setQueryInternal] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // Handle query changes with debouncing
   const setQuery = useCallback(

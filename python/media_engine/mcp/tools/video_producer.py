@@ -672,3 +672,337 @@ def register_video_producer_tools(mcp, server_instance):
             "scripts": scripts,
             "count": len(scripts),
         }, indent=2)
+
+    @mcp.tool()
+    async def get_video_script(script_id: str) -> str:
+        """
+        Get a single video script with full parsed details.
+
+        Args:
+            script_id: Script identifier (e.g., "en/intro")
+
+        Returns:
+            JSON with full script details including scenes, settings, and metadata
+        """
+        import yaml
+
+        if not server_instance.project:
+            return json.dumps({"error": "No project found"}, indent=2)
+
+        # Parse script_id
+        parts = script_id.split("/", 1)
+        if len(parts) != 2:
+            return json.dumps({"error": "Invalid script_id format. Use 'language/script_name'"}, indent=2)
+
+        lang, name = parts
+        script_path = server_instance.project.content_dir / lang / "scripts" / f"{name}.yaml"
+
+        if not script_path.exists():
+            return json.dumps({"error": f"Script not found: {script_id}"}, indent=2)
+
+        try:
+            with open(script_path) as f:
+                script = yaml.safe_load(f)
+        except yaml.YAMLError as e:
+            return json.dumps({"error": f"YAML parse error: {e}"}, indent=2)
+
+        # Calculate totals
+        scenes = script.get("scenes", [])
+        total_duration = sum(s.get("duration", 5) for s in scenes)
+        scenes_with_vo = sum(1 for s in scenes if s.get("voiceover"))
+
+        # Check for associated files
+        props_path = script_path.with_suffix(".props.json")
+        has_props = props_path.exists()
+
+        audio_path = server_instance.project.output_dir / lang / "videos" / f"{name}.mp3"
+        has_audio = audio_path.exists()
+
+        video_path = server_instance.project.output_dir / lang / "videos" / f"{name}.mp4"
+        has_video = video_path.exists()
+
+        return json.dumps({
+            "id": script_id,
+            "name": script.get("title", name),
+            "language": lang,
+            "path": str(script_path.relative_to(server_instance.project.root)),
+            "metadata": script.get("metadata", {}),
+            "settings": script.get("settings", {}),
+            "scenes": scenes,
+            "statistics": {
+                "scene_count": len(scenes),
+                "total_duration": total_duration,
+                "scenes_with_voiceover": scenes_with_vo,
+                "has_props": has_props,
+                "has_audio": has_audio,
+                "has_video": has_video,
+            },
+            "associated_files": {
+                "props": str(props_path) if has_props else None,
+                "audio": str(audio_path) if has_audio else None,
+                "video": str(video_path) if has_video else None,
+            },
+        }, indent=2)
+
+    @mcp.tool()
+    async def get_video_props(script_id: str) -> str:
+        """
+        Get the props.json configuration for a video script.
+
+        Props contain the computed layout, timing, and visual data needed for rendering.
+
+        Args:
+            script_id: Script identifier (e.g., "en/intro")
+
+        Returns:
+            JSON with props data or instructions to generate if missing
+        """
+        if not server_instance.project:
+            return json.dumps({"error": "No project found"}, indent=2)
+
+        # Parse script_id
+        parts = script_id.split("/", 1)
+        if len(parts) != 2:
+            return json.dumps({"error": "Invalid script_id format. Use 'language/script_name'"}, indent=2)
+
+        lang, name = parts
+
+        # Check multiple possible locations for props
+        script_path = server_instance.project.content_dir / lang / "scripts" / f"{name}.yaml"
+        props_path = script_path.with_suffix(".props.json")
+
+        # Also check in remotion public folder
+        remotion_props = server_instance.project.root / "remotion" / "public" / "props.json"
+
+        if props_path.exists():
+            try:
+                props = json.loads(props_path.read_text())
+                return json.dumps({
+                    "script_id": script_id,
+                    "source": str(props_path.relative_to(server_instance.project.root)),
+                    "props": props,
+                }, indent=2)
+            except json.JSONDecodeError as e:
+                return json.dumps({"error": f"Invalid props JSON: {e}"}, indent=2)
+
+        if remotion_props.exists():
+            try:
+                props = json.loads(remotion_props.read_text())
+                return json.dumps({
+                    "script_id": script_id,
+                    "source": "remotion/public/props.json",
+                    "note": "Using global props file",
+                    "props": props,
+                }, indent=2)
+            except json.JSONDecodeError as e:
+                return json.dumps({"error": f"Invalid props JSON: {e}"}, indent=2)
+
+        return json.dumps({
+            "error": "Props not found",
+            "script_id": script_id,
+            "searched_paths": [
+                str(props_path.relative_to(server_instance.project.root)),
+                "remotion/public/props.json",
+            ],
+            "hint": "Run 'media-engine video build-props' to generate props from the script",
+        }, indent=2)
+
+    @mcp.tool()
+    async def get_video_assets(asset_type: str = None) -> str:
+        """
+        List all video assets in the project.
+
+        Args:
+            asset_type: Filter by type (demo_clips, voiceover, captions, output, all)
+
+        Returns:
+            JSON with list of assets grouped by type
+        """
+        if not server_instance.project:
+            return json.dumps({"error": "No project found"}, indent=2)
+
+        assets = {
+            "demo_clips": [],
+            "voiceover": [],
+            "captions": [],
+            "output": [],
+        }
+
+        # Check demo/demos folder
+        demos_dir = server_instance.project.root / "demo" / "demos"
+        if demos_dir.exists():
+            for f in demos_dir.glob("**/*.mp4"):
+                assets["demo_clips"].append({
+                    "name": f.stem,
+                    "path": str(f.relative_to(server_instance.project.root)),
+                    "size": f.stat().st_size,
+                    "size_mb": round(f.stat().st_size / (1024 * 1024), 2),
+                })
+
+        # Also check remotion/public/demos
+        remotion_demos = server_instance.project.root / "remotion" / "public" / "demos"
+        if remotion_demos.exists():
+            for f in remotion_demos.glob("**/*.mp4"):
+                assets["demo_clips"].append({
+                    "name": f.stem,
+                    "path": str(f.relative_to(server_instance.project.root)),
+                    "size": f.stat().st_size,
+                    "size_mb": round(f.stat().st_size / (1024 * 1024), 2),
+                })
+
+        # Check for voiceover audio
+        for lang_dir in server_instance.project.output_dir.glob("*"):
+            if not lang_dir.is_dir():
+                continue
+            audio_dir = lang_dir / "audio"
+            if audio_dir.exists():
+                for f in audio_dir.glob("*.mp3"):
+                    assets["voiceover"].append({
+                        "name": f.stem,
+                        "language": lang_dir.name,
+                        "path": str(f.relative_to(server_instance.project.root)),
+                        "size": f.stat().st_size,
+                    })
+
+        # Check for captions
+        for lang_dir in server_instance.project.output_dir.glob("*"):
+            if not lang_dir.is_dir():
+                continue
+            captions_dir = lang_dir / "captions"
+            if captions_dir.exists():
+                for f in captions_dir.glob("*.srt"):
+                    assets["captions"].append({
+                        "name": f.stem,
+                        "language": lang_dir.name,
+                        "path": str(f.relative_to(server_instance.project.root)),
+                    })
+                for f in captions_dir.glob("*.vtt"):
+                    assets["captions"].append({
+                        "name": f.stem,
+                        "language": lang_dir.name,
+                        "path": str(f.relative_to(server_instance.project.root)),
+                    })
+
+        # Check for rendered output
+        for lang_dir in server_instance.project.output_dir.glob("*"):
+            if not lang_dir.is_dir():
+                continue
+            videos_dir = lang_dir / "videos"
+            if videos_dir.exists():
+                for f in videos_dir.glob("*.mp4"):
+                    assets["output"].append({
+                        "name": f.stem,
+                        "language": lang_dir.name,
+                        "path": str(f.relative_to(server_instance.project.root)),
+                        "size": f.stat().st_size,
+                        "size_mb": round(f.stat().st_size / (1024 * 1024), 2),
+                    })
+
+        # Filter by type if specified
+        if asset_type and asset_type != "all":
+            if asset_type not in assets:
+                return json.dumps({
+                    "error": f"Unknown asset type: {asset_type}",
+                    "valid_types": list(assets.keys()) + ["all"],
+                }, indent=2)
+            filtered = {asset_type: assets[asset_type]}
+            total_count = len(assets[asset_type])
+        else:
+            filtered = assets
+            total_count = sum(len(v) for v in assets.values())
+
+        return json.dumps({
+            "assets": filtered,
+            "total_count": total_count,
+            "counts_by_type": {k: len(v) for k, v in assets.items()},
+        }, indent=2)
+
+    @mcp.tool()
+    async def generate_voiceover(
+        script_id: str,
+        voice: str = "onyx",
+        force: bool = False,
+    ) -> str:
+        """
+        Generate voiceover audio from a video script.
+
+        Args:
+            script_id: Script identifier (e.g., "en/intro")
+            voice: Voice to use (onyx, alloy, echo, fable, nova, shimmer)
+            force: Regenerate even if audio exists
+
+        Returns:
+            JSON with generation status and output path
+        """
+        import yaml
+
+        if not server_instance.project:
+            return json.dumps({"error": "No project found"}, indent=2)
+
+        # Parse script_id
+        parts = script_id.split("/", 1)
+        if len(parts) != 2:
+            return json.dumps({"error": "Invalid script_id format. Use 'language/script_name'"}, indent=2)
+
+        lang, name = parts
+        script_path = server_instance.project.content_dir / lang / "scripts" / f"{name}.yaml"
+
+        if not script_path.exists():
+            return json.dumps({"error": f"Script not found: {script_id}"}, indent=2)
+
+        # Check if output already exists
+        output_dir = server_instance.project.output_dir / lang / "audio"
+        output_path = output_dir / f"{name}.mp3"
+
+        if output_path.exists() and not force:
+            return json.dumps({
+                "status": "exists",
+                "script_id": script_id,
+                "output_path": str(output_path.relative_to(server_instance.project.root)),
+                "message": "Audio already exists. Use force=true to regenerate.",
+            }, indent=2)
+
+        # Load script and extract voiceover text
+        try:
+            with open(script_path) as f:
+                script = yaml.safe_load(f)
+        except yaml.YAMLError as e:
+            return json.dumps({"error": f"YAML parse error: {e}"}, indent=2)
+
+        scenes = script.get("scenes", [])
+        voiceover_texts = []
+
+        for scene in scenes:
+            vo = scene.get("voiceover")
+            if vo:
+                voiceover_texts.append({
+                    "scene_id": scene.get("id", "unknown"),
+                    "text": vo,
+                    "duration": scene.get("duration", 5),
+                })
+
+        if not voiceover_texts:
+            return json.dumps({
+                "status": "no_voiceover",
+                "script_id": script_id,
+                "message": "Script has no voiceover text in any scene",
+            }, indent=2)
+
+        # Calculate total word count and estimated duration
+        total_words = sum(len(t["text"].split()) for t in voiceover_texts)
+        estimated_duration = (total_words / 150) * 60  # ~150 words per minute
+
+        # Note: Actual TTS generation would require API integration
+        # This returns the plan for what would be generated
+        return json.dumps({
+            "status": "ready",
+            "script_id": script_id,
+            "voice": voice,
+            "available_voices": ["onyx", "alloy", "echo", "fable", "nova", "shimmer"],
+            "output_path": str(output_dir / f"{name}.mp3"),
+            "scenes_with_voiceover": len(voiceover_texts),
+            "total_words": total_words,
+            "estimated_duration_seconds": round(estimated_duration),
+            "voiceover_segments": voiceover_texts,
+            "note": "Use 'media-engine video voiceover' CLI command to generate the actual audio",
+        }, indent=2)

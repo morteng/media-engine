@@ -32,7 +32,7 @@ describe('Skeleton', () => {
   });
 
   it('renders with rectangular variant', () => {
-    const { container } = render(<Skeleton variant="rectangular" data-testid="skeleton" />);
+    render(<Skeleton variant="rectangular" data-testid="skeleton" />);
     const skeleton = screen.getByTestId('skeleton');
     expect(skeleton).toHaveClass('skeleton');
     expect(skeleton).not.toHaveClass('rounded', 'rounded-full', 'rounded-lg');

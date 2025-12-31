@@ -360,3 +360,4 @@ dashboard/src/components/ui/DataTable.test.tsx
 dashboard/src/utils/searchUtils.ts
 dashboard/src/pages/AIAssist.tsx
 dashboard/src/components/video-production/sections/VideoProps.tsx
+dashboard/src/components/publications/RecentPublications.tsx
